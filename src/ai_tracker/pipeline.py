@@ -6,7 +6,7 @@
     python -m ai_tracker.pipeline n2-live            N2 only (day 5: previous month)
     python -m ai_tracker.pipeline n1-live            N1 only (quarter end + 20 days: the quarter just ended)
     python -m ai_tracker.pipeline scorecard          forecasts/SCORECARD.md: live forecasts vs first-vintage outcome
-    python -m ai_tracker.pipeline publish PATH...    git-commit new forecast files + SCORECARD.md (CI; never amends)
+    python -m ai_tracker.pipeline publish PATH...    git-commit new forecast files + SCORECARD.md, or new snapshots (CI)
 
 Timing rule. A live forecast is only made on its registered origin, and the origin is *today* in UTC: the routine
 refreshes its series and then reads them with as_of(origin). Every row fetched today has known_from <= today, so the
@@ -24,6 +24,7 @@ import argparse
 import json
 import math
 import os
+import re
 import subprocess
 import sys
 from dataclasses import dataclass
@@ -288,19 +289,24 @@ def _git(repo: Path, *args: str, check: bool = True) -> subprocess.CompletedProc
     return subprocess.run(["git", *args], cwd=repo, capture_output=True, text=True, check=check)
 
 
-def publish(paths: list[str], repo: Path | None = None, scorecard_path: str = "forecasts/SCORECARD.md") -> bool:
-    """Commit new forecast files (and the scorecard) with the bot identity. Does not push.
+SNAPSHOT_PATH = re.compile(r"snapshots/\d{4}-\d{2}\.json")
+FORECAST_PATH = re.compile(r"forecasts/[^/]+/[^/]+\.json")
 
-    Only paths that are not yet in HEAD are committed: a forecast that is already committed is never
+
+def publish(paths: list[str], repo: Path | None = None, scorecard_path: str = "forecasts/SCORECARD.md") -> bool:
+    """Commit new forecast files (and the scorecard) or new monthly snapshots with the bot identity. Does not push.
+
+    Only paths that are not yet in HEAD are committed: a forecast or snapshot that is already committed is never
     committed again, so a second run is a no-op. Returns True if a commit was made.
     """
     repo = Path(repo or config.REPO)
     new = []
     for p in paths:
-        if not p.startswith("forecasts/") or not p.endswith(".json"):
-            raise SystemExit(f"refusing to publish {p}: only forecasts/<nowcast>/<period>.json")
+        if not (FORECAST_PATH.fullmatch(p) or SNAPSHOT_PATH.fullmatch(p)):
+            raise SystemExit(f"refusing to publish {p}: only forecasts/<nowcast>/<period>.json "
+                             "or snapshots/<YYYY-MM>.json")
         if _git(repo, "cat-file", "-e", f"HEAD:{p}", check=False).returncode == 0:
-            print(f"{p} is already committed; live forecasts are never re-committed. Skipping.")
+            print(f"{p} is already committed; live forecasts and snapshots are never re-committed. Skipping.")
             continue
         if not (repo / p).is_file():
             raise SystemExit(f"{p} does not exist")
@@ -308,17 +314,23 @@ def publish(paths: list[str], repo: Path | None = None, scorecard_path: str = "f
     if not new:
         print("nothing to publish")
         return False
+    forecasts = [p for p in new if FORECAST_PATH.fullmatch(p)]
+    snapshots = [p for p in new if SNAPSHOT_PATH.fullmatch(p)]
     _git(repo, "add", "--", *new)
-    if (repo / scorecard_path).is_file():
+    if forecasts and (repo / scorecard_path).is_file():
         _git(repo, "add", "--", scorecard_path)
     staged = _git(repo, "diff", "--cached", "--name-status").stdout.split("\n")
     staged = [line.split("\t") for line in staged if line]
-    allowed = set(new) | {scorecard_path}
+    allowed = set(new) | ({scorecard_path} if forecasts else set())
     if any(f not in allowed for _, f in staged) or any(s != "A" for s, f in staged if f in new):
         raise SystemExit(f"unexpected staged changes: {staged}")
-    periods = ", ".join(Path(p).parent.name + " " + Path(p).stem for p in new)
-    _git(repo, "-c", f"user.name={BOT_NAME}", "-c", f"user.email={BOT_EMAIL}", "commit", "-m",
-         f"Live forecast {periods} (origin {utc_today().date()})")
+    parts = []
+    if forecasts:
+        periods = ", ".join(Path(p).parent.name + " " + Path(p).stem for p in forecasts)
+        parts.append(f"Live forecast {periods} (origin {utc_today().date()})")
+    if snapshots:
+        parts.append(f"Monthly snapshot {', '.join(Path(p).stem for p in snapshots)} (written {utc_today().date()})")
+    _git(repo, "-c", f"user.name={BOT_NAME}", "-c", f"user.email={BOT_EMAIL}", "commit", "-m", "; ".join(parts))
     print(f"committed {new}")
     return True
 
