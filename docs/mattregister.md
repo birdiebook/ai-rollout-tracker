@@ -148,3 +148,22 @@ publiceringsdatum, och ingen modell har körts.
   `us_imports_tw_m` (Korea- och Taiwanserierna är blockerade).
 - `us_imports_tw_m` och `us_constr_datacenter` är bakåtfyllda: bara den senaste versionen finns, så revideringar
   läcker in i backtesten. Det redovisas med resultatet.
+
+### 2026-11-23 – B2 (bolagens guidance) läggs till för N1 och N2 (före extraktion och analys)
+
+Ingen guidance har hämtats eller jämförts med utfall när detta skrivs.
+
+**N2, B2 (TSMC):**
+- TSMC ger i sin kvartalsrapport (6-K) ett intervall för kvartalets intäkt i USD och ett antagande om växelkursen
+  USD/NT$. `known_from` = inlämningsdatum för 6-K:n.
+- Kvartalets intäkt i NT$ = intervallets mittpunkt × den antagna växelkursen.
+- För månad m i kvartalet: B2 = (kvartalets intäkt i NT$ − summan av kvartalets kända månader) × B1-andelen.
+  B1-andelen = B1:s prognos för m delat med summan av B1:s prognoser för kvartalets okända månader, där m ingår.
+- Om ingen guidance för kvartalet är känd på prognosdagen används B1.
+- Utvärdering, test och befordran sker som för N2 i övrigt. B2 behandlas som en variant, och Holm-justeringen görs
+  över V1 och B2.
+
+**N1, B2 (capex):**
+- Definitionen låses i en ny post här när extraktionen (fas 4, spår E1) har dokumenterat hur varje bolags guidance
+  är definierad (med eller utan finansiell leasing, kalender- eller räkenskapsår, kvartal eller helår).
+- Det görs innan något B2-värde jämförs med utfall.
