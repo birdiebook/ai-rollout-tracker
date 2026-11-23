@@ -18,7 +18,10 @@ from ai_tracker import catalog, observations
 from ai_tracker.observations import to_periods
 
 # Series with an accepted gap, and why. Keep this short.
-KNOWN_GAPS: dict[str, str] = {}
+KNOWN_GAPS: dict[str, str] = {
+    "guid_capex_msft_q_lo": "Microsoft gives a capex number for the next quarter only in some calls; else a direction",
+    "guid_capex_msft_q_dir_qoq": "2025Q3 was guided as a number (over $30bn), not as a direction",
+}
 
 CHECKS = {
     "unique_key": """
