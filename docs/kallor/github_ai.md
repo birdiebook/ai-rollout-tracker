@@ -168,4 +168,24 @@ nedladdningen sker i sessionen eller i Actions.
 
 ## Körningar
 
-(fylls i nedan med datum, byte och tid)
+| Datum (UTC) | Jobb | BigQuery-byte | Resultat |
+|---|---|---|---|
+| 2026-11-23 21:04 | `bq.yml` `gharchive_probe` (torrkörning, tak 0,001 GB) | uppskattat **15 675 664 020** (15,7 GB) för en dag (`githubarchive.day.20250901`, kolumnerna `type`, `repo.id`, `payload`), vägrad, 0 byte körda | kostnadsmätning |
+| 2026-11-23 21:10–22:09 | `python -m ai_tracker.sources.gharchive build --workers 8` i sessionen | 0 | 1 736 urvalstimmar + 25 ersättningstimmar hämtade (cirka 120 GB gzip via proxyn, cirka 20 MB/s), 59 min. 248 veckor, 247 med värde |
+| 2026-11-23 21:40–22:11 | `job.yml` `github_ai_gharchive` (Actions, oberoende omräkning) | 0 | 31 min. CSV:n i loggen är **identisk** med `curated/github_ai_gharchive.csv` (alla 248 rader, alla kolumner) |
+
+**Varför inte BigQuery:** en dag kostar cirka 15,7 GB (2025-09, och dagar 2021–2024 är av samma storleksordning),
+eftersom tabellerna inte är partitionerade på timme och `payload` måste läsas helt. Ett urval på en dag per vecka
+2021-01–2025-10 vore 248 × cirka 12–16 GB ≈ 3–4 TB, och full täckning cirka 25 TB. Målet var 400 GB, så det går
+inte inom kvoten ens från 2023 (cirka 143 veckor × 15 GB ≈ 2,1 TB). Timfilerna ger samma data per timme utan kvot:
+7 timmar per vecka i stället för 24 × 7. Spåret använder därför 0 byte av den delade kvoten.
+
+**Avbrott i GH Archive i perioden:** 33 timfiler saknas (404), bland annat 2021-08-26–27 och 2021-10-22–28. Veckorna
+2021-08-23 och 2021-10-18 har 5 timmar, och veckan **2021-10-25 har 3 och får inget värde** (hål i serierna, listat i
+`warehouse.KNOWN_GAPS`). Inga timmar var trasiga eller omätbara i perioden.
+
+**Datakontroll (nivåer, ingen analys):** första vecka med träff per grupp: `other` 2023-10-23, `devin` 2024-05-20,
+`copilot` 2024-09-16, `claude` 2025-02-10 (två veckor före den publika förhandsversionen 2025-02-24, alltså tidig
+åtkomst; GH Archive visar pushtid, så det är inte bakåtdatering), `google` 2025-02-24, `cursor` 2025-06-02,
+`aider` 2025-06-23, `amp` 2025-06-30, `codex` 2025-07-28. Ingen grupp har träffar före 2023, vilket talar mot falska
+positiva i mönstren.
