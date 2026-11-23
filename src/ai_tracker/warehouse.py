@@ -51,7 +51,7 @@ def _with_periods(table: pd.DataFrame) -> pd.DataFrame:
     for freq, idx in t.groupby("freq").groups.items():
         periods = to_periods(t.loc[idx, "period"], freq)
         t.loc[idx, "period_end"] = periods.end_time.normalize()
-        t.loc[idx, "ordinal"] = periods.asi8
+        t.loc[idx, "ordinal"] = observations.fortnight_ordinal(periods) if freq == "2W" else periods.asi8
     t["period_end"] = pd.to_datetime(t["period_end"])
     t["ordinal"] = t["ordinal"].astype("int64")
     return t
