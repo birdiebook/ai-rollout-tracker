@@ -21,9 +21,14 @@ QUESTION = {
 }
 LICENSE = ("SEC EDGAR: public information (sec.gov/privacy); microsoft.com: bara extraherade siffror med "
            "källhänvisning, aldrig text")
-LAG = {"M": -31, "Q": -92}  # a point-in-time value is stated in the month it refers to (or after the quarter)
+# A point-in-time value is stated in the month it refers to (or after the quarter); a Microsoft fiscal year (ends
+# June) is stored as its calendar year, so its row comes about 150 days before that period's end.
+LAG = {"M": -31, "Q": -92, "A": -200}
 FORWARD_LAG = -400  # forward statements (expected run rate, capacity outlook) refer to a period up to a year ahead
 MAX_AGE = 400  # irregular disclosure: overdue only when nothing new has come for about a year
+# A KPI not stated in the documents of the last ~three quarterly reports (270 days before the newest document in the
+# extraction) is treated as discontinued (closed); it reopens when a later extraction finds it again.
+INACTIVE_DAYS = 270
 
 
 def _specs() -> tuple[list[Spec], dict[str, str]]:
@@ -41,7 +46,7 @@ def _specs() -> tuple[list[Spec], dict[str, str]]:
             return ai_kpis.series_frame(ai_kpis.load(), c)
 
         last_end = max(ai_kpis._period(d.freq, p).end_time for p in frame["period"])
-        inactive = (newest - last_end).days > MAX_AGE  # not stated again in a year of later documents
+        inactive = (newest - last_end).days > INACTIVE_DAYS
         closed = code in ai_kpis.CLOSED or inactive
         reason = ai_kpis.CLOSED.get(code) or (f"bolaget har inte angett nyckeltalet sedan {last_end.date()} (senaste "
                                               f"dokumentet i extraktionen {newest.date()}); öppnas igen om det kommer "

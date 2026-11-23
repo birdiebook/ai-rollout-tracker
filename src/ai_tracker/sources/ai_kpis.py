@@ -32,7 +32,7 @@ COLUMNS = ["id", "company", "definition", "kind", "value_lo", "value_hi", "unit"
            "sentence_sha256", "note"]
 COMPANIES = ("msft", "googl", "amzn", "meta", "nvda")
 KINDS = ("point", "approx", "min", "range", "code")
-PERIOD_BASES = ("reported_quarter", "stated_date", "quarter_end", "document_date", "forward")
+PERIOD_BASES = ("reported_quarter", "fiscal_year", "stated_date", "quarter_end", "document_date", "forward")
 CAPACITY_TIMES = ("current", "forward")
 
 
@@ -41,7 +41,7 @@ class Definition:
     company: str
     lead: str  # "L2" usage, "L3" revenue, "cap" capacity
     unit: str
-    freq: str  # "M" (point-in-time value: month it refers to) or "Q" (reported quarter)
+    freq: str  # "M" (point-in-time value: month it refers to), "Q" (reported quarter) or "A" (fiscal year)
     label: str  # Swedish, for the catalog
     text: str  # what the number measures, in the company's terms (English)
 
@@ -62,6 +62,9 @@ _DEFS = {
                             "tokens processed in the fiscal quarter, all Microsoft AI services (call)"),
     "MSFT_TOKENS_MONTH": ("msft", "L2", "tn", "M", "Microsoft: tokens bearbetade under en månad",
                           "tokens processed in one month, all Microsoft AI services (call)"),
+    "MSFT_FOUNDRY_TOKENS_FY": ("msft", "L2", "tn", "A", "Microsoft: tokens via Foundry-API:er under räkenskapsåret "
+                               "(period = året då det slutar)", "tokens served by Foundry APIs in the fiscal year "
+                               "(July-June; stored as the calendar year in which it ends)"),
     "MSFT_FOUNDRY_CUST_1T_TOKENS": ("msft", "L2", "count", "M",
                                     "Microsoft: kunder på väg mot över en biljon tokens på Foundry i år",
                                     "customers on track to process over one trillion tokens on Foundry this year"),
@@ -201,7 +204,11 @@ def _period(freq: str, period: str) -> pd.Period:
         if not re.fullmatch(r"\d{4}Q[1-4]", period):
             raise CsvError(f"quarterly period must be YYYYQn, not {period!r}")
         return pd.Period(period, freq="Q-DEC")
-    raise CsvError(f"freq must be M or Q, not {freq!r}")
+    if freq == "A":  # a fiscal year, stored as the calendar year in which it ends (as guidance_capex)
+        if not re.fullmatch(r"\d{4}", period):
+            raise CsvError(f"annual period must be YYYY, not {period!r}")
+        return pd.Period(period, freq="Y-DEC")
+    raise CsvError(f"freq must be M, Q or A, not {freq!r}")
 
 
 def load(path: Path | None = None) -> pd.DataFrame:
