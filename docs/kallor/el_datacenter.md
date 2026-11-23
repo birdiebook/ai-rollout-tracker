@@ -8,7 +8,7 @@ källornas egna tabeller.
 |---|---|---|---|---|---|
 | PJM kapacitetsauktion (BRA) | `pjm_bra_rcp_rto_a`, `pjm_bra_rcp_dom_a`, `pjm_bra_cleared_rto_a` | leveransår 2007/08–2028/29 (pris RTO), 2025/26– (DOM), 2020/21– (MW) | dag då resultatet publicerades, med belägg per år | nej | OK |
 | PJM lastprognos (januarirapporten) | `pjm_lf_{peak,energy}_{rto,dom}_h{1,5,10}`, `pjm_lf_adj_{rto,dom}_h{1,5,10}` | årgång 2017–2026 (justeringar 2025–2026) | rapportens publiceringsdag | nej | OK |
-| EIA-930 timvis last | `eia930_{avg,peak}_{pjm,pjm_dom,erco,soco,azps,srp}_m` | 2015-07 (PJM, ERCOT, APS), 2018-08/10/11 (SRP, DOM, SOCO) till 2026-10 | månadsslut + 7 dagar (backfill) | ja | OK |
+| EIA-930 timvis last | `eia930_{avg,peak}_{pjm,pjm_dom,erco,soco,azps,srp}_m` | 2015-07 (PJM, ERCOT, APS), 2018-08/10/11 (SRP, DOM, SOCO) till 2026-10 | backfill: max(månadsslut + 7 dagar, 2016-07-25); DOM max(månadsslut + 31 dagar, 2019-08-21) | ja | OK, flaggad (se nedan) |
 | ERCOT kö för stora laster | inga | – | – | – | **PARTIAL** (siffrorna finns bara som diagram i PDF) |
 
 Hämtning: `python -m ai_tracker.observations [nycklar]`. Kontroller: `python -m ai_tracker.warehouse`.
@@ -141,6 +141,27 @@ Moduler: `sources/pjm.py`, `series/pjm.py`, `sources/eia930.py`, `series/eia930.
   det är inte verifierat mot EIA:s dokumentation. **Läckagerisk:** BA:ernas revideringar och EIA:s omräkning av den
   justerade serien läcker in i backfillen. Från första hämtningen (2026-11-23) får nya månader och ändrade värden
   hämtdatum (`fetch`/`revision`), alltså riktiga versioner framåt.
+- **Datering av backfillen efter R3 (rättning X2, 2026-11-23):** belagt på eia.gov med den ärliga klienten.
+  - **Första publicering, BA-data:** 2016-07-25 (pressmeddelande press437 och Today in Energy 27212, *"Hourly
+    information on U.S. electricity supply, demand, and flows is now available"*, verktyget U.S. Electric System
+    Operating Data). Data finns bakåt till 2015-07-01, men månaderna 2015-07 – 2016-06 var inte offentliga förrän
+    då och får `known_from` = 2016-07-25.
+  - **Första publicering, delregioner:** 2019-08-21 (Today in Energy 40993, betaversionen av Hourly Electric Grid
+    Monitor *"incorporates two new data elements: hourly electricity generation by energy source and hourly
+    subregional demand"*). EIA började samla in delregionsdata 2018-07-01, men de publicerades först då. DOM-raderna
+    2018-10 – 2019-07 får `known_from` = 2019-08-21.
+  - **Fördröjning för DOM: 31 dagar** (`lag_days = 31`). Om-sidan (`930-content/about.html`) säger *"Demand by
+    subregion, where available, is available on a lag of 1–30 days"*, och blanketten ger en månad. Det är den
+    konservativa tolkningen. Följd: oktober 2026 för DOM har `known_from` 2026-12-01, alltså efter hämtningen
+    2026-11-23, och syns inte i `as_of` förrän då. BA-serierna behåller 7 dagar (EIA: total last ungefär en timme
+    efter timmen, och hämtningen visar BALANCE till dagen före).
+  - **Inte belagt: när kolumnen "Demand (MW) (Adjusted)" infördes.** Varken om-sidan, Today in Energy 27212, 40993
+    och 43295 eller pressmeddelandet nämner när EIA:s justerade efterfrågan började publiceras i sexmånadersfilerna,
+    och webbarkiv (web.archive.org) och PUDL:s dokumentation (docs.catalyst.coop) nås inte från sessionen. Serierna
+    `eia930_{avg,peak}_{pjm,erco,soco,azps,srp}_m` är därför **flaggade**: backfillen kan vara daterad före den första
+    publiceringen av just den justerade serien (samma riskklass som C30 i R1). Värdena är EIA:s nuvarande justerade
+    serie, så detta är en del av det kända revideringsläckaget i backfillen. Använd inte backfillen av BA-serierna i en
+    backtest utan att först belägga datumet eller byta till den ojusterade kolumnen "Demand (MW)".
 
 ## ERCOT: kö för stora laster (PARTIAL, ingen serie)
 
