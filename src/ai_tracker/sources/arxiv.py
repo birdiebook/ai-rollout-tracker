@@ -8,7 +8,7 @@ The same pass gives the union including cross-lists (each paper once).
 Politeness. The API rate-limits hard (429 from shared IPs). One call at a time, at least 3 s apart
 (arXiv's API terms), exponential backoff with Retry-After on 429/5xx and network errors, a call budget per run,
 and a per-month cache in data/arxiv/monthly.json so an interrupted backfill resumes where it stopped. Pages are
-not saved raw (about 4.7 MB per 2 000 records); the per-month counts with fetch date are the stored record.
+not saved raw (about 2.4 MB per 1 000 records); the per-month counts with fetch date are the stored record.
 
 known_from: month end + 7 days (late announcements and moderation holds keep the original submission date, so a
 month's count still rises a little afterwards; revised=True). Months are re-fetched until they are 60 days old.
@@ -38,7 +38,7 @@ API = "https://export.arxiv.org/api/query"
 SOURCE = "arxiv"
 CATEGORIES = ("cs.AI", "cs.LG", "cs.CL")
 START = "1998-01"
-PAGE_SIZE = 2000
+PAGE_SIZE = int(os.environ.get("ARXIV_PAGE_SIZE", "1000"))  # 2000 is the API maximum; 1000 gets fewer 500s
 MIN_INTERVAL = 3.0  # seconds between calls, arXiv API terms
 SETTLED_DAYS = 60  # re-fetch a month until it is this old
 CACHE = config.REPO / "data" / "arxiv" / "monthly.json"
@@ -141,27 +141,36 @@ def parse_feed(text: str) -> tuple[int, list[tuple[str, str]]]:
     return total, entries
 
 
-def month_query(month: pd.Period) -> str:
+MAX_OFFSET = 10_000  # the API answers HTTP 500 for start >= 10 000 (verified 2026-11-23): split larger windows
+
+
+def window_query(first: pd.Timestamp, last: pd.Timestamp) -> str:
+    """Query for submissions on the days first..last (inclusive)."""
     cats = " OR ".join(f"cat:{c}" for c in CATEGORIES)
-    first, last = month.start_time, month.end_time
     return f"({cats}) AND submittedDate:[{first:%Y%m%d}0000 TO {last:%Y%m%d}2359]"
 
 
-def fetch_month(month: pd.Period, client: Client, page_size: int = PAGE_SIZE, empty_retries: int = 3) -> dict:
-    """Page through one month; returns {'total', 'n', 'primary': {cat: n}}.
+def month_query(month: pd.Period) -> str:
+    return window_query(month.start_time, month.end_time)
 
-    Stable order (sortBy=submittedDate ascending), dedupe by id. An empty page before `total` is reached is
-    retried (the API sometimes returns one); the month is accepted when the ids seen match totalResults within
-    max(2, 0.2 %), else ArxivError (the month stays uncached and is retried next run).
-    """
-    q = month_query(month)
+
+def _fetch_window(first: pd.Timestamp, last: pd.Timestamp, client: Client, page_size: int,
+                  empty_retries: int) -> tuple[int, dict[str, str]]:
+    """(totalResults, {id: primary}) for a day window. A window with more than MAX_OFFSET results is split in two
+    halves by day (recursively), since deeper pages cannot be fetched."""
+    q = window_query(first, last)
     ids: dict[str, str] = {}
     start, total, empties = 0, None, 0
     while total is None or start < total:
-        params = {"search_query": q, "start": start, "max_results": page_size,
+        params = {"search_query": q, "start": start, "max_results": min(page_size, MAX_OFFSET),
                   "sortBy": "submittedDate", "sortOrder": "ascending"}
         t, entries = parse_feed(client.fetch(params))
         total = t if total is None else max(total, t)
+        if total > MAX_OFFSET and last > first:
+            mid = first + pd.Timedelta(days=(last - first).days // 2)
+            t1, ids1 = _fetch_window(first, mid, client, page_size, empty_retries)
+            t2, ids2 = _fetch_window(mid + pd.Timedelta(days=1), last, client, page_size, empty_retries)
+            return t1 + t2, {**ids1, **ids2}
         if not entries:
             if total == 0:
                 break
@@ -172,11 +181,26 @@ def fetch_month(month: pd.Period, client: Client, page_size: int = PAGE_SIZE, em
         empties = 0
         ids.update(entries)
         start += len(entries)
+        if start >= MAX_OFFSET:
+            break  # a single day with > MAX_OFFSET submissions: the count check below reports it
+    return int(total or 0), ids
+
+
+def fetch_month(month: pd.Period, client: Client, page_size: int | None = None, empty_retries: int = 3) -> dict:
+    """Page through one month; returns {'total', 'n', 'primary': {cat: n}}.
+
+    Stable order (sortBy=submittedDate ascending), dedupe by id. An empty page before `total` is reached is
+    retried (the API sometimes returns one). Windows above MAX_OFFSET results are split by day. The month is
+    accepted when the ids seen match totalResults within max(2, 0.2 %), else ArxivError (the month stays uncached
+    and is retried next run).
+    """
+    total, ids = _fetch_window(month.start_time, month.end_time.normalize(), client, page_size or PAGE_SIZE,
+                               empty_retries)
     n = len(ids)
-    if abs(n - (total or 0)) > max(2, 0.002 * (total or 0)):
+    if abs(n - total) > max(2, 0.002 * total):
         raise ArxivError(f"{month}: saw {n} records of {total}")
     primary = {c: sum(1 for p in ids.values() if p == c) for c in CATEGORIES}
-    return {"total": int(total or 0), "n": n, "primary": primary}
+    return {"total": total, "n": n, "primary": primary}
 
 
 # ------------------------------------------------------------------ resumable collection

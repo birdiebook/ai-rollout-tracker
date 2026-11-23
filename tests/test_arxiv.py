@@ -164,3 +164,21 @@ def test_arxiv_specs_not_published_until_licence_checked():
 
     assert catalog.validate(sa.SPECS) == []
     assert not any(s.publish for s in sa.SPECS)
+
+
+def test_window_above_max_offset_is_split_by_day(monkeypatch):
+    monkeypatch.setattr(arxiv, "MAX_OFFSET", 4)
+    # 6 records in October -> the month window (6 > 4) is split once: days 1-16 (3 records) and 17-31 (3)
+    by_day = {1: "cs.AI", 2: "cs.LG", 3: "cs.LG", 10: "cs.CL", 20: "cs.CV", 31: "cs.LG"}
+
+    def respond(p):
+        lo, hi = map(int, re.search(r"\[(\d{8})0000 TO (\d{8})2359\]", p["search_query"]).groups())
+        recs = [(f"d{d}", c) for d, c in by_day.items() if lo <= 20251000 + d <= hi]
+        return Resp(200, feed(len(recs), recs[p["start"]:p["start"] + p["max_results"]]))
+
+    c, calls, _ = client(respond)
+    out = arxiv.fetch_month(pd.Period("2025-10", "M"), c, page_size=2)
+    assert out == {"total": 6, "n": 6, "primary": {"cs.AI": 1, "cs.LG": 3, "cs.CL": 1}}
+    assert all(p["start"] < 4 for p in calls)  # never asks for a page beyond the API limit
+    windows = {re.search(r"\[(\d{8})", p["search_query"]).group(1) for p in calls}
+    assert windows == {"20251001", "20251017"}

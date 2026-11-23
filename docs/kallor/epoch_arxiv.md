@@ -64,15 +64,17 @@ release-månaden (2026-04). Sidan uppdateras inte längre, och METR anger att v�
 
 **arXiv, primär kategori.** API:ets `cat:` träffar även korslistade artiklar, och det finns inget filter för
 primär kategori. Därför hämtas alla poster i `cat:cs.AI OR cat:cs.LG OR cat:cs.CL` per inlämningsmånad
-(`submittedDate`, version 1, sorterat stigande, 2 000 per sida), och `arxiv:primary_category` räknas. Samma körning
-ger unionen inklusive korslistningar. En månad godkänns när antalet unika id stämmer med `totalResults`
+(`submittedDate`, version 1, sorterat stigande, 1 000 per sida eftersom 2 000 oftare gav HTTP 500), och `arxiv:primary_category` räknas. Samma körning
+ger unionen inklusive korslistningar. API:et svarar HTTP 500 för `start` ≥ 10 000 (verifierat 2026-11-23, och månader sedan 2026-05 har
+upp till 12 900 poster), så ett fönster med fler träffar delas på mitten efter dag tills varje del ryms.
+En månad godkänns när antalet unika id stämmer med `totalResults`
 (tolerans max(2; 0,2 %)), annars hämtas den igen vid nästa körning.
 
 **arXiv, artighet.** Ett anrop åt gången, minst 3 s mellan anropen och exponentiell backoff (20 s · 2^n, högst
 900 s, eller `Retry-After`) vid 429, 5xx och nätfel. Varje körning har en anropsbudget (`ARXIV_MAX_CALLS`), och
 månadscachen `data/arxiv/monthly.json` sparas efter varje månad, så att en avbruten återfyllnad fortsätter där den
 slutade. Serierna vägrar skriva en ofullständig historik, eftersom den första laddningen blir backfill. Sidorna
-sparas inte råa (cirka 4,7 MB per 2 000 poster). Månadsräkningarna med hämtdatum är det som lagras.
+sparas inte råa (cirka 2,4 MB per 1 000 poster). Månadsräkningarna med hämtdatum är det som lagras.
 
 **arXiv, `known_from`** = månadsslut + 7 dagar. Sena tillkännagivanden och moderationsstopp behåller sitt
 inlämningsdatum, så en månad växer lite i efterhand. Månader hämtas om tills de är 60 dagar gamla, och därefter
@@ -89,6 +91,9 @@ anses de stabila. Revideringar efter 60 dagar fångas inte.
   `known_from` nominellt och inte ett ärligt kunskapsdatum.
 - Om en veckokörning missas får nya perioder `min(periodslut + fördröjning, hämtdag)` (ramverkets regel), och det
   kan vara tidigare än vår faktiska hämtning.
-- arXiv-nivån har inte kunnat stämmas av mot arXivs egen statistik (arxiv.org blockeras).
+- arXiv: summan av månaderna stämmer med en årsfråga (kontrollerat för 2013 och 2015), men nivån har inte
+  kunnat stämmas av mot arXivs egen statistik (arxiv.org blockeras).
 - Hård hastighetsbegränsning från delade IP-adresser (429) har observerats i fas 1. Hur det ser ut i GitHub
   Actions är inte verifierat. Budgeten gör att en första återfyllnad där kan ta flera körningar.
+- Lokalt 2026-11-23 tog arXiv-återfyllnaden (1998-01 – 2026-10) cirka 560 anrop. Efter cirka 480 anrop kom
+  perioder med 429/500/503, och backoffen klarade dem.
