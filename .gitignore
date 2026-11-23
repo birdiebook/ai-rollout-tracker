@@ -5,6 +5,10 @@ data/*
 # Hemligheter
 .env
 
+# Krypterade datasnapshots (ai_tracker.datasnapshot) committas aldrig
+*.aisnap
+snapshot-out/
+
 # Python
 __pycache__/
 *.py[cod]
