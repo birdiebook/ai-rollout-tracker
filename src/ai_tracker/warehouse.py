@@ -29,12 +29,14 @@ import pandas as pd
 
 from ai_tracker import catalog, observations
 from ai_tracker.observations import to_periods
+from ai_tracker.sources import plans as _plans
 
 # Series with an accepted gap, and why. Keep this short.
 KNOWN_GAPS: dict[str, str] = {
     "guid_capex_msft_q_lo": "Microsoft gives a capex number for the next quarter only in some calls; else a direction",
     "guid_capex_msft_q_dir_qoq": "2025Q3 was guided as a number (over $30bn), not as a direction",
 }
+KNOWN_GAPS.update(_plans.known_gaps())  # D1 plan series are sparse by design (docs/kallor/planer.md)
 
 # Stale series accepted until a date (ISO), and why: a known outage, never a permanent exemption
 # (that is Spec.max_age_days or Spec.closed). Example: {"us_imports_tw_m": ("2026-12-31", "shutdown, ...")}.
