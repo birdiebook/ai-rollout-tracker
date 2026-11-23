@@ -121,14 +121,24 @@ def test_search_weeks_and_queries():
     assert github_search.last_complete_monday(date(2026, 11, 22)) == date(2026, 11, 9)
     full = github_search.weeks_to_query(today, max_weeks=None)
     assert full[0] == date(2024, 1, 1) and full[-1] == date(2026, 11, 16) and len(full) == 151
-    first = github_search.weeks_to_query(today)  # cold start: recent 8 weeks + the oldest 32
-    assert len(first) == 40 and first[0] == date(2024, 1, 1) and first[-1] == date(2026, 11, 16)
-    assert first[31] == date(2024, 8, 5) and first[32] == date(2026, 9, 28)
+    first = github_search.weeks_to_query(today)  # cold start: the newest 40 weeks, contiguous
+    assert len(first) == 40 and first == full[-40:]
     stored = {str(pd.Period(w, "W-SUN")) for w in full}
     recent = github_search.weeks_to_query(today, stored)
     assert len(recent) == 8 and recent[0] == date(2026, 9, 28)
     stored.discard(str(pd.Period(date(2025, 3, 3), "W-SUN")))  # a hole is filled on the next run
     assert date(2025, 3, 3) in github_search.weeks_to_query(today, stored)
+
+
+def test_joined_never_leaves_a_hole():
+    w = pd.period_range("2026-10-04", periods=6, freq="W-SUN")
+    stored = {str(p) for p in w[:3]}
+    values = pd.Series([1.0, 1.0, 1.0, 1.0, 1.0], index=w[[0, 1, 2, 4, 5]])  # week 3 failed this run
+    assert list(github_search.joined(values, stored).index) == list(w[[0, 1, 2]])
+    values = pd.Series([1.0, 1.0], index=w[[4, 5]])  # cold start, week 3 failed: keep the newest block
+    assert list(github_search.joined(values, set()).index) == list(w[[4, 5]])
+    older = pd.Series([1.0, 1.0], index=w[[0, 1]])  # backfill chunk below a stored block, week 2 failed
+    assert list(github_search.joined(older, {str(p) for p in w[3:]}).index) == []
     assert github_search.query("all", date(2024, 1, 1)) == "committer-date:2024-01-01..2024-01-07"
     assert github_search.query("claude", date(2024, 1, 1)).startswith('"noreply@anthropic.com" committer-date:')
     assert github_search.QUERIES["any"].count(" OR ") <= 5  # search allows five operators

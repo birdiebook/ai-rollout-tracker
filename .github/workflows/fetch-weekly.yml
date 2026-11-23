@@ -26,6 +26,7 @@ jobs:
       SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT }}
       CENSUS_API_KEY: ${{ secrets.CENSUS_API_KEY }}
       ECOS_API_KEY: ${{ secrets.ECOS_API_KEY }}
+      GITHUB_TOKEN: ${{ github.token }}  # GitHub commit search (g3_ghs_*, track B2): 30 searches/min with a token
     steps:
       - uses: actions/checkout@v4
       - name: Require SEC_USER_AGENT (no fallback for sec.gov)

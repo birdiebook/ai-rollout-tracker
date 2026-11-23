@@ -5,8 +5,10 @@ on 2025-10-08 (Events API change), so this is the live continuation, as a differ
 commit-search index (default branches of public repos), `total_count` only. Nothing but counts is stored.
 
 Each fetch asks the last REQUERY_WEEKS complete weeks (values change afterwards: late merges, deleted repos,
-index rebuilds) and, oldest first, the weeks since START that the series does not have yet, at most
-MAX_WEEKS_PER_FETCH weeks in all (GitHub's secondary rate limit: a cold start fills the history over a few runs).
+index rebuilds) and, newest first, the weeks since START that the series does not have yet, at most
+MAX_WEEKS_PER_FETCH weeks in all (GitHub's secondary rate limit: a cold start fills the history backwards over a
+few runs). Only new weeks joined to the newest block are returned, so a failed query never leaves a hole (the
+warehouse gap check) and is asked again next run.
 Counts are cached per fetch day under RAW_DIR/github_search/<day>/counts.json, so the series of one run share
 the queries.
 """
@@ -97,7 +99,7 @@ def last_complete_monday(today: date) -> date:
 
 
 def weeks_to_query(today: date, stored: set | None = None, max_weeks: int | None = MAX_WEEKS_PER_FETCH) -> list[date]:
-    """The last REQUERY_WEEKS complete weeks, then the oldest weeks since START missing from `stored` (week
+    """The last REQUERY_WEEKS complete weeks, then the newest weeks since START missing from `stored` (week
     strings 'YYYY-MM-DD/YYYY-MM-DD'), at most `max_weeks` in all (None = no cap), in date order."""
     stored = stored or set()
     last = last_complete_monday(today)
@@ -106,7 +108,7 @@ def weeks_to_query(today: date, stored: set | None = None, max_weeks: int | None
         all_weeks.append(m)
         m += timedelta(days=7)
     recent = all_weeks[-REQUERY_WEEKS:]
-    missing = [w for w in all_weeks[:-REQUERY_WEEKS] if str(pd.Period(w, "W-SUN")) not in stored]
+    missing = [w for w in reversed(all_weeks[:-REQUERY_WEEKS]) if str(pd.Period(w, "W-SUN")) not in stored]
     pick = recent + missing
     if max_weeks is not None:
         pick = pick[:max_weeks]
@@ -160,7 +162,26 @@ def level(name: str, df: pd.DataFrame) -> pd.Series:
     return df[name].dropna().rename(name)
 
 
+def joined(values: pd.Series, stored: set) -> pd.Series:
+    """`values` without new weeks that would leave a hole: a new week is kept only when it lies in the contiguous
+    run of (stored or valued) weeks that holds the stored weeks, or on a cold start the run ending at the newest
+    week."""
+    have = sorted({pd.Period(p, "W-SUN") for p in stored} | set(values.index))
+    if not have:
+        return values
+    anchor = max(pd.Period(p, "W-SUN") for p in stored) if stored else have[-1]
+    i = have.index(anchor)
+    lo = hi = i
+    while lo > 0 and have[lo - 1] == have[lo] - 1:
+        lo -= 1
+    while hi < len(have) - 1 and have[hi + 1] == have[hi] + 1:
+        hi += 1
+    keep = [p for p in values.index if have[lo] <= p <= have[hi] or str(p) in stored]
+    return values.loc[keep]
+
+
 def fetch(key: str, name: str, kind: str) -> pd.Series:
     """Spec.fetch for series `key`: share (%) or level of query `name`."""
-    df = counts(stored_periods(key))
-    return share(name, df) if kind == "share" else level(name, df)
+    stored = stored_periods(key)
+    df = counts(stored)
+    return joined(share(name, df) if kind == "share" else level(name, df), stored)
