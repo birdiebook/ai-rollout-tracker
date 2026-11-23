@@ -119,3 +119,20 @@ förskjutna utgivningar får `max_age_days` med skäl (Indeed 83 dagar, Nvidia 1
 veckovis mot tabellens vintages. De enda övriga träffarna var shutdown-förseningarna hösten 2025, som är riktiga
 avbrott. En för gammal serie fäller veckojobbet (exitkod 2) men cachen sparas ändå. Detaljer:
 [drift.md](drift.md), avsnittet Aktualitet.
+
+## 2026-11-23 – Spår X1: läckagerättningar efter granskningen R1, N1 och N2 omkörda
+
+**Val:** alla åtta åtgärder i [R1](granskning/r1_lackage.md) är genomförda, och de 23 xfail-testerna är vanliga
+tester. Viktigast: Census-kategorin datacenter är känd först från sin första publicering 2024-07-01 (2014-01–2024-04
+låg tidigare före den), ALFRED:s 0,0-platshållare räknas inte som publicering (FT-900 oktober 2025 är känd
+2026-01-08), och en hämtlogg (`data/fetch_log.parquet`) gör att en ny regeldaterad period aldrig dateras till före
+en tidigare hämtning som saknade den. Dessutom: N2 poängsätter inte månader med känt utfall, FT-900 har 45 dagars
+fördröjning före 2013 och nedstängningen 2013 i `LATE`, BTOS-cykler planerade under finansieringsluckan 2025 är
+kända från 2025-11-13 och tidsplanen sparas vid varje hämtning, Indeed och LiteLLM har en dags marginal, och
+`as_of`-konventionen (prognosdagen = dagens slut, `known_from == prognosdag` räknas) är dokumenterad.
+**Omkörning utan ändringar i modeller eller regler:** N1 kan bara utvärderas från 2024Q2 (n = 9 i stället för 19).
+B1 7,00, V1 9,81, V2 9,51, Holm p 0,45. N1b: B1 12,17, V1 14,39, V2 13,48 (n = 36). N2: V1 10,506 mot B1 10,510,
+Holm p 0,981. **Ingen befordran, B1 är fortfarande huvudmodell för både N1 och N2.** De gamla siffrorna står kvar
+som ogiltiga i [n1.md](resultat/n1.md) och [n2.md](resultat/n2.md). Kvarstående läckage: C30 och FT-900 är
+backfill med dagens vintage, och datacenter är säsongsrensad med dagens faktorer. Det gynnar V1/V2 och gör det
+negativa resultatet robust, men ett positivt resultat hade krävt realtidsvintages.

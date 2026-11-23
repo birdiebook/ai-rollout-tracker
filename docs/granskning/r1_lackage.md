@@ -239,6 +239,11 @@ Hela pytest: 231 passed, 23 xfailed.
 
 ## 7. Rekommenderade åtgärder, i ordning efter påverkan på N1 och N2
 
+**Status 2026-11-23:** åtgärd 1–8 är genomförda i spår X1 (`auto2/x1-rattning`). Alla 23 xfail-tester är vanliga
+tester som passerar. N1 och N2 är omkörda, se [n1.md](../resultat/n1.md) och [n2.md](../resultat/n2.md). Åtgärd 3
+lades också på regeldaterade rader i releasedaterade serier (EIA före 2012-11), och en ombyggnad (`--rebuild`)
+glömmer inte tidigare hämtningar (hämtloggen `data/fetch_log.parquet`).
+
 1. **C30 datacenter (N1, stor):** `known_from` = max(regel, 2024-07-01) för 2014-01–2024-04, till exempel som en
    `FIRST_PUBLISHED`-gräns i `series/census_c30.py`. Kör om den registrerade N1-backtesten och redovisa resultatet
    (B1 är fortfarande huvudmodell). Skriv i `docs/resultat/n1.md` att V1/V2 bara kan utvärderas från 2024Q2

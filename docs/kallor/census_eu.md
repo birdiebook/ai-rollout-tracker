@@ -42,6 +42,11 @@ serie (`_se`, publiceras inte).
 **known_from** = *Publication Date*, alltså 4 dagar efter att insamlingen slutat (t.ex. 202622: insamling
 2026-10-19–11-01, publicerad 2026-11-05). Framtida cykler står också i filen (202624 → 2026-12-03).
 Publiceringsdatumen för v1 tas från `National.xlsx`, eftersom `AI Core Questions.xlsx` saknar dem.
+**Rättat i X1 (2026-11-23):** kolumnen är en tidsplan, inte ett utfall. En cykel vars planerade dag ligger under en
+finansieringslucka (2025-10-01–11-12) får `known_from` dagen efter luckan, 2025-11-13. Det gäller cykel 202520
+(planerad 2025-10-09). Den faktiska dagen är inte belagd (R1, avsnitt 3.6), och när den är det läggs den i
+`census_btos.PUBLISHED`. Varje hämtning sparar tidsplanen med hämtdatum i `data/raw/census_btos/schedule_log.parquet`,
+så att tidsplan och utfall kan skiljas åt i efterhand.
 
 **Period och frekvens:** ny frekvens `2W` (ISO-fjortondag). Värdet lagras på den W-SUN-vecka då
 insamlingen slutar. Det följer Census egen cykelnumrering (smpdt = ISO-år + fjortondag 01–26).
@@ -97,10 +102,18 @@ ALFRED-vintages för TLPRVCONS visar 29–35 dagar 2011–2026 i normalfallet. F
 Senare releaser i `LATE`: 2018-11–2019-01 (nedstängningen 2018–19) och 2025-08–2026-03 (nedstängningen 2025
 och efterföljande kompakterat schema, t.ex. september och oktober 2025 båda 2026-01-21).
 
+**Första publicering (rättat i X1, 2026-11-23):** kategorin Data center publicerades separat första gången med
+majreleasen 2024-07-01, bakåt till 2014-01 (pr202403.pdf, pr202404.pdf, pr202405.pdf och pdf/news.pdf, se
+[R1](../granskning/r1_lackage.md), avsnitt 3.1). Månaderna 2014-01–2024-04 har därför `known_from` 2024-07-01
+(`census_c30.FIRST_PUBLISHED`, lagt i `LATE`). Tidigare fick de månadsslut + 35 dagar, alltså ett datum innan
+serien fanns.
+
 **Revideringar och läckage:** filen har bara senaste vintage, så allt före vår första hämtning är backfill med
-p/r-revideringar och årsrevisioner. När kategorin Data center infördes i publiceringen är fortfarande
-overifierat. Historiken från 2014 kan vara bakåtskattad, och det är en läckageflagga. Från andra
-hämtningen och framåt blir varje ändring en `revision` med hämtdatum.
+p/r-revideringar och årsrevisioner (majreleasen i juli reviderar NSA cirka 2 år bakåt och SA cirka 7 år bakåt).
+**Säsongsrensningen läcker också:** `privsatime.xlsx` är skattad med dagens säsongsfaktorer, som bygger på data
+efter varje historisk månad. Den SA-historik som en backtest ser 2024-07-20 är alltså inte den som publicerades
+då. Den ej säsongsrensade serien (`_nsa`) har bara revideringsläckaget. Att byta V1/V2 i N1 till `_nsa` kräver en
+ny registrerad variant. Från andra hämtningen och framåt blir varje ändring en `revision` med hämtdatum.
 
 ## Fed G.17 och Census M3 via ALFRED (G6)
 
@@ -149,9 +162,15 @@ included with each data API request"). Det som behövs är en gratis Census API-
 lagras bara totalimporten.
 
 **known_from** = max(månadsslut + 41 dagar, belagd release). FT-900 kom 32–41 dagar efter månadens slut
-2017–2026 (ALFRED IMP5830, vintages från 2017-11). `LATE`: 2018-11–2019-02, 2020-03, 2025-08, 2025-09, 2025-11
-och 2025-12. Före 2017-11 finns inget releasebelägg här, så förseningar då, t.ex. nedstängningen
-2013, täcks inte. Det är en läckageflagga för den gamla backfillen. Årsrevisioner gör hela historiken till backfill.
+2017–2026 (ALFRED IMP5830, vintages från 2017-11). `LATE`: 2018-11–2019-02, 2020-03, 2025-08, 2025-09, 2025-10,
+2025-11 och 2025-12. **Rättat i X1 (2026-11-23):** oktober 2025 saknades i `LATE`, eftersom ALFRED:s vintage
+2025-12-11 hade platshållaren 0,0 för månaden. Releasen kom 2026-01-08 (ft900_2510.pdf). `alfred.first_release()`
+och `release_rows()` räknar nu inte 0,0 som ett publicerat värde. Övriga ALFRED-härledda datum (TLPRVCONS för C30,
+A679RC1Q027SBEA för BEA, A34SNO, IPG3344S) är kontrollerade i de sparade vintagefilerna: inga andra nollor finns.
+Före 2017-11 är belägget FT-900-pressmeddelandena (R1 läste alla månader 2006–2017): 2006–2012 kom releasen
+42–45 dagar efter månadsslut, så månader före 2013 får månadsslut + 45 dagar (före 2006 overifierat, samma regel).
+Nedstängningen 2013 ligger i `LATE` (2013-08 → 2013-10-24, 2013-09 → 2013-11-14). Årsrevisioner gör hela
+historiken till backfill.
 
 ## Eurostat `isoc_eb_ai` (G3)
 
