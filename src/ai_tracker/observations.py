@@ -108,6 +108,31 @@ def new_rows(spec: catalog.Spec, values: pd.Series | pd.DataFrame, table: pd.Dat
     return pd.DataFrame(rows, columns=COLUMNS)
 
 
+def vintage_rows(wide: pd.DataFrame) -> pd.DataFrame:
+    """Wide vintages (index observation date, one column per release date) -> release-dated rows.
+
+    Columns period, value, known_from: a row whenever a release adds or changes a value. A value that a
+    later release drops keeps its last published value (nothing is deleted).
+    """
+    rows = []
+    prev = pd.Series(np.nan, index=wide.index)
+    for vdate in sorted(wide.columns):
+        cur = wide[vdate]
+        changed = cur.notna() & (prev.isna() | ~np.isclose(cur.fillna(0), prev.fillna(0), rtol=0, atol=1e-9))
+        rows += [(obs, cur[obs], vdate) for obs in cur.index[changed]]
+        prev = cur.where(cur.notna(), prev)
+    return pd.DataFrame(rows, columns=["period", "value", "known_from"])
+
+
+def drop_series(keys: list[str], path: Path | None = None) -> int:
+    """Remove every stored row of `keys` (e.g. after a source switch). Returns rows removed."""
+    table = load(path)
+    keep = ~table["series"].isin(keys)
+    if (~keep).any():
+        save(table[keep].reset_index(drop=True), path)
+    return int((~keep).sum())
+
+
 def upsert(spec: catalog.Spec, values: pd.Series | pd.DataFrame, fetched_at: date | None = None,
            path: Path | None = None) -> int:
     """Append a fetched vintage to the stored table. Returns rows added."""
@@ -147,4 +172,10 @@ def refresh(keys: list[str] | None = None) -> dict[str, str]:
 if __name__ == "__main__":
     import sys
 
-    refresh(sys.argv[1:] or None)
+    args = sys.argv[1:]
+    if args[:1] == ["--rebuild"]:  # drop stored rows of the given keys, then fetch them anew
+        if not args[1:]:
+            sys.exit("--rebuild needs series keys")
+        print(f"dropped {drop_series(args[1:])} rows")
+        args = args[1:]
+    refresh(args or None)
