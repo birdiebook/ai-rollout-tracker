@@ -51,3 +51,10 @@ helårsvärdet. Detaljer: [kallor/sec.md](kallor/sec.md).
 tid. **Variant:** `g2_price_at_capability_gpqa` med Epochs egna GPQA-körningar har ärliga tidsstämplar för
 förmågan, men är en brusig benchmark nära taket. Båda redovisas, och huvudmåttet är fortfarande ECI-varianten.
 Detaljer: [kallor/pris_formaga.md](kallor/pris_formaga.md).
+
+## 2026-11-23 – N2: källa och prognosdag
+
+TSMC:s månadsintäkt hämtas från bolagets 6-K till SEC (2006–), med inlämningsdatum som `known_from`. MOPS och TSMC:s
+IR-sida blockerar automatiska anrop. Prognosdagen flyttades till dag 5, eftersom 21 % av rapporterna kom dag 8 eller
+tidigare. Koreas och Taiwans exportdata är blockerade (geoblockering, Cloudflare). BOK ECOS fungerar men kräver en
+gratisnyckel.
