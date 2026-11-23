@@ -67,14 +67,26 @@ def vintages(series_id: str, dates: list[str]) -> pd.DataFrame:
     return pd.concat(parts, axis=1).sort_index(axis=1)
 
 
+def published(wide: pd.DataFrame) -> pd.DataFrame:
+    """`wide` with ALFRED's 0.0 placeholders set to missing.
+
+    ALFRED sometimes carries a not-yet-published month as exactly 0.0 (IMP5830, vintage 2025-12-11: October
+    2025 = 0.0; the real value arrived 2026-01-08, R1 review section 3.2). Every series read here is a level
+    (dollars, index points), where an exact zero is never a real observation, so a zero is not a release.
+    """
+    return wide.mask(wide == 0)
+
+
 def release_rows(wide: pd.DataFrame) -> pd.DataFrame:
-    """Columns period (observation date), value, known_from: a row whenever a vintage adds or changes a value."""
-    return observations.vintage_rows(wide)
+    """Columns period (observation date), value, known_from: a row whenever a vintage adds or changes a value.
+    0.0 placeholders are not values (see `published`)."""
+    return observations.vintage_rows(published(wide))
 
 
 def first_release(wide: pd.DataFrame) -> pd.Series:
-    """First vintage date in which each observation date has a value (= its first publication)."""
-    has = wide.notna()
+    """First vintage date in which each observation date has a value (= its first publication).
+    0.0 placeholders do not count (see `published`)."""
+    has = published(wide).notna()
     first = has.idxmax(axis=1)
     return first[has.any(axis=1)]
 

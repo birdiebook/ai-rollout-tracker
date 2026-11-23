@@ -1,7 +1,7 @@
 """G8: Indeed Hiring Lab, share of job postings that mention AI (daily, per country).
 
-Release-dated rows: known_from = UTC time of the default-branch commit that first contained the value
-(sources/indeed.py). Countries present in the latest version (2026-11). ES, IN, SG (dropped 2024-09) and
+Release-dated rows: known_from = the UTC day after the default-branch commit that first contained the value
+(sources/indeed.py; +1 day margin because push times of local commits are unknown). Countries present in the latest version (2026-11). ES, IN, SG (dropped 2024-09) and
 JP (2024-11 to 2025-02) appear in early vintages only and are not catalogued.
 """
 

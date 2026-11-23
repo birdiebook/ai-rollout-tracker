@@ -110,7 +110,8 @@ def test_btos_regimes_are_separate_and_dated_by_publication():
     national, ai_core = _btos_files()
     v1 = census_btos.build(national, ai_core, "use", "v1")
     assert list(v1["value"]) == [3.7, 10.0]
-    assert list(v1["known_from"]) == [pd.Timestamp("2023-09-28"), pd.Timestamp("2025-10-09")]
+    # 202520 is scheduled 2025-10-09, inside the 2025 funding lapse: known from the day after the lapse (R1 3.6)
+    assert list(v1["known_from"]) == [pd.Timestamp("2023-09-28"), pd.Timestamp("2025-11-13")]
     assert list(v1["period"]) == [pd.Timestamp("2023-09-24"), pd.Timestamp("2025-10-05")]
     v2 = census_btos.build(national, ai_core, "use", "v2")
     assert list(v2["value"]) == [17.3, 24.6]  # 202524 and 202621; shutdown '.' dropped
@@ -121,6 +122,28 @@ def test_btos_regimes_are_separate_and_dated_by_publication():
     assert list(expect["value"]) == [21.1, 28.6]
     se_v1 = census_btos.build(national, ai_core, "use", "v1", stat="se")
     assert list(se_v1["value"]) == [0.2]  # 'S' (suppressed) dropped
+
+
+def test_btos_publication_scheduled_in_a_funding_lapse_is_moved_past_it(monkeypatch):
+    assert census_btos.release_date(202520, pd.Timestamp("2025-10-09")) == pd.Timestamp("2025-11-13")
+    assert census_btos.release_date(202519, pd.Timestamp("2025-09-25")) == pd.Timestamp("2025-09-25")
+    assert census_btos.release_date(202524, pd.Timestamp("2025-12-04")) == pd.Timestamp("2025-12-04")
+    monkeypatch.setitem(census_btos.PUBLISHED, 202520, "2025-11-20")  # a documented date wins
+    assert census_btos.release_date(202520, pd.Timestamp("2025-10-09")) == pd.Timestamp("2025-11-20")
+
+
+def test_btos_schedule_is_logged_on_every_fetch(tmp_path):
+    national, _ = _btos_files()
+    path = tmp_path / "schedule_log.parquet"
+    dates = census_btos.parse_dates(national)
+    census_btos.log_schedule(dates, pd.Timestamp("2026-11-23 10:00"), path)
+    census_btos.log_schedule(dates, pd.Timestamp("2026-11-23 18:00"), path)  # same day: replaced, not doubled
+    later = dates.assign(published=dates["published"] + pd.Timedelta(days=1))
+    log = census_btos.log_schedule(later, pd.Timestamp("2026-12-07"), path)
+    assert len(log) == 2 * len(dates)
+    assert set(log["fetched_at"]) == {pd.Timestamp("2026-11-23"), pd.Timestamp("2026-12-07")}
+    one = log[log["smpdt"] == 202520].sort_values("fetched_at")["published"]
+    assert list(one) == [pd.Timestamp("2025-10-09"), pd.Timestamp("2025-10-10")]
 
 
 def test_btos_wording_change_is_not_silently_spliced():

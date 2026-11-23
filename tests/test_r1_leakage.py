@@ -8,7 +8,7 @@ Release dates below were read from the sources themselves on 2026-11-23 (docs/gr
 - EIA Electricity Monthly Update archive ("Release Date").
 
 Tests marked xfail(strict=True) demonstrate a real dating bug; they turn into failures once the bug is fixed,
-so the fix must also remove the mark. Synthetic fixtures for the engine tests, no network.
+so the fix must also remove the mark. Track X1 fixed all 23 that R1 found (docs/granskning/r1_lackage.md). Synthetic fixtures for the engine tests, no network.
 """
 
 from __future__ import annotations
@@ -40,11 +40,9 @@ def bug(reason: str):
 
 # ------------------------------------------------------------------ 1. lag-dated sources vs documented releases
 
-FT900_2025_10 = ("FT-900 for October 2025 was released 2026-01-08 (ft900_2510.pdf); LATE lacks 2025-10 because "
-                 "ALFRED's 2025-12-11 vintage carries a 0.0 placeholder for it, so known_from = 2025-12-11")
-FT900_2013 = "2013 shutdown: FT-900 Aug/Sep 2013 released 2013-10-24 / 2013-11-14; no LATE before 2017-11"
-FT900_PRE2013 = "FT-900 2006-2012 often came 42-45 days after month end; the 41-day lag is 1-4 days early"
-
+# Evidence (R1): FT-900 for October 2025 was released 2026-01-08 (ft900_2510.pdf; ALFRED's 2025-12-11 vintage has
+# a 0.0 placeholder for it); 2013 shutdown: Aug/Sep 2013 released 2013-10-24 / 2013-11-14; 2006-2012 the FT-900
+# came 42-45 days after month end.
 FT900 = [  # (month, first release from the FT-900 press release)
     ("2025-06", "2025-08-05"), ("2025-07", "2025-09-04"), ("2025-08", "2025-11-19"), ("2025-09", "2025-12-11"),
     ("2025-11", "2026-01-29"), ("2025-12", "2026-02-19"), ("2026-01", "2026-03-12"), ("2026-02", "2026-04-02"),
@@ -52,11 +50,9 @@ FT900 = [  # (month, first release from the FT-900 press release)
     ("2019-02", "2019-04-17"), ("2020-02", "2020-04-02"), ("2020-03", "2020-05-05"), ("2017-11", "2018-01-05"),
     ("2016-12", "2017-02-07"), ("2015-11", "2016-01-06"), ("2014-12", "2015-02-05"), ("2013-07", "2013-09-04"),
     ("2013-10", "2013-12-04"), ("2013-11", "2014-01-07"), ("2013-12", "2014-02-06"),
-    pytest.param("2025-10", "2026-01-08", marks=bug(FT900_2025_10)),
-    pytest.param("2013-08", "2013-10-24", marks=bug(FT900_2013)),
-    pytest.param("2013-09", "2013-11-14", marks=bug(FT900_2013)),
-    pytest.param("2007-12", "2008-02-14", marks=bug(FT900_PRE2013)),
-    pytest.param("2007-06", "2007-08-14", marks=bug(FT900_PRE2013)),
+    # fixed by X1 (were strict xfail in R1): LATE 2025-10 and 2013-08/09, 45-day lag before 2013
+    ("2025-10", "2026-01-08"), ("2013-08", "2013-10-24"), ("2013-09", "2013-11-14"),
+    ("2007-12", "2008-02-14"), ("2007-06", "2007-08-14"),
 ]
 
 
@@ -66,18 +62,15 @@ def test_ft900_known_from_not_before_release(key, month, released):
     assert rule_known_from(key, month) >= pd.Timestamp(released)
 
 
-C30_CATEGORY = ("C30 'Data center' was first published separately 2024-07-01 (May 2024 release, back to 2014-01; "
-                "notice in pr202403/pr202404/pr202405.pdf and pdf/news.pdf); the backfill dates 2014-01..2024-04 "
-                "at month end + 35 days, before the series existed")
+# Evidence (R1): C30 'Data center' was first published separately 2024-07-01 (May 2024 release, back to 2014-01;
+# notice in pr202403/pr202404/pr202405.pdf and pdf/news.pdf).
 C30 = [  # (month, first release of the Data center value)
     ("2025-08", "2025-11-17"), ("2025-09", "2026-01-21"), ("2025-10", "2026-01-21"), ("2025-11", "2026-02-27"),
     ("2025-12", "2026-02-27"), ("2026-01", "2026-03-23"), ("2026-02", "2026-05-07"), ("2026-03", "2026-05-07"),
     ("2025-07", "2025-09-02"), ("2024-05", "2024-07-01"), ("2024-06", "2024-08-01"),
-    pytest.param("2014-01", "2024-07-01", marks=bug(C30_CATEGORY)),
-    pytest.param("2019-06", "2024-07-01", marks=bug(C30_CATEGORY)),
-    pytest.param("2021-12", "2024-07-01", marks=bug(C30_CATEGORY)),
-    pytest.param("2023-12", "2024-07-01", marks=bug(C30_CATEGORY)),
-    pytest.param("2024-04", "2024-07-01", marks=bug(C30_CATEGORY)),
+    # fixed by X1 (were strict xfail in R1): first publication of the category, 2024-07-01
+    ("2014-01", "2024-07-01"), ("2019-06", "2024-07-01"), ("2021-12", "2024-07-01"), ("2023-12", "2024-07-01"),
+    ("2024-04", "2024-07-01"),
 ]
 
 
@@ -100,9 +93,9 @@ def test_bea_known_from_not_before_advance_estimate(quarter, released):
 # ------------------------------------------------------------------ 2. ALFRED as release evidence
 
 
-@bug("alfred.first_release / release_rows treat a 0.0 placeholder as a published value "
-     "(IMP5830, vintage 2025-12-11 has October 2025 = 0.0; the real value came 2026-01-08)")
 def test_alfred_zero_placeholder_is_not_a_release():
+    """Fixed by X1: a 0.0 placeholder (IMP5830, vintage 2025-12-11 has October 2025 = 0.0; the real value came
+    2026-01-08) is not a release in first_release / release_rows."""
     idx = pd.to_datetime(["2025-09-01", "2025-10-01"])
     wide = pd.DataFrame({pd.Timestamp("2025-12-11"): [14991.3, 0.0],
                          pd.Timestamp("2026-01-08"): [14991.3, 22252.7]}, index=idx)
@@ -129,10 +122,8 @@ def test_lag_rule_never_after_fetch_on_later_fetches():
     assert new["known_from"].max() <= pd.Timestamp("2026-04-01")
 
 
-@bug("observations.new_rows dates a new period min(period end + lag, fetch date) on later fetches, even when an "
-     "earlier fetch (stored fetched_at) after that date did not contain the period: a delayed release that is "
-     "not in LATE is back-dated (live runs only; today's table is a single fetch)")
 def test_new_period_is_not_dated_before_a_fetch_that_did_not_have_it():
+    """Fixed by X1: a delayed release that is not in LATE is never back-dated to before a fetch that lacked it."""
     spec = _spec()
     # Fetch on 2025-11-10 holds months up to 2025-08 only (September is late: it would be due 2025-11-04)
     s1 = pd.Series([1.0, 2.0], index=pd.PeriodIndex(["2025-07", "2025-08"], freq="M"))
@@ -142,6 +133,66 @@ def test_new_period_is_not_dated_before_a_fetch_that_did_not_have_it():
     t2 = observations.new_rows(spec, s2, t1, fetched_at=pd.Timestamp("2026-01-25").date())
     sep = t2[t2["period"] == "2025-09"]["known_from"].iloc[0]
     assert sep > pd.Timestamp("2025-11-10")
+
+
+def _monthly(months):
+    return pd.Series(np.arange(1.0, len(months) + 1), index=pd.PeriodIndex(months, freq="M"))
+
+
+def test_fetch_without_new_periods_is_logged_and_guards_the_next_new_period(tmp_path):
+    """X1: a fetch that adds nothing is still logged, so a period that appears later is dated after it."""
+    spec, path = _spec(), tmp_path / "obs.parquet"
+    assert observations.upsert(spec, _monthly(["2025-07", "2025-08"]), fetched_at=pd.Timestamp("2025-10-20").date(),
+                               path=path) == 2
+    # nothing new on 2025-11-10 (September is late, due 2025-11-04 by the rule): no rows, one log entry
+    assert observations.upsert(spec, _monthly(["2025-07", "2025-08"]), fetched_at=pd.Timestamp("2025-11-10").date(),
+                               path=path) == 0
+    log = observations.load_log(path)
+    assert list(log["fetched_at"]) == [pd.Timestamp("2025-10-20"), pd.Timestamp("2025-11-10")]
+    assert list(log["rows_added"]) == [2, 0] and list(log["last_period"]) == ["2025-08", "2025-08"]
+    observations.upsert(spec, _monthly(["2025-07", "2025-08", "2025-09"]),
+                        fetched_at=pd.Timestamp("2026-01-25").date(), path=path)
+    t = observations.load(path)
+    assert t.loc[t["period"] == "2025-09", "known_from"].iloc[0] == pd.Timestamp("2025-11-11")
+
+
+def test_rebuild_keeps_the_knowledge_that_an_earlier_fetch_lacked_a_period(tmp_path):
+    spec, path = _spec(), tmp_path / "obs.parquet"
+    observations.upsert(spec, _monthly(["2025-07", "2025-08"]), fetched_at=pd.Timestamp("2025-11-10").date(),
+                        path=path)
+    assert observations.drop_series([spec.key], path) == 2
+    # rebuilt later: July/August were in the dropped fetch (rule dates kept), September was not
+    observations.upsert(spec, _monthly(["2025-07", "2025-08", "2025-09"]),
+                        fetched_at=pd.Timestamp("2026-01-25").date(), path=path)
+    kf = observations.load(path).set_index("period")["known_from"]
+    assert kf["2025-07"] == pd.Timestamp("2025-09-04") and kf["2025-08"] == pd.Timestamp("2025-10-05")
+    assert kf["2025-09"] == pd.Timestamp("2025-11-11")
+
+
+def test_rule_dated_rows_in_a_release_frame_are_guarded_and_not_duplicated():
+    spec = _spec()
+    frame = lambda months: pd.DataFrame({"period": months, "value": np.arange(1.0, len(months) + 1),  # noqa: E731
+                                         "known_from": [pd.Period(m, "M").end_time.normalize() + pd.Timedelta(days=35)
+                                                        for m in months], "source": "backfill"})
+    t1 = observations.new_rows(spec, frame(["2025-07", "2025-08"]), observations._empty(),
+                               fetched_at=pd.Timestamp("2025-11-10").date())
+    t2 = pd.concat([t1, observations.new_rows(spec, frame(["2025-07", "2025-08", "2025-09"]), t1,
+                                              fetched_at=pd.Timestamp("2026-01-25").date())], ignore_index=True)
+    assert t2.loc[t2["period"] == "2025-09", "known_from"].iloc[0] == pd.Timestamp("2025-11-11")
+    again = observations.new_rows(spec, frame(["2025-07", "2025-08", "2025-09"]), t2,
+                                  fetched_at=pd.Timestamp("2026-02-01").date())
+    assert again.empty  # the guarded row is not re-added under its rule date
+
+
+def test_document_dated_rows_keep_their_date():
+    """A filing date is a document date, not a rule: the absent-fetch guard does not move it."""
+    spec = _spec()
+    filing = lambda months, kf: pd.DataFrame({"period": months, "value": 1.0, "known_from": kf})  # noqa: E731
+    t1 = observations.new_rows(spec, filing(["2025-07"], ["2025-08-05"]), observations._empty(),
+                               fetched_at=pd.Timestamp("2025-11-10").date())
+    t2 = observations.new_rows(spec, filing(["2025-07", "2025-08"], ["2025-08-05", "2025-09-05"]), t1,
+                               fetched_at=pd.Timestamp("2026-01-25").date())
+    assert list(t2["known_from"]) == [pd.Timestamp("2025-09-05")]
 
 
 # ------------------------------------------------------------------ 4. the stored table (skipped without data)
@@ -340,9 +391,8 @@ def test_n2_sample_selection_does_not_depend_on_outcomes(t2):
     assert (a["n_train"] == b["n_train"]).all()
 
 
-@bug("latent: N2 backtest.run() scores months whose outcome is already known at the origin (N1 skips them); "
-     "0 such months in the current data because the earliest 6-K is day 6")
 def test_n2_month_with_outcome_known_at_origin_is_not_scored():
+    """Fixed by X1: like N1, N2 never scores a month whose outcome was known at the origin."""
     t = n2_table(outcome_day=5)  # every 6-K filed on day 5 = the origin day: known at the origin
     frame = n2_backtest.run(t)
     assert (frame["outcome_known_from"] > frame["origin"]).all()

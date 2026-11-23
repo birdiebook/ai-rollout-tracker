@@ -84,7 +84,9 @@ Lokalt: `python -m ai_tracker.warehouse [datum]` visar för gamla serier ett vis
 ## Data och cache
 
 Observationstabellen ligger i Actions-cachen (`data/`, nyckel `ai-data-<run_id>`, återställs med prefixet
-`ai-data-`). Den committas aldrig och laddas inte upp som artefakt, eftersom artefakter i ett publikt repo går att
+`ai-data-`). Där ligger också hämtloggen `data/fetch_log.parquet` (en rad per lyckad hämtning och serie, även när
+inget nytt kom). Den hindrar att en försenad release som saknas i `LATE` bakåtdateras (spår X1), så en kall cache
+tappar också det skyddet för perioder som var sena vid förra hämtningen. Den committas aldrig och laddas inte upp som artefakt, eftersom artefakter i ett publikt repo går att
 ladda ned och flera källor har licenser som inte är kontrollerade. Alla datajobb delar concurrency-gruppen
 `ai-data`, så två jobb skriver aldrig cachen samtidigt. Det gäller även `collect-weekly.yml` (Epoch, spår I5).
 GitHub tar bort en cache som inte använts på sju dagar. Veckohämtningen håller den varm. En kall cache betyder

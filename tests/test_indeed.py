@@ -79,15 +79,17 @@ def test_vintages_from_git_history(data_repo, tmp_path):
     ]
     rows = indeed.rows_from_repo(clone)
     us = rows[rows["country"] == "US"].set_index(["period", "known_from"])["value"]
+    # known_from = the UTC day after the commit (+1 day margin, R1)
     # 2019-01-01: same value in all versions (Excel rounding below ATOL) -> one row only
-    assert us.loc[pd.Timestamp("2019-01-01")].to_dict() == {pd.Timestamp("2024-04-29 14:00"): 2.1}
+    assert us.loc[pd.Timestamp("2019-01-01")].to_dict() == {pd.Timestamp("2024-04-30"): 2.1}
     # 2019-01-02: revised in v2 (method change), unchanged in v3
-    assert us.loc[pd.Timestamp("2019-01-02")].to_dict() == {pd.Timestamp("2024-04-29 14:00"): 2.2,
-                                                            pd.Timestamp("2024-07-20 09:00"): 2.25}
+    assert us.loc[pd.Timestamp("2019-01-02")].to_dict() == {pd.Timestamp("2024-04-30"): 2.2,
+                                                            pd.Timestamp("2024-07-21"): 2.25}
     # 2019-01-13 only in v1: kept; 2019-01-03 and GB new in v3
     assert pd.Timestamp("2019-01-13") in us.index.get_level_values(0)
-    assert us.loc[pd.Timestamp("2019-01-03")].index.tolist() == [pd.Timestamp("2024-10-15 05:00")]
-    assert rows[rows["country"] == "GB"]["known_from"].tolist() == [pd.Timestamp("2024-10-15 05:00")]
+    assert us.loc[pd.Timestamp("2019-01-03")].index.tolist() == [pd.Timestamp("2024-10-16")]
+    assert rows[rows["country"] == "GB"]["known_from"].tolist() == [pd.Timestamp("2024-10-16")]
+    assert (rows["known_from"] > rows["period"]).all()
     assert not (rows["value"] > 9).any()  # GenAI file never read
 
     # a second sync is a fetch, and gives the same rows
@@ -106,6 +108,19 @@ def test_rows_load_as_release_vintages(data_repo, tmp_path):
     assert observations.as_of(spec.key, "2024-05-01", t)["2019-01-02"] == 2.2
     assert observations.as_of(spec.key, "2024-08-01", t)["2019-01-02"] == 2.25
     assert len(observations.as_of(spec.key, "2024-04-01", t)) == 0
+    # committed 2024-04-29 14:00 UTC: not known at origin 2024-04-29 (end of day), known at 2024-04-30
+    assert len(observations.as_of(spec.key, "2024-04-29", t)) == 0
+    assert len(observations.as_of(spec.key, "2024-04-30", t)) > 0
+
+
+def test_two_commits_on_one_day_collapse_to_the_last(data_repo, tmp_path):
+    _commit(data_repo, "2024-10-15T20:00:00+00:00", "same-day fix", {"AI_posting.csv": NEW.replace("2.", "3.")})
+    rows = indeed.rows_from_repo(indeed.sync(tmp_path / "clone", url=str(data_repo)))
+    assert not rows.duplicated(["country", "period", "known_from"]).any()
+    day = rows[(rows["known_from"] == pd.Timestamp("2024-10-16")) & (rows["country"] == "US")]
+    assert day.set_index("period")["value"].to_dict() == {pd.Timestamp("2019-01-01"): 3.1000000001,
+                                                          pd.Timestamp("2019-01-02"): 3.25,
+                                                          pd.Timestamp("2019-01-03"): 3.4}
 
 
 def test_catalog_entries():

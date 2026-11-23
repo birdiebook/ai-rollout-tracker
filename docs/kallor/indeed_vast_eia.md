@@ -22,7 +22,9 @@ Hämtning: `python -m ai_tracker.observations [nycklar]`. Kontroller: `python -m
 - **Vintages:** repot klonas utan blobbar (`git clone --filter=blob:none`) till `data/raw/indeed/ai-tracker`,
   aldrig in i vårt repo. Varje commit på standardgrenen (`--first-parent`, så att en merge räknas från
   merge-tiden och inte från grenens commit) som innehåller en ny version av AI-filen är en vintage.
-  `known_from` = commit-tiden i UTC för den första commit där värdet fanns. Ändrade värden blir nya rader
+  `known_from` = dagen efter (UTC, midnatt) den första commit där värdet fanns, alltså en dags marginal
+  (rättat i X1, 2026-11-23, se läckagerisken nedan). Flera versioner samma UTC-dag slås ihop till den sista.
+  Ändrade värden blir nya rader
   (revideringar). Ändringar under 1e-6 procentenheter räknas inte, eftersom Excel-sparade versioner
   avrundar till 10 värdesiffror. Raderna har `source="release"`.
 - **Filhistorik:** `AI_posting_<datum>_clean.csv` (2024-04 till 2024-08), `ai-postings.csv` (2024-09),
@@ -38,7 +40,9 @@ Hämtning: `python -m ai_tracker.observations [nycklar]`. Kontroller: `python -m
   månadsmedel ur data som var kända vid månadens slut) beräknas senare ur `as_of()`, inte här.
 - **Läckagerisk:** commit-tiden sätts av den som committar, och push kan komma senare än commit
   (GitHub-API:t, som visar push-tid, nekas i sessionen). Den publika tidpunkten kan alltså vara något
-  senare än `known_from`. Merge-commits minskar risken. Historiken kan i princip skrivas om med
+  senare än commit-tiden. Därför läggs en dags marginal på (`indeed.known_from`): med `as_of`-konventionen
+  (en prognosdag betyder dagens slut) räknas en version som känd först dagen efter commit-dagen. Merge-commits
+  minskar risken. Historiken kan i princip skrivas om med
   force-push. Det syns som att gamla vintages försvinner, och klonen i `data/raw` behåller de gamla.
 
 ## EIA Electric Power Monthly: kommersiell elförsäljning (G7)

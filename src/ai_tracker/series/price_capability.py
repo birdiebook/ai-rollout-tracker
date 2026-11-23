@@ -31,6 +31,10 @@ ECI_THRESHOLD = 141.16
 # (o1-2024-12-17, high effort, 152/198 = 0.767677), floored to 6 decimals so o1 itself qualifies.
 GPQA_THRESHOLD = 0.767676
 INPUT_WEIGHT, OUTPUT_WEIGHT = 3, 1
+# known_from = month end + 1 day: the month value uses commits during the whole last day (snapshot dates are
+# UTC commit days), so with as_of's convention (a date = end of that day) it is known one day after month end
+# (R1 review, +1 day margin; docs/granskning/r1_lackage.md section 1 and 7).
+LAG_DAYS = 1
 TOL = 1e-9
 
 
@@ -157,13 +161,13 @@ SPECS = [
     Spec(key="g2_price_at_capability", branch="G2",
          label="Pris vid fast förmåga (ECI ≥ frontens nivå 2025-01-01)",
          unit="USD per 1M tokens (3:1 input:output)", freq="M", source="LiteLLM git-historik × Epoch AI ECI",
-         fetch=fetch_eci, lag_days=0, license=LICENSE, revised=True, publish=True,
+         fetch=fetch_eci, lag_days=LAG_DAYS, license=LICENSE, revised=True, publish=True,
          question="Hur mycket billigare blir en fast förmågenivå?",
          note="Historiken är bakåtfylld: ECI och tröskeln är dagens skattningar (läckage). Se docs/kallor/pris_formaga.md"),
     Spec(key="g2_price_at_capability_gpqa", branch="G2",
          label="Pris vid fast förmåga (GPQA Diamond ≥ frontens nivå 2025-01-01)",
          unit="USD per 1M tokens (3:1 input:output)", freq="M", source="LiteLLM git-historik × Epoch AI GPQA Diamond",
-         fetch=fetch_gpqa, lag_days=0, license=LICENSE, revised=True, publish=True,
+         fetch=fetch_gpqa, lag_days=LAG_DAYS, license=LICENSE, revised=True, publish=True,
          question="Samma mått med ärliga tidsstämplar för förmågan (Epochs egna körningar)",
          note="Förmåga känd från Epochs körning (Started at + 7 dagar). En brusig benchmark nära taket. Se docs/kallor/pris_formaga.md"),
 ]

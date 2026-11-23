@@ -11,7 +11,8 @@ enligt måttregistret i ett senare steg, inte här.
 
 Värde för månad m: det lägsta blandade priset, (3 × input + output) / 4 i USD per miljon tokens, bland
 förstapartsmodeller vars förmåga är minst tröskeln, enligt prisfilen som den såg ut vid slutet av m. Bara hela
-månader tas med. `known_from` = månadens sista dag (`lag_days=0`). Bygg med
+månader tas med. `known_from` = dagen efter månadens sista dag (`lag_days=1`, rättat i X1 2026-11-23: värdet bygger på commits
+under hela sista dagen, så med `as_of`-konventionen att en dag betyder dagens slut är det känt först dagen efter). Bygg med
 `python -m ai_tracker.observations g2_price_at_capability g2_price_at_capability_gpqa`.
 
 Kod: `src/ai_tracker/sources/litellm_prices.py` (priser), `src/ai_tracker/sources/epoch_capability.py`

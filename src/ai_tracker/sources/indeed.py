@@ -2,7 +2,11 @@
 
 Source: github.com/hiring-lab/ai-tracker (CC BY 4.0). The repo's git history is the vintage archive:
 every commit on the default branch that adds a new version of the AI postings CSV is one vintage, and
-each value gets known_from = the UTC commit time of the first default-branch commit that contained it.
+each value gets known_from = the UTC day after the first default-branch commit that contained it (midnight).
+The +1 day margin (R1 review, docs/granskning/r1_lackage.md 1 and 7): most commits are local, so the push time
+is unknown (api.github.com is refused); with as_of's convention (an origin date is the end of that day) a
+version is thus counted a full day after its commit day. Several versions committed on one UTC day collapse to
+the last of them.
 Changed values in later commits become revisions (the whole history is recomputed at every refresh).
 
 The data repo is kept as a blobless clone under data/raw/indeed/ai-tracker (never in the repo tree);
@@ -113,8 +117,19 @@ def vintage_rows(versions: list[tuple[pd.Timestamp, pd.DataFrame]]) -> pd.DataFr
     return pd.DataFrame(rows, columns=["country", "period", "value", "known_from"])
 
 
+KNOWN_MARGIN = pd.Timedelta(days=1)
+
+
+def known_from(commit_time: pd.Timestamp) -> pd.Timestamp:
+    """Commit time (UTC) -> known_from: the start of the next UTC day (see module docstring)."""
+    return pd.Timestamp(commit_time).normalize() + KNOWN_MARGIN
+
+
 def rows_from_repo(repo: Path, ref: str | None = None) -> pd.DataFrame:
-    versions = [(kf, parse_csv(_git(repo, "cat-file", "-p", blob))) for kf, blob, _ in vintages(repo, ref)]
+    by_day: dict[pd.Timestamp, str] = {}
+    for ts, blob, _ in vintages(repo, ref):  # oldest first: the last version of a day wins
+        by_day[known_from(ts)] = blob
+    versions = [(kf, parse_csv(_git(repo, "cat-file", "-p", blob))) for kf, blob in by_day.items()]
     return vintage_rows(versions)
 
 

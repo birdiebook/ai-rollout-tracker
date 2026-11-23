@@ -19,6 +19,13 @@ v3 202622-202701 "Super Intelligence or SI (formerly referred to as Artificial I
    Supplement", fielded 2026-10-19 to 2027-01-17)
 Cycles after the last regime (instrument fielded from 2027-01-18 changes the examples again) are not
 assigned to any series until the wording has been reviewed: parse() drops them and warns.
+
+Publication dates: the "Publication Date" column is a schedule (it also lists announced future cycles), not a
+record of what happened. Cycle 202520 is scheduled for 2025-10-09, inside the federal funding lapse
+(2025-10-01..2025-11-12) when Census did not normally update its site; the actual date could not be documented
+(R1 review, docs/granskning/r1_lackage.md 3.6). A cycle scheduled inside a lapse is therefore known from the day
+after the lapse (2025-11-13) until its real date is documented in PUBLISHED. Every fetch appends the schedule
+with the fetch date to data/raw/census_btos/schedule_log.parquet, so schedule and outcome can be told apart.
 """
 
 from __future__ import annotations
@@ -64,6 +71,11 @@ SHEETS = {  # file -> (estimates sheet, standard-error sheet)
     "ai_core": ("National Estimates", "National SE"),
 }
 YES = 1  # answer id
+# Federal funding lapses (first day, last day): a publication scheduled inside one is moved to the day after
+FUNDING_LAPSES = [(pd.Timestamp("2025-10-01"), pd.Timestamp("2025-11-12"))]
+# Documented actual publication dates that override the schedule (cycle -> date, with the source in a comment)
+PUBLISHED: dict[int, str] = {}
+SCHEDULE_LOG = http.RAW_DIR / "census_btos" / "schedule_log.parquet"
 
 
 def _pct(x) -> float:
@@ -102,6 +114,30 @@ def parse_dates(content: bytes) -> pd.DataFrame:
         "col_end": pd.to_datetime(df["Col End"]).to_numpy(),
         "published": pd.to_datetime(df["Publication Date"]).to_numpy(),
     })
+
+
+def release_date(smpdt: int, scheduled: pd.Timestamp) -> pd.Timestamp:
+    """known_from for a cycle: a documented date if there is one, else the schedule, moved past a funding lapse."""
+    if smpdt in PUBLISHED:
+        return pd.Timestamp(PUBLISHED[smpdt])
+    scheduled = pd.Timestamp(scheduled)
+    for first, last in FUNDING_LAPSES:
+        if first <= scheduled <= last:
+            return last + pd.Timedelta(days=1)
+    return scheduled
+
+
+def log_schedule(dates: pd.DataFrame, fetched_at: pd.Timestamp, path=None) -> pd.DataFrame:
+    """Append the file's schedule (smpdt, col_end, published) with the fetch date; one entry per fetch day."""
+    path = SCHEDULE_LOG if path is None else path
+    new = dates.assign(fetched_at=pd.Timestamp(fetched_at).normalize())
+    if path.exists():
+        old = pd.read_parquet(path)
+        old = old[old["fetched_at"] != new["fetched_at"].iloc[0]] if len(new) else old
+        new = pd.concat([old, new], ignore_index=True)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    new.to_parquet(path, index=False)
+    return new
 
 
 def regime_of(smpdt: int) -> Regime | None:
@@ -147,8 +183,9 @@ def build(national: bytes, ai_core: bytes, what: str, version: str, stat: str = 
     if out["published"].isna().any():
         raise ValueError(f"BTOS: no publication date for cycles {list(out.loc[out['published'].isna(), 'smpdt'])}")
     out = out.sort_values("smpdt")
+    known = [release_date(c, d) for c, d in zip(out["smpdt"], out["published"])]
     return pd.DataFrame({"period": out["col_end"].to_numpy(), "value": out["value"].to_numpy(),
-                         "known_from": out["published"].to_numpy()})
+                         "known_from": pd.to_datetime(known)})
 
 
 _CACHE: dict[str, bytes] = {}
@@ -160,5 +197,12 @@ def _get(url: str) -> bytes:
     return _CACHE[url]
 
 
+_LOGGED: set[str] = set()
+
+
 def fetch(what: str, version: str, stat: str = "estimate") -> pd.DataFrame:
-    return build(_get(NATIONAL), _get(AI_CORE), what, version, stat)
+    national = _get(NATIONAL)
+    if NATIONAL not in _LOGGED:  # once per process: the schedule as it stood on this fetch
+        log_schedule(parse_dates(national), pd.Timestamp.today())
+        _LOGGED.add(NATIONAL)
+    return build(national, _get(AI_CORE), what, version, stat)

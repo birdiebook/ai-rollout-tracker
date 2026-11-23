@@ -33,15 +33,26 @@ class Result:
     reasons: list
 
 
+COLUMNS = ["month", "origin", "outcome_known_from", "n_train", "lambda", "imports_lag",
+           *[f"e_{v}" for v in engine.VARIANTS]]
+
+
 def run(table: pd.DataFrame) -> pd.DataFrame:
-    """Forecasts and errors for every month with a first-vintage outcome."""
+    """Forecasts and errors for every month with a first-vintage outcome that was not yet known at its origin.
+
+    A month whose first 6-K is dated on or before the origin is a forecast of a known number: it is never
+    scored (same guard as N1). The skipped months are listed in frame.attrs["known_at_origin"].
+    """
     t = engine.slim(table)
     outcomes = engine.first_vintages(t)
     last = outcomes.index.max()
     records = engine.build_records(t, last)
-    rows = []
+    rows, known = [], []
     for m in sorted(records):
         if m not in outcomes.index:
+            continue
+        if outcomes.at[m, "known_from"] <= records[m].origin:
+            known.append(f"{m} (filed {pd.Timestamp(outcomes.at[m, 'known_from']).date()})")
             continue
         f = engine.forecast_from(m, records, outcomes)
         y = 100 * np.log(outcomes.at[m, "value"])
@@ -52,7 +63,9 @@ def run(table: pd.DataFrame) -> pd.DataFrame:
             "imports_lag": (m - pd.Period(max(imp_last), "M")).n if imp_last else np.nan,
             **{f"e_{v}": f.logs[v] - y for v in engine.VARIANTS},
         })
-    return pd.DataFrame(rows).set_index("month")
+    frame = pd.DataFrame(rows, columns=COLUMNS).set_index("month")
+    frame.attrs["known_at_origin"] = known
+    return frame
 
 
 def evaluate(frame: pd.DataFrame) -> Result:
@@ -116,7 +129,9 @@ def main():
     print("\n".join(res.reasons))
     print(f"Promoted: {res.promoted}. Champion: {res.champion}")
     ev = res.frame
-    print(f"\nOutcome known at origin (should be 0): {(ev['outcome_known_from'] <= ev['origin']).sum()}")
+    print(f"\nOutcome known at origin: {len(frame.attrs['known_at_origin'])} months skipped "
+          f"{frame.attrs['known_at_origin'] or ''}; scored with known outcome (must be 0): "
+          f"{(ev['outcome_known_from'] <= ev['origin']).sum()}")
     print(f"Imports lag (months, target - latest known import month): {ev['imports_lag'].value_counts().to_dict()}")
     print(f"Lambda chosen: {ev['lambda'].value_counts().sort_index().to_dict()}")
     print(f"Run log: {log(res)}")
