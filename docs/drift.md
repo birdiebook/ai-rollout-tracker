@@ -17,6 +17,13 @@ har en interaktiv session öppen. Koden finns i `src/ai_tracker/pipeline.py`, te
 - **N2** (TSMC:s månadsintäkt): dag 5 varje månad, för föregående månad. Första: 2026-12-05 (2026-11).
 - **N1** (capex för de fyra hyperskalarna): kvartalsslut + 20 dagar, alltså 20 jan, apr, jul och okt, för
   kvartalet som just slutat. Första: 2027-01-20 (2026Q4).
+- **N3** (Nvidias datacenterintäkter): räkenskapskvartalets slut + 14 dagar (Nvidias 52/53-veckorskalender), etikett =
+  kalenderkvartalet för mittpunkten. Första: 2027-02-14 (2026Q4, nov–jan).
+- **N4** (molnintäkter) och **N6** (RPO-summa): kvartalsslut + 20 dagar, samma dag som N1. Första: 2027-01-20 (2026Q4).
+- **N5** (BTOS): dagen före den schemalagda publiceringen enligt det schema som `census_btos` loggar vid varje hämtning
+  (`data/raw/census_btos/schedule_log.parquet`). Utan loggat schema, inom ett finansieringsuppehåll eller i en
+  ogranskad frågeregim görs ingen prognos. B1 kräver 7 tidigare publiceringar i regimen, så ingen fil skrivs i v3
+  (högst 6 cykler); rutinen loggar då en varning. Fil: `forecasts/n5/<insamlingsperiodens slutdatum>.json`.
 
 En prognosdag som infaller på en helg behålls och flyttas inte. De två schematiderna ligger samma UTC-dag.
 18:47 kommer efter de amerikanska morgonpubliceringarna och långt före datumbytet, även om GitHub försenar
