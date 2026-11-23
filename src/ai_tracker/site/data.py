@@ -16,7 +16,7 @@ from pathlib import Path
 import pandas as pd
 
 from ai_tracker import catalog, config, evaluation, observations, pipeline
-from ai_tracker.nowcast import n1
+from ai_tracker.nowcast import intervals, n1
 from ai_tracker.nowcast import n2
 from ai_tracker.nowcast import n2 as n2_live
 from ai_tracker.state import register as R
@@ -385,6 +385,8 @@ def nowcasts(ctx: Context, forecasts_dir: Path, today) -> dict:
             rec["variants"] = {k: _num(v, 6) for k, v in (rec.get("variants") or {}).items()}
             rec["period"] = d.get("quarter") or d.get("month")
             rec["file"] = f"forecasts/{sub}/{f.name}"
+            if intervals.ENABLED:  # grind G-C: the champion's stored central intervals, in levels (no error pool)
+                rec["intervals"] = _champion_intervals(d)
             files.append(rec)
         df = scores.get(sub)
         rows = [] if df is None or df.empty else [
@@ -395,6 +397,7 @@ def nowcasts(ctx: Context, forecasts_dir: Path, today) -> dict:
             e = [r.get(f"err_{v}") for r in scored if r.get(f"err_{v}") is not None]
             summary.append({"variant": v, "n": len(e), "mae": _num(sum(abs(x) for x in e) / len(e), 4) if e else None,
                             "bias": _num(sum(e) / len(e), 4) if e else None})
+        coverage = _coverage(scored, variants) if intervals.ENABLED else []
         spec = ctx.specs.get(target)
         nxt = next_origin(sub, today, forecasts_dir)
         out.append({
@@ -406,9 +409,35 @@ def nowcasts(ctx: Context, forecasts_dir: Path, today) -> dict:
             "variants": [{"id": v, "text": info["variants"].get(v, v)} for v in variants],
             "next_origin": nxt[0] if nxt else None, "next_period": nxt[1] if nxt else None,
             "forecasts": files, "scorecard": rows, "summary": summary, "scorecard_error": error,
+            "coverage": coverage, "interval_levels": [intervals.level_key(L) for L in intervals.LEVELS]
+            if intervals.ENABLED else [],
             "history": _target_history(target, ctx, today),
         })
     return {"nowcasts": out}
+
+
+def _champion_intervals(d: dict) -> dict | None:
+    """{"50": [lo, hi], "80": ..., "95": ...} of the champion's stored distribution, or None."""
+    m = ((d.get("distribution") or {}).get("models") or {}).get(d.get("champion")) or {}
+    iv = m.get("intervals")
+    if not iv:
+        return None
+    return {k: [_num(lo, 6), _num(hi, 6)] for k, (lo, hi) in iv.items()}
+
+
+def _coverage(scored: list[dict], variants) -> list[dict]:
+    """Per variant: n scored with a stored distribution, coverage per level and mean CRPS (scorecard rows)."""
+    out = []
+    for v in ["champion", *variants]:
+        g = [r for r in scored if r.get(f"crps_{v}") is not None]
+        row = {"variant": v, "n": len(g), "crps": _num(sum(r[f"crps_{v}"] for r in g) / len(g), 4) if g else None}
+        for L in intervals.LEVELS:
+            k = intervals.level_key(L)
+            hits = [r[f"hit_{k}_{v}"] for r in g if r.get(f"hit_{k}_{v}") is not None]
+            row[f"coverage_{k}"] = _num(sum(hits) / len(hits), 3) if hits else None
+            row[f"band_{k}"] = [_num(x, 3) for x in intervals.binomial_band(len(hits), L)] if hits else None
+        out.append(row)
+    return out
 
 
 def method(ctx: Context) -> dict:

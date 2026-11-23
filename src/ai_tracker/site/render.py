@@ -315,12 +315,19 @@ def nowcast_section(n: dict, build: dict) -> str:
     nxt = (f"Nästa skarpa prognos: {esc(n['next_period'])}, görs {esc(n['next_origin'])}."
            if n.get("next_origin") else "")
     var_ids = [x["id"] for x in n["variants"]]
+    with_iv = any(f.get("intervals") for f in n["forecasts"])  # only with intervals.ENABLED (grind G-C)
+
+    def iv_cell(f):
+        lo, hi = ((f.get("intervals") or {}).get("80") or [None, None])
+        return f'<td class="num">{num(lo, 0)} – {num(hi, 0)}</td>' if lo is not None else "<td></td>"
+
     if n["forecasts"]:
-        head = "".join(f"<th>{esc(v)}</th>" for v in var_ids)
+        head = "".join(f"<th>{esc(v)}</th>" for v in var_ids) + ("<th>80 % intervall</th>" if with_iv else "")
         rows = "".join(
             f'<tr><td>{esc(f["period"])}</td><td>{esc(f.get("origin"))}</td><td>{esc(f.get("champion"))}</td>'
             f'<td class="num">{num(f.get("value"), 0)}</td>'
             + "".join(f'<td class="num">{num((f.get("variants") or {}).get(v), 0)}</td>' for v in var_ids)
+            + (iv_cell(f) if with_iv else "")
             + f'<td><a href="{esc(build["repo"])}/blob/main/{esc(f["file"])}">fil</a></td></tr>' for f in n["forecasts"])
         fc = (f'<div class="table-wrap"><table><thead><tr><th>Period</th><th>Origin</th><th>Huvudmodell</th>'
               f'<th>Prognos</th>{head}<th>Git</th></tr></thead><tbody>{rows}</tbody></table></div>')
@@ -346,13 +353,27 @@ def nowcast_section(n: dict, build: dict) -> str:
                            f'<td class="num">{s["n"]}</td><td class="num">{num(s["mae"])}</td>'
                            f'<td class="num">{num(s["bias"], 2, signed=True)}</td></tr>' for s in summ) +
                    "</tbody></table></div><p class='small muted'>Få utfall: skillnader mellan varianter kan vara slump.</p>")
+        cov = [c for c in n.get("coverage") or [] if c["n"]]
+        if cov:
+            keys = n["interval_levels"]
+            sc += ('<div class="table-wrap"><table class="narrow"><thead><tr><th>Variant</th><th>n</th>'
+                   + "".join(f"<th>Täckning {esc(k)} %</th>" for k in keys) + '<th>CRPS</th></tr></thead><tbody>'
+                   + "".join(f'<tr><td>{"huvudmodell" if c["variant"] == "champion" else esc(c["variant"])}</td>'
+                             f'<td class="num">{c["n"]}</td>'
+                             + "".join(f'<td class="num">{num(c.get(f"coverage_{k}"))} '
+                                       f'[{num((c.get(f"band_{k}") or [None, None])[0])}–'
+                                       f'{num((c.get(f"band_{k}") or [None, None])[1])}]</td>' for k in keys)
+                             + f'<td class="num">{num(c["crps"])}</td></tr>' for c in cov)
+                   + "</tbody></table></div><p class='small muted'>Täckning = andel utfall inom intervallet, med ett binomialt "
+                     "90 %-band inom hakparentes. Den blir meningsfull först efter många utfall, och dålig kalibrering "
+                     "byter inte huvudmodell.</p>")
     elif n.get("scorecard_error"):
         sc = f'<p class="reason">Scorecarden kunde inte beräknas: {esc(n["scorecard_error"])}</p>'
     chart = ""
     if n.get("history"):
         chart = (f'<figure class="chart wide" data-chart="nowcast" data-id="{esc(n["id"])}"><figcaption>'
                  f'{esc(n["target_label"])} ({esc(n["unit"])}), senaste kända version. Punkter: skarpa prognoser '
-                 f'(huvudmodellen).</figcaption></figure>'
+                 f'(huvudmodellen){", med 50 %- och 95 %-intervall" if with_iv else ""}.</figcaption></figure>'
                  f'<p class="source">Källa: {esc(n["source"])}. Licens: {esc(n["license"])}.</p>')
     return f"""<section class="nowcast" id="{esc(n['id'])}">
 <h2>{esc(n['label'])}: {esc(n['title'])}</h2>
