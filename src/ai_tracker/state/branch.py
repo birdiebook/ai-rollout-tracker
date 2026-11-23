@@ -6,7 +6,7 @@ import re
 
 import pandas as pd
 
-from ai_tracker import catalog, warehouse
+from ai_tracker import catalog, observations, warehouse
 from ai_tracker.state import register as R
 from ai_tracker.state.measures import Context, measure
 
@@ -32,6 +32,38 @@ def stale_reason(key: str, when, ctx: Context) -> str:
         age, bound = (when - end).days, warehouse.max_age_days(spec)
         if age > bound:
             return f"inaktuell: {k} senaste period slutade för {age} dagar sedan (gräns {bound})"
+    return ""
+
+
+def resolve_all(entry: str, when, ctx: Context) -> list[tuple[str | None, str]]:
+    """A register entry -> [(series key or None, note)] on `when`. `<valda>` gives one key per selected benchmark
+    (ctx.selection(when)); every other entry gives one (see `resolve`)."""
+    if R.SELECTED_PLACEHOLDER in entry:
+        slugs = ctx.selection(pd.Timestamp(when))
+        if not slugs:
+            return [(None, f"{entry}: ingen vald benchmark på beräkningsdagen")]
+        return [(entry.replace(R.SELECTED_PLACEHOLDER, s), f"vald benchmark {s}") for s in slugs]
+    return [resolve(entry, when, ctx)]
+
+
+def benchmark_guard(key: str, when, ctx: Context) -> str:
+    """A selected benchmark that, with what is known on `when`, is saturated (frontier > 0.90) or retired (its
+    newest month with an Epoch run ended more than 90 days before `when`) is not counted, also before its
+    successor is registered. '' = no objection. `superseded_by` is metadata without dated history: it takes
+    effect through a registered replacement (series.epoch_hub.REPLACEMENTS), and the 90-day rule catches a
+    benchmark that Epoch stops running."""
+    when = pd.Timestamp(when)
+    front = observations.as_of(key, when, ctx.rows(key))
+    if len(front) and front.max() > R.REPLACE_ABOVE:
+        return f"mättad: frontvärde {front.max():.3f} > {R.REPLACE_ABOVE} känt på beräkningsdagen"
+    runs_key = key.replace(R.BENCH_FRONTIER_PREFIX, R.BENCH_RUNS_PREFIX, 1)
+    runs = observations.as_of(runs_key, when, ctx.rows(runs_key))
+    active = runs[runs > 0]
+    if len(active):
+        last_end = active.index.max().end_time.normalize()
+        if (when - last_end).days > R.RETIRE_AFTER_DAYS:
+            return (f"avslutad: senaste kända månad med Epoch-körning är {active.index.max()} "
+                    f"(mer än {R.RETIRE_AFTER_DAYS} dagar före beräkningsdagen)")
     return ""
 
 
@@ -86,18 +118,24 @@ def branch(code: str, when, ctx: Context) -> dict:
     entries = R.core_entries(code, ctx.core)
     used, not_counted = [], []
     for entry in entries:
-        key, note = resolve(entry, when, ctx)
-        if key is None:
-            not_counted.append({"entry": entry, "series": None, "reason": note})
-            continue
-        m = measure(key, when, ctx)
-        m["entry"] = entry
-        if note:
-            m["resolved"] = note
-        stale = stale_reason(key, when, ctx)
-        if stale and m["valid"]:
-            m["valid"], m["reason"] = False, stale
-        (used if m["valid"] else not_counted).append(m)
+        for key, note in resolve_all(entry, when, ctx):
+            if key is None:
+                not_counted.append({"entry": entry, "series": None, "reason": note})
+                continue
+            if key not in ctx.specs and key not in ctx.derived:
+                not_counted.append({"entry": entry, "series": key, "reason": f"{note}: serien saknas i katalogen"})
+                continue
+            m = measure(key, when, ctx)
+            m["entry"] = entry
+            if note:
+                m["resolved"] = note
+            stale = stale_reason(key, when, ctx)
+            if stale and m["valid"]:
+                m["valid"], m["reason"] = False, stale
+            guard = benchmark_guard(key, when, ctx) if R.SELECTED_PLACEHOLDER in entry else ""
+            if guard and m["valid"]:
+                m["valid"], m["reason"] = False, guard
+            (used if m["valid"] else not_counted).append(m)
     dirs = [m["direction"] for m in used]
     index = diffusion(dirs)
     return {

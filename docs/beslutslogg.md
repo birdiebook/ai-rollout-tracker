@@ -173,3 +173,15 @@ Holm p 0,981. **Ingen befordran, B1 är fortfarande huvudmodell för både N1 oc
 som ogiltiga i [n1.md](resultat/n1.md) och [n2.md](resultat/n2.md). Kvarstående läckage: C30 och FT-900 är
 backfill med dagens vintage, och datacenter är säsongsrensad med dagens faktorer. Det gynnar V1/V2 och gör det
 negativa resultatet robust, men ett positivt resultat hade krävt realtidsvintages.
+
+## 2026-11-23 – Spår F6: G1 och G9 i tillståndsmotorn
+
+Urvalsregeln från registerändringen 2026-11-23 körs som kod (`epoch_hub.selection_table`). Den valde
+`frontiermath_erdos` och `spireclimb`. Bara två familjer återstod, så den tredje platsen är tom. Resultatet står som en
+daterad post i [måttregistret](mattregister.md). Benchmarkvärden är kända från `Started at` + 30 dagar, och månaden
+blir känd första dagen i nästa månad + 30 dagar. Serierna byggdes om. `<valda>` löses upp per beräkningsdag ur den
+registrerade listan och registrerade byten. En vald benchmark slutar räknas så snart den är känd som mättad eller utan
+körning i 90 dagar, även innan bytet är registrerat. ECI och modelldatabasen är spärrade, och träningsberäkningen räknas
+men flaggas. `frontiermath` och `frontiermath_tier_4` är avslutade katalogserier. Backcast 2024-01–2026-10: G1 har 1
+räknad serie och därför inget tillstånd, och G9 har 3. Detaljer i [tillstand.md](resultat/tillstand.md) och
+[kallor/epoch_arxiv.md](kallor/epoch_arxiv.md).

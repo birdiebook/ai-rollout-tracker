@@ -23,6 +23,7 @@ import math
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Callable
 
 import numpy as np
 import pandas as pd
@@ -36,6 +37,13 @@ LN2 = math.log(2.0)
 # ------------------------------------------------------------------ context
 
 
+def _default_selection(when) -> list[str]:
+    """`<valda>`: the selected G1 benchmarks on `when` (registered list plus registered replacements)."""
+    from ai_tracker.series import epoch_hub  # lazy: series modules import the sources
+
+    return epoch_hub.selected_on(when)
+
+
 @dataclass
 class Context:
     """The observation table split by series (plus derived series), the catalog and the forecasts root."""
@@ -45,6 +53,7 @@ class Context:
     forecasts: Path = field(default_factory=lambda: config.REPO / "forecasts")
     core: dict[str, list[str]] = field(default_factory=lambda: R.CORE_SERIES)
     derived: dict = field(default_factory=lambda: R.DERIVED)
+    selection: Callable[[pd.Timestamp], list[str]] = field(default_factory=lambda: _default_selection)
     by_series: dict[str, pd.DataFrame] = field(init=False)
 
     def __post_init__(self):
@@ -247,6 +256,8 @@ def measure(key: str, when, ctx: Context) -> dict:
     rule = rule_for(key, ctx)
     rows = ctx.rows(key)
     out: dict = {"series": key, "method": rule.method, "freq": rule.freq, "valid": False, "reason": ""}
+    if key in R.BACKFILL_FLAGGED:
+        out["flag"] = R.BACKFILL_FLAGGED[key]
     gated_note = ""
     if rule.gated:
         n_own = own_months(rows, when)
@@ -301,7 +312,8 @@ def measure(key: str, when, ctx: Context) -> dict:
             y = 100.0 * np.log(x.where(x > 0))
             out["pace_unit"] = "log x100 per år"
         elif method == "share":
-            y = x
+            fraction = bool(re.search(r"0\s*[-–]\s*1\b", ctx.specs[key].unit)) if key in ctx.specs else False
+            y = 100.0 * x if fraction else x  # a 0-1 share in percentage points
             out["pace_unit"] = "procentenheter per år"
         elif method == "logit":
             p = x.cummax().where(x.notna())

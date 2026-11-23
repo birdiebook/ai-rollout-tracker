@@ -75,7 +75,9 @@ def build(when, table: pd.DataFrame | None = None, ctx: Context | None = None) -
         "table_max_fetched_at": str(pd.Timestamp(t["fetched_at"].max()).date()) if len(t) else None,
         "rules": {"deadband_sd": R.DEADBAND, "accelerating_at_least": R.ACCELERATING, "braking_at_most": R.BRAKING,
                   "min_series": R.MIN_SERIES, "min_history": R.MIN_HISTORY, "pace_lag": R.PACE_LAG,
-                  "change_lag": R.CHANGE_LAG, "doubling_window_months": R.DOUBLING_WINDOW},
+                  "change_lag": R.CHANGE_LAG, "doubling_window_months": R.DOUBLING_WINDOW,
+                  "backfill_gated": sorted(R.BACKFILL_GATED), "backfill_flagged": sorted(R.BACKFILL_FLAGGED),
+                  "own_snapshot_months": R.OWN_SNAPSHOT_MONTHS, "g1_selected_benchmarks": ctx.selection(when)},
         "branches": compute(when, ctx),
     })
 

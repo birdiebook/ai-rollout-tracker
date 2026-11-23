@@ -7,14 +7,14 @@ beräknas här, eftersom det görs i en senare fas.
 
 Hämtning: `python -m ai_tracker.observations <nycklar>` eller veckojobbet `.github/workflows/collect-weekly.yml`
 (måndagar, Actions-cache för `data/`, concurrency-grupp `ai-data`, inga hemligheter).
-`python -m ai_tracker.series.epoch_hub` räknar om urvalsregeln och successorkontrollen och skriver ut resultatet.
-Byten görs aldrig tyst.
+`python -m ai_tracker.series.epoch_hub` räknar om urvalsregeln och successorkontrollen och skriver ut resultatet
+(spår F6). Byten görs aldrig tyst.
 
 ## Serier
 
 | Nyckel | Frekv. | Historik | Värde | `known_from` | `source` |
 |---|---|---|---|---|---|
-| `g1_epoch_bench_frontier_<b>` | M | 2025-03 (b = `frontiermath`), 2025-07 (`frontiermath_tier_4`), 2026-08 (`frontiermath_erdos`) | bästa poäng bland körningar startade före månadsslut | 1:a dagen i månaden efter. Ändrat källvärde: hämtdagen | release |
+| `g1_epoch_bench_frontier_<b>` | M | valda: 2026-08 (b = `frontiermath_erdos`), 2026-11 (`spireclimb`, känd från 2026-12-31). Avslutade: 2025-03 (`frontiermath`), 2025-07 (`frontiermath_tier_4`) | bästa poäng bland körningar startade före månadsslut | 1:a dagen i månaden efter + 30 dagar. Körning som syns först i en senare hämtning: ny version vid max(`Started at` + 30, `first_seen`). Ändrat källvärde: hämtdagen | release |
 | `g1_epoch_bench_runs_<b>` | M | som ovan | antal Epoch-körningar startade i månaden | som ovan | release |
 | `g1_epoch_eci_frontier` | W (mån–sön) | 2023-02 – | högsta ECI bland modeller släppta t.o.m. veckans slut | historik: veckoslut + 1 dag (nominellt). Nya veckor och revideringar: hämtdagen | backfill, sedan fetch/revision |
 | `g1_epoch_train_compute_frontier` | M | 2010-01 – | största `Training compute (FLOP)` bland alla modeller publicerade t.o.m. månaden | historik: månadsslut + 7 (nominellt). Sedan hämtdagen | backfill → fetch/revision |
@@ -33,16 +33,42 @@ tills villkoren är kontrollerade.
 ## Härledningar och val
 
 **Benchmarkfronten as-of.** En körning räknas för månad m bara om `Started at` ligger före m:s sista ögonblick
-(UTC). Det gäller även när modellen släpptes tidigare. Värdet får `known_from` = första dagen i m+1, alltså efter alla
-körningar som räknats. Det är registrets regel (`Started at` = `known_from`). Den är optimistisk med körningens
-längd plus Epochs publiceringsfördröjning. Därför sparas en körningslogg, `data/epoch/benchmark_runs.parquet`, med
-`first_seen` per körning från våra hämtningar, så att fördröjningen kan mätas och regeln kalibreras. Om Epoch
-ersätter en körning (omkörning) eller lägger in en körning med gammalt `Started at` ändras det härledda värdet.
-Då läggs en ny rad med `known_from` = hämtdagen till (`epoch_hub.with_revisions`), och den gamla versionen
-ligger kvar för `as_of()`.
+(UTC). Det gäller även när modellen släpptes tidigare. Sedan registerändringen 2026-11-23 ("försiktigare datum",
+spår F6) är en körning känd från `Started at` + 30 dagar, avrundat uppåt till midnatt UTC (`epoch_hub.run_known`).
+Körningar i den första hämtningen (2026-11-23, `FIRST_FETCH`) har inget observerat publiceringsdatum, så för dem gäller
+bara 30-dagarsregeln. En körning som syns först i en senare hämtning är känd från max(`Started at` + 30, `first_seen`).
+Månad m får sin första version den första dagen i m+1 + 30 dagar, och då är varje körning i den första hämtningen som
+räknas för m känd. Varje senare känd körning som ändrar värdet ger en ny version på sitt kända datum
+(`epoch_hub.monthly_vintages`). Körningsloggen `data/epoch/benchmark_runs.parquet` har `first_seen` per körning, och
+fördröjningen mäts och redovisas efter 6 månader enligt registret. Om Epoch ersätter en körning (omkörning) så att ett
+redan lagrat värde ändras, läggs en ny rad med `known_from` = hämtdagen till (`epoch_hub.with_revisions` och
+`observations.new_rows`), och den gamla versionen ligger kvar för `as_of()`. Serierna byggdes om (`--rebuild`)
+2026-11-23 med den nya regeln, så de tidigare raderna (första dagen i m+1) finns inte kvar. `lag_days` = 31 i
+katalogen ger aktualitetsgränsen 92 dagar.
 
-**Urval.** Se måttregistret, 2026-11-23 (benchmarkurvalet tillämpat): `frontiermath`, `frontiermath_tier_4` och
-`frontiermath_erdos`. Två av dem är ersatta av Epoch och har inte körts sedan 2026-06-08. Frågan är flaggad för beslut.
+En hämtning samma dag läser dagens råkopia i `data/raw/epoch/<dag>/` i stället för att ladda ned igen
+(`epoch_hub._zip_bytes`). Det gör att en ombyggnad efter en hämtning använder samma version.
+
+**Urval** (måttregistret 2026-11-23, posterna om avslutade benchmarks och "G1: urvalsregeln tillämpad (spår F6)").
+Koden finns i `epoch_hub.selection_table`. En benchmark är avslutad om den har `superseded_by` eller saknar Epoch-körning
+de senaste 90 dagarna. Avslutade benchmarks och de med frontvärde ≥ 0,80 utesluts. Sedan väljs högst en per familj
+(`epoch_hub.family`, första ledet i filnamnet före `_`), den med flest modeller och vid lika antal basvarianten.
+Familjevinnarna rangordnas efter antal Epoch-körda modeller. Resultatet blev `frontiermath_erdos` (17 modeller) och
+`spireclimb` (13). Bara två familjer återstod, så den tredje platsen är tom och det finns ingen efterträdare.
+Det tidigare urvalet, `frontiermath` och `frontiermath_tier_4`, är ersatt av Epoch och ligger kvar som avslutade
+katalogserier (`closed=True`, "Avslutad:" i `note`). De är bara beskrivning.
+
+**Byten och `<valda>`.** Kärnserien `g1_epoch_bench_frontier_<valda>` i registret löses upp av tillståndsmotorn per
+beräkningsdag genom `series.epoch_hub.selected_on`. Den utgår från den registrerade listan och tillämpar varje byte i
+`REPLACEMENTS` (datum, ersatt, efterträdare) från bytets datum. Datumet är den första dagen då den ersatta benchmarken
+var avslutad eller mättad (> 0,90) med det som var känt den dagen. Efterträdaren väljs med `apply_successor_rule` och
+rangordningen den dagen: familjevinnare som inte är avslutade, har frontvärde < 0,70, inte har varit valda tidigare och
+inte tillhör en familj som redan är vald. Byten registreras, de görs aldrig tyst. Försiktighetsregeln är att en vald
+benchmark slutar räknas så snart det som är känt på beräkningsdagen visar att den är mättad (känt frontvärde > 0,90)
+eller avslutad (senaste kända månad med körning slutade mer än 90 dagar tidigare), även innan bytet är registrerat
+(`state.branch.benchmark_guard`). `superseded_by` har ingen daterad historik i källan och verkar därför bara genom ett
+registrerat byte, men en benchmark som Epoch slutar köra fångas av 90-dagarsregeln. Före urvalsdagen, alltså i
+backcast, gäller den registrerade listan. Urvalet bygger på täckning och metadata, inte på frontvärdenas förlopp.
 
 **ECI** skattas om (IRT) när modeller och benchmarks tillkommer, så hela historiken kan flytta sig vid varje hämtning.
 Varje förändring blir en revisionsrad. Veckoserien ger det aktuella frontvärdet varje måndag. Det kräver en senare
@@ -50,7 +76,11 @@ aggregering till månad i måttfasen.
 
 **Modelldatabasen** fylls på i efterhand. De senaste månaderna är ofullständiga, och det är inmatningseftersläpning
 och ingen trend. Den återfyllda historiken (`source=backfill`) har ett nominellt `known_from` och får enligt
-registret inte ingå i diffusionsindex förrän det finns 24 månader egna ögonblicksbilder.
+registret inte ingå i diffusionsindex förrän det finns 24 månader egna ögonblicksbilder. I tillståndsmotorn
+(`state/register.py`) är `g1_epoch_eci_frontier`, `g9_epoch_notable_models` och `g9_epoch_open_weights_share`
+därför spärrade (`BACKFILL_GATED`). `g1_epoch_train_compute_frontier` räknas enligt registret men flaggas
+(`BACKFILL_FLAGGED`, fältet `flag` i ögonblicksbilden). Andelen öppna vikter mäts som andel i procentenheter
+(0–1 × 100), inte i logit, eftersom logit bara är registrerat för G1-benchmarks.
 
 **Hårdvara:** Epochs egen kolumn `Price-performance` använder den snabbaste precisionen, som byts över tid
 (FP32 → FP8/FP4). Vi håller en precision: Tensor-FP16/BF16, annars FP16. Före 2016 finns för få priser. Serien är
@@ -82,8 +112,9 @@ anses de stabila. Revideringar efter 60 dagar fångas inte.
 
 ## Läckage och förbehåll
 
-- `Started at` är körningens start och inte publiceringen. Värdena är därför optimistiska med dagar. Det kalibreras
-  med `first_seen` i körningsloggen.
+- `Started at` är körningens start och inte publiceringen. Därför används `Started at` + 30 dagar. Om 30 dagar räcker
+  för körningarna i den första hämtningen går inte att verifiera. Det kalibreras med `first_seen` i körningsloggen
+  efter 6 månader.
 - I `gpqa_diamond` (56 körningar) och `math_level_5` (52) har många körningar exakt `Started at`
   2025-01-27 00:00:00. Det ser ut som ett platshållardatum för körningar som importerades när hubben startade.
   Inget av dem ingår i urvalet, men det ska kontrolleras om de blir aktuella.

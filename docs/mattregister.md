@@ -294,3 +294,52 @@ Guidance har extraherats (fas 4 E1) men inte jämförts med utfall.
   Befordran sker enligt samma regel som tidigare.
 - **Krav före befordran:** en oberoende granskning av extraktionen ska godkänna de värden som B2 använder.
   Annars befordras B2 inte, oavsett resultat.
+
+### 2026-11-23 – G1: urvalsregeln tillämpad (spår F6, före analys)
+
+Regeln i föregående poster körd som kod (`ai_tracker.sources.epoch_hub.selection_table`) på `benchmark_data.zip`
+hämtad 2026-11-23, med urvalsdag 2026-11-23. Inga frontvärden över tid har tittats på. Tillämpning:
+
+- **Avslutad:** `superseded_by` satt i `benchmark_metadata.csv`, eller ingen Epoch-körning startad från och med
+  2026-08-25 (90 dagar före urvalsdagen).
+- **Familj** (`epoch_hub.family`): första ledet i filnamnet före `_` (`frontiermath_tier_4_v2` → `frontiermath`,
+  `spireclimb_sts2_a10` → `spireclimb`). Fel åt bara ett håll: två olika benchmarks med samma första ord hamnar i
+  samma familj, och en familj delas aldrig. På dagens 18 Epoch-körda benchmarks har bara `frontiermath` (5) och
+  `spireclimb` (3) fler än en medlem.
+- **Ordning:** avslutade och de med frontvärde ≥ 0,80 utesluts först. Bland resten väljs en per familj (flest
+  modeller, vid lika antal basvarianten, alltså filnamnet lika med familjen). Familjevinnarna rangordnas efter antal
+  modeller, och de 3 första väljs.
+
+| Rang | Benchmark (fil) | Familj | Modeller | Frontvärde | Senaste körning |
+|---|---|---|---|---|---|
+| 1 | FrontierMath-Erdos (`frontiermath_erdos`) | frontiermath | 17 | 0,103 | 2026-11-19 |
+| 2 | SpireClimb (`spireclimb`) | spireclimb | 13 | 0,413 | 2026-11-19 |
+
+Bara två familjer återstod, så den tredje platsen är tom och det finns ingen efterträdare i rangordningen (inga fler
+familjevinnare med frontvärde < 0,70). Uteslutna:
+
+- **Avslutade:** `frontiermath` (100 modeller, ersatt av FrontierMath-Tiers-1-3-v2-Private), `frontiermath_tier_4`
+  (71, ersatt av FrontierMath-Tier-4-v2-Private), `math_level_5` (108, senaste körning 2025-10-30),
+  `swe_bench_verified` (33, senaste körning 2026-06-25).
+- **Frontvärde ≥ 0,80:** `gpqa_diamond` (341, 0,968), `otis_mock_aime_2024_2025` (319, 1,0), `chess_puzzles` (168,
+  0,830), `mystery_game_puzzles` (150, 0,950), `frontiermath_tiers_1_3_v2` (128, 0,951), `simpleqa_verified` (106,
+  0,940), `frontiermath_tier_4_v2` (84, 1,0), `mirrorcode` (48, 0,978), `furniture_assembly` (43, 0,900),
+  `ebr_bench` (36, 0,981).
+- **Samma familj:** `spireclimb_sts1_a20_heart` (13, 0,333) och `spireclimb_sts2_a10` (13, 0,493). Lika många
+  modeller som `spireclimb`, så basvarianten väljs.
+
+Kärnserier för G1: `g1_epoch_bench_frontier_frontiermath_erdos` och `g1_epoch_bench_frontier_spireclimb` (`<valda>`),
+plus `g1_epoch_bench_runs_<b>` som täckningsserier. Datum enligt föregående post: en körning är känd från
+`Started at` + 30 dagar (avrundat uppåt till midnatt UTC). Månad m får `known_from` = första dagen i m+1 + 30 dagar,
+och en körning som syns först i en senare hämtning ger en ny version vid max(`Started at` + 30, `first_seen`).
+SpireClimbs första körningar startade 2026-11-04, så dess första hela månad (2026-11) blir känd 2026-12-31.
+`frontiermath` och `frontiermath_tier_4` ligger kvar i katalogen som avslutade serier (beskrivning).
+
+**Tolkningar, fastställda innan några serier har tittats på:**
+
+- "Passerar 0,90" läses fortfarande som > 0,90, som i posten om I5.
+- Byten gäller från den första dag då benchmarken var avslutad eller mättad med det som var känt den dagen. Byten
+  registreras i `series/epoch_hub.py` (`REPLACEMENTS`) med den dagen. Tills ett byte är registrerat räknas en vald
+  benchmark ändå inte när dess kända frontvärde är > 0,90 eller när dess senaste kända månad med körning slutade mer
+  än 90 dagar före beräkningsdagen. `superseded_by` har ingen daterad historik och verkar därför bara genom ett
+  registrerat byte. Före urvalsdagen (backcast) gäller den registrerade listan.

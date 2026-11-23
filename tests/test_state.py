@@ -74,6 +74,9 @@ def test_expand_braces():
 def test_every_registered_core_series_exists_and_has_the_registered_method():
     ctx = M.Context(observations._empty())
     expected = {"g2_price_at_capability_gpqa": "halving", "eu_ai_ent_se": "share", "rev_nvda": "log",
+                "g1_epoch_bench_frontier_spireclimb": "logit", "g1_epoch_train_compute_frontier": "doubling",
+                "g1_epoch_eci_frontier": "doubling", "g9_epoch_open_weights_share": "share",
+                "g9_epoch_notable_models": "log", "g9_arxiv_cs_lg": "log",
                 "capex_hyp4": "log", "capex_ocf_hyp4": "share", "us_imports_kr_m": "log",
                 "us_elec_sales_com_oh_m": "log", "ai_postings_share_nl_d": "share", "btos_ai_use_v1": "share"}
     for key, method in expected.items():
@@ -82,7 +85,9 @@ def test_every_registered_core_series_exists_and_has_the_registered_method():
         for entry in R.core_entries(code):
             if R.REGIME_PLACEHOLDER in entry:
                 continue
-            M.rule_for(entry, ctx)  # raises if neither catalogued nor derived
+            for key in ([entry.replace(R.SELECTED_PLACEHOLDER, b) for b in ctx.selection(pd.Timestamp("2026-11-30"))]
+                        if R.SELECTED_PLACEHOLDER in entry else [entry]):
+                M.rule_for(key, ctx)  # raises if neither catalogued nor derived
     assert M.rule_for("ai_postings_share_us_d", ctx).agg == "mean"
 
 
@@ -360,6 +365,96 @@ def test_backfill_gated_series_describes_but_does_not_count(monkeypatch):
     m2 = M.measure("eci", "2026-07-31", c2)
     assert m2["own_snapshot_months"] >= 24 and m2["sources"] == ["fetch"]
     assert m2["pace"] == pytest.approx(math.log(2) / 0.08)
+
+
+def test_registered_backfill_gate_for_g1_and_g9():
+    """Register 2026-11-23 (G1/G9 core table): ECI and the Epoch models database are gated, training compute
+    counts but is flagged, arXiv counts."""
+    assert {"g1_epoch_eci_frontier", "g9_epoch_open_weights_share", "g9_epoch_notable_models"} <= R.BACKFILL_GATED
+    assert "g1_epoch_train_compute_frontier" not in R.BACKFILL_GATED
+    assert "g1_epoch_train_compute_frontier" in R.BACKFILL_FLAGGED
+    assert not {"g9_arxiv_cs_ai", "g9_arxiv_cs_lg", "g9_arxiv_cs_cl"} & R.BACKFILL_GATED
+    ctx = M.Context(observations._empty())
+    for key in ("g1_epoch_eci_frontier", "g9_epoch_open_weights_share", "g9_epoch_notable_models"):
+        assert M.rule_for(key, ctx).gated, key
+    assert not M.rule_for("g1_epoch_train_compute_frontier", ctx).gated
+
+
+def test_flagged_backfill_series_counts_with_a_flag(monkeypatch):
+    monkeypatch.setattr(R, "BACKFILL_FLAGGED", {"compute": "bakåtfylld, flaggas"})
+    g = np.r_[np.full(40, 0.05), np.full(12, 0.08)]
+    back = monthly_rows("compute", np.exp(np.cumsum(g)), start="2020-01", source="backfill", lag_days=7)
+    c = ctx_for([back], [spec("compute", unit="FLOP", branch="G1")], core={"G1": ["compute"]})
+    m = M.measure("compute", "2024-06-30", c)
+    assert m["valid"] and m["flag"] == "bakåtfylld, flaggas" and m["sources"] == ["backfill"]
+    assert B.branch("G1", "2024-06-30", c)["n_series"] == 1
+
+
+def test_fraction_share_is_measured_in_percentage_points(monkeypatch):
+    monkeypatch.setitem(R.METHOD_OVERRIDES, "ow", "share")
+    q = pd.period_range("2015Q1", periods=24, freq="Q")
+    x = np.linspace(0.2, 0.43, 24)
+    c = ctx_for([rows("ow", "Q", q, x)], [spec("ow", unit="andel (0–1)", freq="Q", branch="G9")])
+    m = M.measure("ow", "2030-01-01", c)
+    assert m["method"] == "share" and m["pace"] == pytest.approx(100 * 4 * 0.01)
+
+
+# ------------------------------------------------------------------ <valda>: selected benchmarks (G1)
+
+
+def _bench(slug, frontier, runs, start="2023-01"):
+    f = monthly_rows(f"g1_epoch_bench_frontier_{slug}", frontier, start=start, lag_days=31)
+    r = monthly_rows(f"g1_epoch_bench_runs_{slug}", runs, start=start, lag_days=31)
+    sp = [spec(f"g1_epoch_bench_frontier_{slug}", unit="andel rätt (0–1)", branch="G1"),
+          spec(f"g1_epoch_bench_runs_{slug}", unit="antal körningar", branch="G1")]
+    return [f, r], sp
+
+
+def test_selected_placeholder_resolves_to_the_selection_on_the_date():
+    n = 40
+    t1, s1 = _bench("x", np.linspace(0.05, 0.6, n), np.full(n, 3.0))
+    t2, s2 = _bench("y", np.linspace(0.02, 0.4, n) ** 1.2, np.full(n, 2.0))
+    t3, s3 = _bench("z", np.linspace(0.1, 0.5, n), np.full(n, 1.0))
+    core = {"G1": ["g1_epoch_bench_frontier_<valda>"]}
+    c = ctx_for(t1 + t2 + t3, s1 + s2 + s3, core=core)
+    c.selection = lambda when: ["x", "y"] if when < pd.Timestamp("2025-06-01") else ["z", "y"]
+    b = B.branch("G1", "2025-05-31", c)
+    assert [m["series"] for m in b["series_used"] + b["series_not_counted"]] == [
+        "g1_epoch_bench_frontier_x", "g1_epoch_bench_frontier_y"]
+    assert b["registered_entries"] == ["g1_epoch_bench_frontier_<valda>"]
+    b2 = B.branch("G1", "2025-06-30", c)
+    assert {m["series"] for m in b2["series_used"] + b2["series_not_counted"]} == {
+        "g1_epoch_bench_frontier_z", "g1_epoch_bench_frontier_y"}
+    c.selection = lambda when: []
+    assert B.branch("G1", "2025-06-30", c)["series_not_counted"][0]["series"] is None
+    c.selection = lambda when: ["missing"]
+    assert "saknas i katalogen" in B.branch("G1", "2025-06-30", c)["series_not_counted"][0]["reason"]
+
+
+def test_selected_benchmark_guard_saturated_or_retired():
+    n = 40
+    t, sp = _bench("x", np.linspace(0.05, 0.6, n), np.full(n, 3.0))
+    c = ctx_for(t, sp, core={"G1": ["g1_epoch_bench_frontier_<valda>"]})
+    c.selection = lambda when: ["x"]
+    when = pd.Period("2026-04", "M").end_time.normalize() + pd.Timedelta(days=31)  # 2026-04 known on 2026-05-31
+    assert B.benchmark_guard("g1_epoch_bench_frontier_x", when, c) == ""
+    m = B.branch("G1", when, c)["series_used"]
+    assert len(m) == 1  # counts
+    # saturated: the frontier known on the date passes 0.90
+    t_sat, sp_sat = _bench("x", np.r_[np.linspace(0.05, 0.6, n - 1), 0.95], np.full(n, 3.0))
+    c_sat = ctx_for(t_sat, sp_sat, core={"G1": ["g1_epoch_bench_frontier_<valda>"]})
+    c_sat.selection = lambda when: ["x"]
+    assert B.benchmark_guard("g1_epoch_bench_frontier_x", when, c_sat).startswith("mättad")
+    assert B.branch("G1", when, c_sat)["series_used"] == []
+    # retired: no run in the last months known on the date (newest month with a run ended > 90 days before)
+    t_ret, sp_ret = _bench("x", np.linspace(0.05, 0.6, n), np.r_[np.full(n - 4, 3.0), np.zeros(4)])
+    c_ret = ctx_for(t_ret, sp_ret, core={"G1": ["g1_epoch_bench_frontier_<valda>"]})
+    c_ret.selection = lambda when: ["x"]
+    g = B.benchmark_guard("g1_epoch_bench_frontier_x", when, c_ret)
+    assert g.startswith("avslutad") and "2025-12" in g
+    # the guard only uses what is known: a later saturation does not reach back
+    early = pd.Timestamp("2025-06-30")
+    assert B.benchmark_guard("g1_epoch_bench_frontier_x", early, c_sat) == ""
 
 
 # ------------------------------------------------------------------ surprise

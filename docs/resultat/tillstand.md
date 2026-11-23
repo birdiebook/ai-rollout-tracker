@@ -14,7 +14,7 @@ arbetsflöde: `.github/workflows/snapshot.yml`.
 
 Kärnserielistan finns på ett ställe, `CORE_SERIES` i `state/register.py`, skriven med registrets egna förkortningar
 (`us_elec_sales_com_{va,tx,...}_m`, `btos_ai_use_<aktiv regim>`). Ett test läser registerfilen och kräver att den och
-`CORE_SERIES` är identiska. När G1 och G9 registreras läggs namnen in i `CORE_SERIES` (en dataändring). Metoden per
+`CORE_SERIES` är identiska. G1 och G9 registrerades 2026-11-23 och finns i `CORE_SERIES` (spår F6, se nedan). Metoden per
 serie följer katalogens enhet och gren: enhet som börjar med `%` ger andel, enhet som anger 0–1 ger logit, och övriga
 G1- och G2-serier ger fördubblings- respektive halveringstid. Avvikelser läggs i `METHOD_OVERRIDES`.
 
@@ -73,8 +73,9 @@ Punkterna 1, 7 och 8 bör orkestreraren ta ställning till och registrera.
 8. **Ingen regel för inaktuella serier.** Registret säger inget om hur gammal den senaste perioden får vara. En
    serie räknas därför med sin senaste kända period, och `latest_period` och `known_from` visas i ögonblicksbilden.
    Exempel: `rev_nvda` (räkenskapskvartal) ligger ett kvartal efter de andra.
-9. **Logit (G1-benchmarks, ej registrerade än):** frontvärde = löpande max, och takten anges i logit-enheter
-   (utan ×100). Riktning och percentiler påverkas inte av skalan.
+9. **Logit (G1-benchmarks):** frontvärde = löpande max, och takten anges i logit-enheter
+   (utan ×100). Riktning och percentiler påverkas inte av skalan. En andel 0–1 utanför G1
+   (`g9_epoch_open_weights_share`) mäts som andel i procentenheter (×100, `METHOD_OVERRIDES`).
 10. **Överraskning:** utfall minus den skarpa nowcasten när `forecasts/n1|n2/<period>.json` finns och dess origin är
     ≤ beräkningsdagen. Annars utfall minus B1 enligt avsnitt 3 (drift = förra värdet plus medel av de 4 senaste
     förändringarna), på seriens transformerade skala: log ×100, procentenheter eller logit. B1 tar inte hänsyn till
@@ -83,8 +84,9 @@ Punkterna 1, 7 och 8 bör orkestreraren ta ställning till och registrera.
 11. **Aktiv BTOS-regim:** den regimserie (`btos_ai_use_v<n>`) vars senast kända observation slutar sist på
     beräkningsdagen. Ingen återgång till en äldre regim sker när den aktiva är för kort. Standardfelsserierna
     (`_se`) ingår inte. Följd: från 2025-12 är v2 aktiv men för kort, och från 2026-11 är v3 aktiv.
-12. **Undantag för bakåtfyllt:** gäller `g2_price_at_capability` (ECI-varianten) och framtida serier från ECI och
-    Epochs modelldatabas (`BACKFILL_GATED`). De beskrivs men räknas inte förrän det finns 24 kalendermånader (räknat
+12. **Undantag för bakåtfyllt:** gäller `g2_price_at_capability` (ECI-varianten), `g1_epoch_eci_frontier`,
+    `g9_epoch_notable_models` och `g9_epoch_open_weights_share` (`BACKFILL_GATED`). `g1_epoch_train_compute_frontier`
+    räknas men flaggas (`BACKFILL_FLAGGED`, fältet `flag`). De beskrivs men räknas inte förrän det finns 24 kalendermånader (räknat
     på `known_from`) med egna rader, alltså rader som inte är backfill. Därefter beräknas måtten bara på de egna
     raderna. `g2_price_at_capability_gpqa` har också `source="backfill"`, men registret anger den som kärnserie och
     undantar bara ECI-varianten, så den räknas. Den har ändå för kort historik. De lagdaterade kärnserierna
@@ -97,6 +99,28 @@ Punkterna 1, 7 och 8 bör orkestreraren ta ställning till och registrera.
     månads ögonblicksbild, och resultatet går att räkna om exakt. Skrivaren vägrar datum i framtiden, datum som inte
     är månadsslut och befintliga filer (öppnas med `x`). `pipeline publish` committar bara nya
     `snapshots/<YYYY-MM>.json`.
+
+## G1 och G9 (spår F6)
+
+Registrerat 2026-11-23 (måttregistret, posterna "G1 och G9: avslutade benchmarks …" och "G1: urvalsregeln tillämpad").
+
+| Gren | Kärnserie | I tillståndsmotorn |
+|---|---|---|
+| G1 | `g1_epoch_bench_frontier_<valda>` | En serie per vald benchmark på beräkningsdagen (`Context.selection`, som standard `series.epoch_hub.selected_on`): `frontiermath_erdos` och `spireclimb`. Logit av löpande max |
+| G1 | `g1_epoch_train_compute_frontier` | Räknas, flaggas som bakåtfylld. Fördubblingstid |
+| G1 | `g1_epoch_eci_frontier` | Spärrad tills det finns 24 månader egna ögonblicksbilder |
+| G9 | `g9_arxiv_cs_ai`, `g9_arxiv_cs_lg`, `g9_arxiv_cs_cl` | Räknas. Log ×100 |
+| G9 | `g9_epoch_open_weights_share`, `g9_epoch_notable_models` | Spärrade tills det finns 24 månader egna ögonblicksbilder |
+
+15. **`<valda>`.** Platshållaren löses upp till frontserierna för de benchmarks som är valda på beräkningsdagen.
+    Det är den registrerade listan med registrerade byten (`REPLACEMENTS`) tillämpade från sina datum. Före urvalsdagen
+    gäller den registrerade listan. En vald benchmark räknas inte (`branch.benchmark_guard`) när dess frontvärde,
+    känt på dagen, är > 0,90, eller när dess senaste kända månad med Epoch-körning slutade mer än 90 dagar före dagen.
+    Det gäller även innan bytet har registrerats. En vald serie som saknas i katalogen listas med skäl.
+    Ögonblicksbilden redovisar urvalet under `rules.g1_selected_benchmarks`.
+16. **Benchmarkdatum:** `Started at` + 30 dagar per körning, och månad m blir känd första dagen i m+1 + 30 dagar.
+    Se `docs/kallor/epoch_arxiv.md`. Därför har `frontiermath_erdos` bara 2026-08 och 2026-09 kända 2026-11-23,
+    och `spireclimb` har inga kända värden före 2026-12-31. Ingen av dem har takt i backcasten.
 
 ## Drift
 
@@ -114,31 +138,36 @@ satte, och bara den nya filen committas med bot-identiteten. Den första skarpa 
 inte ett skarpt register)". Det skarpa registret börjar med den första committade ögonblicksbilden. Det här är
 första gången måtten tittas på. Siffrorna redovisas utan tolkning.
 
-Index (oavrundat, 3 decimaler), tillstånd och antal räknade serier, de sex senaste månaderna:
+Index (oavrundat, 3 decimaler), tillstånd och antal räknade serier, de sex senaste månaderna. Körd om 2026-11-23
+i spår F6 med G1 och G9 registrerade. G4 har sedan F5 segmentserierna som kärnserier.
 
 | Gren | 2026-05 | 2026-06 | 2026-07 | 2026-08 | 2026-09 | 2026-10 |
 |---|---|---|---|---|---|---|
-| G1 | ej registrerad | ej registrerad | ej registrerad | ej registrerad | ej registrerad | ej registrerad |
+| G1 | 0,500 för få (1) | 0,500 för få (1) | 0,500 för få (1) | 0,500 för få (1) | 0,500 för få (1) | 0,500 för få (1) |
 | G2 | – för få (0) | – för få (0) | – för få (0) | – för få (0) | – för få (0) | – för få (0) |
 | G3 | – för få (0) | – för få (0) | – för få (0) | – för få (0) | – för få (0) | – för få (0) |
-| G4 | 0,900 accelererar (5) | 0,900 accelererar (5) | 0,900 accelererar (5) | 0,900 accelererar (5) | 0,900 accelererar (5) | 0,500 stabil (5) |
+| G4 | 1,000 accelererar (5) | 1,000 accelererar (5) | 1,000 accelererar (5) | 1,000 accelererar (5) | 1,000 accelererar (5) | 1,000 accelererar (5) |
 | G5 | 0,750 accelererar (4) | 0,750 accelererar (4) | 0,875 accelererar (4) | 0,875 accelererar (4) | 0,875 accelererar (4) | 1,000 accelererar (4) |
 | G6 | 0,600 stabil (5) | 0,500 stabil (5) | 0,600 stabil (5) | 0,400 stabil (5) | 0,500 stabil (5) | 0,500 stabil (5) |
 | G7 | 0,583 stabil (6) | 0,583 stabil (6) | 0,667 stabil (6) | 0,583 stabil (6) | 0,750 accelererar (6) | 0,583 stabil (6) |
 | G8 | 0,944 accelererar (9) | 1,000 accelererar (9) | 1,000 accelererar (9) | 0,944 accelererar (9) | 0,944 accelererar (9) | 0,944 accelererar (9) |
-| G9 | ej registrerad | ej registrerad | ej registrerad | ej registrerad | ej registrerad | ej registrerad |
+| G9 | 1,000 accelererar (3) | 0,500 stabil (3) | 0,833 accelererar (3) | 0,167 bromsar in (3) | 0,833 accelererar (3) | 0,500 stabil (3) |
 
 Antal månader per tillstånd, 2019-01 till 2026-10, för de månader där grenen har minst 3 serier:
 
 | Gren | Från | Accelererar | Stabil | Bromsar in | Månader |
 |---|---|---|---|---|---|
-| G4 | 2019-01 | 40 | 16 | 38 | 94 |
-| G5 | 2019-08 | 35 | 37 | 15 | 87 |
-| G6 | 2019-01 | 28 | 46 | 20 | 94 |
+| G4 | 2022-03 | 18 | 21 | 17 | 56 |
+| G5 | 2019-08 | 34 | 38 | 15 | 87 |
+| G6 | 2019-01 | 27 | 46 | 21 | 94 |
 | G7 | 2019-01 | 25 | 46 | 23 | 94 |
 | G8 | 2024-04 | 29 | 2 | 0 | 31 |
+| G9 | 2019-01 | 16 | 63 | 15 | 94 |
 
-G2 har ingen räknad serie under någon månad. G3 har som mest en räknad serie (BTOS v1, 2025-05 till 2025-11).
+G1 har som mest en räknad serie (`g1_epoch_train_compute_frontier`, flaggad som bakåtfylld) och visar därför index men
+inget tillstånd. De valda benchmarkserierna har ingen takt under perioden (se punkt 16), och ECI är spärrad. G9 räknar de
+tre arXiv-serierna. Epochs modelldatabas är spärrad. G2 har ingen räknad serie under någon månad. G3 har som mest en
+räknad serie (BTOS v1, 2025-05 till 2025-11).
 
 **Förbehåll:**
 - Rekonstruktionen använder dagens tabell. Rader som är daterade med publiceringsfördröjning (`source="backfill"`)
@@ -147,7 +176,9 @@ G2 har ingen räknad serie under någon månad. G3 har som mest en räknad serie
   BTOS-raderna har riktiga versionsdatum.
 - G8 börjar 2024-04 eftersom Indeeds första sparade version är från 2024-04-29. Varje Indeed-version räknar om
   hela historiken, så takthistoriken i en given månad bygger på den versionens metod.
-- G2 och G3 saknar tillstånd hela perioden (för kort historik, regimbyten och årsdata). G1 och G9 är inte registrerade.
+- G2 och G3 saknar tillstånd hela perioden (för kort historik, regimbyten och årsdata). G1 saknar tillstånd (en räknad
+  serie). G9 vilar på tre arXiv-serier som är bakåtfyllda med nominellt `known_from` (månadsslut + 7 dagar), så
+  revideringar läcker in i historiken.
 - Tillstånden byter ofta för G4–G7. Om tillståndsregeln har något prognos- eller beskrivningsvärde är inte prövat.
   Det är en egen fråga och kräver förregistrering.
 - G4 och G5 har 5 respektive 4 serier, så en enda serie flyttar indexet 0,1–0,125 eller mer.

@@ -4,12 +4,13 @@ Everything the state engine needs to know about *which* series and *which* thres
 registration (e.g. the G1 and G9 core series) is a data change in this file, not a code change:
 
 - CORE_SERIES mirrors the register's core-series table(s) (section 5) cell by cell, with the register's own
-  shorthand: brace lists (`x_{a,b}_m`) and the BTOS placeholder `<aktiv regim>`. tests/test_state.py parses the
+  shorthand: brace lists (`x_{a,b}_m`), the BTOS placeholder `<aktiv regim>` and the G1 placeholder `<valda>`. tests/test_state.py parses the
   register file and asserts that it equals CORE_SERIES, so the two cannot drift apart.
 - METHOD_OVERRIDES / AGG_OVERRIDES pin a measure method or aggregation where the default inferred from the
   catalog (unit, branch) is not the registered one.
 - BACKFILL_GATED lists series whose backfilled history may only describe, not count, until there are
   24 months of own snapshots (register, change 2026-11-23 on ECI and the Epoch model database).
+  BACKFILL_FLAGGED lists backfilled core series that count but carry a flag (training compute).
 - DERIVED defines ratio series that are built from two catalog series (capex_ocf_hyp4).
 """
 
@@ -24,8 +25,7 @@ REGISTER_PATH = config.REPO / "docs" / "mattregister.md"
 
 # ------------------------------------------------------------------ section 5: core series per branch
 # Mirrors the register table literally (one entry per backticked name in the "Kärnserier" cell).
-# G1 and G9 are not registered yet: add their names here when the register gets them (the test fails until
-# this structure and the register agree again).
+# tests/test_state.py fails until this structure and the register agree.
 CORE_SERIES: dict[str, list[str]] = {
     "G1": ["g1_epoch_bench_frontier_<valda>", "g1_epoch_train_compute_frontier", "g1_epoch_eci_frontier"],
     "G2": ["g2_price_at_capability_gpqa"],
@@ -41,6 +41,14 @@ CORE_SERIES: dict[str, list[str]] = {
 # "<aktiv regim>": the regime series are <prefix>v<n>; the active one is resolved per computation date.
 REGIME_PLACEHOLDER = "<aktiv regim>"
 REGIME_SUFFIX = r"v(\d+)"
+# "<valda>": the benchmarks selected by the registered rule on the computation date (Context.selection,
+# default ai_tracker.series.epoch_hub.selected_on). One series per selected benchmark.
+SELECTED_PLACEHOLDER = "<valda>"
+# Guard for a selected benchmark (register 2026-11-23): not counted once, with what is known on the date, its
+# frontier is > REPLACE_ABOVE or its newest month with an Epoch run ended more than RETIRE_AFTER_DAYS earlier.
+BENCH_FRONTIER_PREFIX, BENCH_RUNS_PREFIX = "g1_epoch_bench_frontier_", "g1_epoch_bench_runs_"
+REPLACE_ABOVE = 0.90
+RETIRE_AFTER_DAYS = 90
 
 # ------------------------------------------------------------------ section 1: measures per series
 PACE_LAG = {"M": 12, "Q": 4, "A": 1}  # takt: change over a year
@@ -52,14 +60,23 @@ SUBMONTHLY = {"D", "W", "2W"}  # aggregated to calendar months before any pace i
 
 # Methods: "log" (positive quantities, log x100), "share" (percent level, pp), "logit" (bounded 0-1 scores,
 # front = running max), "doubling" (G1, front = running max), "halving" (G2 price, front = running min).
-METHOD_OVERRIDES: dict[str, str] = {}
+# g9_epoch_open_weights_share is a share (unit "andel (0–1)", which would default to logit): register section 1,
+# shares in level and percentage points (a 0-1 share is scaled x100). Logit is registered for G1 benchmarks only.
+METHOD_OVERRIDES: dict[str, str] = {"g9_epoch_open_weights_share": "share"}
 AGG_OVERRIDES: dict[str, str] = {}  # "mean" | "sum" for D/W/2W series
 
 # Series that are live nowcast targets: surprise = outcome minus the committed live nowcast (forecasts/<dir>/).
 NOWCAST_TARGETS = {"capex_hyp4": "n1", "tsmc_revenue_m": "n2"}
 
 # ------------------------------------------------------------------ backfill exclusion (change 2026-11-23)
-BACKFILL_GATED: set[str] = {"g2_price_at_capability"}  # ECI-based; future ECI / Epoch model-db series go here
+# ECI and the Epoch models database (register 2026-11-23, G1/G9 core table): gated. g2_price_at_capability uses ECI.
+BACKFILL_GATED: set[str] = {"g2_price_at_capability", "g1_epoch_eci_frontier", "g9_epoch_open_weights_share",
+                            "g9_epoch_notable_models"}
+# Backfilled core series that count, with a flag (register 2026-11-23: "Träningsberäkningen är bakåtfylld och flaggas").
+BACKFILL_FLAGGED: dict[str, str] = {
+    "g1_epoch_train_compute_frontier": "bakåtfylld (Epochs modelldatabas, nominellt known_from), räknas enligt "
+                                       "registret men flaggas",
+}
 OWN_SNAPSHOT_MONTHS = 24
 
 # ------------------------------------------------------------------ derived ratio series (section 5, G5)
