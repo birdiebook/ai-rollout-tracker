@@ -200,11 +200,6 @@ def frame(rows):
     return pd.DataFrame([(p, v, TS(k)) for p, v, k in rows], columns=["period", "value", "known_from"])
 
 
-@bug("sec_financing.first_available picks the formula per period from the full history: when a later filing tags "
-     "the missing component only as a comparative (Meta's LongTermDebtCurrent = 0 at 2025-12-31 in the 2026-10-22 "
-     "10-Q), the period's earlier vintage from the fallback formula is dropped and the period is dated 266 days late "
-     "(lt_debt_meta 2025Q4: 2026-10-22 instead of 2026-01-29). Conservative, not a leak, but it opens a hole in "
-     "as_of views (and in lt_debt_hyp4) for nine months")
 def test_first_available_keeps_the_first_publication_of_an_unchanged_value():
     parts = frame([("2025Q4", 58744, "2026-10-22"), ("2026Q3", 83669, "2026-10-22")])  # noncurrent + current
     noncurrent = frame([("2025Q3", 28834, "2025-10-30"), ("2025Q4", 58744, "2026-01-29"),
@@ -212,6 +207,24 @@ def test_first_available_keeps_the_first_publication_of_an_unchanged_value():
     s = sf.first_available([parts, noncurrent])
     first = s.groupby("period")["known_from"].min()
     assert first["2025Q4"] == TS("2026-01-29")
+
+
+@pytest.mark.parametrize("seed", range(8))
+def test_first_available_point_in_time(seed):
+    """X2: as of any d, each period comes from the first formula that has it with rows known by d."""
+    rnd = random.Random(400 + seed)
+    frames = []
+    for _ in range(3):
+        rows = [(rnd.choice(["2025Q1", "2025Q2", "2025Q3"]), rnd.choice([10, 20, 30]),
+                 str(rnd.choice(list(DATES[:15])).date())) for _ in range(rnd.randint(0, 6))]
+        frames.append(frame(rows).drop_duplicates(["period", "known_from"]))
+    s = sf.first_available(frames)
+    for d in list(DATES[:16]) + [x - pd.Timedelta(days=1) for x in DATES[:16]]:
+        ref = {}
+        for f in frames:
+            for p, v in f[f.known_from <= d].sort_values("known_from").groupby("period")["value"].last().items():
+                ref.setdefault(p, v)
+        assert as_of_rows(s, d) == ref, d
 
 
 def test_first_available_never_dates_a_period_earlier_than_its_formula():
@@ -249,6 +262,27 @@ def test_asml_bookings_regimes_are_closed_and_exclude_2016_and_2026():
         assert SPECS[key].closed
     assert "2016Q4" not in seen and "2026Q1" not in seen
     assert "2017Q1" in seen and "2025Q4" in seen
+
+
+def test_asml_split_table_q2_2013_reads_the_including_column_and_the_previous_quarter():
+    """X2 (R3 item 4): the Cymer-split key figures of 17 July 2013 (layout as in the release, numbers as published)."""
+    text = ("ASML reports second quarter 2013 results. Q2 2013 ASML (excluding Cymer) June 2013 Cymer* Preliminary "
+            "Purchase Price Allocation Q2 2013 ASML (including Cymer) Q1 2013 ASML Net sales 1,155 32 1,187 892 of "
+            "which service and field option sales 239 32 271 215 Net bookings, excluding EUV 1,065 1,065 715 Net "
+            "bookings, excluding EUV (units) 38 38 25 Gross profit 483 18 (19 ) 482 341")
+    rel = asml_sec.parse_release(text)
+    assert rel is not None and rel.quarter == pd.Period("2013Q2", "Q")
+    assert rel.figures["net_sales"] == {pd.Period("2013Q2", "Q"): (1187.0, "net sales"),
+                                        pd.Period("2013Q1", "Q"): (892.0, "net sales")}
+    assert {q: v for q, (v, _) in rel.figures["net_bookings"].items()} == {pd.Period("2013Q2", "Q"): 1065.0,
+                                                                          pd.Period("2013Q1", "Q"): 715.0}
+    assert all(d == "net bookings, excluding euv" for _, d in rel.figures["net_bookings"].values())
+
+
+def test_asml_presentation_exhibits_are_skipped():
+    """The 2017-04-19 6-K's presentation (asml20170418presentatd98.htm) has no bookings row and was parsed first."""
+    assert asml_sec.SKIP_DOC.search("asml20170418presentatd98.htm")
+    assert not asml_sec.SKIP_DOC.search("pressreleasequarterlyresul.htm")
 
 
 @pytest.mark.parametrize("seed", range(6))
@@ -320,6 +354,21 @@ def test_eia930_first_load_is_backfill_and_later_months_are_fetch_dated():
     rows2 = observations.new_rows(spec, second, rows, fetched_at=pd.Timestamp("2026-12-03").date())
     got = {(r.period, r.source): r.known_from for r in rows2.itertuples()}
     assert got == {("2026-10", "revision"): TS("2026-12-03"), ("2026-11", "fetch"): TS("2026-12-03")}
+
+
+@pytest.mark.parametrize("key,period,expected", [
+    ("eia930_avg_pjm_m", "2015-07", "2016-07-25"),  # BA data first public 2016-07-25 (EIA press437)
+    ("eia930_avg_pjm_m", "2016-07", "2016-08-07"),  # after that: month end + 7
+    ("eia930_peak_erco_m", "2016-06", "2016-07-25"),
+    ("eia930_avg_pjm_dom_m", "2018-10", "2019-08-21"),  # sub-region data first public 2019-08-21 (TIE 40993)
+    ("eia930_avg_pjm_dom_m", "2019-08", "2019-10-01"),  # then month end + 31 (EIA: sub-region lag 1-30 days)
+])
+def test_eia930_backfill_not_before_first_publication(key, period, expected):
+    """X2 (R3 item 3): backfill rows are floored at the data element's first publication."""
+    spec = SPECS[key]
+    rows = observations.new_rows(spec, pd.Series([1.0], index=pd.PeriodIndex([period], freq="M")),
+                                 pd.DataFrame(columns=observations.COLUMNS), fetched_at=pd.Timestamp("2026-11-23").date())
+    assert list(rows["source"]) == ["backfill"] and rows["known_from"].iloc[0] == TS(expected)
 
 
 def test_eia930_month_needs_two_days_after_its_end():
@@ -442,8 +491,6 @@ def test_pjm_rows_use_the_posting_table(table):
 
 @pytest.mark.real_data
 @pytest.mark.skipif(not real_table_exists(), reason="no data fetched (python -m ai_tracker.observations)")
-@bug("lt_debt_meta 2025Q4 is dated 2026-10-22 although Meta's 10-K (0001628280-26-003942, filed 2026-01-29) reported "
-     "the balance (58,744): sec_financing.first_available, see test_first_available_keeps_the_first_publication_...")
 @pytest.mark.parametrize("key", ["lt_debt_meta", "lt_debt_hyp4"])
 def test_meta_lt_debt_2025q4_known_from_the_10k(table, key):
     g = table[(table.series == key) & (table.period == "2025Q4")]
@@ -452,10 +499,6 @@ def test_meta_lt_debt_2025q4_known_from_the_10k(table, key):
 
 @pytest.mark.real_data
 @pytest.mark.skipif(not real_table_exists(), reason="no data fetched (python -m ai_tracker.observations)")
-@bug("Manifold history before the selection day is stored as source='release', but the questions were selected on "
-     "2026-11-23 with metadata known only then (uniqueBettorCount >= 100, life >= 180 d, resolution != CANCEL): an "
-     "as_of view of G9 before selected_on is survivorship-conditioned. Per-trade values are point-in-time correct; "
-     "the set is not. Mark pre-selection rows 'backfill' (or gate set-level use on selected_on)")
 def test_manifold_rows_before_selection_are_flagged(table):
     for q in fv.load_urval():
         if q["platform"] != "manifold":
@@ -463,3 +506,15 @@ def test_manifold_rows_before_selection_are_flagged(table):
         g = table[table.series == f"g9_exp_mf_{q['id']}"]
         early = g[g.known_from < TS(q["selected_on"])]
         assert set(early["source"]) <= {"backfill"}, q["id"]
+
+
+@pytest.mark.real_data
+@pytest.mark.skipif(not real_table_exists(), reason="no data fetched (python -m ai_tracker.observations)")
+def test_eia930_rows_not_before_first_publication(table):
+    from ai_tracker.series import eia930 as s930
+
+    g = table[table.series.str.startswith("eia930_")]
+    for key, kf in g.groupby("series")["known_from"].min().items():
+        kind = "SUBREGION" if "_dom_" in key else "BALANCE"
+        assert kf >= TS(s930.FIRST_PUBLISHED[kind]), key
+

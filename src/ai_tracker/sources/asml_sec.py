@@ -10,6 +10,7 @@ Parsing is deterministic and strict, as in tsmc_sec:
   then rows "Total net sales" / "Net sales" and "Net bookings". Values are matched to the column labels;
   footnote markers (single digits, "*") are dropped, and a row whose value count does not match the
   column count is not used.
+- Q2 2013 (Cymer acquisition): a split key-figures table, see parse_split_table.
 - Older releases (to about 2012): bullet sentences "Q3 2009 net sales of EUR 555 million versus Q2 2009
   net sales of EUR 277 million" and "Q3 2009 net bookings valued at EUR 777 million", every figure with
   its own quarter label.
@@ -47,7 +48,7 @@ SUBMISSIONS_FILE = "https://data.sec.gov/submissions/{name}"
 ARCHIVE = "https://www.sec.gov/Archives/edgar/data/{cik}/{acc}/{doc}"
 RESULT_MONTHS = (1, 2, 4, 7, 10)  # results are published mid/late Jan, Apr, Jul, Oct (Feb as a margin)
 MAX_DOC_BYTES = 200_000  # press releases are 5-60 kB; financial statements and presentations are skipped by name
-SKIP_DOC = re.compile(r"(?i)financial_?statement|financialsusgaap|statementsusgaap|presentation|ifrs|statutory|annual|agm|\.(jpg|gif|png|pdf|xml|xsd|txt)$")
+SKIP_DOC = re.compile(r"(?i)financial_?statement|financialsusgaap|statementsusgaap|presentat|ifrs|statutory|annual|agm|\.(jpg|gif|png|pdf|xml|xsd|txt)$")
 
 
 @dataclass(frozen=True)
@@ -221,6 +222,39 @@ def parse_table(text: str, rel: Release) -> bool:
     return got
 
 
+SPLIT_HEADER_RE = re.compile(r"(?i)\bQ([1-4]) (\d{4}) ASML \(excluding (\w+)\)(?:(?!\bnet sales\b).){0,200}?"
+                             r"\bQ\1 \2 ASML \(including \3\) Q([1-4]) (\d{4}) ASML (?=net sales\b)")
+
+
+def parse_split_table(text: str, rel: Release) -> bool:
+    """Key figures split around an acquisition (Q2 2013, Cymer consolidated from 30 May 2013): columns
+    "Qn ASML (excluding X)", the acquired company, a purchase price allocation, "Qn ASML (including X)" and
+    the previous quarter. Cells of the middle columns are blank in some rows, so only the last two values of a
+    row are read: the reported quarter (including the acquisition, as in later comparatives) and the previous
+    quarter. True if net sales were read."""
+    hm = SPLIT_HEADER_RE.search(text)
+    if not hm:
+        return False
+    cols = [pd.Period(f"{hm.group(2)}Q{hm.group(1)}", freq="Q-DEC"),
+            pd.Period(f"{hm.group(5)}Q{hm.group(4)}", freq="Q-DEC")]
+    if cols[1] != cols[0] - 1:
+        return False
+    body = text[hm.end():hm.end() + 3000]
+    got = False
+    for measure, row_re in (("net_sales", SALES_ROW), ("net_bookings", BOOKINGS_ROW)):
+        m = row_re.search(body)
+        if not m or (measure == "net_sales" and m.start() != 0):
+            continue
+        toks = [t for t in _row_values(body, m.end()) if not MARKER.fullmatch(t)]
+        if len(toks) < 2:
+            continue
+        definition = re.sub(r"\s+", " ", m.group(1).lower())
+        for q, t in zip(cols, toks[-2:]):
+            rel.add(measure, q, _value(t), definition)
+        got = got or measure == "net_sales"
+    return got
+
+
 def parse_sentences(text: str, rel: Release) -> None:
     """Older releases: 'Q3 2009 net sales of EUR 555 million', 'Q3 2009 net bookings valued at EUR 777 million'."""
     for measure, rx, definition in (("net_sales", SENT_SALES, "net sales"),
@@ -236,7 +270,7 @@ def parse_release(text: str) -> Release | None:
     if "ASML" not in head or not RESULTS_RE.search(head):
         return None
     rel = Release(pd.Period("1900Q1", freq="Q-DEC"))
-    if not parse_table(text, rel):
+    if not parse_table(text, rel) and not parse_split_table(text, rel):
         parse_sentences(text[:6000], rel)
     sales = rel.figures.get("net_sales", {})
     if not sales:

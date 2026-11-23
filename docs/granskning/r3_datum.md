@@ -172,3 +172,30 @@ som någonsin har den, så versionen från 10-K 2026-01-29 (samma värde, 58 744
   negativa debt-kvartal, EIA-930 backfill-märkt, PJM-datum ur tabellen, samt två xfail (Meta-skulden och
   Manifold-urvalet).
 - Hela sviten: 991 passed, 3 skipped, 4 xfailed.
+
+## Status efter rättning (X2, 2026-11-23)
+
+Rättat på `auto6/x2-r3-rattning`. Alla fyra strikta xfail i `tests/test_r3_datum.py` är borttagna och testerna gröna.
+
+1. **`sec_financing.first_available`** väljer nu formel per brytdag (som `balances_at` för taggar). Ett oförändrat
+   värde behåller sin första publicering, och ett formelbyte med nytt värde blir en revidering. Det gamla testet
+   heter nu `test_first_available_chooses_the_formula_per_cutoff_date`, och ett egenskapstest mot brute force har
+   lagts till. Ombyggt: `lt_debt_meta` och `lt_debt_hyp4` 2025Q4 är daterade 2026-01-29 respektive 2026-02-06
+   (i stället för 2026-10-22). Samma regel ger `lt_debt_msft` 2012Q2 från 2012-07-26 (reservformeln) och
+   `cash_sec_googl` 2009Q4 från 10-K 2010-02-12 i stället för 2010-07-30. Övriga 23 balansserier är oförändrade.
+2. **Manifold:** rader med `known_from` före frågans `selected_on` har `source="backfill"`
+   (`forvantningar.flag_preselection`). Ombyggt: 17 serier, 9 702 backfill-rader och 3 release-rader. Regeln inför
+   G-A finns i `docs/kallor/forvantningar.md`: mått på mängdnivå använder bara rader som inte är backfill.
+3. **EIA-930:** golv vid första publicering, belagt på eia.gov. För BA-data är det 2016-07-25 (press437 och TIE
+   27212), för delregioner 2019-08-21 (TIE 40993). DOM har 31 dagars fördröjning (om-sidan: "lag of 1–30 days").
+   Ombyggt: alla 12 serier. **Kvar:** när kolumnen "Demand (MW) (Adjusted)" infördes gick inte att belägga. De tio
+   BA-serierna är flaggade i `docs/kallor/el_datacenter.md`.
+4. **ASML:** pressmeddelandet 2013-07-17 läses nu (`parse_split_table`, tabellen delad kring Cymer), och
+   presentationsbilagor hoppas över (`presentat` i `SKIP_DOC`). Det senare rättade 2017-04-19 och också 2020-10-14,
+   där presentationen tidigare lästes före pressmeddelandet. Nu har `asml_net_sales` 2013Q2, 2017Q1 och 2020Q3
+   samt `asml_net_bookings(_ex_euv)` 2013Q2, 2017Q1 och 2020Q3 rätt, tidigare datum. Värdena är desamma som i de
+   senare jämförelsetalen.
+5. **Polymarket:** i `forvantningar.md` står nu att värdet är måndagens pris, märkt med föregående vecka.
+
+Hela sviten efter merge av main: 1 259 passed, 1 skipped och 26 xfailed. Alla 26 xfail kommer från R5 (`test_r5_extraktion.py`),
+inga från R3. `python -m ai_tracker.warehouse` är grön.

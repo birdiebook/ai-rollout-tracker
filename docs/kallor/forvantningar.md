@@ -103,7 +103,7 @@ omgång före nästa urval, aldrig genom att ta bort frågor ur omgång 1.
 
 | Nyckel | Frekv. | Värde | `known_from` | `source` |
 |---|---|---|---|---|
-| `g9_exp_mf_<id>` | D (UTC-dygn) | sannolikheten efter dygnets sista handel (`probAfter` i `/v0/bets`), och föregående dygns värde förs vidare om ingen handel skett | dygnets slut, alltså D+1 00:00 UTC. Varje handel som används har en tidsstämpel före `known_from` | release |
+| `g9_exp_mf_<id>` | D (UTC-dygn) | sannolikheten efter dygnets sista handel (`probAfter` i `/v0/bets`), och föregående dygns värde förs vidare om ingen handel skett | dygnets slut, alltså D+1 00:00 UTC. Varje handel som används har en tidsstämpel före `known_from` | backfill före frågans `selected_on`, därefter release |
 | `g9_exp_pm_<id>` | W (mån–sön) | Ja-priset (`outcomePrices`, det pris Polymarket visar) vid den första hämtningen efter att veckan tagit slut | hämtdagen (midnatt UTC), som för andra hämtade värden i `observations.new_rows` | snapshot |
 
 - **Manifold, historik:** hela handelshistoriken hämtas varje gång (sidvis med `before`, 1 000 per sida). Serien
@@ -115,6 +115,21 @@ omgång före nästa urval, aldrig genom att ta bort frågor ur omgång 1.
   börjar därför med hämtningen 2026-11-23 (veckan 2026-11-16–22). Veckohämtningen sker på måndagar 03:37 UTC, så
   värdet speglar priset några timmar efter veckans slut. En senare hämtning samma vecka behåller den lagrade
   ögonblicksbilden. En missad vecka ger en lucka, som `no_gaps` fångar.
+- **Polymarket, vilken dag priset gäller (R3):** värdet är *måndagens* pris (hämtat omkring 03:37 UTC), men det
+  lagras under föregående vecka (mån–sön) och får `known_from` = måndagen 00:00 UTC. Det följer `as_of`-konventionen
+  (ett värde som kommer under en dag räknas som känt den dagen), och priset tas mindre än fyra timmar efter dagens
+  början. Det är alltså inte veckans stängningspris söndag 24:00 utan ett pris några timmar in i nästa vecka. Den
+  som jämför med en annan källas veckovärde ska räkna med den förskjutningen.
+- **Urvalsbias i Manifold-historiken (R3, rättat i X2):** varje dygnsvärde är rätt i tid, eftersom det räknas om ur
+  handeln. Men frågorna valdes ut den 2026-11-23 med metadata som bara var känd då (minst 100 unika handlare,
+  livslängd minst 180 dagar, inte avgjord som CANCEL), och 14 av 17 var redan avgjorda. Att en fråga finns med beror
+  alltså på vad som hände senare. Rader med `known_from` före frågans `selected_on` märks därför
+  `source="backfill"`, som all historik som laddats i efterhand, och rader från urvalsdagen och framåt `release`
+  (`sources/forvantningar.flag_preselection`). **Regel inför grind G-A:** mått på mängdnivå i G9 (antal frågor,
+  medel över frågor, spridning) får bara använda rader med `source != "backfill"`, alltså frågor från och med deras
+  urvalsdag. Backfill-raderna får användas per fråga, till exempel för att visa en enskild frågas historik, men inte
+  i en `as_of`-vy av G9 som helhet före urvalsdagen och inte i en backtest av G9-aggregat. Nya urvalsomgångar får
+  sitt eget `selected_on`, så regeln gäller per omgång.
 - **Kontroll:** för de öppna Manifold-frågorna stämmer det senaste dygnsvärdet med API:ts aktuella `probability`
   (skillnaden var 0 för en fråga, och de andra skilde sig bara genom dagens handel efter dygnsskiftet).
   Alla värden ligger i [0, 1].

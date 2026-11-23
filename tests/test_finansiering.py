@@ -94,12 +94,22 @@ def test_sum_needs_every_component_and_is_dated_by_the_latest():
     assert first_known(s) == {"2025Q1": "2025-05-02"}
 
 
-def test_first_available_takes_each_period_from_one_formula():
+def test_first_available_chooses_the_formula_per_cutoff_date():
+    """R3/X2: the fallback's version stands until the preferred formula has the period; the switch is a revision."""
     a = frame([("2025Q2", 20, "2025-07-30")])
     b = frame([("2025Q1", 9, "2025-04-30"), ("2025Q2", 99, "2025-07-01")])
     s = sf.first_available([a, b])
     assert latest(s) == {"2025Q1": 9, "2025Q2": 20}
-    assert first_known(s)["2025Q2"] == "2025-07-30"  # b's earlier date for Q2 is not used
+    assert first_known(s)["2025Q2"] == "2025-07-01"  # b had Q2 first: known from b's own date
+    q2 = s[s.period == "2025Q2"]
+    assert list(zip(q2["value"], q2["known_from"].astype(str))) == [(99, "2025-07-01"), (20, "2025-07-30")]
+
+
+def test_first_available_unchanged_value_from_the_preferred_formula_is_no_new_version():
+    a = frame([("2025Q2", 20, "2025-10-30")])  # comparative in a later filing, same value
+    b = frame([("2025Q2", 20, "2025-07-30")])
+    s = sf.first_available([a, b])
+    assert list(s["known_from"].astype(str)) == ["2025-07-30"]
 
 
 # ------------------------------------------------------------------ flows: gap fillers

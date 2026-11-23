@@ -120,12 +120,29 @@ def test_manifold_series_ends_yesterday_or_at_close(monkeypatch):
             {"createdTime": ms("2026-11-23 09:00"), "probAfter": 0.7},  # today: not a complete day
             {"createdTime": ms("2026-11-19 12:00"), "probAfter": 0.1}]
     monkeypatch.setattr(fv, "manifold_bets", lambda _id: bets)
-    q = {"id": "x", "platform": "manifold", "close": "2028-01-01", "status": "open"}
+    q = {"id": "x", "platform": "manifold", "close": "2028-01-01", "status": "open", "selected_on": "2026-11-22"}
     out = fv.manifold_series(q, now=pd.Timestamp("2026-11-23 18:00"))
     assert list(out["period"]) == ["2026-11-19", "2026-11-20", "2026-11-21", "2026-11-22"]
     assert list(out["value"]) == [0.1, 0.4, 0.4, 0.4]
+    # known before the selection day -> backfill (survivorship-conditioned set), from it on -> release
+    assert list(out["source"]) == ["backfill", "backfill", "release", "release"]
     closed = dict(q, close="2026-11-20", status="resolved")
     assert fv.manifold_series(closed, now=pd.Timestamp("2026-11-23"))["period"].iloc[-1] == "2026-11-20"
+
+
+def test_manifold_preselection_rows_are_stored_as_backfill_with_their_trade_dates():
+    from ai_tracker import catalog, observations
+
+    q = {"id": "x", "selected_on": "2026-11-23"}
+    df = fv.flag_preselection(fv.daily_from_trades(pd.Series(pd.to_datetime(["2026-11-20 10:00", "2026-11-22 10:00"])),
+                                                   pd.Series([0.2, 0.6]), pd.Timestamp("2026-11-23")), q)
+    spec = catalog.Spec(key="g9_exp_mf_x", branch="G9", label="x", unit="p", freq="D", source="Manifold",
+                        fetch=lambda: df, lag_days=1, license="unverified", revised=False, publish=False)
+    rows = observations.new_rows(spec, df, pd.DataFrame(columns=observations.COLUMNS),
+                                 fetched_at=pd.Timestamp("2026-11-24").date())
+    got = {(r.period, r.source): str(r.known_from.date()) for r in rows.itertuples()}
+    assert got == {("2026-11-20", "backfill"): "2026-11-21", ("2026-11-21", "backfill"): "2026-11-22",
+                   ("2026-11-22", "release"): "2026-11-23", ("2026-11-23", "release"): "2026-11-24"}
 
 
 def _table(rows):
