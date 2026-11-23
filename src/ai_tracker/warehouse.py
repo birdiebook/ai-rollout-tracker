@@ -36,6 +36,11 @@ KNOWN_GAPS: dict[str, str] = {
     "guid_capex_msft_q_dir_qoq": "2025Q3 was guided as a number (over $30bn), not as a direction",
 }
 
+# Company AI KPIs (track B4) are stated irregularly; the series module lists its gapped series with the reason.
+from ai_tracker.series.ai_kpis import KNOWN_GAPS as _AI_KPI_GAPS  # noqa: E402
+
+KNOWN_GAPS.update(_AI_KPI_GAPS)
+
 # Stale series accepted until a date (ISO), and why: a known outage, never a permanent exemption
 # (that is Spec.max_age_days or Spec.closed). Example: {"us_imports_tw_m": ("2026-12-31", "shutdown, ...")}.
 KNOWN_STALE: dict[str, tuple[str, str]] = {

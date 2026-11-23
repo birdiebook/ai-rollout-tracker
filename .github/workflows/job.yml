@@ -1,0 +1,51 @@
+# Runs one job module (ai_tracker.jobs.<job>) that needs secrets only Actions has: Cloudflare Radar token and
+# keyless GCP auth (OIDC -> Workload Identity Federation, BigQuery sandbox, no billing). Dispatch with any
+# branch as ref, so a track can test its own job before merge. Output: aggregates of public data only,
+# uploaded as a short-lived artifact.
+name: Secret job
+
+on:
+  workflow_dispatch:
+    inputs:
+      job:
+        description: "Module name in src/ai_tracker/jobs/"
+        required: true
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: job-${{ inputs.job }}
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      PYTHONPATH: src
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate job name
+        run: '[[ "${{ inputs.job }}" =~ ^[a-z0-9_]+$ ]] && test -f "src/ai_tracker/jobs/${{ inputs.job }}.py"'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Install pinned dependencies
+        run: python -m pip install -r ci/requirements.txt
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+      - uses: google-github-actions/setup-gcloud@v2
+      - name: Run job
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+        run: python -m ai_tracker.jobs "${{ inputs.job }}" --out out
+      - uses: actions/upload-artifact@v4
+        with:
+          name: job-${{ inputs.job }}
+          path: out/
+          retention-days: 3
