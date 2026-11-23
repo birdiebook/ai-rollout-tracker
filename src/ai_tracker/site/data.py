@@ -17,8 +17,8 @@ import pandas as pd
 
 from ai_tracker import catalog, config, evaluation, observations, pipeline
 from ai_tracker.nowcast import n1
-from ai_tracker.nowcast_n2 import __main__ as n2_live
-from ai_tracker.nowcast_n2 import engine as n2
+from ai_tracker.nowcast import n2
+from ai_tracker.nowcast import n2 as n2_live
 from ai_tracker.state import register as R
 from ai_tracker.state import snapshot as S
 from ai_tracker.state.measures import Context, measure_path
