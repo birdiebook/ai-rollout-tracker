@@ -30,7 +30,8 @@ starten. Försöket 21:19 tar en dag där det första fallerade (till exempel at
   `run_live` vägrar en prognosdag som inte är i dag.
 - **En missad prognosdag tas inte igen** av schemat. Om båda försöken fallerar kan prognosen köras för hand
   samma UTC-dag (se nedan). Annars noteras dagen som missad. CLI:erna `python -m ai_tracker.nowcast n1 --origin`
-  och `python -m ai_tracker.nowcast_n2 --origin` finns kvar för manuella körningar.
+  och `python -m ai_tracker.nowcast n2 --origin` finns kvar för manuella körningar (`python -m ai_tracker.nowcast_n2`
+  är en shim till det senare).
 - **Skrivs aldrig om.** En befintlig prognosfil hoppas över (skrivarna öppnar med läget `x`). `pipeline publish`
   vägrar en sökväg som redan finns i HEAD och vägrar om något annat än den nya filen och scorecarden är
   stagat. Om filen dykt upp på main under tiden ger `git pull --rebase` en konflikt och jobbet fallerar i stället

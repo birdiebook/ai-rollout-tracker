@@ -11,9 +11,9 @@
 
 Timing rule. A live forecast is only made on its registered origin, and the origin is *today* in UTC: the routine
 refreshes its series and then reads them with as_of(origin). Every row fetched today has known_from <= today, so the
-information set is what was known on the origin day. A missed origin is not made up later (the CLIs in
-ai_tracker.nowcast and ai_tracker.nowcast_n2 still allow a manual run with an explicit --origin). If the registered
-day falls on a weekend it is kept, never shifted.
+information set is what was known on the origin day. A missed origin is not made up later (`python -m ai_tracker.nowcast
+n1|n2` still allows a manual run with an explicit --origin). If the registered day falls on a weekend it is kept, never
+shifted.
 
 Immutability. A forecast file that exists is never rewritten (the writers open with mode "x"), a due origin whose
 file exists is skipped, and `publish` refuses a path that is already in HEAD.
@@ -35,10 +35,7 @@ from pathlib import Path
 import pandas as pd
 
 from ai_tracker import catalog, config, observations, warehouse
-from ai_tracker.nowcast import engine as n1_engine
-from ai_tracker.nowcast import n1
-from ai_tracker.nowcast_n2 import __main__ as n2_live
-from ai_tracker.nowcast_n2 import engine as n2
+from ai_tracker.nowcast import engine, n1, n2
 
 FORECASTS = config.REPO / "forecasts"
 SCORECARD = FORECASTS / "SCORECARD.md"
@@ -204,7 +201,7 @@ def run_live(d: Due, root: Path | None = None, table: pd.DataFrame | None = None
             raise SystemExit(f"refresh failed for {failed}; no forecast written. Re-run the workflow today.")
     table = observations.load() if table is None else table
     if d.nowcast == "n2":
-        out = n2_live.write(d.origin, table, path.parent, today=today)
+        out = n2.write(d.origin, table, path.parent, today=today)
     else:
         out = n1.write_live(table, d.origin, path.parent, today=today)
     assert Path(out) == path, (out, path)
@@ -245,8 +242,8 @@ def score(root: Path | None = None, table: pd.DataFrame | None = None) -> dict[s
             target = d.get("target", default_target)
             period = d.get("quarter") or d.get("month")
             origin = pd.Timestamp(d["origin"])
-            fv = n1_engine.first_vintage(table, target)
-            fkf = n1_engine.first_known_from(table, target) if len(fv) else pd.Series(dtype="datetime64[ns]")
+            fv = engine.first_vintage(table, target)
+            fkf = engine.first_known_from(table, target) if len(fv) else pd.Series(dtype="datetime64[ns]")
             fv.index, fkf.index = fv.index.astype(str), fkf.index.astype(str)
             row = {"period": period, "origin": origin.date().isoformat(), "champion": d["champion"],
                    "forecast": _num(d["value"]), "outcome": float("nan"), "known_from": "", "status": "väntar"}
@@ -261,7 +258,7 @@ def score(root: Path | None = None, table: pd.DataFrame | None = None) -> dict[s
             for v in variants:
                 x = _num(d.get("variants", {}).get(v))
                 ok = math.isfinite(x) and math.isfinite(row["outcome"]) and x > 0
-                row[f"err_{v}"] = n1_engine.log_error(x, row["outcome"]) if ok else float("nan")
+                row[f"err_{v}"] = engine.log_error(x, row["outcome"]) if ok else float("nan")
             row["err_champion"] = row.get(f"err_{d['champion']}", float("nan"))
             rows.append(row)
         out[sub] = pd.DataFrame(rows)

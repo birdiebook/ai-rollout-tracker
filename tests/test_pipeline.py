@@ -13,9 +13,7 @@ import pandas as pd
 import pytest
 
 from ai_tracker import config, observations, pipeline, warehouse
-from ai_tracker.nowcast import n1
-from ai_tracker.nowcast_n2 import __main__ as n2_live
-from ai_tracker.nowcast_n2 import engine as n2
+from ai_tracker.nowcast import n1, n2
 
 TS = pd.Timestamp
 
@@ -145,7 +143,7 @@ def test_live_refuses_an_origin_that_is_not_today(tmp_path):
 
 def test_n2_writer_refuses_future_origin(tmp_path):
     with pytest.raises(ValueError, match="future"):
-        n2_live.write("2020-01-05", n2_table(), tmp_path, today="2020-01-04")
+        n2.write("2020-01-05", n2_table(), tmp_path, today="2020-01-04")
     assert not list(tmp_path.iterdir())
 
 

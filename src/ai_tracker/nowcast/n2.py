@@ -1,6 +1,11 @@
-"""Nowcast N2: TSMC monthly revenue (docs/mattregister.md, section 4 and the later changes).
+"""Nowcast N2: TSMC monthly revenue (docs/mattregister.md, section 4 and the later changes). Shared rolling-origin
+contract (first vintage, outcome-known guard, promotion rule, immutable writer): engine.py.
 
-Pre-registered and implemented exactly: B0, B1 and V1, nothing else.
+    python -m ai_tracker.nowcast n2 --origin YYYY-MM-DD [--refresh]   live forecast -> forecasts/n2/<month>.json
+    python -m ai_tracker.nowcast backtest n2                          pre-registered backtest, logged to experiments/runs/
+    (python -m ai_tracker.nowcast_n2 [...] and python -m ai_tracker.nowcast_n2.backtest remain as compatibility shims)
+
+Pre-registered and implemented exactly: B0, B1, V1 and B2, nothing else.
 
 Timing
 - Target month m. Origin = day 5 of month m+1 (register change 2026-11-23; earliest 6-K ever filed is day 6).
@@ -31,16 +36,32 @@ Models (all in 100 * log points)
   y(j-12) * y(L) / y(L-12) (identical to iterating B1 month by month).
   Fallback to B1 (and the reason recorded) when the quarter has no guidance known at the origin, when lo or hi
   of the range or (from 2017Q3) the rate is missing, or when G - known months <= 0.
+
+Promotion rule (register section 4, "as N1", and the B2 changes), read conservatively:
+- baseline = the better of B0 and B1 by MAE over the full evaluation period;
+- DM test of each variant (V1, B2) against that baseline on the full period; Holm over the registered family
+  {V1, B2} (before B2 the family was V1 alone);
+- a variant passes only if Holm-p < 0.10 AND its MAE is lower than both B0 and B1 in the full period AND in the
+  subperiod from 2023-01. Otherwise B1 is the main model.
+- A passing variant in REVIEW_REQUIRED is only a conditional promotion (an independent review of the extracted
+  guidance values comes first). It never sets the champion. R2 approved B2's extraction, so the set is empty.
+
+Live forecast: writes forecasts/n2/<target month>.json once. Refuses to overwrite, refuses an origin that is not
+day 5, refuses an origin after today (UTC; as_of would not be the real information set), and refuses when the
+target month's outcome is already in the table (then it would not be a forecast).
 """
 
 from __future__ import annotations
 
+import argparse
 from dataclasses import dataclass, field
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
-from ai_tracker import observations
+from ai_tracker import evaluation, observations
+from ai_tracker.nowcast import engine
 
 TARGET = "tsmc_revenue_m"
 INDICATORS = ["us_imports_tw_m"]  # register change 2026-11-23: us_ip_semis excluded, Korea/Taiwan blocked
@@ -48,7 +69,7 @@ DROPPED_INDICATORS = {
     "kr_semi_exports_20d": "BLOCKED (Korea customs, other egress IP needed)",
     "kr_semi_exports_m": "BLOCKED (MOTIE/KOSIS/KITA; ECOS needs key)",
     "tw_exports_m": "BLOCKED (Taiwan MOF/customs)",
-    "us_ip_semis": "excluded pending FRED/ALFRED terms decision",
+    "us_ip_semis": "not in the registered variants (Fed G.17 primary source since I7; needs a new registered variant)",
 }
 VARIANTS = ["B0", "B1", "V1", "B2"]
 MODELS = ["V1", "B2"]  # the registered Holm family for N2 (register change "B2: TSMC före 2017Q3 ...")
@@ -77,18 +98,8 @@ def target_for(origin: pd.Timestamp) -> pd.Period:
 
 
 def first_vintages(table: pd.DataFrame, series: str = TARGET) -> pd.DataFrame:
-    """Earliest vintage per period: columns value, known_from, on a monthly PeriodIndex."""
-    t = table[table["series"] == series].sort_values("known_from").groupby("period").first()
-    t.index = pd.PeriodIndex(t.index, freq="M")
-    return t[["value", "known_from"]].sort_index()
-
-
-def _vintage_dates(table: pd.DataFrame, series: str, origin) -> pd.Series:
-    """known_from of the vintage as_of(series, origin) uses for each period (same selection rule)."""
-    t = table[(table["series"] == series) & (table["known_from"] <= origin)]
-    kf = t.sort_values("known_from").groupby("period")["known_from"].last()
-    kf.index = pd.PeriodIndex(kf.index, freq="M")
-    return kf
+    """Earliest vintage per period: columns value, known_from, on a monthly PeriodIndex (engine.first_vintages)."""
+    return engine.first_vintages(table, series)
 
 
 @dataclass
@@ -111,7 +122,7 @@ def month_inputs(month: pd.Period, table) -> Inputs:
     inp = Inputs(month, origin)
     by_series = table if isinstance(table, dict) else {k: g for k, g in table.groupby("series")}
     y = observations.as_of(TARGET, origin, by_series[TARGET])
-    y_kf = _vintage_dates(by_series[TARGET], TARGET, origin)
+    y_kf = engine.vintage_known_from(by_series[TARGET], origin)
     need = [month - 1, month - 12, month - 13]
     if month - 1 in y.index:
         inp.b0 = 100 * np.log(y[month - 1])
@@ -130,7 +141,7 @@ def month_inputs(month: pd.Period, table) -> Inputs:
         last = s.index.max()
         if last - 12 in s.index and s[last] > 0 and s[last - 12] > 0:
             inp.x[ind] = 100 * (np.log(s[last]) - np.log(s[last - 12]))
-            kf = _vintage_dates(by_series[ind], ind, origin)
+            kf = engine.vintage_known_from(by_series[ind], origin)
             for p in (last, last - 12):
                 inp.used.append((ind, str(p), float(s[p]), kf[p]))
     return inp
@@ -144,15 +155,8 @@ def _guidance_value(key: str, quarter: pd.Period, origin, by_series: dict):
     s = observations.as_of(series, origin, by_series[series])
     if quarter not in s.index:
         return None
-    kf = _vintage_dates_q(by_series[series], origin)
+    kf = engine.vintage_known_from(by_series[series], origin)
     return float(s[quarter]), kf[quarter]
-
-
-def _vintage_dates_q(rows: pd.DataFrame, origin) -> pd.Series:
-    t = rows[rows["known_from"] <= origin]
-    kf = t.sort_values("known_from").groupby("period")["known_from"].last()
-    kf.index = pd.PeriodIndex(kf.index, freq="Q-DEC")
-    return kf
 
 
 def quarter_guidance(quarter: pd.Period, origin, by_series: dict) -> tuple[float, str, list]:
@@ -200,7 +204,7 @@ def _b2(inp: Inputs, y: pd.Series, by_series: dict) -> None:
     inp.b2 = 100 * np.log(rest * b1[m] / sum(b1.values()))
     inp.b2_source = source
     inp.b2_guidance = g
-    y_kf = _vintage_dates(by_series[TARGET], TARGET, inp.origin)
+    y_kf = engine.vintage_known_from(by_series[TARGET], inp.origin)
     for k in sorted(set(known) | {k - 12 for k in unknown} | {last, last - 12}):
         rec = (TARGET, str(k), float(y[k]), y_kf[k])
         if rec not in inp.used:
@@ -312,3 +316,221 @@ def forecast(origin, table: pd.DataFrame) -> Forecast:
     month = target_for(origin)
     records = build_records(t, month)
     return forecast_from(month, records, first_vintages(t))
+
+
+# ------------------------------------------------------------------ backtest
+
+PROMOTION_P = engine.PROMOTION_ALPHA
+
+
+@dataclass
+class Result:
+    frame: pd.DataFrame  # one row per evaluated month
+    summary: pd.DataFrame  # one row per (period, variant)
+    baseline: str
+    holm_p: float  # V1's Holm-adjusted p (kept for the phase 3 report)
+    promoted: bool  # a variant was promoted outright (not conditionally)
+    champion: str
+    reasons: list  # V1's checks
+    holm: dict = None  # variant -> Holm-adjusted p over the registered family
+    checks: dict = None  # variant -> list of PASS/FAIL lines
+    conditional: dict = None  # variant -> status, for variants that pass but need a review first
+
+
+COLUMNS = ["month", "origin", "outcome_known_from", "n_train", "lambda", "imports_lag", "b2_source",
+           *[f"e_{v}" for v in VARIANTS]]
+
+
+def run(table: pd.DataFrame) -> pd.DataFrame:
+    """Forecasts and errors for every month with a first-vintage outcome that was not yet known at its origin.
+
+    A month whose first 6-K is dated on or before the origin is a forecast of a known number: it is never
+    scored (same guard as N1). The skipped months are listed in frame.attrs["known_at_origin"].
+    """
+    t = slim(table)
+    outcomes = first_vintages(t)
+    last = outcomes.index.max()
+    records = build_records(t, last)
+    rows, known = [], []
+    for m in sorted(records):
+        if m not in outcomes.index:
+            continue
+        note = engine.known_at_origin(outcomes, m, records[m].origin, str(m))
+        if note:
+            known.append(note)
+            continue
+        f = forecast_from(m, records, outcomes)
+        y = 100 * np.log(outcomes.at[m, "value"])
+        imp_last = [p for s, p, *_ in f.inputs.used if s == "us_imports_tw_m"]
+        rows.append({
+            "month": m, "origin": f.origin, "outcome_known_from": outcomes.at[m, "known_from"],
+            "n_train": f.n_train, "lambda": f.lam,
+            "imports_lag": (m - pd.Period(max(imp_last), "M")).n if imp_last else np.nan,
+            "b2_source": f.inputs.b2_source,
+            **{f"e_{v}": f.logs[v] - y for v in VARIANTS},
+        })
+    frame = pd.DataFrame(rows, columns=COLUMNS).set_index("month")
+    frame.attrs["known_at_origin"] = known
+    return frame
+
+
+def evaluate(frame: pd.DataFrame) -> Result:
+    variants = [v for v in VARIANTS if f"e_{v}" in frame]
+    models = [v for v in MODELS if v in variants]
+    ok = frame[[f"e_{v}" for v in variants]].notna().all(axis=1) & (frame["n_train"] >= MIN_TRAIN)
+    start = max(EVAL_START, frame.index[ok].min())
+    ev = frame[(frame.index >= start) & ok]
+    periods = {"full": ev, "2023+": ev[ev.index >= SUBPERIOD_START]}
+    mae = {k: {v: evaluation.metrics(d[f"e_{v}"])["MAE"] for v in variants} for k, d in periods.items()}
+    baseline = engine.best_baseline(mae["full"])
+
+    out, dm_full = [], {}
+    for name, d in periods.items():
+        base = engine.best_baseline(mae[name])
+        label = f"{d.index.min()}..{d.index.max()}"
+        for v in variants:
+            m = evaluation.metrics(d[f"e_{v}"])
+            row = {"period": name, "range": label, "variant": v, **m, "vs": "", "dm_diff": np.nan, "dm_p": np.nan,
+                   "mde": np.nan}
+            ref = baseline if name == "full" else base
+            if v != ref:
+                r = evaluation.dm_test(d[f"e_{v}"], d[f"e_{ref}"])
+                row.update(vs=ref, dm_diff=r.mean_diff, dm_p=r.p, mde=r.mde)
+                if name == "full" and v in models:
+                    dm_full[v] = r
+            out.append(row)
+    summary = pd.DataFrame(out)
+    holm = evaluation.holm({v: dm_full[v].p for v in models})
+    checks, passed = {}, {}
+    for v in models:
+        # Holm on the full period only; MAE below both baselines in both periods
+        per = {"full": engine.period_check(mae["full"][v], min(mae["full"]["B0"], mae["full"]["B1"]), holm[v],
+                                           PROMOTION_P),
+               "2023+": engine.period_check(mae["2023+"][v], min(mae["2023+"]["B0"], mae["2023+"]["B1"]))}
+        c = {
+            f"Holm-p {holm[v]:.3f} < {PROMOTION_P} (family {'+'.join(models)})": per["full"]["holm_ok"],
+            "lower MAE than B0 and B1, full period": per["full"]["mae_ok"],
+            "lower MAE than B0 and B1, 2023+": per["2023+"]["mae_ok"],
+        }
+        checks[v] = [f"{'PASS' if ok_ else 'FAIL'}: {k}" for k, ok_ in c.items()]
+        passed[v] = engine.passes(per)
+    d = engine.decide(passed, mae["full"], REVIEW_REQUIRED, "B1")
+    return Result(ev, summary, baseline, holm.get("V1", np.nan), bool(d.winners), d.champion, checks.get("V1", []),
+                  holm, checks, d.conditional)
+
+
+def b2_usage(frame: pd.DataFrame) -> pd.DataFrame:
+    """Per quarter: months where B2 used guidance and months where it fell back to B1 (with the reason)."""
+    f = frame.assign(quarter=[str(m.asfreq("Q-DEC")) for m in frame.index],
+                     used=frame["b2_source"].str.startswith("guidance"))
+    return f.groupby("quarter").agg(months=("used", "size"), guidance=("used", "sum"),
+                                    sources=("b2_source", lambda s: "; ".join(sorted(set(s)))))
+
+
+def log(result: Result):
+    rows = [{"target": TARGET, "variant": r.variant, "period": f"{r.period} {r.range}", "n": r.n,
+             "MAE": round(r.MAE, 4), "dm_p_vs_baseline": "" if np.isnan(r.dm_p) else round(r.dm_p, 4)}
+            for r in result.summary.itertuples()]
+    return evaluation.log_run("n2_tsmc", rows)
+
+
+def markdown(result: Result) -> str:
+    lines = ["| Period | Variant | n | MAE | RMSE | Bias | vs | MAE diff | DM p | MDE |",
+             "|---|---|---|---|---|---|---|---|---|---|"]
+    for r in result.summary.itertuples():
+        f = lambda x: "" if np.isnan(x) else f"{x:.3f}"  # noqa: E731
+        lines.append(f"| {r.period} {r.range} | {r.variant} | {r.n} | {r.MAE:.3f} | {r.RMSE:.3f} | {r.bias:+.3f} | "
+                     f"{r.vs} | {f(r.dm_diff)} | {f(r.dm_p)} | {f(r.mde)} |")
+    return "\n".join(lines)
+
+
+def main_backtest():
+    table = observations.load()
+    frame = run(table)
+    res = evaluate(frame)
+    print(markdown(res))
+    print(f"\nBaseline (best of B0/B1, full period): {res.baseline}. Holm-p over {MODELS}: {res.holm}")
+    for v, lines in res.checks.items():
+        print(f"{v}: " + " | ".join(lines))
+    print(f"Promoted outright: {res.promoted}. Champion: {res.champion}. Conditional: {res.conditional or '-'}")
+    ev = res.frame
+    use = b2_usage(ev)
+    print(f"B2 used guidance in {int(use['guidance'].sum())} of {int(use['months'].sum())} months; "
+          f"fallbacks: {ev.loc[~ev['b2_source'].str.startswith('guidance'), 'b2_source'].value_counts().to_dict()}")
+    print(f"\nOutcome known at origin: {len(frame.attrs['known_at_origin'])} months skipped "
+          f"{frame.attrs['known_at_origin'] or ''}; scored with known outcome (must be 0): "
+          f"{(ev['outcome_known_from'] <= ev['origin']).sum()}")
+    print(f"Imports lag (months, target - latest known import month): {ev['imports_lag'].value_counts().to_dict()}")
+    print(f"Lambda chosen: {ev['lambda'].value_counts().sort_index().to_dict()}")
+    sub = res.summary[(res.summary["period"] == "2023+") & res.summary["variant"].isin(MODELS)]
+    print(f"Holm over {MODELS} in 2023+ (reported; the rule's Holm test is on the full period): "
+          f"{evaluation.holm(dict(zip(sub['variant'], sub['dm_p'])))}")
+    pos = ev.assign(pos=[(m.month - 1) % 3 + 1 for m in ev.index])
+    for k, d in pos.groupby("pos"):
+        r = evaluation.dm_test(d["e_B2"], d["e_B1"])
+        print(f"info (not registered) month {k} of the quarter, n={len(d)}: MAE B1 {d['e_B1'].abs().mean():.2f}, "
+              f"B2 {d['e_B2'].abs().mean():.2f}, bias B2 {d['e_B2'].mean():+.2f}, DM p {r.p:.4f}")
+    print(f"Run log: {log(res)}")
+    return res
+
+
+# ------------------------------------------------------------------ live forecast
+
+FORECAST_DIR = evaluation.REPO / "forecasts" / "n2"
+# Set mechanically by the pre-registered promotion rule (evaluate(), docs/resultat/n2.md). B1 unless a model passes.
+CHAMPION = "B2"  # promoted 2026-11-23 by the registered rule after review R2 approved the TSMC guidance
+
+
+def payload(fc: Forecast, table: pd.DataFrame, champion: str = CHAMPION) -> dict:
+    levels = fc.levels()
+    if levels.get(champion) is None:
+        raise RuntimeError(f"champion {champion} has no forecast for {fc.month}")
+    t = slim(table)
+    return {
+        "target": TARGET,
+        "unit": "mn TWD",
+        "month": str(fc.month),
+        "origin": str(fc.origin.date()),
+        "champion": champion,
+        "value": levels[champion],
+        "variants": levels,
+        "v1": {"n_train": fc.n_train, "lambda": fc.lam, "features": fc.inputs.x},
+        "inputs": [{"series": s, "period": p, "value": v, "known_from": str(pd.Timestamp(k).date())}
+                   for s, p, v, k in fc.inputs.used],
+        "table_max_fetched_at": str(pd.Timestamp(t["fetched_at"].max()).date()) if len(t) else None,
+    }
+
+
+def write(origin, table: pd.DataFrame, out_dir: Path = FORECAST_DIR, champion: str = CHAMPION, today=None) -> Path:
+    """forecasts/n2/<month>.json, written once (engine.write_live; the timestamp field is created_utc)."""
+    month = target_for(pd.Timestamp(origin))
+
+    def build() -> dict:
+        if str(month) in set(table.loc[table["series"] == TARGET, "period"]):
+            raise RuntimeError(f"outcome for {month} is already in the table; this would not be a live forecast")
+        return payload(forecast(origin, table), table, champion)
+
+    return engine.write_live(Path(out_dir) / f"{month}.json", origin, build, today, stamp_key="created_utc")
+
+
+def main_live(argv=None):
+    """Live N2 forecast: --origin YYYY-MM-DD [--refresh] [--out-dir D]. Prints the written file."""
+    ap = argparse.ArgumentParser(prog="python -m ai_tracker.nowcast n2", description=main_live.__doc__)
+    add_live_args(ap)
+    run_live(ap.parse_args(argv))
+    return 0
+
+
+def add_live_args(ap: argparse.ArgumentParser) -> None:
+    ap.add_argument("--origin", required=True, help="forecast origin, day 5 of the month after the target month")
+    ap.add_argument("--refresh", action="store_true", help="fetch the target and indicator series first")
+    ap.add_argument("--out-dir", default=str(FORECAST_DIR))
+    ap.add_argument("--table", default=None, help="observation table (default data/observations.parquet)")
+
+
+def run_live(a: argparse.Namespace) -> Path:
+    if a.refresh:
+        observations.refresh([TARGET, *INDICATORS])
+    path = write(a.origin, observations.load(Path(a.table) if a.table else None), Path(a.out_dir))
+    print(path.read_text(encoding="utf-8"))
+    return path

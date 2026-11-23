@@ -205,3 +205,19 @@ B2 uppfyllde den förregistrerade befordringsregeln med stor marginal (MAE 6,4 m
 oberoende granskningen R2 godkände extraktionen. Huvudmodellen byttes därför mekaniskt enligt regeln. Johannes kan
 backa beslutet före den första skarpa körningen 2026-12-05. För N1 gav B2 lägre MAE (5,3 mot 7,0, n=9) men klarade
 inte Holm-testet, så B1 förblir huvudmodell där. Granskningen hittade en saknad Alphabet-rad, som nu är tillagd.
+
+## 2026-11-23 – Spår C1: en rolling-origin-motor för N1 och N2
+
+**Val:** N2 flyttas från `src/ai_tracker/nowcast_n2/` till `src/ai_tracker/nowcast/n2.py`. Det gemensamma kontraktet
+ligger i `nowcast/engine.py`: första vintage, vintage-datum enligt `as_of`, spärren för utfall som är kända vid
+prognosdagen, regelns delar (bästa baslinje, kontroll per period, `REVIEW_REQUIRED`-spärren och valet av champion)
+och skrivaren som aldrig skriver om. Modellerna och de registrerade reglerna är oförändrade. N1 kräver fortfarande
+Holm i båda perioderna och N2 bara i hela perioden, som tidigare. **Kompatibilitet:** `python -m ai_tracker.nowcast_n2`
+och `python -m ai_tracker.nowcast_n2.backtest` finns kvar som tunna shims. Ny väg: `python -m ai_tracker.nowcast
+n2|backtest n2`. Workflows anropar bara `pipeline`, och pipeline, tester och aktuella dokument använder nu den nya
+modulen. **Kontroll:** före och efter flytten gav backtesterna för N1, N1b och N2 bitidentiska fel per origin (1 721
+värden), identiska utvärderingar och identiska befordringsbeslut (N1 B1, N2 B2). Torrkörda skarpa prognoser (N2
+2026-11-05, N1 2026-10-20, trunkerad tabell) gav identisk JSON utom tidsstämpel och git-sha. Det enda som ändrats i
+JSON är att N2:s `created_utc` nu kommer före `git_sha`. Inaktuell motivering i koden rättad: `us_ip_semis` är
+utesluten för att den inte ingår i de registrerade varianterna, inte i väntan på FRED-villkoren (G.17 kommer från
+Fed sedan I7).

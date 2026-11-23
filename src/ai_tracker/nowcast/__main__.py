@@ -1,7 +1,12 @@
 """CLI.
 
     python -m ai_tracker.nowcast n1 --origin YYYY-MM-DD      live forecast -> forecasts/n1/<quarter>.json (never overwrites)
-    python -m ai_tracker.nowcast backtest n1                 pre-registered backtest, logged to experiments/runs/
+    python -m ai_tracker.nowcast n2 --origin YYYY-MM-DD [--refresh]
+                                                             live forecast -> forecasts/n2/<month>.json (never overwrites)
+    python -m ai_tracker.nowcast backtest n1|n2              pre-registered backtest, logged to experiments/runs/
+
+The scheduled routine is `python -m ai_tracker.pipeline live`; these commands are for manual runs.
+`python -m ai_tracker.nowcast_n2 ...` and `python -m ai_tracker.nowcast_n2.backtest` are compatibility shims for n2.
 """
 
 from __future__ import annotations
@@ -10,7 +15,7 @@ import argparse
 from pathlib import Path
 
 from ai_tracker import evaluation, observations
-from ai_tracker.nowcast import n1
+from ai_tracker.nowcast import n1, n2
 
 FORECASTS = evaluation.REPO / "forecasts"
 
@@ -22,14 +27,21 @@ def main(argv=None) -> int:
     live.add_argument("--origin", required=True, help="forecast date; registered: quarter end + 20 days")
     live.add_argument("--out-dir", default=str(FORECASTS / "n1"))
     live.add_argument("--table", default=None, help="observation table (default data/observations.parquet)")
+    n2.add_live_args(sub.add_parser("n2", help="live N2 forecast (prints the written file)"))
     bt = sub.add_parser("backtest", help="run a registered backtest")
-    bt.add_argument("nowcast", choices=["n1"])
+    bt.add_argument("nowcast", choices=["n1", "n2"])
     args = ap.parse_args(argv)
 
     if args.cmd == "n1":
         table = observations.load(Path(args.table) if args.table else None)
         path = n1.write_live(table, args.origin, args.out_dir)
         print(f"wrote {path}")
+        return 0
+    if args.cmd == "n2":
+        n2.run_live(args)
+        return 0
+    if args.nowcast == "n2":
+        n2.main_backtest()
         return 0
     out = n1.run_backtest(observations.load())
     print(n1.format_report(out))

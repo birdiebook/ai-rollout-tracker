@@ -13,8 +13,7 @@ import pytest
 from ai_tracker import observations
 from ai_tracker.nowcast import engine as n1_engine
 from ai_tracker.nowcast import n1
-from ai_tracker.nowcast_n2 import backtest as n2_backtest
-from ai_tracker.nowcast_n2 import engine as n2
+from ai_tracker.nowcast import n2
 
 M = lambda s: pd.Period(s, freq="M")  # noqa: E731
 Q = lambda s: pd.Period(s, freq="Q-DEC")  # noqa: E731
@@ -144,14 +143,14 @@ def test_n2_fallback_to_b1_without_guidance(tsmc):
     bare = tsmc[~tsmc["series"].str.startswith("tsmc_guid")]
     f = n2.forecast(n2.origin_for(M("2016-09")), bare)
     assert f.logs["B2"] == f.logs["B1"] and f.inputs.b2_source.startswith("B1:")
-    frame = n2_backtest.run(bare)
+    frame = n2.run(bare)
     ok = frame["e_B1"].notna()
     assert ok.sum() > 24 and (frame.loc[ok, "e_B2"] == frame.loc[ok, "e_B1"]).all()
     assert frame.loc[ok, "b2_source"].str.startswith("B1:").all()
 
 
 def test_n2_backtest_rerun_from_truncated_table_is_identical(tsmc):
-    frame = n2_backtest.run(tsmc)
+    frame = n2.run(tsmc)
     for m in (M("2016-06"), M("2017-08")):
         origin = n2.origin_for(m)
         f = n2.forecast(origin, tsmc[tsmc["known_from"] <= origin])
@@ -167,7 +166,7 @@ def test_n2_b2_promotion_is_only_conditional(monkeypatch):
     b = rng.normal(0, 3, n)
     idx = pd.period_range("2012-01", periods=n, freq="M")
     frame = pd.DataFrame({"e_B0": b * 1.2, "e_B1": b, "e_V1": b * 1.05, "e_B2": b * 0.3, "n_train": 100}, index=idx)
-    res = n2_backtest.evaluate(frame)
+    res = n2.evaluate(frame)
     assert set(res.holm) == {"V1", "B2"} and res.holm["B2"] < 0.10
     assert all(line.startswith("PASS") for line in res.checks["B2"])
     assert res.conditional == {"B2": n2.REVIEW_REQUIRED["B2"]} and "R2" in res.conditional["B2"]
@@ -181,7 +180,7 @@ def test_n2_b2_promoted_once_review_approved():
     idx = pd.period_range("2012-01", periods=n, freq="M")
     frame = pd.DataFrame({"e_B0": b * 1.2, "e_B1": b, "e_V1": b * 1.05, "e_B2": b * 0.3, "n_train": 100}, index=idx)
     assert n2.REVIEW_REQUIRED == {}
-    res = n2_backtest.evaluate(frame)
+    res = n2.evaluate(frame)
     assert res.champion == "B2" and not res.conditional
 
 

@@ -20,9 +20,7 @@ import pandas as pd
 import pytest
 
 from ai_tracker import catalog, observations, publication
-from ai_tracker.nowcast import engine, n1
-from ai_tracker.nowcast_n2 import backtest as n2_backtest
-from ai_tracker.nowcast_n2 import engine as n2
+from ai_tracker.nowcast import engine, n1, n2
 from ai_tracker.sources import alfred
 
 SPECS = catalog.by_key()  # importing the catalog registers every series module's LATE dates
@@ -385,7 +383,7 @@ def test_n2_sample_selection_does_not_depend_on_outcomes(t2):
     rng = np.random.default_rng(2)
     scale = {p: float(np.exp(rng.normal(0, 0.2))) for p in t.loc[is_target, "period"].unique()}
     t.loc[is_target, "value"] = t.loc[is_target, "value"] * t.loc[is_target, "period"].map(scale)
-    a, b = n2_backtest.run(t2), n2_backtest.run(t)
+    a, b = n2.run(t2), n2.run(t)
     ok = lambda f: f[[c for c in f if c.startswith("e_")]].notna().all(axis=1) & (f["n_train"] >= n2.MIN_TRAIN)  # noqa: E731
     assert list(a.index[ok(a)]) == list(b.index[ok(b)])
     assert (a["n_train"] == b["n_train"]).all()
@@ -394,5 +392,5 @@ def test_n2_sample_selection_does_not_depend_on_outcomes(t2):
 def test_n2_month_with_outcome_known_at_origin_is_not_scored():
     """Fixed by X1: like N1, N2 never scores a month whose outcome was known at the origin."""
     t = n2_table(outcome_day=5)  # every 6-K filed on day 5 = the origin day: known at the origin
-    frame = n2_backtest.run(t)
+    frame = n2.run(t)
     assert (frame["outcome_known_from"] > frame["origin"]).all()

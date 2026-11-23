@@ -66,7 +66,7 @@ REVIEW_REQUIRED = {"B2": "villkorad: väntar på oberoende granskning av extrakt
 # company series -> (full-year guidance prefix, finance-lease series to subtract or None). Amazon and Microsoft
 # guide on other definitions (net of incentives / incl. new finance leases at inception): B1.
 B2_GUIDANCE = {"capex_meta": ("guid_capex_meta_cy", "fin_lease_meta"), "capex_googl": ("guid_capex_googl_cy", None)}
-HOLM_ALPHA = 0.10
+HOLM_ALPHA = engine.PROMOTION_ALPHA
 DEFAULT_CHAMPION = "B1"
 # Champion for live forecasts, decided by the registered promotion rule on the phase 3 backtest
 # (docs/resultat/n1.md). Changing it needs a new decision, not a rerun.
@@ -333,13 +333,14 @@ def _design(info, quarter, g, drift, out):
 
 def backtest_unit(table: pd.DataFrame, target: str) -> pd.DataFrame:
     """Rolling-origin errors for one target series. One row per quarter with B0/B1 available."""
-    fv = engine.first_vintage(table, target)
-    fkf = engine.first_known_from(table, target)
+    outcomes = engine.first_vintages(table, target)
+    fv = outcomes["value"]
     rows, known = [], []
     for q in fv.index[5:]:
         origin = origin_for(q)
-        if fkf[q] <= origin:  # filed on or before the origin: a forecast of a known number is never scored
-            known.append(f"{target} {q} (filed {fkf[q].date()})")
+        note = engine.known_at_origin(outcomes, q, origin, f"{target} {q}")
+        if note:  # filed on or before the origin: a forecast of a known number is never scored
+            known.append(note)
             continue
         try:
             f = forecast(engine.InfoSet(table, origin), target, q)
@@ -375,7 +376,7 @@ def evaluate(errors: pd.DataFrame, pooled: bool) -> dict:
             res[name] = {"n": len(common), "excluded": excluded}
             continue
         m = {v: engine.summary(common[v]) for v in VARIANTS}
-        best = min(BASELINES, key=lambda b: (m[b]["MAE"], BASELINES.index(b)))
+        best = engine.best_baseline({b: m[b]["MAE"] for b in BASELINES}, BASELINES)
         dm = {}
         for v in MODELS:
             r = engine.pooled_dm(common.assign(quarter=common["quarter"].astype(str)), v, best) if pooled \
@@ -402,17 +403,15 @@ def promotion(res: dict) -> dict:
         c = {}
         for per in ("full", "2023Q1-"):
             r = res[per]
-            c[per] = {"holm_p": r["dm"][v]["holm_p"], "holm_ok": bool(r["dm"][v]["holm_p"] < HOLM_ALPHA),
-                      "mae": r["metrics"][v]["MAE"], "best_mae": r["metrics"][r["best_baseline"]]["MAE"],
-                      "mae_ok": bool(r["metrics"][v]["MAE"] < r["metrics"][r["best_baseline"]]["MAE"])}
-        c["promoted"] = all(c[p]["holm_ok"] and c[p]["mae_ok"] for p in ("full", "2023Q1-"))
+            c[per] = engine.period_check(r["metrics"][v]["MAE"], r["metrics"][r["best_baseline"]]["MAE"],
+                                         r["dm"][v]["holm_p"], HOLM_ALPHA)
+        c["promoted"] = engine.passes({p: c[p] for p in ("full", "2023Q1-")})
         # The looser reading (Holm only in the full period) is reported, never used
         c["promoted_loose_reading"] = c["full"]["holm_ok"] and c["full"]["mae_ok"] and c["2023Q1-"]["mae_ok"]
         checks[v] = c
-    conditional = {v: REVIEW_REQUIRED[v] for v in models if checks[v]["promoted"] and v in REVIEW_REQUIRED}
-    winners = [v for v in models if checks[v]["promoted"] and v not in REVIEW_REQUIRED]
-    champion = min(winners, key=lambda v: res["full"]["metrics"][v]["MAE"]) if winners else DEFAULT_CHAMPION
-    return {"champion": champion, "checks": checks, "conditional": conditional}
+    d = engine.decide({v: checks[v]["promoted"] for v in models},
+                      {v: res["full"]["metrics"][v]["MAE"] for v in models}, REVIEW_REQUIRED, DEFAULT_CHAMPION)
+    return {"champion": d.champion, "checks": checks, "conditional": d.conditional}
 
 
 def run_backtest(table: pd.DataFrame, log: bool = True) -> dict:
@@ -527,11 +526,6 @@ def live_payload(table: pd.DataFrame, origin) -> dict:
 
 
 def write_live(table: pd.DataFrame, origin, out_dir, today=None):
-    origin = pd.Timestamp(origin)
-    today = pd.Timestamp(today or pd.Timestamp.now(tz="UTC").date())
-    if origin > today:
-        raise ValueError(f"origin {origin.date()} is in the future: as_of would not be the real information set")
-    path = Path(out_dir) / f"{target_quarter(origin)}.json"
-    if path.exists():
-        raise FileExistsError(f"{path} already exists; live forecasts are never rewritten")
-    return engine.write_forecast(path, live_payload(table, origin))
+    """forecasts/n1/<quarter>.json, written once (engine.write_live)."""
+    path = Path(out_dir) / f"{target_quarter(pd.Timestamp(origin))}.json"
+    return engine.write_live(path, origin, lambda: live_payload(table, origin), today)
