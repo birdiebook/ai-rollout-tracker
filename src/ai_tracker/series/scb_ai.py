@@ -30,7 +30,7 @@ def fetch(version: str):
     return s[s.index.year >= first]
 
 
-def _spec(version: str, lag_days: int, label_extra: str, note: str) -> Spec:
+def _spec(version: str, lag_days: int, label_extra: str, note: str, closed: bool = False) -> Spec:
     return Spec(
         key="scb_ai_ent_se" + ("" if version == "v1" else "_nace21"),
         branch="G3",
@@ -45,13 +45,15 @@ def _spec(version: str, lag_days: int, label_extra: str, note: str) -> Spec:
         publish=True,
         question="Hur stor andel av svenska företag använder AI?",
         note=note,
+        closed=closed,
     )
 
 
 SPECS = [
     _spec("v1", 0, ", 2023–2025 (SNI 2007-täckning)",
-          "TAB6405. Avslutad. known_from = 31 dec referensåret (konservativt: publiceringsdag för 2023–2024 ej "
-          "belagd). Korrigeringen 2026-05-05 gällde 0–9 anställda, inte den här serien."),
+          "TAB6405. Avslutad: tabellen ersattes av TAB6814 (NACE 2.1) från referensår 2026. known_from = 31 dec "
+          "referensåret (konservativt: publiceringsdag för 2023–2024 ej belagd). Korrigeringen 2026-05-05 gällde "
+          "0–9 anställda, inte den här serien.", closed=True),
     _spec("v2", -50, ", från 2026 (NACE 2.1-täckning)",
           "TAB6814, publicerad 2026-11-05 (tabellens updated). known_from = 11 nov referensåret. "
           "Bredare branschtäckning än v1: skarvas inte."),

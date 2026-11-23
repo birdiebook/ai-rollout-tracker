@@ -34,7 +34,11 @@ SPECS = [
         publish=True,
         question="Hur snabbt sprids AI-kompetens som krav i arbetsmarknaden?",
         note="Hela historiken räknas om vid varje uppdatering (ungefär månadsvis). Metoden ändrades "
-             "2024-07 (glidande medel) och 2024-09 (harmonisering), vilket syns som revideringar.",
+             "2024-07 (glidande medel) och 2024-09 (harmonisering), vilket syns som revideringar. "
+             "Aktualitet: data till månadsskiftet publiceras i månadsbatcher 4–22 dagar senare, så gränsen räknas "
+             "som för en månadsserie, 22 + 31 + 30 = 83 dagar (D-regeln gav 48, under vanliga 49–51). Enstaka "
+             "överhoppade månader 2024-06/07 och 2026-01/02 nådde 79 dagar.",
+        max_age_days=83,
     )
     for cc, name in COUNTRIES.items()
 ]

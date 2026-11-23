@@ -54,6 +54,10 @@ class Spec:
     publish: bool = False  # may derived values be shown on the public dashboard? Only after the licence check
     question: str = ""  # one line: what this series tells us about its branch
     note: str = ""
+    # Freshness (warehouse.fresh): max days from the newest period's end to today; None = derived from
+    # freq + lag_days. Override only with a documented reason in `note`.
+    max_age_days: int | None = None
+    closed: bool = False  # the series has ended (regime closed, table discontinued): no freshness check
 
 
 def _all() -> list[Spec]:
@@ -86,6 +90,10 @@ def validate(specs: list[Spec] | None = None) -> list[str]:
             errors.append(f"{s.key}: licence missing (write 'unverified' until checked)")
         if s.publish and s.license.strip().lower() == "unverified":
             errors.append(f"{s.key}: publish=True needs a checked licence")
+        if s.max_age_days is not None and s.max_age_days <= 0:
+            errors.append(f"{s.key}: max_age_days must be positive")
+        if (s.closed or s.max_age_days is not None) and not s.note.strip():
+            errors.append(f"{s.key}: closed or max_age_days needs a reason in note")
     return errors
 
 

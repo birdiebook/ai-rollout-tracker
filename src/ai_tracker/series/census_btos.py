@@ -21,6 +21,9 @@ _WORDING = {"v1": "gamla frågan (\"in producing goods or services\"), cykel 202
             "v3": "\"Super Intelligence or SI (formerly ... AI)\" och nya exempel, från cykel 202622"}
 
 
+CLOSED = ("v1", "v2")  # wording regimes that have ended (no freshness check)
+
+
 def _spec(what: str, version: str, stat: str) -> Spec:
     se = stat == "se"
     return Spec(
@@ -37,7 +40,9 @@ def _spec(what: str, version: str, stat: str) -> Spec:
         publish=not se,
         question=_QUESTION[what],
         note=f"Frågelydelse {_WORDING[version]}. Period = veckan då insamlingen slutar. Regimbrott: egen serie "
-             "per lydelse, skarvas aldrig. Se docs/kallor/census_eu.md.",
+             "per lydelse, skarvas aldrig. Se docs/kallor/census_eu.md."
+             + (" Avslutad: lydelsen ersattes av en ny från nästa cykel." if version in CLOSED else ""),
+        closed=version in CLOSED,
     )
 
 

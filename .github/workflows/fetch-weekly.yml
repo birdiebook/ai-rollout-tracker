@@ -1,6 +1,7 @@
 # Weekly data fetch (Mondays). Refreshes every catalog series into the Actions cache and runs the warehouse checks.
 # Nothing is committed and no data artifact is uploaded (artifacts of a public repo are downloadable; licences). Scheduled runs only happen on the default branch (main); run by hand with workflow_dispatch.
 # A failed check fails the job before the cache is saved, so a bad table never replaces the cached one.
+# A stale series (freshness check, exit 2) saves the cache first and then fails the job.
 # Shares the concurrency group and cache key prefix with the other data jobs (nowcast.yml, collect-weekly.yml).
 name: Weekly data fetch
 
@@ -47,9 +48,21 @@ jobs:
           key: ai-data-${{ github.run_id }}
           restore-keys: ai-data-
       - name: Fetch all series and run the warehouse checks
-        run: python -m ai_tracker.pipeline weekly
+        id: weekly
+        run: |
+          set +e
+          python -m ai_tracker.pipeline weekly
+          rc=$?
+          echo "rc=$rc" >> "$GITHUB_OUTPUT"
+          # 2 = only stale series (freshness check): the table is sound, save the cache and fail below
+          if [ "$rc" -ne 0 ] && [ "$rc" -ne 2 ]; then exit "$rc"; fi
       - name: Save data cache
         uses: actions/cache/save@v4
         with:
           path: data
           key: ai-data-${{ github.run_id }}
+      - name: Fail on stale series
+        if: steps.weekly.outputs.rc == '2'
+        run: |
+          echo "::error::Stale series (see the fetch step log and docs/drift.md, section Aktualitet)."
+          exit 1

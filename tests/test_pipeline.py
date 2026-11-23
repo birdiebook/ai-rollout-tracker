@@ -271,9 +271,11 @@ def test_sec_user_agent_is_required(monkeypatch):
 
 def test_weekly_exit_code_follows_checks(monkeypatch):
     monkeypatch.setattr(observations, "refresh", lambda keys=None: {"us_imports_tw_m": "FAILED: x"})
-    monkeypatch.setattr(warehouse, "run_checks", lambda: {"unique_key": pd.DataFrame()})
+    monkeypatch.setattr(warehouse, "connect", lambda *a, **k: None)
+    monkeypatch.setattr(warehouse, "fresh", lambda con=None, today=None: pd.DataFrame(columns=["series"]))
+    monkeypatch.setattr(warehouse, "run_checks", lambda con=None: {"unique_key": pd.DataFrame()})
     assert pipeline.weekly(["us_imports_tw_m"]) == 0  # a failed source is a warning
-    monkeypatch.setattr(warehouse, "run_checks", lambda: {"unique_key": pd.DataFrame({"series": ["a"]})})
+    monkeypatch.setattr(warehouse, "run_checks", lambda con=None: {"unique_key": pd.DataFrame({"series": ["a"]})})
     assert pipeline.weekly(["us_imports_tw_m"]) == 1
     with pytest.raises(SystemExit, match="unknown series"):
         pipeline.weekly(["no_such_series"])

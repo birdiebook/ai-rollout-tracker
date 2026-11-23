@@ -40,7 +40,9 @@ SPECS = [
         unit="mn TWD", freq="M", source="SEC EDGAR, TSMC Form 6-K (månadsrapport om intäkter)",
         fetch=_fetch("unconsolidated"), lag_days=10, license=LICENSE, revised=True, publish=True,
         question="Längre historik (från 2001-10) för TSMC:s intäkt, innan koncernsiffran fanns.",
-        note="Moderbolaget (unconsolidated), R.O.C. GAAP. Rapporteras inte efter 2012-12 (IFRS). "
+        closed=True,
+        note="Avslutad: moderbolagets intäkt rapporteras inte efter 2012-12 (IFRS). "
+             "Moderbolaget (unconsolidated), R.O.C. GAAP. "
              "2001-10–2002-09 kommer bara från jämförelsetal i rapporter ett år senare, och har den senare "
              "inlämningsdagen som known_from.",
     ),

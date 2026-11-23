@@ -58,6 +58,9 @@ LABELS = {
     "rev": ("Intäkter", "Hur utvecklas intäkterna mot investeringarna?"),
 }
 BRANCH = {"capex": "G5", "fin_lease": "G5", "ocf": "G5", "rev": "G4"}
+# NVDA's fiscal quarter ends ~4 weeks after the calendar quarter it maps to: first filing 45-77 days after
+# the calendar quarter end (10-K up to mid-March), so the derived bound (25 + 92 + 30) is too tight.
+NVDA_MAX_AGE_DAYS = 77 + 92 + 30
 
 LICENSE = ("public: 'Information presented on sec.gov is considered public information and may be copied "
            "or further distributed by users of the web site without the SEC's permission' (sec.gov/privacy, "
@@ -94,9 +97,14 @@ def _spec(measure: str, company: str | None) -> Spec:
     else:
         key, who = f"{measure}_{company}", COMPANIES[company][0]
         note = "Taggar: " + ", ".join(TAGS[measure][company])
+    max_age = None
+    if company == "nvda":
+        max_age = NVDA_MAX_AGE_DAYS
+        note += (". Aktualitet: NVDA:s kvartal slutar sista veckan i jan/apr/jul/okt, så rapporten kommer 45–77 "
+                 f"dagar efter kalenderkvartalets slut (2009–2026); gräns 77 + 92 + 30 = {NVDA_MAX_AGE_DAYS} dagar.")
     return Spec(key=key, branch=BRANCH[measure], label=f"{label}, {who}", unit="MUSD", freq="Q", source=SOURCE,
                 fetch=_fetch(measure, company), lag_days=25, license=LICENSE, revised=True, publish=True,
-                question=question, note=note)
+                question=question, note=note, max_age_days=max_age)
 
 
 SPECS = ([_spec(m, c) for m in ("capex", "fin_lease", "ocf") for c in HYP4]

@@ -1,6 +1,7 @@
 """Scheduled jobs (GitHub Actions) and the scorecard.
 
-    python -m ai_tracker.pipeline weekly [keys...]   refresh catalog series, run warehouse checks (exit 1 on a failed check)
+    python -m ai_tracker.pipeline weekly [keys...]   refresh catalog series, run warehouse checks (exit 1 on a failed
+                                                     check) and the freshness check (exit 2 if only series are stale)
     python -m ai_tracker.pipeline due [--today D]    which live forecasts are due today (UTC); read-only
     python -m ai_tracker.pipeline live               run every live routine whose registered origin is today
     python -m ai_tracker.pipeline n2-live            N2 only (day 5: previous month)
@@ -117,32 +118,57 @@ def _refresh(keys: list[str] | None) -> list[str]:
 
 # ------------------------------------------------------------------ weekly
 
+STALE_EXIT = 2  # only stale series: the table itself is sound, so the workflow still saves the cache
 
-def weekly(keys: list[str] | None = None) -> int:
+
+def weekly(keys: list[str] | None = None, today=None) -> int:
+    """Refresh, then the integrity checks (exit 1) and the freshness check on `keys` or the catalog (exit 2).
+
+    A failed fetch alone is a warning: the stored data may still be fresh. Once a series is past its bound
+    (warehouse.fresh) the job fails, and the message says whether this run's fetch failed too.
+    """
     require_sec(keys)
     unknown = set(keys or []) - set(catalog.by_key())
     if unknown:
         raise SystemExit(f"unknown series: {sorted(unknown)}")
+    today = pd.Timestamp(today or utc_today())
     failed = _refresh(keys)
     for k in failed:
         _annotate("warning", f"fetch failed: {k}")
-    results = warehouse.run_checks()
+    con = warehouse.connect()
+    results = warehouse.run_checks(con)
     bad = {name: df for name, df in results.items() if len(df)}
     for name, df in results.items():
         print(f"{name:40s} {'ok' if df.empty else f'{len(df)} violations'}")
         if len(df):
             print(df.head(10).to_string())
+    stale = warehouse.fresh(con, today)
+    if keys:
+        stale = stale[stale["series"].isin(keys)]
+    lines = [line + (" - fetch FAILED this run" if k in failed else " - fetch ok but no new period")
+             for k, line in zip(stale["series"], warehouse.describe_stale(stale))]
+    print(f"{'fresh':40s} {'ok' if stale.empty else f'{len(stale)} stale series (as of {today.date()})'}")
+    for line in lines:
+        print("  " + line)
     summary = os.environ.get("GITHUB_STEP_SUMMARY")
     if summary:
         with open(summary, "a", encoding="utf-8") as f:
-            f.write(f"Weekly fetch: {len(failed)} failed series, {len(bad)} failed checks\n\n")
+            f.write(f"Weekly fetch: {len(failed)} failed series, {len(bad)} failed checks, "
+                    f"{len(stale)} stale series\n\n")
             for k in failed:
                 f.write(f"- fetch failed: `{k}`\n")
             for name in bad:
                 f.write(f"- check failed: `{name}`\n")
+            for line in lines:
+                f.write(f"- stale: {line}\n")
+            if lines:
+                f.write("\nSee docs/drift.md (Aktualitet) for how to handle a stale series.\n")
     if bad:
         _annotate("error", f"data checks failed: {', '.join(bad)}")
         return 1
+    if lines:
+        _annotate("error", f"{len(lines)} stale series (see docs/drift.md, Aktualitet): " + "; ".join(lines))
+        return STALE_EXIT
     return 0
 
 
