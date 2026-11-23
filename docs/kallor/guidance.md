@@ -174,3 +174,11 @@ helårsguidance för kalenderåret, med samma andelslogik som N2:s B2.**
 
 Läckage: G tas med `as_of(prognosdag)` på `guid_capex_<bolag>_cy_lo/hi`. Guidance som ges i samtalet efter
 kvartalets slut (efter prognosdagen) kommer aldrig med, eftersom `known_from` är dokumentets datum.
+
+
+## Rättning efter granskning R2 (2026-11-23)
+
+Granskningen (`docs/granskning/r2_guidance.md`) hittade en rad som saknades. Alphabets pressmeddelande 2025-07-23
+(8-K EX-99.1, accession 0001652044-25-000056) höjer capex för 2025 till cirka 85 mdr USD. Raden är nu tillagd
+(`googl-r2f1`), så filen har 102 rader. Det tidigare påståendet att höjningen i juli 2025 inte finns i EDGAR är fel:
+den finns i 8-K:n. Alphabets B2 för 2025Q3 bygger nu på 85 mdr.

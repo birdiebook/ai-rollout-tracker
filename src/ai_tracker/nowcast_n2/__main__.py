@@ -20,7 +20,7 @@ from ai_tracker.nowcast_n2 import engine
 
 FORECAST_DIR = evaluation.REPO / "forecasts" / "n2"
 # Set mechanically by the pre-registered promotion rule (backtest.py, docs/resultat/n2.md). B1 unless V1 passes.
-CHAMPION = "B1"
+CHAMPION = "B2"  # promoted 2026-11-23 by the registered rule after review R2 approved the TSMC guidance
 
 
 def payload(fc: engine.Forecast, table: pd.DataFrame, champion: str = CHAMPION) -> dict:

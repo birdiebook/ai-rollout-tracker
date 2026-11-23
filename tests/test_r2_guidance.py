@@ -91,7 +91,6 @@ def test_b2_rows_are_all_quantitative_meta_and_alphabet_cy_rows(capex):
 # filed 2025-07-23, accepted 2025-07-23T20:01:33Z) states, in the CEO quote, that capital expenditures in 2025 are
 # raised to approximately $85 billion. The CSV has no row for it and docs/kallor/guidance.md says the July 2025
 # raise is not in EDGAR. B2 for Alphabet 2025Q3 (forecast date 2025-10-20) therefore uses the stale 75 bn.
-@bug("R2-F1: Alphabet 2025 capex ~85 bn (8-K EX-99.1 of 2025-07-23) is missing from curated/guidance_capex.csv")
 def test_alphabet_2025_raise_to_85bn_is_in_the_csv(capex):
     r = capex[(capex["company"] == "googl") & (capex["horizon"] == "CY") & (capex["period"] == "2025")
               & (capex["kind"] == "approx") & (capex["value_lo"] == 85000)]
@@ -101,7 +100,6 @@ def test_alphabet_2025_raise_to_85bn_is_in_the_csv(capex):
     assert r["value_hi"] == 85000 and r["unit"] == "MUSD"
 
 
-@bug("R2-F1: as_of the N1 forecast date for 2025Q3 (2025-10-20) Alphabet's 2025 guidance was ~85 bn, not 75 bn")
 def test_alphabet_2025_guidance_known_at_2025q3_forecast_date(capex):
     for measure in ("lo", "hi"):
         s = gc.series_frame(capex, "googl", "CY", measure)
@@ -150,12 +148,13 @@ def test_sampled_row_matches_source(capex, rid):
 def test_no_capex_row_dated_before_its_edgar_acceptance(capex):
     """known_from (= filed, the EDGAR filingDate) is never before the acceptance date in New York time.
 
-    The accepted column was checked equal to EDGAR's acceptanceDateTime for all 72 rows with an accession.
+    The accepted column was checked equal to EDGAR's acceptanceDateTime for all 72 rows with an accession
+    (73 after the R2-F1 row was added).
     """
     d = capex[capex["accepted"] != ""]
     acc_ny = pd.to_datetime(d["accepted"], utc=True).dt.tz_convert("America/New_York").dt.tz_localize(None)
     assert (d["known_from"] >= acc_ny.dt.normalize()).all()
-    assert len(d) == 72
+    assert len(d) == 73
 
 
 # ------------------------------------------------------------------ 3. TSMC: sampled quarters, read by hand

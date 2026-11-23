@@ -197,3 +197,11 @@ oberoende granskning av extraktionen (R2)**. `CHAMPION` är fortfarande B1. **N1
 kvartal, för Alphabet i 6 av 9 och aldrig för Amazon eller Microsoft. B2 MAE 5,85 mot B1 7,00 (n = 9), Holm-p 0,68.
 B2 klarar inte regeln, och B1 är huvudmodell. N1b: Meta blir bättre med guidance, Alphabet sämre (inaktuella
 vintages när samtalen saknas). Detaljer: [n1.md](resultat/n1.md) och [n2.md](resultat/n2.md).
+
+
+## 2026-11-23 – N2: B2 (TSMC:s guidance) blir huvudmodell
+
+B2 uppfyllde den förregistrerade befordringsregeln med stor marginal (MAE 6,4 mot 10,5, Holm-p 2,5·10⁻⁸). Den
+oberoende granskningen R2 godkände extraktionen. Huvudmodellen byttes därför mekaniskt enligt regeln. Johannes kan
+backa beslutet före den första skarpa körningen 2026-12-05. För N1 gav B2 lägre MAE (5,3 mot 7,0, n=9) men klarade
+inte Holm-testet, så B1 förblir huvudmodell där. Granskningen hittade en saknad Alphabet-rad, som nu är tillagd.

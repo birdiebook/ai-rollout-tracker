@@ -159,7 +159,9 @@ def test_n2_backtest_rerun_from_truncated_table_is_identical(tsmc):
         assert frame.at[m, "e_B2"] == pytest.approx(f.logs["B2"] - y, abs=1e-12)
 
 
-def test_n2_b2_promotion_is_only_conditional():
+def test_n2_b2_promotion_is_only_conditional(monkeypatch):
+    # The review gate as it stood before R2 approved the TSMC extraction (2026-11-23).
+    monkeypatch.setattr(n2, "REVIEW_REQUIRED", {"B2": "villkorad: väntar på oberoende granskning av extraktionen (R2)"})
     rng = np.random.default_rng(3)
     n = 180
     b = rng.normal(0, 3, n)
@@ -170,6 +172,17 @@ def test_n2_b2_promotion_is_only_conditional():
     assert all(line.startswith("PASS") for line in res.checks["B2"])
     assert res.conditional == {"B2": n2.REVIEW_REQUIRED["B2"]} and "R2" in res.conditional["B2"]
     assert res.champion == "B1" and not res.promoted
+
+
+def test_n2_b2_promoted_once_review_approved():
+    rng = np.random.default_rng(3)
+    n = 180
+    b = rng.normal(0, 3, n)
+    idx = pd.period_range("2012-01", periods=n, freq="M")
+    frame = pd.DataFrame({"e_B0": b * 1.2, "e_B1": b, "e_V1": b * 1.05, "e_B2": b * 0.3, "n_train": 100}, index=idx)
+    assert n2.REVIEW_REQUIRED == {}
+    res = n2_backtest.evaluate(frame)
+    assert res.champion == "B2" and not res.conditional
 
 
 # ================================================================== N1 (capex)

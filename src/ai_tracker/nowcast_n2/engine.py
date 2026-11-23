@@ -53,7 +53,8 @@ DROPPED_INDICATORS = {
 VARIANTS = ["B0", "B1", "V1", "B2"]
 MODELS = ["V1", "B2"]  # the registered Holm family for N2 (register change "B2: TSMC före 2017Q3 ...")
 # B2 may not be promoted before an independent review approves the extracted guidance values (register)
-REVIEW_REQUIRED = {"B2": "villkorad: väntar på oberoende granskning av extraktionen (R2)"}
+# Review R2 (docs/granskning/r2_guidance.md) approved the TSMC guidance extraction on 2026-11-23.
+REVIEW_REQUIRED: dict[str, str] = {}
 USD_FROM = pd.Period("2017Q3", "Q-DEC")  # TSMC guided in NT$ up to 2017Q2, in US$ from 2017Q3
 GUIDANCE = {"twd_lo": "tsmc_guid_rev_twd_lo", "twd_hi": "tsmc_guid_rev_twd_hi",
             "usd_lo": "tsmc_guid_rev_usd_lo", "usd_hi": "tsmc_guid_rev_usd_hi", "fx": "tsmc_guid_fx"}
