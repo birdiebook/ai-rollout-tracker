@@ -39,6 +39,8 @@ PROJECTS = ["openai", "anthropic", "google-generativeai", "google-genai", "langc
 CONTROL = "requests"  # always downloaded: a day without a `requests` row is a gap in the table, not a zero
 BACKFILL_START = date(2016, 1, 1)
 REREAD_DAYS = 21  # the incremental job re-reads the last three weeks (late-ingested rows become revisions)
+# The backfill stops where pypistats' 180-day window (the free weekly refresh) still overlaps by about a week.
+PYPISTATS_OVERLAP_DAYS = 173
 # Byte caps (GB = 1e9 bytes). Sized from the dry run 2026-11-23 (docs/kallor/utvecklaradoption.md).
 BACKFILL_MAX_GB = 300.0
 INCREMENTAL_MAX_GB = 15.0
@@ -171,7 +173,7 @@ def dryrun(out_dir: Path, today: date | None = None) -> list[dict]:
     """Estimates only, per year of the backfill and for one incremental window. Dry runs are free."""
     today = today or date.today()
     end = last_monday(today)
-    records = plan(year_chunks(BACKFILL_START, end))
+    records = plan(year_chunks(BACKFILL_START, backfill_end(today)))
     s = end - timedelta(days=REREAD_DAYS)
     records += [dict(r, kind="incremental") for r in plan([(s, end)])]
     # Probe: does the estimate reflect clustering? Same day with one project vs every project.
@@ -189,8 +191,13 @@ def dryrun(out_dir: Path, today: date | None = None) -> list[dict]:
     return records
 
 
+def backfill_end(today: date) -> date:
+    """A Monday about 25 weeks back: pypistats (180 days) covers everything after it, with a few days of overlap."""
+    return last_monday(today - timedelta(days=PYPISTATS_OVERLAP_DAYS))
+
+
 def backfill(out_dir: Path, today: date | None = None) -> list[dict]:
-    end = last_monday(today or date.today())
+    end = backfill_end(today or date.today())
     return execute(year_chunks(BACKFILL_START, end), out_dir, BACKFILL_MAX_GB)
 
 
@@ -266,12 +273,18 @@ def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="python -m ai_tracker.sources.pypi_bq")
     ap.add_argument("mode", choices=["dryrun", "backfill", "incremental"])
     ap.add_argument("--out", type=Path, default=None)
+    ap.add_argument("--force", action="store_true", help="backfill even if BigQuery days are stored")
     a = ap.parse_args(argv)
     if a.mode == "incremental":
         incremental(a.out)
+    elif a.mode == "backfill":
+        root = http.RAW_DIR / SOURCE_DIR
+        if a.out is None and not stored_days(root).empty and not a.force:
+            print(f"PyPI BigQuery days already stored under {root}: not running the backfill again (--force)")
+            return 0
+        backfill(a.out or root / date.today().isoformat())
     else:
-        out = a.out or http.RAW_DIR / SOURCE_DIR / date.today().isoformat()
-        (dryrun if a.mode == "dryrun" else backfill)(out)
+        dryrun(a.out or http.RAW_DIR / SOURCE_DIR / f"dryrun-{date.today().isoformat()}")
     return 0
 
 

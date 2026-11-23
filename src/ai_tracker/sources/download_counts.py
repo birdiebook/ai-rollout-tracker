@@ -8,6 +8,8 @@ Rules (docs/kallor/utvecklaradoption.md):
   from the package's own weekday profile: weekly = sum of the reported days / their share of the week in the
   package's last 8 complete weeks *before* this week (past data only). With fewer than 4 such weeks the
   share is n_reported / 7. A week with fewer than MIN_DAYS reported days is dropped.
+- Days outside the source's coverage are gaps as well, and weeks before the first complete week are dropped
+  (the series never starts with an estimated week, e.g. when stored pypistats history begins on a Tuesday).
 - The series starts at `start` (a Monday) or else at the first week with a download.
 """
 
@@ -34,7 +36,8 @@ def weekly(daily: pd.Series, today, lag_days: int, start=None) -> pd.Series:
     last_known = pd.Timestamp(today).normalize() - pd.Timedelta(days=lag_days)
     days = pd.date_range(first - pd.Timedelta(days=first.weekday()), daily.index.max(), freq="D")
     d = daily.reindex(days)  # days outside the covered range are NaN, then handled like gap days
-    d[d.index < first] = 0.0  # before the start: the package (or this owner of the name) did not exist
+    # Before the start the package (or this owner of the name) did not exist: covered days count as 0.
+    d[(d.index < first) & d.index.isin(daily.index)] = 0.0
     weeks = d.index.to_period("W-SUN")
     frame = pd.DataFrame({"v": d.to_numpy(), "week": weeks, "dow": d.index.dayofweek})
     grid = frame.pivot(index="week", columns="dow", values="v").reindex(columns=range(7))
@@ -48,7 +51,7 @@ def weekly(daily: pd.Series, today, lag_days: int, start=None) -> pd.Series:
             if vals.sum() > 0:
                 history.append(vals / vals.sum())
             continue
-        if ok.sum() < MIN_DAYS:
+        if ok.sum() < MIN_DAYS or not out:  # too few days, or before the first complete week
             continue
         recent = history[-PROFILE_WEEKS:]
         share = np.mean(recent, axis=0)[ok].sum() if len(recent) >= PROFILE_MIN else ok.sum() / 7
