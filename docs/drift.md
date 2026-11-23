@@ -10,6 +10,7 @@ har en interaktiv session öppen. Koden finns i `src/ai_tracker/pipeline.py`, te
 | `tests.yml` | varje push och PR | pytest | nej |
 | `fetch-weekly.yml` | måndagar 03:37 | `pipeline weekly`: hämtar alla katalogserier till Actions-cachen och kör datatesterna i `warehouse.py`. Ett fallerat test fäller jobbet innan cachen sparas. En källa som fallerar ger en varning, men jobbet fortsätter. En serie som är för gammal (aktualitetskontrollen, se nedan) fäller jobbet efter att cachen sparats | nej |
 | `nowcast.yml` | dagligen 18:47, med ett nytt försök 21:19 | `pipeline due` avgör om dagen är en registrerad prognosdag. Annars slutar jobbet där. På en prognosdag: återställ cachen, hämta de serier som behövs, skriv prognosen, uppdatera `forecasts/SCORECARD.md` och committa till main | bara den nya `forecasts/<nowcast>/<period>.json` och `SCORECARD.md` |
+| `pages.yml` | efter varje lyckad körning av `fetch-weekly.yml`, `snapshot.yml` och `nowcast.yml` (workflow_run), och för hand | `python -m ai_tracker.site build`: kör datatesterna i `warehouse.py` och bygger den publika sidan ur Actions-cachen och de committade `snapshots/` och `forecasts/`. Ett fallerat datatest fäller jobbet, och då publiceras ingenting (den förra sidan ligger kvar). Publicerar med `actions/deploy-pages` | nej |
 
 **Prognosdagar** (registrerade i `docs/mattregister.md`):
 
@@ -92,6 +93,29 @@ ladda ned och flera källor har licenser som inte är kontrollerade. Alla datajo
 `ai-data`, så två jobb skriver aldrig cachen samtidigt. Det gäller även `collect-weekly.yml` (Epoch, spår I5).
 GitHub tar bort en cache som inte använts på sju dagar. Veckohämtningen håller den varm. En kall cache betyder
 bara att allt hämtas om (backfill), vilket tar längre tid.
+
+## Hemsidan (GitHub Pages)
+
+**Engångsåtgärd för ägaren:** Settings → Pages → Build and deployment → Source: **GitHub Actions**. Det går inte
+att göra från koden. Innan det är gjort fallerar deploy-steget i `pages.yml` (bygget går igenom). Starta sedan
+`Pages` för hand en gång (Actions → Pages → Run workflow), eller vänta på nästa veckohämtning.
+
+- **Vad som visas:** startsidan (vad som ändrade takt den här månaden: de nio grenarna med tillstånd,
+  diffusionsindex, antal serier och förändring mot föregående månad), en sida per gren (kärnserierna med takt
+  och förändring i takt, senaste period, `known_from` och skälet till att en serie inte räknas), prognossidan
+  (N1 och N2: skarpa prognoser och scorecard, huvudmodell och skuggor) och metodsidan (neutral inramning,
+  måttregistret, filerna i git, källor och licenser, "inte investeringsrådgivning").
+- **Register:** de committade ögonblicksbilderna i `snapshots/` är registret. Före den första (2026-11-30) visas
+  tillståndet beräknat i efterhand vid varje månadsslut, tydligt märkt "rekonstruerad historik, inte ett skarpt
+  underlag". Månader efter den första skarpa ögonblicksbilden rekonstrueras aldrig.
+- **Licenser:** bara serier med `Spec.publish=True` visas med värden (en härledd serie kräver att alla
+  komponenter får publiceras). En serie med `publish=False` som är kärnserie räknas i grenens index enligt
+  registret, men sidan visar bara grenens summering och anger vilka serier som hålls inne och varför. I dag
+  gäller det arXiv-serierna i G9 (licensen är inte kontrollerad). Prognosfilernas indata (`inputs`) publiceras inte.
+- **Inga externa värdar:** diagrammen är inline-SVG som `assets/app.js` ritar från JSON-filerna i `data/`.
+  Testerna i `tests/test_site.py` kontrollerar att sidorna inte laddar något från andra värdar.
+- **Lokalt:** `python -m ai_tracker.site build [--out site] [--history-from 2023-01] [--today D]` bygger `site/`
+  (gitignorerad), cirka en minut. Titta med `python -m http.server -d site`.
 
 ## Hemligheter som ägaren lägger in
 
