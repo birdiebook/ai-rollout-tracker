@@ -151,7 +151,8 @@ def test_bq_backfill_queries_wednesdays_and_first_year():
     assert qs[0].start == date(2016, 1, 1) and qs[-1].end == date(2026, 6, 1)  # pypistats covers 2026-05-26 ->
     assert all(q.kind == "wed" for q in qs)
     assert all(d.weekday() == 2 for q in qs for d in q.days) and len(qs[0].days) == 52
-    assert qs[0].projects == ("requests", "numpy") and "anthropic" in qs[7].projects  # 2023
+    assert qs[0].projects == ("requests",) and "anthropic" in qs[7].projects  # 2023
+    assert all("numpy" not in q.projects for q in qs)
     q = qs[-1].sql()
     assert "DATE(timestamp) IN ('2026-01-07'" in q and "'2026-05-27')" in q
     assert pypi_bq.backfill_end(date(2026, 12, 7)) == date(2026, 6, 15)

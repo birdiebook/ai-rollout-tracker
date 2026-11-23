@@ -6,7 +6,7 @@ Two series per project, both from views of the same BigQuery table (bigquery-pub
   A missing day is filled from the weekday profile (sources/download_counts.py).
 - `g3_pypi_<p>_wed`: downloads on the Wednesday of each week, 2016 -> : the sampled BigQuery backfill
   (sources/pypi_bq.py, RAW_DIR/pypi_bq) and from 2026-05-27 the same weekday from pypistats. An exact daily
-  history is about 1.7 TB of BigQuery quota; the Wednesday sample is about 220 GB.
+  history is about 1.7 TB of BigQuery quota; the Wednesday sample is about 180 GB (numpy left out).
 On a day both have, BigQuery (the source table) wins.
 docs/kallor/utvecklaradoption.md has the overlap check between the two and the BigQuery bytes.
 """
@@ -46,7 +46,8 @@ PROJECTS = {
     "g3_pypi_llama_index_w": ("llama-index", None, "llama-index", ""),
     "g3_pypi_mcp_w": ("mcp", None, "mcp (Model Context Protocol)", ""),
     "g3_pypi_requests_w": ("requests", None, "requests (kontrollpaket)", "Kontrollpaket, inte en AI-serie."),
-    "g3_pypi_numpy_w": ("numpy", None, "numpy (kontrollpaket)", "Kontrollpaket, inte en AI-serie."),
+    "g3_pypi_numpy_w": ("numpy", None, "numpy (kontrollpaket)",
+                        "Kontrollpaket, inte en AI-serie. Ingår inte i BigQuery-historiken (kvoten), bara pypistats."),
 }
 
 

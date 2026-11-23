@@ -8,7 +8,7 @@ Cost (dry runs and a calibration 2026-11-23, docs/kallor/utvecklaradoption.md): 
 the clustering and equals the billed bytes, and every (project, day) costs at least one storage block (about
 0.01-0.05 GB) however small the project. An exact daily history 2016 -> 2026-06 for the twelve projects is about
 1.7 TB, far above the budget. So the backfill reads one fixed weekday per week (Wednesday, UTC), each AI project
-from its first year: about 220 GB. Exact daily counts come for free from pypistats (sources/pypistats.py).
+from its first year: about 180 GB. Exact daily counts come for free from pypistats (sources/pypistats.py).
 
 BigQuery only runs in GitHub Actions (keyless OIDC, sandbox quota of 1 TB/month shared by all tracks). Every
 query is dry-run first; a run is refused when the estimate is above its cap, and maximum_bytes_billed is set
@@ -40,10 +40,11 @@ import pandas as pd
 from ai_tracker import http
 
 TABLE = "bigquery-public-data.pypi.file_downloads"
-# file.project is the normalised project name (lower case, '-' separators) -> first year queried
+# file.project is the normalised project name (lower case, '-' separators) -> first year in the backfill.
+# numpy (None) is not in the backfill: about 45 GB for a second control; its exact weekly series comes from pypistats.
 FIRST_YEAR = {"openai": 2020, "anthropic": 2023, "google-generativeai": 2023, "google-genai": 2024, "langchain": 2022,
               "langchain-core": 2023, "transformers": 2019, "torch": 2018, "llama-index": 2023, "mcp": 2024,
-              "requests": 2016, "numpy": 2016}
+              "requests": 2016, "numpy": None}
 PROJECTS = list(FIRST_YEAR)
 CONTROL = "requests"  # always downloaded: a day without a `requests` row is a gap in the table, not a zero
 SAMPLE_WEEKDAY = 2  # Wednesday (Monday = 0)
@@ -52,7 +53,7 @@ REREAD_DAYS = 21  # the incremental job re-reads the last three weeks (late-inge
 # The backfill stops where pypistats' 180-day window (the free weekly refresh) still overlaps by about a week.
 PYPISTATS_OVERLAP_DAYS = 173
 # Byte caps (GB = 1e9 bytes), from the dry runs 2026-11-23 (docs/kallor/utvecklaradoption.md).
-BACKFILL_MAX_GB = 240.0
+BACKFILL_MAX_GB = 200.0
 INCREMENTAL_MAX_GB = 20.0
 SOURCE_DIR = "pypi_bq"
 _FILE = re.compile(r"(daily|wed)_(\d{4}-\d{2}-\d{2})_(\d{4}-\d{2}-\d{2})\.csv$")
@@ -122,7 +123,7 @@ def backfill_end(today: date) -> date:
 
 def backfill_queries(today: date) -> list[Query]:
     """Wednesdays, one query per year, with the projects whose first year has come."""
-    return [Query("wed", s, e, tuple(p for p in PROJECTS if FIRST_YEAR[p] <= s.year))
+    return [Query("wed", s, e, tuple(p for p, y in FIRST_YEAR.items() if y is not None and y <= s.year))
             for s, e in year_chunks(BACKFILL_START, backfill_end(today))]
 
 
