@@ -83,7 +83,8 @@ räknas inte här. Andelarna påverkas inte av hur många timmar som är med.
   sedan publiceringen. Det som är valt i efterhand är identitetslistan (verktyg som inte fanns än ger noll).
 - Lagring: veckoaggregaten ligger i `curated/github_ai_gharchive.csv` (bara siffror, aggregat av publik data) och
   byggs om med `python -m ai_tracker.sources.gharchive build`. Timresultaten cachas under
-  `data/raw/gharchive/hours/`.
+  `data/raw/gharchive/hours_v2/` (v1 hade ett fel i förfiltret som missade `Co-Authored-By` med stora bokstäver;
+  hittades av testerna innan något veckovärde lästes, och v1-cachen raderades).
 
 ### Kända skevheter
 
@@ -138,9 +139,25 @@ Endast `total_count` används. Inga commits eller texter sparas.
   vecka får `known_from` = min(veckans slut + 1 dag, hämtdatum), och ett ändrat värde blir en revidering med
   hämtdatumet. Första hämtningen (2024-01 till nu) är dagens version och får `source="backfill"`: där läcker
   senare revideringar in (överlevande repon, sena merges). Detta ska beaktas i varje backtest.
-- **Hämtning:** i den schemalagda veckohämtningen (`fetch-weekly.yml`) med `GITHUB_TOKEN` (30 sökningar per minut).
-  Första körningen är cirka 150 veckor × 5 frågor ≈ 750 frågor (cirka 26 minuter), därefter 40 frågor per vecka.
-  Ett misslyckat anrop försöks igen med väntan, och en vecka utan svar hoppas över (den hämtas nästa vecka).
+- **Bakåtdaterade commits (upptäckt vid datakontrollen 2026-11-23):** committer-datumet sätts av klienten.
+  Träffar för `"noreply@anthropic.com"` med datum i januari 2024, före Claude Code, är bakåtdaterade commits
+  (till exempel repon som "målar" GitHubs aktivitetsgraf, och en trailer som namnger "Claude Opus 5.5" med datum
+  2024-01-06). Sökningen kan inte filtrera på pushtid. Backfillen av del B är därför **inte** en tidsserie över
+  när commits skrevs, utan dagens index sorterat på påstått datum. Bara veckor som hämtas löpande (de 8 senaste,
+  och deras revideringar) har ett meningsfullt `known_from`. Del A (pushtid i GH Archive) har inte problemet.
+- **Hämtning:** i den schemalagda veckohämtningen (`fetch-weekly.yml`, `GITHUB_TOKEN`). Ett misslyckat anrop
+  försöks igen med väntan. En vecka utan svar lämnas ute och frågas igen nästa körning, och bara nya veckor som
+  hänger ihop med de lagrade returneras, så att lagret aldrig får hål (lagrets kontroll `no_gaps`).
+
+### Ändringar av del B efter registreringen (2026-11-23, före första hela hämtningen, inga värden analyserade)
+
+1. **Takt:** GitHubs sekundära gräns för sökning slog till redan vid cirka 10 frågor per minut från sessionen
+   (anonymt via proxyn, "You have exceeded a secondary rate limit"). Frågorna går nu med minst 6 sekunders
+   mellanrum i veckohämtningen, och en sekundär 403 ger 90 s × försök i väntan.
+2. **Kall start i Actions:** högst 40 veckor (200 frågor, cirka 20 minuter) per körning, nyaste först. En tom
+   cache i Actions fyller alltså historiken bakåt under fem veckokörningar. Hela backfillen (151 veckor) körs en
+   gång med jobbet `github_search_counts` (`job.yml`, `GITHUB_TOKEN`, 2,5 s mellanrum) och laddas in i spårets tabell.
+3. Startveckan (2024-01-01), frågorna och måtten är oförändrade.
 
 ## Budget (BigQuery)
 

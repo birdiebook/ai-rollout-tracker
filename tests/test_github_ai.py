@@ -41,9 +41,9 @@ COPILOT = "Apply suggestion\n\nCo-authored-by: Copilot <175728472+Copilot@users.
     # not AI: rule-based bots and people with tool-like names
     ("dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>", set()),
     ("github-actions[bot] <github-actions[bot]@users.noreply.github.com>", set()),
-    ("cursor <12345+theselfish@users.noreply.github.com>", set()),
-    ("Devin Hurley <devin.hurley@elastic.co>", set()),
-    ("Logan Kilpatrick <logan@openai.com>", set()),
+    ("cursor <12345+someone@example.com>", set()),
+    ("Devin Example <devin@example.com>", set()),
+    ("A Person <person@example.org>", set()),
 ])
 def test_identity_groups(identity, groups):
     assert gharchive.identity_groups(identity) == groups
@@ -54,7 +54,7 @@ def test_message_groups_needs_a_trailer_line():
     assert gharchive.message_groups(CLAUDE + "\n" + COPILOT.split("\n")[-1]) == {"claude", "copilot"}
     assert gharchive.message_groups("mention noreply@anthropic.com in prose") == set()
     assert gharchive.message_groups("Fix\n\nSigned-off-by: Claude <noreply@anthropic.com>") == set()
-    assert gharchive.message_groups("x\n  co-authored-by:   claude <NOREPLY@anthropic.com>  ") == {"claude"}
+    assert gharchive.message_groups("x\n  CO-AUTHORED-BY:   CLAUDE <noreply@anthropic.com>  ") == {"claude"}
 
 
 def test_count_lines():
