@@ -277,3 +277,8 @@ mot LiteLLM finns kvar och stämde exakt för alla 23 aktuella modeller.
 
 **Uppdatering samma dag:** Johannes godkände spåret, och insamlingen av Anthropics prissida är påslagen igen (en
 hämtning per vecka). Serien är fortfarande `publish=False`, eftersom sidan inte anger någon licens för vidarepublicering.
+
+**Slutligt beslut samma dag:** efter genomgång av villkoren valde Johannes rekommendationen att **pausa**
+insamlingen från Anthropics webbplatser (prissidan i B5 och nyhetssidorna i B6). G2 vilar på LiteLLM, som
+korskontrollen bekräftade. Inga återkommande automatiska hämtningar görs från anthropic.com, claude.com eller
+platform.claude.com. Redan hämtade meningar granskas mot sparade hashar.

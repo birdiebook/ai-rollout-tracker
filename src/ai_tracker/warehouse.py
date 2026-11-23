@@ -46,7 +46,6 @@ KNOWN_GAPS.update(_AI_KPI_GAPS)
 # Stale series accepted until a date (ISO), and why: a known outage, never a permanent exemption
 # (that is Spec.max_age_days or Spec.closed). Example: {"us_imports_tw_m": ("2026-12-31", "shutdown, ...")}.
 KNOWN_STALE: dict[str, tuple[str, str]] = {
-    "g2_fp_price_at_capability_gpqa_anthropic": ("2026-12-15", "new series: first month known 2026-12-01"),
     # Selected 2026-11-23 (register, G1 track F6); Epoch's first runs started 2026-11-04, so the first complete
     # month (2026-11) is known from 2026-12-31 (first day of the next month + 30 days).
     "g1_epoch_bench_frontier_spireclimb": ("2027-01-07", "new series: first month known 2026-12-31"),

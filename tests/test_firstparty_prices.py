@@ -27,8 +27,8 @@ def _anthropic_collected(monkeypatch, request):
 
 
 def test_anthropic_is_paused_pending_owner_decision():
-    """Approved by the owner 2026-11-23: Anthropic is collected (the only reachable developer)."""
-    assert fp.PROVIDERS["anthropic"].status == "OK" and [p.developer for p in fp.collected()] == ["anthropic"]
+    """Paused by the owner's decision 2026-11-23 (Anthropic's terms)."""
+    assert fp.PROVIDERS["anthropic"].status == "BLOCKED" and fp.collected() == []
 
 T = pd.Timestamp
 
