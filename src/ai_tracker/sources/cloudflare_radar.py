@@ -14,11 +14,13 @@ Licence (developers.cloudflare.com/radar, source src/content/docs/radar/index.md
 
 from __future__ import annotations
 
+import json
 import os
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 import requests
 
@@ -89,9 +91,12 @@ def weekly(result: dict, group: str, today: pd.Timestamp | None = None) -> pd.Se
     """Weekly share (per cent) of `group` on W-SUN periods, complete weeks only.
 
     Radar's 1w buckets are labelled by their start; the bucket must start on a Monday (else the window was not
-    week-aligned and the data is refused) and must have ended before `today` (no partial last week).
+    week-aligned and the data is refused) and must have ended before `today` (no partial last week). Timestamps
+    where every group is 0 are dropped: Radar pads the weeks before an endpoint's data starts with zeros.
     """
     df = parse_groups(result)
+    total = df.groupby("timestamp")["value"].sum()
+    df = df[df["timestamp"].isin(total.index[total > 0])]  # before an endpoint's data starts, every group is 0
     df = df[df["group"] == group]
     if df.empty:
         raise ValueError(f"group {group!r} not in Radar response")
@@ -100,28 +105,94 @@ def weekly(result: dict, group: str, today: pd.Timestamp | None = None) -> pd.Se
         raise ValueError("Radar weekly buckets do not start on Mondays")
     today = pd.Timestamp(today or pd.Timestamp.now(tz="UTC").date()).normalize()
     ends = starts + pd.Timedelta(days=7)
-    keep = (ends <= today).to_numpy() & df["value"].notna().to_numpy()
+    keep = np.asarray(ends <= today) & df["value"].notna().to_numpy()
     s = pd.Series(df["value"].to_numpy()[keep], index=pd.PeriodIndex(starts[keep], freq="W-SUN"))
     return s[~s.index.duplicated(keep="last")].sort_index()
 
 
-def window(start: str, today: pd.Timestamp | None = None) -> dict:
-    """dateStart/dateEnd for whole weeks: from the Monday on or after `start` to the latest Monday 00:00 UTC."""
+CHUNK_WEEKS = 50  # the API refuses windows longer than about a year (73 weeks refused, 47 answered, probe 2026-11-23)
+
+
+def week_floor(day: pd.Timestamp) -> pd.Timestamp:
+    """The Monday on or before `day` (00:00)."""
+    day = pd.Timestamp(day).normalize()
+    return day - pd.Timedelta(days=day.dayofweek)
+
+
+def windows(start: str, today: pd.Timestamp | None = None) -> list[dict]:
+    """dateStart/dateEnd pairs of at most CHUNK_WEEKS whole weeks, from the Monday on or after `start` to the
+    latest Monday 00:00 UTC (the end of the last complete week)."""
     today = pd.Timestamp(today or pd.Timestamp.now(tz="UTC").date()).normalize()
-    end = today - pd.Timedelta(days=today.dayofweek)
+    end = week_floor(today)
     s = pd.Timestamp(start).normalize()
     s += pd.Timedelta(days=(7 - s.dayofweek) % 7)
-    return {"dateStart": s.strftime("%Y-%m-%dT00:00:00Z"), "dateEnd": end.strftime("%Y-%m-%dT00:00:00Z")}
+    out = []
+    while s < end:
+        e = min(s + pd.Timedelta(weeks=CHUNK_WEEKS), end)
+        out.append({"dateStart": s.strftime("%Y-%m-%dT00:00:00Z"), "dateEnd": e.strftime("%Y-%m-%dT00:00:00Z")})
+        s = e
+    return out
 
 
-def fetch_query(q: Query, today: pd.Timestamp | None = None) -> tuple[pd.Series, dict]:
-    """Weekly series for `q` from the API, plus the response meta (lastUpdated, confidenceInfo)."""
-    result = get(q.path, {**q.params, "aggInterval": "1w", **window(q.start, today)})
-    return weekly(result, q.group, today), result.get("meta", {})
+def window(start: str, today: pd.Timestamp | None = None) -> dict:
+    """One window from `start` to the latest Monday (for short probes; the API caps the length)."""
+    w = windows(start, today)
+    return {"dateStart": w[0]["dateStart"], "dateEnd": w[-1]["dateEnd"]}
+
+
+def fetch_query(q: Query, today: pd.Timestamp | None = None) -> tuple[pd.Series, list[dict]]:
+    """Weekly series for `q` from the API (one request per window), plus each response's meta."""
+    parts, metas = [], []
+    for w in windows(q.start, today):
+        result = get(q.path, {**q.params, "aggInterval": "1w", **w})
+        metas.append({**w, **{k: result.get("meta", {}).get(k) for k in ("lastUpdated", "normalization",
+                                                                            "confidenceInfo")}})
+        try:
+            parts.append(weekly(result, q.group, today))
+        except ValueError as exc:  # a group that does not exist yet in an early window
+            if "not in Radar response" not in str(exc):
+                raise
+    if not parts:
+        raise ValueError(f"group {q.group!r} not in any Radar response for {q.path}")
+    s = pd.concat(parts)
+    return s[~s.index.duplicated(keep="last")].sort_index(), metas
 
 
 def job_csv(out_dir: Path, key: str) -> Path:
     return Path(out_dir) / f"{key}.csv"
+
+
+def write_job_csv(out_dir: Path, key: str, s: pd.Series) -> Path:
+    p = job_csv(out_dir, key)
+    pd.DataFrame({"period": s.index.astype(str), "value": s.to_numpy()}).to_csv(p, index=False)
+    return p
+
+
+def log_line(key: str, s: pd.Series, metas: list[dict]) -> str:
+    """One compact log line per series: consecutive weeks from `start` (null = no value that week)."""
+    s = s.sort_index()
+    full = pd.period_range(s.index.min(), s.index.max(), freq="W-SUN")
+    vals = [None if pd.isna(v) else float(v) for v in s.reindex(full).to_numpy()]
+    last = max((m.get("lastUpdated") or "" for m in metas), default="") or None
+    return "RADAR " + json.dumps({"key": key, "start": str(full[0].start_time.date()), "values": vals,
+                                  "last_updated": last}, separators=(",", ":"))
+
+
+def from_log(text: str, out_dir: Path) -> list[str]:
+    """Job log text -> <key>.csv files in out_dir (the local copy of a job run). Returns the keys written."""
+    out_dir = Path(out_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    keys = []
+    for line in text.splitlines():
+        i = line.find("RADAR {")
+        if i < 0:
+            continue
+        rec = json.loads(line[i + len("RADAR "):])
+        idx = pd.period_range(pd.Timestamp(rec["start"]), periods=len(rec["values"]), freq="W-SUN")
+        s = pd.Series(rec["values"], index=idx, dtype=float).dropna()
+        write_job_csv(out_dir, rec["key"], s)
+        keys.append(rec["key"])
+    return keys
 
 
 def load_job_csv(key: str, job_dir: str | Path | None = None) -> pd.Series:

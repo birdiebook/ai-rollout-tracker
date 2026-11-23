@@ -18,9 +18,11 @@ Licence: pageview data is CC0 1.0 (see docs/kallor/trafik.md for the quoted term
 
 from __future__ import annotations
 
+import time
 from urllib.parse import quote
 
 import pandas as pd
+import requests
 
 from ai_tracker import http
 
@@ -60,6 +62,14 @@ TOPICS: dict[str, dict[str, tuple[str, ...]]] = {
 }
 
 
+# Product topics count views only from the product's public launch: some current titles are generic words that
+# meant something else before (de "Claude" and "Grok" have views from 2015). Fixed with the topic list.
+LAUNCH: dict[str, str] = {
+    "chatgpt": "2022-11-30", "claude": "2023-03-14", "gemini": "2023-02-06", "copilot": "2023-02-07",
+    "grok": "2023-11-04", "deepseek": "2023-07-17", "perplexity": "2022-12-07",
+}
+
+
 def url(lang: str, title: str, end: str) -> str:
     return f"{API}/{lang}.wikipedia/all-access/user/{quote(title.replace(' ', '_'), safe='')}/daily/{START}/{end}"
 
@@ -73,14 +83,31 @@ def parse(payload: dict) -> pd.Series:
     return pd.Series([float(i["views"]) for i in items], index=idx).groupby(level=0).sum().sort_index()
 
 
+def _get(u: str, tries: int = 12):
+    """http.get, waiting out Wikimedia's 429s as told by Retry-After (shared egress IPs hit the limit often)."""
+    for attempt in range(tries):
+        try:
+            return http.get(u, SOURCE, retries=0)
+        except requests.HTTPError as exc:
+            resp = exc.response
+            if resp is None or resp.status_code != 429 or attempt == tries - 1:
+                raise
+            try:
+                wait = float(resp.headers.get("retry-after", 5))
+            except ValueError:
+                wait = 5.0
+            time.sleep(min(max(wait, 1.0), 60.0) + 0.5)
+    raise RuntimeError("unreachable")
+
+
 def daily(lang: str, title: str, today: pd.Timestamp | None = None) -> pd.Series:
     """Daily user views of one title; a title that does not exist (404) has none."""
     today = pd.Timestamp(today or pd.Timestamp.now(tz="UTC").date()).normalize()
     end = (today - pd.Timedelta(days=1)).strftime("%Y%m%d")
     try:
-        r = http.get(url(lang, title, end), SOURCE, retries=6)
-    except Exception as exc:  # noqa: BLE001 - only a 404 means "no views"
-        if getattr(getattr(exc, "response", None), "status_code", None) == 404:
+        r = _get(url(lang, title, end))
+    except requests.HTTPError as exc:  # only a 404 means "no views"
+        if exc.response is not None and exc.response.status_code == 404:
             return pd.Series(dtype=float)
         raise
     return parse(r.json())
@@ -101,5 +128,8 @@ def weekly_sum(days: list[pd.Series]) -> pd.Series:
 
 
 def topic_weekly(topic: str, langs: tuple[str, ...]) -> pd.Series:
-    """Weekly views of `topic` summed over the titles of `langs` (Spec.fetch)."""
-    return weekly_sum([daily(lang, t) for lang in langs for t in TOPICS[topic][lang]])
+    """Weekly views of `topic` summed over the titles of `langs` (Spec.fetch); product topics from LAUNCH."""
+    days = [daily(lang, t) for lang in langs for t in TOPICS[topic][lang]]
+    if topic in LAUNCH:
+        days = [d[d.index >= pd.Timestamp(LAUNCH[topic])] for d in days]
+    return weekly_sum(days)
