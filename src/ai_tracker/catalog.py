@@ -9,7 +9,7 @@ Fetch contract. `Spec.fetch()` returns either
   carries its real release date (e.g. SEC filings with their `filed` date). Then known_from comes
   from the source, not from `lag_days`.
 
-Series are added in phase 2, after the measure register (docs/mattregister.md) is fixed.
+Series live in ai_tracker/series/<source>.py (SPECS list), discovered automatically.
 `python -m ai_tracker.catalog` prints the catalog as Markdown.
 """
 
@@ -53,7 +53,13 @@ class Spec:
     note: str = ""
 
 
-ALL: list[Spec] = []
+def _all() -> list[Spec]:
+    from ai_tracker.series import discover
+
+    return discover()
+
+
+ALL: list[Spec] = _all()
 
 
 def by_key(specs: list[Spec] | None = None) -> dict[str, Spec]:
