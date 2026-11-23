@@ -69,3 +69,10 @@ ihop, eftersom 2026 byter till NACE 2.1 och omfattar fler branscher. **Ny frekve
 nyckel och primärkällan inte nås: federalreserve.gov nekas, och api.census.gov kräver nyckel. ALFRED används också
 som belägg för publiceringsdagar. **Beslutspunkt feb 2027:** BTOS byter exempel igen från cykel 202702, och
 rekommendationen är en ny serie v4. Detaljer: [kallor/census_eu.md](kallor/census_eu.md).
+
+## 2026-11-23 – N2: förregistrerad backtest, V1 befordras inte (fas 3, spår F3-N2)
+
+B0, B1 och V1 (B1 + ridge på importens årstillväxt) kördes enligt registret, 2012-05 – 2026-10 (n=174). V1 ≈ B1
+(MAE 10,52 mot 10,51, Holm-p 0,96, sämre även från 2023). **B1 är huvudmodell för N2.** Tolkningar av oklarheter
+(utvärderingsstart 2012-05, ridge-detaljer) och förbehåll finns i [resultat/n2.md](resultat/n2.md). Nästa steg som
+kan ge mer är TSMC:s kvartalsguidance som B2, och den registreras före analys.
