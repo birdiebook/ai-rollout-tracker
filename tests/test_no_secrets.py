@@ -9,7 +9,8 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
 EMAIL = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+\.[A-Za-z.]{2,}")
-ALLOWED = {"you@example.com", "noreply@anthropic.com"}  # placeholders / tool attribution
+ALLOWED = {"noreply@anthropic.com"}  # tool attribution
+RESERVED_DOMAINS = {"example.com", "example.org", "example.net"}  # RFC 2606 placeholders
 
 
 def tracked_files() -> list[Path]:
@@ -28,5 +29,6 @@ def test_no_email_addresses_in_tracked_files():
             text = path.read_text(encoding="utf-8")
         except UnicodeDecodeError:
             continue
-        hits += [f"{path.relative_to(REPO)}: {m}" for m in set(EMAIL.findall(text)) - ALLOWED]
+        found = {m for m in EMAIL.findall(text) if m.split("@")[1].lower() not in RESERVED_DOMAINS}
+        hits += [f"{path.relative_to(REPO)}: {m}" for m in found - ALLOWED]
     assert not hits, hits
