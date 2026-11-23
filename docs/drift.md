@@ -114,11 +114,64 @@ Lokalt: `python -m ai_tracker.warehouse [datum]` visar för gamla serier ett vis
 Observationstabellen ligger i Actions-cachen (`data/`, nyckel `ai-data-<run_id>`, återställs med prefixet
 `ai-data-`). Där ligger också hämtloggen `data/fetch_log.parquet` (en rad per lyckad hämtning och serie, även när
 inget nytt kom). Den hindrar att en försenad release som saknas i `LATE` bakåtdateras (spår X1), så en kall cache
-tappar också det skyddet för perioder som var sena vid förra hämtningen. Den committas aldrig och laddas inte upp som artefakt, eftersom artefakter i ett publikt repo går att
-ladda ned och flera källor har licenser som inte är kontrollerade. Alla datajobb delar concurrency-gruppen
+tappar också det skyddet för perioder som var sena vid förra hämtningen. Den committas aldrig och laddas bara upp krypterad (se Datasnapshot nedan), eftersom artefakter i ett publikt
+repo går att ladda ned och flera källor har licenser som inte är kontrollerade. Alla datajobb delar concurrency-gruppen
 `ai-data`, så två jobb skriver aldrig cachen samtidigt. Det gäller även `collect-weekly.yml` (Epoch, spår I5).
 GitHub tar bort en cache som inte använts på sju dagar. Veckohämtningen håller den varm. En kall cache betyder
 bara att allt hämtas om (backfill), vilket tar längre tid.
+
+## Datasnapshot (krypterad artefakt till nya sessioner)
+
+En ny molnsession börjar med tom `data/`. Att bygga om tar 1–2 timmar, och BigQuery- och Cloudflare-serierna går
+bara att hämta i Actions. Därför packar `fetch-weekly.yml` tabellen till en krypterad artefakt efter att cachen
+sparats (`src/ai_tracker/datasnapshot.py`, tester i `tests/test_datasnapshot.py`).
+
+- **Innehåll:** `observations.parquet`, `fetch_log.parquet` och små tillståndsfiler som inte går att hämta igen
+  (`STATE_FILES`: egna prissnapshots för förstapartspriser, BTOS-schemaloggen, Epochs körlogg och LiteLLM-cachen,
+  var och en högst 50 MB). Råkopiorna under `data/raw` packas inte, eftersom de är stora och går att hämta igen.
+- **Kryptering:** AES-256-GCM med en nyckel som härleds ur `DATA_KEY` med scrypt (n = 2^15, r = 8, p = 1) och ett
+  slumpat salt per fil. Det enda som står i klartext är ett litet huvud med formatversion, salt och skapelsetid.
+  Huvudet autentiseras också (associerad data). Inuti ligger ett manifest med git-sha, antal rader och serier,
+  senaste `fetched_at` och `known_from` samt SHA-256 per fil. `fetch` kontrollerar allt innan något skrivs.
+- **Artefakt:** `data-snapshot` (en fil, `data-snapshot.aisnap`), sparas i 14 dagar. Utan secreten `DATA_KEY` hoppas
+  stegen över med en notis, och jobbet går igenom ändå. Nyckeln skickas bara som miljövariabel till pack-steget och
+  skrivs aldrig ut. Steget ligger före *Fail on stale series*, så en tabell som klarat datatesterna packas även när
+  jobbet sedan fallerar på aktualitet. `collect-weekly.yml` (04:17) kommer efter veckohämtningen (03:37), så Epoch-
+  och prisdata i snapshoten är från förra veckans insamling.
+- **Installation:** till utcheckningens `data/`. Kommandot vägrar om den lokala tabellen är lika ny eller nyare
+  (senaste `fetched_at`), utom med `--force`. Filer som ersätts sparas i `data/snapshot_backups/` (de 5 senaste).
+  Skrivningen sker under samma lås som `datamerge` och är atomär per fil. I en spår-worktree
+  (`AI_TRACKER_SHARED_DATA` satt) vägrar standardmålet: installera i main-utcheckningen, som är basen.
+
+**Ny session** (i main-utcheckningen, `DATA_KEY` satt som miljövariabel med samma värde som secreten):
+
+```
+python -m pip install -q -r ci/requirements.txt          # setup-skriptet gör detta
+PYTHONPATH=src python -m ai_tracker.datasnapshot fetch     # senaste data-snapshot från main
+PYTHONPATH=src python -m ai_tracker.warehouse              # datatester och aktualitet på den installerade tabellen
+PYTHONPATH=src python -m ai_tracker.observations           # hämtar bara det som är nytt sedan snapshoten
+```
+
+`fetch` hittar den nyaste artefakten via `api.github.com` (listning och nedladdning fungerar från sessionen utan
+token) och följer omdirigeringen till `productionresultssa<N>.blob.core.windows.net`. Shardnumret varierar mellan
+artefakter. Om proxyn nekar värden säger felmeddelandet vilken den är, och då läggs den till bland miljöns tillåtna
+värdar (`docs/miljo.md`, avsnitt 1). Andra varianter:
+
+```
+python -m ai_tracker.datasnapshot fetch --run-id <run_id>   # en viss körning
+python -m ai_tracker.datasnapshot fetch --url <url>         # URL från GitHub MCP (se nedan)
+python -m ai_tracker.datasnapshot fetch --file <fil>        # .aisnap eller artefaktens .zip, redan nedladdad
+python -m ai_tracker.datasnapshot info <fil>                # huvud och verifierat manifest
+python -m ai_tracker.datasnapshot pack --out <fil>          # packa lokalt (samma som i Actions)
+```
+
+Om `api.github.com` skulle nekas: agenten hämtar körningen med `mcp__github__actions_list` (`list_workflow_runs`,
+workflow `fetch-weekly.yml`) och nedladdnings-URL:en med `mcp__github__actions_get`
+(`download_workflow_run_artifact`, artefakten `data-snapshot`), och kör sedan `datasnapshot fetch --url <url>`.
+URL:en är signerad och kortlivad, så den skrivs inte ut av kommandot och ska inte loggas.
+
+**Byta nyckel:** sätt ny `DATA_KEY` både som secret och i miljön. Äldre artefakter går då inte att läsa (de
+försvinner ändå efter 14 dagar), så kör `Weekly data fetch` för hand en gång efter bytet.
 
 ## Delad data (parallella spår)
 
@@ -194,6 +247,7 @@ Settings → Secrets and variables → Actions → New repository secret:
 |---|---|---|
 | `SEC_USER_AGENT` | `ai-rollout-tracker <kontaktadress>` | **ja**. sec.gov kräver en deklarerad User-Agent med kontaktuppgift. Det finns ingen reserv: saknas den fallerar `fetch-weekly.yml` och `nowcast.yml` direkt med ett tydligt meddelande |
 | `CENSUS_API_KEY` | nyckel från api.census.gov | när den finns (används inte av koden än) |
+| `DATA_KEY` | lång slumpad lösenfras, till exempel `python -c "import secrets; print(secrets.token_urlsafe(32))"` | för datasnapshoten. Samma värde läggs in som miljövariabel i molnmiljön (`docs/miljo.md`). Saknas den hoppas snapshot-stegen över. Värdet sparas också utanför GitHub (lösenordshanterare), eftersom en secret inte går att läsa ut igen |
 | `ECOS_API_KEY` | nyckel från Bank of Korea ECOS | när den finns (används inte av koden än, se N2:s blockerade indikatorer) |
 
 Värdena skickas bara som miljövariabler till stegen och skrivs aldrig ut. GitHub maskerar dem i loggarna.
