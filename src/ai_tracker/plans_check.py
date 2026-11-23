@@ -36,13 +36,21 @@ def _scaled(v: float) -> str:
     return rf"(?<![\d.]){whole}{tail}(?![\d])"
 
 
-def number_patterns(value: float, unit: str) -> list[str]:
-    """Ways the value can be written: MUSD in trillions / billions / millions, MW in GW or MW, multiples."""
+# the lower end of a range written once with its unit: "$34-39 billion", "$37 billion to $39 billion" is covered too
+RANGE_TAIL = r"(?:\s*(?:-|–|to)\s*\$?\s*[\d.]+)?\s*"
+WORD_GW = {1000.0: r"(?:a|another|one) gigawatt"}
+
+
+def number_patterns(value: float, unit: str, in_millions: bool = False) -> list[str]:
+    """Ways the value can be written: MUSD in trillions / billions / millions (a bare number in a table stated
+    "in millions"), MW in GW or MW, multiples."""
     if unit == "MUSD":
-        return [_scaled(value / 1e6) + r"\s*trillion", _scaled(value / 1000) + r"\s*(?:billion|B\b)",
-                _scaled(value) + r"\s*(?:million|M\b)"]
+        pats = [_scaled(value / 1e6) + RANGE_TAIL + r"trillion", _scaled(value / 1000) + RANGE_TAIL + r"(?:billion|B\b)",
+                _scaled(value) + RANGE_TAIL + r"(?:million|M\b)"]
+        return pats + ([_scaled(value)] if in_millions else [])
     if unit == "MW":
-        return [_scaled(value / 1000) + r"\s*(?:GW|gigawatts?)", _scaled(value) + r"\s*(?:MW|megawatts?)"]
+        pats = [_scaled(value / 1000) + r"\s*(?:GW|gigawatts?)", _scaled(value) + r"\s*(?:MWs?|megawatts?)"]
+        return pats + ([WORD_GW[value]] if value in WORD_GW else [])
     if unit == "multiple":
         pats = [_scaled(value) + r"\s*x", _scaled(round((value - 1) * 100, 3)) + r"\s*%"]
         if value in WORD_MULTIPLES:
@@ -55,7 +63,8 @@ def sentence_ok(row: pd.Series, sentence: str) -> bool:
     if row["kind"] == "direction":
         return re.search(DIRECTION_WORDS[int(row["direction_code"])], sentence, re.I) is not None
     vals = [v for v in (row["value_lo"], row["value_hi"]) if pd.notna(v)]
-    return all(any(re.search(p, sentence, re.I) for p in number_patterns(v, row["unit"])) for v in vals)
+    millions = re.search(r"(?i)\(in millions\)", sentence) is not None
+    return all(any(re.search(p, sentence, re.I) for p in number_patterns(v, row["unit"], millions)) for v in vals)
 
 
 def check_row(row: pd.Series, text: str) -> str:

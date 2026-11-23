@@ -171,9 +171,18 @@ def test_series_keys_periods_and_vintages(tmp_path):
     (590, "MW", "approximately 590 MW of active power"),
     (2.0, "multiple", "roughly double our footprint"),
     (1.8, "multiple", "increase AI capacity by over 80%"),
+    (34000, "MUSD", "in the range of $34-39 billion"),
+    (1000, "MW", "we added another gigawatt of capacity"),
 ])
 def test_number_patterns(value, unit, text):
     assert any(__import__("re").search(p, text, flags=2) for p in plans_check.number_patterns(value, unit))
+
+
+def test_table_total_in_millions():
+    r = pd.Series(row(**(BACKLOG | {"measure": "COMMIT", "definition": "ORCL_UNCOND_OBLIG", "value_lo": 13309.0,
+                                     "value_hi": 13309.0})))
+    assert plans_check.sentence_ok(r, "obligations were as follows (in millions): Fiscal 2027 $ 1,841 Total $ 13,309")
+    assert not plans_check.sentence_ok(r, "obligations were as follows: Total $ 13,309")
 
 
 def test_check_row_ok_moved_and_missing():
