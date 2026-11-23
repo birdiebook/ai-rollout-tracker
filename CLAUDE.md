@@ -62,7 +62,7 @@ Se `docs/plan.md`, avsnitt 8. Uppdatera här när en fas är klar.
 - **Fas 3** ✅ N1 (capex) och N2 (TSMC) med backtest. Läckagegranskning R1 och rättning X1
 - **Fas 4** ✅ guidance (E1), granskning R2. **N2:s huvudmodell är B2 (TSMC:s guidance)**, N1:s huvudmodell är B1
 - **Fas 5** ✅ tillstånd per gren (`python -m ai_tracker.state`), månatlig ögonblicksbild från 2026-11-30
-- **Fas 6** pågår: hemsida på GitHub Pages ✅ (`python -m ai_tracker.site build`, `pages.yml`; ägaren aktiverar
+- **Fas 6** ✅ hemsida på GitHub Pages (`python -m ai_tracker.site build`, `pages.yml`; ägaren aktiverar
   Pages en gång, se `docs/drift.md`). Kvar: månadsbrev
 - Drift: `docs/drift.md` (veckohämtning, skarpa prognoser N2 dag 5 och N1 kvartal + 20 dagar, ögonblicksbild vid månadsslut)
 
