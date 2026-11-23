@@ -90,3 +90,29 @@ längre uppdateras och att Artificial Analysis och OpenRouters tokenvolymer är 
   förmåga är minst tröskeln. Tröskeln är frontens ECI-värde vid 2025-01-01, låst när serien byggs första gången
   och redovisad här. Takt = halveringstid enligt avsnitt 1.
 - **METR och Epochs frysta prisdata:** används som referens för att kontrollera våra egna mått, inte som kärnserier.
+
+### 2026-11-23 – G2: tröskel för pris vid fast förmåga låst (fas 2, spår I6, före analys)
+
+Låst vid första bygget av serien, innan någon takt eller halveringstid beräknats.
+
+- **Tröskel (ECI): 141,16.** Högsta ECI bland Epochs modeller med releasedatum ≤ 2025-01-01, i
+  `eci_scores.csv` hämtad 2026-11-23 (o1, release 2024-12-17). Konstanten `ECI_THRESHOLD` i
+  `src/ai_tracker/series/price_capability.py`. Räknas aldrig om, även när Epoch skattar om ECI.
+- **Serie `g2_price_at_capability`** (månad, registrerat huvudmått): lägsta blandade pris
+  (3 input : 1 output, USD per miljon tokens) bland modeller med ECI ≥ 141,16, enligt LiteLLM:s prisfil som den
+  såg ut vid månadens slut (senaste urvalda commit på `main` med datum ≤ månadsslut). Bara förstapartspriser
+  (utvecklarens eget API, regeln i `src/ai_tracker/sources/model_map.py`). En modell räknas från sitt
+  releasedatum hos Epoch. ECI-värdena är dagens skattningar, så hela historiken är bakåtfylld
+  (`source="backfill"`) och omfattas av regeln ovan om ECI: ingen del av diffusionsindex förrän det finns 24
+  månader egna ögonblicksbilder.
+- **Variant `g2_price_at_capability_gpqa`, tröskel 0,767676.** Samma mått med förmåga från Epochs egna
+  körningar av GPQA Diamond: känd från `Started at` + 7 dagar, bästa körningen per modell (över
+  resonemangsnivåer). Tröskeln är bästa körningen bland modeller släppta ≤ 2025-01-01 (o1-2024-12-17,
+  hög resonemangsnivå, 152/198 = 0,7676768, avrundat nedåt till 6 decimaler). GPQA Diamond valdes för att den
+  har flest Epoch-körda modeller (342 körningar), inte efter utfall. Båda varianterna redovisas. Ingen av dem
+  väljs efter hur serierna ser ut. Huvudmåttet är fortsatt ECI-varianten.
+- **Prisregler, fastställda vid bygget efter kontroll av enskilda poster (inte av seriens förlopp):**
+  utpriset är resonemangspriset när LiteLLM anger ett separat sådant (Gemini 2.5 Flash preview: 0,60 mot
+  3,50 USD), eftersom Epoch mäter förmågan med resonemang påslaget. DeepSeeks eget API räknas under båda
+  LiteLLM:s namnformer (`deepseek-chat` och `deepseek/deepseek-chat`).
+- Takt enligt avsnitt 1 (halveringstid). Inte beräknad i spår I6.
