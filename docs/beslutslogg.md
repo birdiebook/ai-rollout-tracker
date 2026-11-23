@@ -185,3 +185,15 @@ körning i 90 dagar, även innan bytet är registrerat. ECI och modelldatabasen 
 men flaggas. `frontiermath` och `frontiermath_tier_4` är avslutade katalogserier. Backcast 2024-01–2026-10: G1 har 1
 räknad serie och därför inget tillstånd, och G9 har 3. Detaljer i [tillstand.md](resultat/tillstand.md) och
 [kallor/epoch_arxiv.md](kallor/epoch_arxiv.md).
+
+## 2026-11-23 – Spår B2: bolagens guidance utvärderad som B2 för N1 och N2
+
+**Val:** B2 byggd exakt enligt registret (posterna om B2 2026-11-23), med `as_of(prognosdag)` för guidance och all
+annan indata. Oklarheter lästes konservativt och dokumenterades (B1 flera steg fram = iterad säsongsnaiv tillväxt
+för N2 och konstant drift för N1, valuta efter kvartal, ofullständig guidance ger B1, `capex_hyp4` = summan av
+bolagens B2). Holm över alla varianter per mål. **N2:** guidance användes i alla 174 månader. B2 MAE 6,42 mot B1
+10,51 (2023–: 6,70 mot 9,67), Holm-p < 0,001. B2 klarar regeln, men befordringen är **villkorad: väntar på
+oberoende granskning av extraktionen (R2)**. `CHAMPION` är fortfarande B1. **N1:** guidance för Meta i 9 av 9
+kvartal, för Alphabet i 6 av 9 och aldrig för Amazon eller Microsoft. B2 MAE 5,85 mot B1 7,00 (n = 9), Holm-p 0,68.
+B2 klarar inte regeln, och B1 är huvudmodell. N1b: Meta blir bättre med guidance, Alphabet sämre (inaktuella
+vintages när samtalen saknas). Detaljer: [n1.md](resultat/n1.md) och [n2.md](resultat/n2.md).

@@ -21,6 +21,16 @@ Models (all in 100 * log points)
   lambda chosen by time-series CV inside the training window only: the last CV_FOLDS training rows are each
   predicted by a fit on the rows before it (standardisation refitted per fold), loss = mean absolute error,
   grid LAMBDAS, ties go to the larger lambda.
+- B2 (TSMC's own quarterly guidance; register changes "B2 (bolagens guidance) läggs till för N1 och N2" and
+  "B2: TSMC före 2017Q3 och definitionen för N1"):
+  G = the quarter's guided revenue in NT$, as known at the origin (as_of: a mid-quarter update is a later vintage
+  and is used only from its own known_from). Quarters up to 2017Q2: midpoint of the NT$ range. From 2017Q3:
+  midpoint of the US$ range x the assumed USD/NT$ rate. B2(m) = (G - sum of the quarter's months known at the
+  origin) x B1 share, B1 share = B1(m) / sum of B1 over the quarter's unknown months (m included).
+  B1 for a later unknown month j is the same seasonal naive growth from the latest known month L = m-1:
+  y(j-12) * y(L) / y(L-12) (identical to iterating B1 month by month).
+  Fallback to B1 (and the reason recorded) when the quarter has no guidance known at the origin, when lo or hi
+  of the range or (from 2017Q3) the rate is missing, or when G - known months <= 0.
 """
 
 from __future__ import annotations
@@ -40,7 +50,13 @@ DROPPED_INDICATORS = {
     "tw_exports_m": "BLOCKED (Taiwan MOF/customs)",
     "us_ip_semis": "excluded pending FRED/ALFRED terms decision",
 }
-VARIANTS = ["B0", "B1", "V1"]
+VARIANTS = ["B0", "B1", "V1", "B2"]
+MODELS = ["V1", "B2"]  # the registered Holm family for N2 (register change "B2: TSMC före 2017Q3 ...")
+# B2 may not be promoted before an independent review approves the extracted guidance values (register)
+REVIEW_REQUIRED = {"B2": "villkorad: väntar på oberoende granskning av extraktionen (R2)"}
+USD_FROM = pd.Period("2017Q3", "Q-DEC")  # TSMC guided in NT$ up to 2017Q2, in US$ from 2017Q3
+GUIDANCE = {"twd_lo": "tsmc_guid_rev_twd_lo", "twd_hi": "tsmc_guid_rev_twd_hi",
+            "usd_lo": "tsmc_guid_rev_usd_lo", "usd_hi": "tsmc_guid_rev_usd_hi", "fx": "tsmc_guid_fx"}
 ORIGIN_DAY = 5
 MIN_TRAIN = 60  # months of V1 training rows required before a month is evaluated
 EVAL_START = pd.Period("2012-01", "M")
@@ -83,6 +99,9 @@ class Inputs:
     b1: float = np.nan
     x: dict = field(default_factory=dict)  # indicator -> feature (100 * y/y log growth of latest known month)
     used: list = field(default_factory=list)  # (series, period, value, known_from) actually used
+    b2: float = np.nan  # 100 * log forecast (= b1 when B2 falls back)
+    b2_source: str = ""  # "guidance NT$" | "guidance US$xFX" | "B1: <reason>"
+    b2_guidance: float = np.nan  # G, the quarter's guided revenue in mn NT$ (NaN on fallback)
 
 
 def month_inputs(month: pd.Period, table) -> Inputs:
@@ -100,6 +119,7 @@ def month_inputs(month: pd.Period, table) -> Inputs:
     for p in need:
         if p in y.index:
             inp.used.append((TARGET, str(p), float(y[p]), y_kf[p]))
+    _b2(inp, y, by_series)
     for ind in INDICATORS:
         if ind not in by_series:
             continue
@@ -113,6 +133,78 @@ def month_inputs(month: pd.Period, table) -> Inputs:
             for p in (last, last - 12):
                 inp.used.append((ind, str(p), float(s[p]), kf[p]))
     return inp
+
+
+def _guidance_value(key: str, quarter: pd.Period, origin, by_series: dict):
+    """(value, known_from) of guidance series GUIDANCE[key] for `quarter` as known at `origin`, or None."""
+    series = GUIDANCE[key]
+    if series not in by_series:
+        return None
+    s = observations.as_of(series, origin, by_series[series])
+    if quarter not in s.index:
+        return None
+    kf = _vintage_dates_q(by_series[series], origin)
+    return float(s[quarter]), kf[quarter]
+
+
+def _vintage_dates_q(rows: pd.DataFrame, origin) -> pd.Series:
+    t = rows[rows["known_from"] <= origin]
+    kf = t.sort_values("known_from").groupby("period")["known_from"].last()
+    kf.index = pd.PeriodIndex(kf.index, freq="Q-DEC")
+    return kf
+
+
+def quarter_guidance(quarter: pd.Period, origin, by_series: dict) -> tuple[float, str, list]:
+    """G in mn NT$ for `quarter` as known at `origin`: (G, source, used rows), or (NaN, reason, [])."""
+    if quarter < USD_FROM:
+        lo, hi = (_guidance_value(k, quarter, origin, by_series) for k in ("twd_lo", "twd_hi"))
+        if lo is None or hi is None:
+            return np.nan, "no NT$ guidance known", []
+        used = [(GUIDANCE["twd_lo"], str(quarter), *lo), (GUIDANCE["twd_hi"], str(quarter), *hi)]
+        return (lo[0] + hi[0]) / 2, "guidance NT$", used
+    lo, hi, fx = (_guidance_value(k, quarter, origin, by_series) for k in ("usd_lo", "usd_hi", "fx"))
+    if lo is None or hi is None:
+        return np.nan, "no US$ guidance known", []
+    if fx is None:
+        return np.nan, "US$ guidance without a known FX assumption", []
+    used = [(GUIDANCE["usd_lo"], str(quarter), *lo), (GUIDANCE["usd_hi"], str(quarter), *hi),
+            (GUIDANCE["fx"], str(quarter), *fx)]
+    return (lo[0] + hi[0]) / 2 * fx[0], "guidance US$xFX", used
+
+
+def _b2(inp: Inputs, y: pd.Series, by_series: dict) -> None:
+    """B2 for inp.month from TSMC's quarterly guidance (module docstring). Needs B1; falls back to it."""
+    m = inp.month
+    if not np.isfinite(inp.b1):
+        return
+    inp.b2 = inp.b1
+    quarter = m.asfreq("Q-DEC")
+    months = pd.period_range(quarter.asfreq("M", "s"), quarter.asfreq("M", "e"), freq="M")
+    g, source, used = quarter_guidance(quarter, inp.origin, by_series)
+    if not np.isfinite(g):
+        inp.b2_source = f"B1: {source}"
+        return
+    last = m - 1  # B1 needs m-1, so every earlier month of the quarter is known as well
+    known = [k for k in months if k < m]
+    unknown = [k for k in months if k >= m]
+    if any(k not in y.index for k in known) or any(k in y.index for k in unknown) \
+            or any(k - 12 not in y.index for k in unknown):
+        inp.b2_source = "B1: quarter months not as expected at the origin"
+        return
+    b1 = {k: float(y[k - 12] * y[last] / y[last - 12]) for k in unknown}
+    rest = g - float(sum(y[k] for k in known))
+    if rest <= 0:
+        inp.b2_source = "B1: guidance minus known months <= 0"
+        return
+    inp.b2 = 100 * np.log(rest * b1[m] / sum(b1.values()))
+    inp.b2_source = source
+    inp.b2_guidance = g
+    y_kf = _vintage_dates(by_series[TARGET], TARGET, inp.origin)
+    for k in sorted(set(known) | {k - 12 for k in unknown} | {last, last - 12}):
+        rec = (TARGET, str(k), float(y[k]), y_kf[k])
+        if rec not in inp.used:
+            inp.used.append(rec)
+    inp.used.extend(used)
 
 
 # ------------------------------------------------------------------ ridge
@@ -186,7 +278,7 @@ def forecast_from(month: pd.Period, records: dict, outcomes: pd.DataFrame) -> Fo
         if known[k] > origin or not np.isfinite(rk.b1) or len(rk.x) != len(INDICATORS):
             continue
         rows.append(([rk.x[i] for i in INDICATORS], 100 * np.log(value[k]) - rk.b1))
-    logs = {"B0": inp.b0, "B1": inp.b1, "V1": np.nan}
+    logs = {"B0": inp.b0, "B1": inp.b1, "V1": np.nan, "B2": inp.b2}
     lam = np.nan
     if rows and np.isfinite(inp.b1) and len(inp.x) == len(INDICATORS):
         X = np.array([r[0] for r in rows], dtype=float)
@@ -206,7 +298,7 @@ def build_records(table: pd.DataFrame, last_month: pd.Period) -> dict:
 
 
 def slim(table: pd.DataFrame) -> pd.DataFrame:
-    return table[table["series"].isin([TARGET, *INDICATORS])]
+    return table[table["series"].isin([TARGET, *INDICATORS, *GUIDANCE.values()])]
 
 
 def forecast(origin, table: pd.DataFrame) -> Forecast:
