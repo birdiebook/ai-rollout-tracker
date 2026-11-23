@@ -10,6 +10,7 @@ import html
 import math
 
 from ai_tracker import catalog
+from ai_tracker.site import markdown as MD
 
 SITE_TITLE = "AI-utrullningen"
 STATE_ICON = {"accelererar": "↑", "stabil": "→", "bromsar in": "↓", "för få serier": "·"}
@@ -76,7 +77,7 @@ def change_text(v: dict) -> str:
 
 def nav(active: str) -> str:
     items = [("index.html", "Översikt", "oversikt"), ("prognoser.html", "Prognoser", "prognoser"),
-             ("metod.html", "Metod och källor", "metod")]
+             ("manadsbrev.html", "Månadsbrev", "manadsbrev"), ("metod.html", "Metod och källor", "metod")]
     links = "".join(f'<a href="{href}"{" aria-current=\"page\"" if key == active else ""}>{label}</a>'
                     for href, label, key in items)
     return f'<nav class="top" aria-label="Huvudmeny"><a class="brand" href="index.html">{SITE_TITLE}</a>{links}</nav>'
@@ -314,12 +315,19 @@ def nowcast_section(n: dict, build: dict) -> str:
     nxt = (f"Nästa skarpa prognos: {esc(n['next_period'])}, görs {esc(n['next_origin'])}."
            if n.get("next_origin") else "")
     var_ids = [x["id"] for x in n["variants"]]
+    with_iv = any(f.get("intervals") for f in n["forecasts"])  # only with intervals.ENABLED (grind G-C)
+
+    def iv_cell(f):
+        lo, hi = ((f.get("intervals") or {}).get("80") or [None, None])
+        return f'<td class="num">{num(lo, 0)} – {num(hi, 0)}</td>' if lo is not None else "<td></td>"
+
     if n["forecasts"]:
-        head = "".join(f"<th>{esc(v)}</th>" for v in var_ids)
+        head = "".join(f"<th>{esc(v)}</th>" for v in var_ids) + ("<th>80 % intervall</th>" if with_iv else "")
         rows = "".join(
             f'<tr><td>{esc(f["period"])}</td><td>{esc(f.get("origin"))}</td><td>{esc(f.get("champion"))}</td>'
             f'<td class="num">{num(f.get("value"), 0)}</td>'
             + "".join(f'<td class="num">{num((f.get("variants") or {}).get(v), 0)}</td>' for v in var_ids)
+            + (iv_cell(f) if with_iv else "")
             + f'<td><a href="{esc(build["repo"])}/blob/main/{esc(f["file"])}">fil</a></td></tr>' for f in n["forecasts"])
         fc = (f'<div class="table-wrap"><table><thead><tr><th>Period</th><th>Origin</th><th>Huvudmodell</th>'
               f'<th>Prognos</th>{head}<th>Git</th></tr></thead><tbody>{rows}</tbody></table></div>')
@@ -345,13 +353,27 @@ def nowcast_section(n: dict, build: dict) -> str:
                            f'<td class="num">{s["n"]}</td><td class="num">{num(s["mae"])}</td>'
                            f'<td class="num">{num(s["bias"], 2, signed=True)}</td></tr>' for s in summ) +
                    "</tbody></table></div><p class='small muted'>Få utfall: skillnader mellan varianter kan vara slump.</p>")
+        cov = [c for c in n.get("coverage") or [] if c["n"]]
+        if cov:
+            keys = n["interval_levels"]
+            sc += ('<div class="table-wrap"><table class="narrow"><thead><tr><th>Variant</th><th>n</th>'
+                   + "".join(f"<th>Täckning {esc(k)} %</th>" for k in keys) + '<th>CRPS</th></tr></thead><tbody>'
+                   + "".join(f'<tr><td>{"huvudmodell" if c["variant"] == "champion" else esc(c["variant"])}</td>'
+                             f'<td class="num">{c["n"]}</td>'
+                             + "".join(f'<td class="num">{num(c.get(f"coverage_{k}"))} '
+                                       f'[{num((c.get(f"band_{k}") or [None, None])[0])}–'
+                                       f'{num((c.get(f"band_{k}") or [None, None])[1])}]</td>' for k in keys)
+                             + f'<td class="num">{num(c["crps"])}</td></tr>' for c in cov)
+                   + "</tbody></table></div><p class='small muted'>Täckning = andel utfall inom intervallet, med ett binomialt "
+                     "90 %-band inom hakparentes. Den blir meningsfull först efter många utfall, och dålig kalibrering "
+                     "byter inte huvudmodell.</p>")
     elif n.get("scorecard_error"):
         sc = f'<p class="reason">Scorecarden kunde inte beräknas: {esc(n["scorecard_error"])}</p>'
     chart = ""
     if n.get("history"):
         chart = (f'<figure class="chart wide" data-chart="nowcast" data-id="{esc(n["id"])}"><figcaption>'
                  f'{esc(n["target_label"])} ({esc(n["unit"])}), senaste kända version. Punkter: skarpa prognoser '
-                 f'(huvudmodellen).</figcaption></figure>'
+                 f'(huvudmodellen){", med 50 %- och 95 %-intervall" if with_iv else ""}.</figcaption></figure>'
                  f'<p class="source">Källa: {esc(n["source"])}. Licens: {esc(n["license"])}.</p>')
     return f"""<section class="nowcast" id="{esc(n['id'])}">
 <h2>{esc(n['label'])}: {esc(n['title'])}</h2>
@@ -415,3 +437,31 @@ def method_page(doc: dict, build: dict) -> str:
 <div class="table-wrap"><table><thead><tr><th>Gren</th><th>Serie</th><th>Namn</th><th>Skäl</th></tr></thead><tbody>{withheld}</tbody></table></div>
 </section>"""
     return page(f"Metod och källor – {SITE_TITLE}", "metod", body, None, build)
+
+
+# ------------------------------------------------------------------ monthly letters
+
+
+def letters_page(doc: dict, build: dict) -> str:
+    items = "".join(
+        f'<li><a href="{esc(x["page"])}">{esc(x["month_sv"].capitalize())}</a>'
+        f'{kind_note(x["kind"])} <span class="muted small">· <a href="{esc(build["repo"])}/blob/main/{esc(x["file"])}">'
+        f'Markdown i git</a></span></li>' for x in doc["letters"])
+    listing = f'<ul class="letters">{items}</ul>' if items else "<p>Inga månadsbrev än.</p>"
+    body = f"""<section class="intro prose">
+<h1>Månadsbrev</h1>
+<p class="lead">Ett brev per månadsslut: vilka grenar och serier som ändrade takt, nya skarpa prognoser och utfall, och nyheter i datan. Brevet genereras automatiskt och deterministiskt från månadens ögonblicksbild (ingen språkmodell), och committas tillsammans med den.</p>
+<p>Brev märkta <em>rekonstruerad</em> är skrivna från en beräkning i efterhand, inte från en skarp ögonblicksbild.</p>
+{listing}
+</section>"""
+    return page(f"Månadsbrev – {SITE_TITLE}", "manadsbrev", body, None, build)
+
+
+def letter_page(letter: dict, build: dict) -> str:
+    content = MD.render(letter["markdown"], {"Visas inte av licensskäl": "withheld"})
+    body = f"""<p class="crumb"><a href="manadsbrev.html">Månadsbrev</a> › {esc(letter["month"])}</p>
+<article class="letter prose">
+{content}
+<p class="small muted">Källa: <a href="{esc(build["repo"])}/blob/main/{esc(letter["file"])}">{esc(letter["file"])}</a>.</p>
+</article>"""
+    return page(f"{letter['title']} – {SITE_TITLE}", "manadsbrev", body, None, build)

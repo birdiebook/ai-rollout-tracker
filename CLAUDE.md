@@ -63,7 +63,8 @@ Se `docs/plan.md`, avsnitt 8. Uppdatera här när en fas är klar.
 - **Fas 4** ✅ guidance (E1), granskning R2. **N2:s huvudmodell är B2 (TSMC:s guidance)**, N1:s huvudmodell är B1
 - **Fas 5** ✅ tillstånd per gren (`python -m ai_tracker.state`), månatlig ögonblicksbild från 2026-11-30
 - **Fas 6** ✅ hemsida på GitHub Pages (`python -m ai_tracker.site build`, `pages.yml`; ägaren aktiverar
-  Pages en gång, se `docs/drift.md`). Kvar: månadsbrev
+  Pages en gång, se `docs/drift.md`). Månadsbrev ✅ (`python -m ai_tracker.letter`, committas med ögonblicksbilden)
+- **Steg 2** pågår: flödesmodell, sannolikheter och regim (`docs/steg2/plan.md`)
 - Drift: `docs/drift.md` (veckohämtning, skarpa prognoser N2 dag 5 och N1 kvartal + 20 dagar, ögonblicksbild vid månadsslut)
 
 ## Tekniska konventioner
