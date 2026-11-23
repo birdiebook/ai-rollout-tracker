@@ -515,3 +515,25 @@ def test_publish_commits_a_new_snapshot_once(tmp_path):
     assert not pipeline.publish(["snapshots/2026-11.json"], tmp_path)
     with pytest.raises(SystemExit, match="only forecasts"):
         pipeline.publish(["snapshots/latest.json"], tmp_path)
+
+
+def test_stale_series_not_counted():
+    """Register amendment 2026-11-23: a series older than its freshness bound is not counted."""
+    import pandas as pd
+
+    from ai_tracker import catalog, warehouse
+    from ai_tracker.state import branch as B
+
+    spec = catalog.by_key()["us_imports_tw_m"]
+    rows = pd.DataFrame({"series": "us_imports_tw_m", "freq": "M", "period": ["2026-01"], "value": [1.0],
+                         "known_from": [pd.Timestamp("2026-03-01")], "source": "fetch",
+                         "fetched_at": [pd.Timestamp("2026-03-01")]})
+
+    class Ctx:
+        def rows(self, key):
+            return rows if key == "us_imports_tw_m" else rows.iloc[0:0]
+
+    bound = warehouse.max_age_days(spec)
+    fresh_day = pd.Timestamp("2026-01-31") + pd.Timedelta(days=bound)
+    assert B.stale_reason("us_imports_tw_m", fresh_day, Ctx()) == ""
+    assert B.stale_reason("us_imports_tw_m", fresh_day + pd.Timedelta(days=1), Ctx()).startswith("inaktuell")

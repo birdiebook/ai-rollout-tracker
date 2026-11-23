@@ -181,3 +181,20 @@ Ingen guidance har hämtats eller jämförts med utfall när detta skrivs.
 - Definitionen låses i en ny post här när extraktionen (fas 4, spår E1) har dokumenterat hur varje bolags guidance
   är definierad (med eller utan finansiell leasing, kalender- eller räkenskapsår, kvartal eller helår).
 - Det görs innan något B2-värde jämförs med utfall.
+
+### 2026-11-23 – Fas 5: tre tolkningar fastställs (före första skarpa ögonblicksbilden)
+
+Fas 5 (spår F5) lämnade tre tolkningsfrågor. De avgörs här efter att den rekonstruerade historiken körts en gång,
+och därför bara med motiveringar som inte beror på vad historiken visade. Den första skarpa ögonblicksbilden är
+2026-11-30.
+
+1. **Månadsaggregering:** varje månad aggregeras från en och samma version, `as_of(beräkningsdagen)`, och seriens
+   sista månad stryks eftersom den kan vara ofullständig. Det följer avsnitt 1 ("allt via `as_of` på beräkningsdagen")
+   och undviker att blanda versioner med olika metod eller basår. Båda tolkningarna är fria från läckage.
+2. **Tecken för fördubblings- och halveringstid:** kortare tid räknas som acceleration (+1). Det är regelns
+   avsikt, och den bokstavliga läsningen skulle vända riktningen.
+3. **Inaktuella serier räknas inte:** en kärnserie vars senaste kända period är äldre än aktualitetsgränsen
+   (`warehouse.max_age_days`, samma regel som veckotestet) räknas inte i diffusionsindex och listas med orsak.
+   En härledd serie är lika aktuell som sin minst aktuella komponent.
+
+Övriga tolkningar i `docs/resultat/tillstand.md` (punkt 4–10) godtas som de står.

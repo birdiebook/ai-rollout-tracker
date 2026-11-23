@@ -6,8 +6,33 @@ import re
 
 import pandas as pd
 
+from ai_tracker import catalog, warehouse
 from ai_tracker.state import register as R
 from ai_tracker.state.measures import Context, measure
+
+# A derived series is as fresh as its stalest component.
+DERIVED_COMPONENTS = {"capex_ocf_hyp4": ("capex_hyp4", "ocf_hyp4")}
+
+
+def stale_reason(key: str, when, ctx: Context) -> str:
+    """Register amendment 2026-11-23: a series whose newest period known on `when` is older than its
+    freshness bound (warehouse.max_age_days, same rule as the weekly check) is not counted. '' = fresh."""
+    specs = catalog.by_key()
+    when = pd.Timestamp(when)
+    for k in DERIVED_COMPONENTS.get(key, (key,)):
+        spec = specs.get(k)
+        if spec is None:
+            continue
+        rows = ctx.rows(k)
+        rows = rows[rows["known_from"] <= when]
+        if rows.empty:
+            return f"inaktuell: {k} har inga data kända på beräkningsdagen"
+        freq = rows["freq"].iloc[0]
+        end = pd.PeriodIndex(rows["period"], freq=catalog.FREQS.get(freq, freq)).end_time.max().normalize()
+        age, bound = (when - end).days, warehouse.max_age_days(spec)
+        if age > bound:
+            return f"inaktuell: {k} senaste period slutade för {age} dagar sedan (gräns {bound})"
+    return ""
 
 
 def resolve(entry: str, when, ctx: Context) -> tuple[str | None, str]:
@@ -69,6 +94,9 @@ def branch(code: str, when, ctx: Context) -> dict:
         m["entry"] = entry
         if note:
             m["resolved"] = note
+        stale = stale_reason(key, when, ctx)
+        if stale and m["valid"]:
+            m["valid"], m["reason"] = False, stale
         (used if m["valid"] else not_counted).append(m)
     dirs = [m["direction"] for m in used]
     index = diffusion(dirs)
