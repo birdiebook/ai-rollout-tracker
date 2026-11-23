@@ -1,0 +1,65 @@
+# Runs one registered BigQuery job (sql/bq/<job>.sql) with keyless auth (GitHub OIDC -> Workload Identity
+# Federation). BigQuery runs in the free sandbox (no billing account): exceeding the quota fails, never costs.
+# Every query is dry-run first and refused above its `-- max_gb:` header (hard cap via maximum_bytes_billed).
+# Output: aggregated CSV of public datasets only, uploaded as a short-lived artifact (public repo: aggregates only).
+name: BigQuery job
+
+on:
+  workflow_dispatch:
+    inputs:
+      job:
+        description: "Job name = file stem in sql/bq/"
+        required: true
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: bq-${{ inputs.job }}
+  cancel-in-progress: false
+
+jobs:
+  query:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate job name
+        run: |
+          [[ "${{ inputs.job }}" =~ ^[a-z0-9_]+$ ]] || { echo "invalid job name"; exit 1; }
+          test -f "sql/bq/${{ inputs.job }}.sql" || { echo "no such job"; exit 1; }
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+      - uses: google-github-actions/setup-gcloud@v2
+      - name: Dry run and cap
+        id: dry
+        env:
+          PROJECT: ${{ secrets.GCP_PROJECT_ID }}
+        run: |
+          f="sql/bq/${{ inputs.job }}.sql"
+          max_gb=$(grep -m1 -oP '^-- max_gb:\s*\K[0-9.]+' "$f")
+          [ -n "$max_gb" ] || { echo "missing -- max_gb header"; exit 1; }
+          bytes=$(bq --project_id="$PROJECT" query --use_legacy_sql=false --dry_run --format=json < "$f" \
+                  | python3 -c "import json,sys; print(json.load(sys.stdin)['statistics']['totalBytesProcessed'])")
+          echo "estimated bytes: $bytes (cap ${max_gb} GB)" | tee -a "$GITHUB_STEP_SUMMARY"
+          python3 -c "import sys; sys.exit(0 if int('$bytes') <= float('$max_gb')*1e9 else 1)" \
+            || { echo "estimate above cap: refusing"; exit 1; }
+          echo "max_bytes=$(python3 -c "print(int(float('$max_gb')*1e9))")" >> "$GITHUB_OUTPUT"
+      - name: Run
+        env:
+          PROJECT: ${{ secrets.GCP_PROJECT_ID }}
+        run: |
+          mkdir -p out
+          bq --project_id="$PROJECT" query --use_legacy_sql=false --format=csv --max_rows=1000000 \
+             --maximum_bytes_billed="${{ steps.dry.outputs.max_bytes }}" < "sql/bq/${{ inputs.job }}.sql" \
+             > "out/${{ inputs.job }}.csv"
+          echo "rows: $(($(wc -l < out/${{ inputs.job }}.csv) - 1))" | tee -a "$GITHUB_STEP_SUMMARY"
+          head -5 "out/${{ inputs.job }}.csv" >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bq-${{ inputs.job }}
+          path: out/${{ inputs.job }}.csv
+          retention-days: 3

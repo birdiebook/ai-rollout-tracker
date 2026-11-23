@@ -38,6 +38,11 @@ KNOWN_GAPS: dict[str, str] = {
 }
 KNOWN_GAPS.update(_plans.known_gaps())  # D1 plan series are sparse by design (docs/kallor/planer.md)
 
+# Company AI KPIs (track B4) are stated irregularly; the series module lists its gapped series with the reason.
+from ai_tracker.series.ai_kpis import KNOWN_GAPS as _AI_KPI_GAPS  # noqa: E402
+
+KNOWN_GAPS.update(_AI_KPI_GAPS)
+
 # Stale series accepted until a date (ISO), and why: a known outage, never a permanent exemption
 # (that is Spec.max_age_days or Spec.closed). Example: {"us_imports_tw_m": ("2026-12-31", "shutdown, ...")}.
 KNOWN_STALE: dict[str, tuple[str, str]] = {
