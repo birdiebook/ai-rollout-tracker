@@ -296,3 +296,11 @@ platform.claude.com. Redan hämtade meningar granskas mot sparade hashar.
 - **Labbens intäkter:** bara Anthropic har förstapartsuttalanden. Nyhetsrumssiffrorna och S-1:ns definierade
   "Run-Rate Revenue" är separata serier som aldrig blandas. Anthropic är börsnoterat från 2026-11-19, och reviderade
   intäkter läggs till via SEC när den första 10-Q:n kommer.
+
+
+## 2026-11-23 – PyPI-historik som onsdagsurval
+
+Exakt daglig PyPI-historik för tolv paket skulle kosta cirka 2,1 TB i BigQuery. Sandboxen ger 1 TB per månad. Historiken
+är därför nedladdningarna en onsdag per vecka (176 GB). Exakta veckosummor hämtas framåt via pypistats, som läser samma
+tabell och stämde exakt med BigQuery på överlappsdagen. npm har exakta veckosummor från 2015 men ingen verifierad licens
+(`publish=False`).

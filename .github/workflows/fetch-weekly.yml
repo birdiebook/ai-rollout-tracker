@@ -6,15 +6,25 @@
 # A failed check fails the job before the cache is saved, so a bad table never replaces the cached one.
 # A stale series (freshness check, exit 2) saves the cache first and then fails the job.
 # Shares the concurrency group and cache key prefix with the other data jobs (nowcast.yml, collect-weekly.yml).
+# Developer adoption (track B1): npm and pypistats are ordinary catalog series (no secret). The PyPI BigQuery job
+# (keyless OIDC, shared 1 TB/month sandbox quota) only runs when dispatched with input pypi_bigquery, e.g. once
+# with "backfill" to put the history into the cache (docs/kallor/utvecklaradoption.md). It never fails the run.
 name: Weekly data fetch
 
 on:
   schedule:
     - cron: "37 3 * * 1"  # Mondays 03:37 UTC
   workflow_dispatch:
+    inputs:
+      pypi_bigquery:
+        description: "PyPI BigQuery job before the fetch (shared quota): none, backfill (one-off history) or incremental"
+        type: choice
+        default: none
+        options: [none, backfill, incremental]
 
 permissions:
   contents: read
+  id-token: write  # keyless GCP auth for the optional PyPI BigQuery job
 
 concurrency:
   group: ai-data  # never two jobs writing the data cache at once
@@ -51,6 +61,24 @@ jobs:
           path: data
           key: ai-data-${{ github.run_id }}
           restore-keys: ai-data-
+      - name: GCP auth for the PyPI BigQuery job (optional)
+        if: github.event_name == 'workflow_dispatch' && inputs.pypi_bigquery != 'none'
+        continue-on-error: true
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+      - name: Set up gcloud (optional)
+        if: github.event_name == 'workflow_dispatch' && inputs.pypi_bigquery != 'none'
+        continue-on-error: true
+        uses: google-github-actions/setup-gcloud@v2
+      - name: PyPI BigQuery job into data/raw/pypi_bq (optional, dry-run first, byte cap)
+        if: github.event_name == 'workflow_dispatch' && inputs.pypi_bigquery != 'none'
+        continue-on-error: true  # a failed BigQuery job never stops the weekly fetch
+        env:
+          GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+          MODE: ${{ inputs.pypi_bigquery }}
+        run: python -m ai_tracker.sources.pypi_bq "$MODE"
       - name: Fetch all series and run the warehouse checks
         id: weekly
         run: |
