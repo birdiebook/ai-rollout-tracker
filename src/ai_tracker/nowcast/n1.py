@@ -22,6 +22,11 @@ Registered choices implemented here, nothing else:
     Y's unknown quarters.
   - Amazon, Microsoft, any other series, and a company with no full-year range known at the origin: B1_c.
   - Direction statements are never used.
+- B3 (step 2, register G-B and "C0 preciseras efter granskning R6", F-B1-F-B3, F-B9-F-B11; shared logic in b3.py):
+  B2 with Meta's and Alphabet's full-year midpoint x exp(m_{c,k}), k = the target quarter's position in the year.
+  m_{c,k} at the origin from the company's earlier years: d = log(U_Y / midpoint B2 used at the N1 origin of Y's
+  k-th quarter), only years whose U_Y was known at the origin, shrunk per F-B3 (n_c >= 4, else m = 0). Holm family
+  {B3, DF} with DF at p = 1; comparator = the best of B0, B1, the champion (B1) and B2 (promotion_step2).
 
 Fixed by this module where the register is silent (documented in docs/resultat/n1.md):
 - Partial-quarter aggregation: for each indicator, J = the month positions (1st/2nd/3rd month) of the target
@@ -48,7 +53,7 @@ import numpy as np
 import pandas as pd
 
 from ai_tracker import evaluation
-from ai_tracker.nowcast import engine, intervals
+from ai_tracker.nowcast import b3, engine, intervals
 
 TARGET = "capex_hyp4"
 COMPANIES = ["capex_msft", "capex_googl", "capex_amzn", "capex_meta"]
@@ -58,9 +63,17 @@ MIN_TRAIN = 12
 SUBPERIOD = pd.Period("2023Q1", freq="Q-DEC")
 LAMBDAS = np.logspace(-2, 3, 26)
 CV_MIN = 8
-VARIANTS = ["B0", "B1", "V1", "V2", "B2"]
+VARIANTS = ["B0", "B1", "V1", "V2", "B2", "B3"]
 BASELINES = ["B0", "B1"]
-MODELS = ["V1", "V2", "B2"]  # the registered Holm family for N1 (register change "B2: TSMC före 2017Q3 ...")
+MODELS = ["V1", "V2", "B2"]  # the registered Holm family for N1 (register change "B2: TSMC före 2017Q3 ..."), locked
+# Step 2 (register "C0 preciseras efter granskning R6", F-B9): the Holm family for N1 in step 2 is {B3, DF}. A member
+# that is not evaluated yet enters with p = 1. F-B10: B3 is compared with the best of B0, B1, the current champion
+# and B2 (the model B3 builds on).
+STEP2_MODELS = ["B3", "DF"]
+STEP2_UNEVALUATED = {"DF": "not built yet (C3)"}
+STEP2_BUILDS_ON = {"B3": "B2"}
+# B3 companies (as B2: Meta and Alphabet) -> b3.GROUPS key. Their guided quantity is full-year capex.
+B3_COMPANIES = {"capex_meta": "meta", "capex_googl": "googl"}
 # B2 may not be promoted before an independent review approves the extracted guidance values (register)
 REVIEW_REQUIRED = {"B2": "villkorad: väntar på oberoende granskning av extraktionen (R2)"}
 # company series -> (full-year guidance prefix, finance-lease series to subtract or None). Amazon and Microsoft
@@ -172,10 +185,14 @@ class Forecast:
     ols_coef: list[float] = field(default_factory=list)
     b2_sources: dict[str, str] = field(default_factory=dict)  # company series -> how B2 was formed
     b1_companies: float = float("nan")  # capex_hyp4 only: sum of the companies' B1 (diagnostic, not a variant)
+    b2_levels: dict[str, float] = field(default_factory=dict)  # company series -> its B2 level
+    b3_shifts: dict[str, dict] = field(default_factory=dict)  # company series -> b3.Shift.as_dict() at the origin
 
 
-def forecast(info: engine.InfoSet, target: str, quarter: pd.Period | None = None) -> Forecast:
-    """All variants for `quarter` (default: the quarter before the origin) from the information set only."""
+def forecast(info: engine.InfoSet, target: str, quarter: pd.Period | None = None,
+             pool: pd.DataFrame | None = None) -> Forecast:
+    """All variants for `quarter` (default: the quarter before the origin) from the information set only.
+    `pool`: B3's deviations (b3_deviations(); None = built from info.table). b3.shift filters it on the origin."""
     quarter = quarter or target_quarter(info.origin)
     out = Forecast(quarter, info.origin, target)
     y = info.get(target)
@@ -201,6 +218,11 @@ def forecast(info: engine.InfoSet, target: str, quarter: pd.Period | None = None
     except NotAvailable as exc:
         out.levels["B2"] = float("nan")
         out.reasons["B2"] = str(exc)
+    if math.isnan(out.levels["B2"]):
+        out.levels["B3"] = float("nan")
+        out.reasons["B3"] = out.reasons.get("B2", "B2 not available")
+    else:
+        _b3(info, out, b3_deviations(info.table) if pool is None else pool)
 
     out.levels["V1"] = out.levels["V2"] = float("nan")
     try:
@@ -244,11 +266,19 @@ def _year_quarters(q: pd.Period) -> pd.PeriodIndex:
 def b2_company(info: engine.InfoSet, series: str, quarter: pd.Period) -> tuple[float, str, float]:
     """(level, source, the company's own B1) of B2 for one company series and quarter, from the information set
     only."""
+    return guided_company(info, series, quarter)[:3]
+
+
+def guided_company(info: engine.InfoSet, series: str, quarter: pd.Period, m: float = 0.0
+                   ) -> tuple[float, str, float, float]:
+    """(level, source, the company's own B1, midpoint G used or NaN) of B2 for one company series and quarter, with
+    the full-year midpoint x exp(m): m = 0 is B2, m = m_{c,k} is B3 (b3.py; "same formulas as B2")."""
+    nan = float("nan")
     y = info.get(series)
     y = y[y.index <= quarter]
     if quarter in y.index:  # this company has already filed the quarter: it is known, not forecast
         info.mark(series, [quarter])
-        return float(y[quarter]), "known at origin", float(y[quarter])
+        return float(y[quarter]), "known at origin", float(y[quarter]), nan
     if quarter - 1 not in y.index:
         raise NotAvailable(f"{series} {quarter - 1} not known at {info.origin.date()}")
     year = _year_quarters(quarter)
@@ -257,15 +287,16 @@ def b2_company(info: engine.InfoSet, series: str, quarter: pd.Period) -> tuple[f
     b1 = b1_path(y, unknown)
     info.mark(series, list(y.index[-5:]))
     if series not in B2_GUIDANCE:
-        return b1[quarter], "B1 (guidance definition not comparable)", b1[quarter]
+        return b1[quarter], "B1 (guidance definition not comparable)", b1[quarter], nan
     prefix, lease = B2_GUIDANCE[series]
     lo, hi = info.get(f"{prefix}_lo"), info.get(f"{prefix}_hi")
     yp = pd.Period(str(quarter.year), freq=lo.index.freq if len(lo) else "Y-DEC")
     if yp not in lo.index or yp not in hi.index:
-        return b1[quarter], "B1 (no full-year range known)", b1[quarter]
+        return b1[quarter], "B1 (no full-year range known)", b1[quarter], nan
     info.mark(f"{prefix}_lo", [yp])
     info.mark(f"{prefix}_hi", [yp])
-    full_year = (float(lo[yp]) + float(hi[yp])) / 2
+    midpoint = (float(lo[yp]) + float(hi[yp])) / 2
+    full_year = midpoint if m == 0.0 else b3.scaled(midpoint, m)
     source = "guidance"
     if lease:
         f = info.get(lease)
@@ -275,15 +306,15 @@ def b2_company(info: engine.InfoSet, series: str, quarter: pd.Period) -> tuple[f
         try:
             f_b1 = b1_path(f, f_unknown) if f_unknown else {}
         except NotAvailable as exc:
-            return b1[quarter], f"B1 ({lease}: {exc})", b1[quarter]
+            return b1[quarter], f"B1 ({lease}: {exc})", b1[quarter], nan
         info.mark(lease, f_known + list(f.index[-5:]))
         full_year -= float(sum(f[p] for p in f_known)) + sum(f_b1.values())
         source = "guidance - finance leases"
     info.mark(series, known)
     rest = full_year - float(sum(y[p] for p in known))
     if rest <= 0:
-        return b1[quarter], "B1 (guidance minus known quarters <= 0)", b1[quarter]
-    return rest * b1[quarter] / sum(b1.values()), source, b1[quarter]
+        return b1[quarter], "B1 (guidance minus known quarters <= 0)", b1[quarter], nan
+    return rest * b1[quarter] / sum(b1.values()), source, b1[quarter], midpoint
 
 
 def _b2(info: engine.InfoSet, out: Forecast) -> None:
@@ -293,14 +324,66 @@ def _b2(info: engine.InfoSet, out: Forecast) -> None:
         for c in COMPANIES:
             level, source, b1q = b2_company(info, c, out.quarter)
             out.b2_sources[c] = source
+            out.b2_levels[c] = level
             total += level
             b1_total += b1q
         out.levels["B2"] = total
         out.b1_companies = b1_total
     elif out.target in COMPANIES:
         out.levels["B2"], out.b2_sources[out.target], _ = b2_company(info, out.target, out.quarter)
+        out.b2_levels[out.target] = out.levels["B2"]
     else:
         out.levels["B2"], out.b2_sources[out.target] = out.levels["B1"], "B1 (no guidance for this series)"
+
+
+def b3_deviations(table: pd.DataFrame) -> pd.DataFrame:
+    """Meta's and Alphabet's deviations d_{c,Y,k} = log(U_Y / G_{c,Y}(o_{Y,k})) (b3.py; F-B1, F-B2).
+
+    o_{Y,k} = the N1 origin of year Y's k-th quarter; G = the full-year midpoint B2 used there (none where B2 did not
+    use guidance). U_Y = the year's four first vintages of capex_c, for Meta plus fin_lease_meta (the guidance
+    includes finance-lease principal), known from the latest of their known_from."""
+    parts = []
+    for series, company in B3_COMPANIES.items():
+        prefix, lease = B2_GUIDANCE[series]
+        comps = [series] + ([lease] if lease else [])
+        first = {c: engine.first_vintages(table, c) for c in comps}
+        years = sorted({str(p) for p in table.loc[table["series"] == f"{prefix}_lo", "period"]}
+                       & {str(p) for p in table.loc[table["series"] == f"{prefix}_hi", "period"]})
+        guidance = []
+        for y in years:
+            for k, q in enumerate(_year_quarters(pd.Period(f"{y}Q1", freq="Q-DEC")), start=1):
+                o = origin_for(q)
+                try:
+                    _, source, _, g = guided_company(engine.InfoSet(table, o), series, q)
+                except NotAvailable:
+                    continue
+                if source.startswith("guidance"):
+                    guidance.append((y, k, o, g))
+        periods = {y: [(c, q) for c in comps for q in _year_quarters(pd.Period(f"{y}Q1", freq="Q-DEC"))]
+                   for y in years}
+        parts.append(b3.deviations(company, guidance, b3.summed_outcomes(first, periods)))
+    parts = [p for p in parts if len(p)]
+    return pd.concat(parts, ignore_index=True) if parts else b3.empty()
+
+
+def _b3(info: engine.InfoSet, out: Forecast, pool: pd.DataFrame) -> None:
+    """B3 = B2 with Meta's and Alphabet's full-year midpoints x exp(m_{c,k}), k = the target quarter's position in
+    the year (F-B1, F-B3); summed per company as B2. Companies with m = 0 (n_c < 4) and the others keep their B2."""
+    k = out.quarter.quarter
+    units = COMPANIES if out.target == "capex_hyp4" else [out.target] if out.target in COMPANIES else []
+    if not units:
+        out.levels["B3"] = out.levels["B2"]
+        return
+    total = 0.0
+    for c in units:
+        level = out.b2_levels[c]
+        if c in B3_COMPANIES:
+            sh = b3.shift(pool, B3_COMPANIES[c], k, info.origin)
+            out.b3_shifts[c] = sh.as_dict()
+            if sh.m != 0.0:
+                level = guided_company(info, c, out.quarter, sh.m)[0]
+        total += level
+    out.levels["B3"] = total
 
 
 def _design(info, quarter, g, drift, out):
@@ -331,8 +414,10 @@ def _design(info, quarter, g, drift, out):
 # ------------------------------------------------------------------ backtest
 
 
-def backtest_unit(table: pd.DataFrame, target: str) -> pd.DataFrame:
-    """Rolling-origin errors for one target series. One row per quarter with B0/B1 available."""
+def backtest_unit(table: pd.DataFrame, target: str, pool: pd.DataFrame | None = None) -> pd.DataFrame:
+    """Rolling-origin errors for one target series. One row per quarter with B0/B1 available.
+    `pool`: B3's deviations from the same table (built here when None); filtered on each origin in b3.shift."""
+    pool = b3_deviations(table) if pool is None else pool
     outcomes = engine.first_vintages(table, target)
     fv = outcomes["value"]
     rows, known = [], []
@@ -343,7 +428,7 @@ def backtest_unit(table: pd.DataFrame, target: str) -> pd.DataFrame:
             known.append(note)
             continue
         try:
-            f = forecast(engine.InfoSet(table, origin), target, q)
+            f = forecast(engine.InfoSet(table, origin), target, q, pool)
         except NotAvailable:
             continue
         row = {"unit": target, "quarter": q, "origin": origin.date(), "outcome": float(fv[q]),
@@ -352,6 +437,8 @@ def backtest_unit(table: pd.DataFrame, target: str) -> pd.DataFrame:
                "reason": "; ".join(sorted(set(f.reasons.values()))),
                "b2_sources": "; ".join(f"{c}: {v}" for c, v in f.b2_sources.items()),
                "b2_guidance": sum(v.startswith("guidance") for v in f.b2_sources.values()),
+               "b3_shifts": "; ".join(f"{c}: m={d['m']:+.4f} n={d['n']}" for c, d in f.b3_shifts.items()),
+               "b3_shifted": sum(d["m"] != 0.0 for d in f.b3_shifts.values()),
                "B1_companies": (engine.log_error(f.b1_companies, fv[q]) if not math.isnan(f.b1_companies)
                                 else float("nan"))}
         for v in VARIANTS:
@@ -384,14 +471,49 @@ def evaluate(errors: pd.DataFrame, pooled: bool) -> dict:
                 else evaluation.dm_test(common[v].to_numpy(), common[best].to_numpy())
             dm[v] = r
         holm = evaluation.holm({v: dm[v].p for v in MODELS})
+        step2 = _step2(common, m, pooled)
         res[name] = {
             "n": len(common), "quarters": common["quarter"].nunique(),
             "first": str(common["quarter"].min()), "last": str(common["quarter"].max()),
             "excluded": excluded, "metrics": m, "best_baseline": best,
             "dm": {v: {"mean_diff": dm[v].mean_diff, "p": dm[v].p, "holm_p": holm[v], "mde": dm[v].mde,
                        "lag": dm[v].lag, "n": dm[v].n} for v in MODELS},
+            "step2": step2,
         }
     return res
+
+
+def _step2(common: pd.DataFrame, m: dict, pooled: bool) -> dict:
+    """Step-2 family {B3, DF} in one period (F-B9, F-B10): B3 against the best of B0, B1, the current champion and
+    B2 on MAE; Holm over {B3, DF} with DF at p = 1 (not built). The locked family {V1, V2, B2} is untouched."""
+    cands = list(dict.fromkeys(["B0", "B1", CHAMPION, STEP2_BUILDS_ON["B3"]]))
+    comp = engine.best_baseline({c: m[c]["MAE"] for c in cands}, cands)
+    r = engine.pooled_dm(common.assign(quarter=common["quarter"].astype(str)), "B3", comp) if pooled \
+        else evaluation.dm_test(common["B3"].to_numpy(), common[comp].to_numpy())
+    p = {"B3": r.p if np.isfinite(r.p) else 1.0, **{v: 1.0 for v in STEP2_UNEVALUATED}}
+    holm = evaluation.holm(p)
+    return {"candidates": cands, "comparator": comp, "comparator_mae": m[comp]["MAE"],
+            "dm": {"mean_diff": r.mean_diff, "p": r.p, "mde": r.mde, "lag": r.lag, "n": r.n},
+            "p": p, "holm": holm, "unevaluated": dict(STEP2_UNEVALUATED)}
+
+
+def promotion_step2(res: dict) -> dict:
+    """Step 2 (F-B9-F-B11): B3 passes with Holm-p < 0.10 (family {B3, DF}) and a lower MAE than its comparator, both
+    in the full period and from 2023Q1 ("as before for N1"). A passing B3 beats the champion by construction; it
+    becomes champion unless it is in REVIEW_REQUIRED. DF is unevaluated and cannot pass."""
+    checks, passed = {}, {}
+    if all("step2" in res.get(per, {}) for per in ("full", "2023Q1-")):
+        c = {}
+        for per in ("full", "2023Q1-"):
+            s2 = res[per]["step2"]
+            c[per] = engine.period_check(res[per]["metrics"]["B3"]["MAE"], s2["comparator_mae"], s2["holm"]["B3"],
+                                         HOLM_ALPHA)
+            c[per]["comparator"] = s2["comparator"]
+        c["promoted"] = engine.passes({p: c[p] for p in ("full", "2023Q1-")})
+        checks["B3"], passed["B3"] = c, c["promoted"]
+    d = engine.decide(passed, {v: res["full"]["metrics"][v]["MAE"] for v in passed}, REVIEW_REQUIRED, CHAMPION)
+    return {"champion": d.champion, "checks": checks, "conditional": d.conditional,
+            "unevaluated": dict(STEP2_UNEVALUATED)}
 
 
 def promotion(res: dict) -> dict:
@@ -416,14 +538,18 @@ def promotion(res: dict) -> dict:
 
 
 def run_backtest(table: pd.DataFrame, log: bool = True) -> dict:
-    n1 = backtest_unit(table, TARGET)
-    units = [backtest_unit(table, c) for c in COMPANIES]
+    pool = b3_deviations(table)
+    n1 = backtest_unit(table, TARGET, pool)
+    units = [backtest_unit(table, c, pool) for c in COMPANIES]
     n1b = pd.concat(units, ignore_index=True)
     n1b.attrs["known_at_origin"] = [k for u in units for k in u.attrs["known_at_origin"]]
     out = {"N1": {"errors": n1, "eval": evaluate(n1, pooled=False)},
            "N1b": {"errors": n1b, "eval": evaluate(n1b, pooled=True)}}
     out["N1"]["promotion"] = promotion(out["N1"]["eval"])
     out["N1b"]["promotion"] = promotion(out["N1b"]["eval"])  # reported only; N1 decides
+    out["N1"]["step2"] = promotion_step2(out["N1"]["eval"])
+    out["N1b"]["step2"] = promotion_step2(out["N1b"]["eval"])  # reported only
+    out["b3_pool"] = pool
     if intervals.ENABLED:  # grind G-C: off until the register entry exists
         for key in ("N1", "N1b"):
             out[key]["intervals"] = evaluate_intervals(out[key]["errors"])
@@ -436,6 +562,11 @@ def run_backtest(table: pd.DataFrame, log: bool = True) -> dict:
                                  "period": f"{r['first']}..{r['last']}", "n": r["metrics"][v]["n"],
                                  "MAE": r["metrics"][v]["MAE"],
                                  "dm_p_vs_baseline": r["dm"][v]["p"] if v in MODELS else ""})
+                s2 = r["step2"]
+                rows.append({"target": TARGET if key == "N1" else "capex_<company> pooled",
+                             "variant": f"B3 step2 vs {s2['comparator']} (Holm {s2['holm']['B3']:.4f})",
+                             "period": f"{r['first']}..{r['last']}", "n": r["metrics"]["B3"]["n"],
+                             "MAE": r["metrics"]["B3"]["MAE"], "dm_p_vs_baseline": s2["dm"]["p"]})
             out[key]["log"] = evaluation.log_run(f"{name}_backtest", rows)
     return out
 
@@ -542,6 +673,17 @@ def format_report(out: dict) -> str:
         lines.append(f"{key} promotion: champion {p['champion']} "
                      + ", ".join(f"{v}: passes rule={p['checks'][v]['promoted']}" for v in MODELS)
                      + f"; conditional: {p['conditional'] or '-'}")
+        for per, r in out[key]["eval"].items():
+            s2 = r.get("step2")
+            if s2:
+                lines.append(f"{key} step 2 {per}: B3 MAE {r['metrics']['B3']['MAE']:.2f} vs comparator "
+                             f"{s2['comparator']} {s2['comparator_mae']:.2f} (best of {s2['candidates']}), "
+                             f"dMAE {s2['dm']['mean_diff']:+.2f}, DM p {s2['dm']['p']:.3f}, "
+                             f"Holm {{B3, DF=1}} {s2['holm']['B3']:.3f}, MDE {s2['dm']['mde']:.2f}")
+        s = out[key].get("step2")
+        if s:
+            lines.append(f"{key} step 2 promotion: champion {s['champion']}, B3 passes rule="
+                         f"{s['checks'].get('B3', {}).get('promoted')}; DF unevaluated (p = 1)")
     return "\n".join(lines)
 
 
@@ -567,7 +709,7 @@ def live_payload(table: pd.DataFrame, origin, live_dir=None) -> dict:
         "variants": {v: (None if math.isnan(x) else x) for v, x in f.levels.items()},
         "unavailable": f.reasons, "n_train": f.n_train,
         "lambda_v2": None if math.isnan(f.lam) else f.lam, "ols_coef_v1": f.ols_coef,
-        "month_positions": f.positions, "note": note,
+        "month_positions": f.positions, "note": note, "b3_shifts": f.b3_shifts,
         "inputs": info.inputs(),
         **extra,
     }
