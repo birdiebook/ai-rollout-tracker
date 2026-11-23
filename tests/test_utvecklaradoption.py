@@ -146,6 +146,17 @@ def test_bq_sql_reads_only_needed_columns():
         assert f"'{p}'" in q
 
 
+def test_bq_backfill_queries_wednesdays_and_first_year():
+    qs = pypi_bq.backfill_queries(date(2026, 11, 23))
+    assert qs[0].start == date(2016, 1, 1) and qs[-1].end == date(2026, 6, 1)  # pypistats covers 2026-05-26 ->
+    assert all(q.kind == "wed" for q in qs)
+    assert all(d.weekday() == 2 for q in qs for d in q.days) and len(qs[0].days) == 52
+    assert qs[0].projects == ("requests", "numpy") and "anthropic" in qs[7].projects  # 2023
+    q = qs[-1].sql()
+    assert "DATE(timestamp) IN ('2026-01-07'" in q and "'2026-05-27')" in q
+    assert pypi_bq.backfill_end(date(2026, 12, 7)) == date(2026, 6, 15)
+
+
 def test_bq_year_chunks_and_monday():
     ch = pypi_bq.year_chunks(date(2016, 1, 1), date(2026, 11, 23))
     assert ch[0] == (date(2016, 1, 1), date(2017, 1, 1)) and ch[-1] == (date(2026, 1, 1), date(2026, 11, 23))
@@ -160,46 +171,88 @@ def test_bq_csv_body_strips_status_lines():
         pypi_bq._csv_body("Error in query string")
 
 
-def _write_bq(root, fetched, start, end, rows):
+def _write_bq(root, fetched, name, rows):
     d = root / fetched
     d.mkdir(parents=True, exist_ok=True)
     body = "day,project,downloads\n" + "".join(f"{a},{b},{c}\n" for a, b, c in rows)
-    (d / f"daily_{start}_{end}.csv").write_text(body)
+    (d / name).write_text(body)
 
 
 def test_bq_load_daily_newest_fetch_gaps_and_zeros(tmp_path):
-    _write_bq(tmp_path, "2026-11-01", "2026-10-01", "2026-10-04",
+    _write_bq(tmp_path, "2026-11-01", "daily_2026-10-01_2026-10-04.csv",
               [("2026-10-01", "requests", 100), ("2026-10-01", "mcp", 5), ("2026-10-02", "mcp", 6),
                ("2026-10-03", "requests", 100), ("2026-10-03", "mcp", 7)])
-    _write_bq(tmp_path, "2026-11-08", "2026-10-03", "2026-10-05",
+    _write_bq(tmp_path, "2026-11-08", "daily_2026-10-03_2026-10-05.csv",
               [("2026-10-03", "requests", 110), ("2026-10-04", "requests", 100)])
+    _write_bq(tmp_path, "2026-11-08", "wed_2026-09-01_2026-09-15.csv",  # Wednesdays 09-02 and 09-09
+              [("2026-09-02", "requests", 50), ("2026-09-02", "torch", 4), ("2026-09-09", "torch", 4)])
     wide, covered = pypi_bq.load_daily(tmp_path)
-    assert list(covered.strftime("%d")) == ["01", "02", "03", "04"]
+    assert list(covered.strftime("%m-%d")) == ["09-02", "09-09", "10-01", "10-02", "10-03", "10-04"]
     assert wide.loc["2026-10-01", "mcp"] == 5 and wide.loc["2026-10-01", "openai"] == 0  # absent row = 0
     assert wide.loc["2026-10-02"].isna().all()  # no `requests` row: a gap in the table
+    assert wide.loc["2026-09-09"].isna().all() and wide.loc["2026-09-02", "torch"] == 4
     assert wide.loc["2026-10-03", "requests"] == 110 and wide.loc["2026-10-03", "mcp"] == 0  # newer fetch wins
+    only_daily, _ = pypi_bq.load_daily(tmp_path, kinds=("daily",))
+    assert pd.Timestamp("2026-09-02") not in only_daily.index
+    assert pypi_bq.incremental_window(tmp_path, date(2026, 11, 30)) == (date(2026, 10, 5), date(2026, 11, 30))
     assert pypi_bq.incremental_window(tmp_path, date(2026, 10, 30)) == (date(2026, 10, 5), date(2026, 10, 26))
-    assert pypi_bq.incremental_window(tmp_path / "none", date(2026, 10, 30)) is None
+    assert pypi_bq.incremental_window(tmp_path / "none", date(2026, 10, 30)) == (date(2026, 10, 5),
+                                                                                date(2026, 10, 26))
 
 
 def test_bq_execute_refuses_over_cap(tmp_path, monkeypatch):
     monkeypatch.setattr(pypi_bq, "dry_run_bytes", lambda q: int(200e9))
     ran = []
     monkeypatch.setattr(pypi_bq, "run_query", lambda q, cap: ran.append(cap))
+    qs = pypi_bq.backfill_queries(date(2026, 11, 23))[:2]
     with pytest.raises(RuntimeError, match="above cap"):
-        pypi_bq.execute([(date(2016, 1, 1), date(2017, 1, 1)), (date(2017, 1, 1), date(2018, 1, 1))],
-                        tmp_path, cap_gb=300)
+        pypi_bq.execute(qs, tmp_path, cap_gb=300)
     assert ran == [] and json.loads((tmp_path / "bytes.json").read_text())["refused"]
 
 
 def test_bq_execute_records_bytes(tmp_path, monkeypatch):
     monkeypatch.setattr(pypi_bq, "dry_run_bytes", lambda q: int(1e9))
-    monkeypatch.setattr(pypi_bq, "run_query", lambda q, cap: ("day,project,downloads\n2016-01-01,numpy,1\n",
-                                                             {"job_id": "x", "processed": 9e8, "billed": 9e8}))
-    rec = pypi_bq.execute([(date(2016, 1, 1), date(2017, 1, 1))], tmp_path, cap_gb=2)
+    caps = []
+
+    def run(q, cap):
+        caps.append(cap)
+        return "day,project,downloads\n2016-01-06,numpy,1\n", {"job_id": "x", "processed": 9e8, "billed": 9e8}
+
+    monkeypatch.setattr(pypi_bq, "run_query", run)
+    rec = pypi_bq.execute(pypi_bq.backfill_queries(date(2026, 11, 23))[:1], tmp_path, cap_gb=2)
     log = json.loads((tmp_path / "bytes.json").read_text())
     assert rec[0]["rows"] == 1 and log["billed_gb"] == 0.9 and not log["refused"]
-    assert (tmp_path / "daily_2016-01-01_2017-01-01.csv").exists()
+    assert caps == [int(1e9 * 1.05) + 50_000_000]
+    assert (tmp_path / "wed_2016-01-01_2017-01-01.csv").exists()
+
+
+# ------------------------------------------------------------------ PyPI series
+
+
+def test_pypi_series_combine_bq_and_pypistats(tmp_path, monkeypatch):
+    from ai_tracker.series import pypi
+
+    monkeypatch.setattr(http, "RAW_DIR", tmp_path)
+    monkeypatch.setattr(pypistats, "fetch", lambda project: None)  # no network: stored responses only
+    # BigQuery: Wednesdays 2026-05-13 and 05-20 and 05-27; pypistats: 2026-05-26 .. 2026-06-14 (3 weeks)
+    _write_bq(tmp_path / "pypi_bq", "2026-11-23", "wed_2026-05-11_2026-06-01.csv",
+              [("2026-05-13", "requests", 9), ("2026-05-13", "mcp", 1), ("2026-05-20", "requests", 9),
+               ("2026-05-20", "mcp", 2), ("2026-05-27", "requests", 9), ("2026-05-27", "mcp", 3)])
+    days = pd.date_range("2026-05-26", "2026-06-14")
+    for project, value in (("mcp", 10), ("requests", 100)):
+        p = http.raw_path("pypistats", pypistats.url(project), day=date(2026, 11, 23))
+        p.parent.mkdir(parents=True, exist_ok=True)
+        rows = [{"category": "with_mirrors", "date": str(d.date()), "downloads": value} for d in days
+                if not (project == "mcp" and d == pd.Timestamp("2026-06-02"))]  # mcp absent: a zero day
+        p.write_text(json.dumps({"data": rows}))
+    wed = pypi.wednesday("mcp", today=date(2026, 6, 30))
+    assert [str(x) for x in wed.index] == ["2026-05-11/2026-05-17", "2026-05-18/2026-05-24",
+                                           "2026-05-25/2026-05-31", "2026-06-01/2026-06-07",
+                                           "2026-06-08/2026-06-14"]
+    assert list(wed) == [1, 2, 3, 10, 10]  # BigQuery wins on 05-27; pypistats after
+    w = pypi.weekly("mcp", today=date(2026, 6, 30))
+    assert [str(x) for x in w.index] == ["2026-06-01/2026-06-07", "2026-06-08/2026-06-14"]  # 05-25 week partial
+    assert list(w) == [60, 70]  # 2026-06-02 is a real zero (requests has the day)
 
 
 # ------------------------------------------------------------------ catalog and known_from
@@ -211,7 +264,7 @@ def _b1_specs():
 
 def test_b1_specs_valid():
     specs = _b1_specs()
-    assert len(specs) >= 20 and not catalog.validate(specs)
+    assert len(specs) == 34 and not catalog.validate(specs)
     assert all(s.branch == "G3" and s.freq == "W" for s in specs)
     assert all(not s.publish for s in specs if s.key.startswith("g3_npm_"))  # npm licence unverified
 

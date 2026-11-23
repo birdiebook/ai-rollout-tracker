@@ -1,20 +1,26 @@
 """PyPI downloads per day and project from BigQuery (bigquery-public-data.pypi.file_downloads), track B1.
 
-The table is partitioned by DATE(timestamp) and clustered by file.project. The query reads only the columns
-`timestamp` and `file.project` and only the partitions in [start, end), and returns aggregate counts per
+The table is partitioned by DATE(timestamp) and clustered by file.project. Queries read only the columns
+`timestamp` and `file.project`, only the partitions of the days asked for, and return aggregate counts per
 (day, project): a public CC BY 4.0 dataset (docs.pypi.org/api/bigquery), so the CSV may be a public artifact.
+
+Cost (dry runs and a calibration 2026-11-23, docs/kallor/utvecklaradoption.md): the estimate already reflects
+the clustering and equals the billed bytes, and every (project, day) costs at least one storage block (about
+0.01-0.05 GB) however small the project. An exact daily history 2016 -> 2026-06 for the twelve projects is about
+1.7 TB, far above the budget. So the backfill reads one fixed weekday per week (Wednesday, UTC), each AI project
+from its first year: about 220 GB. Exact daily counts come for free from pypistats (sources/pypistats.py).
 
 BigQuery only runs in GitHub Actions (keyless OIDC, sandbox quota of 1 TB/month shared by all tracks). Every
 query is dry-run first; a run is refused when the estimate is above its cap, and maximum_bytes_billed is set
-to the cap. Estimated, processed and billed bytes per query go to bytes.json next to the CSV
-(docs/kallor/utvecklaradoption.md keeps the record).
+just above the estimate. Estimated, processed and billed bytes per query go to bytes.json next to the CSV.
 
-Raw layout: RAW_DIR/pypi_bq/<fetch date>/daily_<start>_<end>.csv (+ bytes.json). For each day, the newest
-fetch that covered it wins (a re-read of recent weeks replaces late-ingested counts).
+Raw layout: RAW_DIR/pypi_bq/<fetch date>/<kind>_<start>_<end>.csv (+ bytes.json); kind "wed" covers the
+Wednesdays in [start, end), kind "daily" every day. For each day the newest fetch that covered it wins.
 
     python -m ai_tracker.sources.pypi_bq dryrun   [--out DIR]   estimates only (free)
-    python -m ai_tracker.sources.pypi_bq backfill [--out DIR]   2016-01-01 .. last Sunday, one query per year
-    python -m ai_tracker.sources.pypi_bq incremental            new days (+ re-read of 3 weeks) into RAW_DIR
+    python -m ai_tracker.sources.pypi_bq backfill [--out DIR]   Wednesdays 2016 -> about 25 weeks ago, per year
+    python -m ai_tracker.sources.pypi_bq incremental            exact daily, new days or the last 3 weeks (manual;
+                                                                about 15 GB a run: pypistats is the weekly source)
 """
 
 from __future__ import annotations
@@ -25,6 +31,7 @@ import os
 import re
 import subprocess
 import uuid
+from dataclasses import dataclass
 from datetime import date, timedelta
 from pathlib import Path
 
@@ -33,29 +40,62 @@ import pandas as pd
 from ai_tracker import http
 
 TABLE = "bigquery-public-data.pypi.file_downloads"
-# file.project is the normalised project name (lower case, '-' separators).
-PROJECTS = ["openai", "anthropic", "google-generativeai", "google-genai", "langchain", "langchain-core",
-            "transformers", "torch", "llama-index", "mcp", "requests", "numpy"]
+# file.project is the normalised project name (lower case, '-' separators) -> first year queried
+FIRST_YEAR = {"openai": 2020, "anthropic": 2023, "google-generativeai": 2023, "google-genai": 2024, "langchain": 2022,
+              "langchain-core": 2023, "transformers": 2019, "torch": 2018, "llama-index": 2023, "mcp": 2024,
+              "requests": 2016, "numpy": 2016}
+PROJECTS = list(FIRST_YEAR)
 CONTROL = "requests"  # always downloaded: a day without a `requests` row is a gap in the table, not a zero
+SAMPLE_WEEKDAY = 2  # Wednesday (Monday = 0)
 BACKFILL_START = date(2016, 1, 1)
 REREAD_DAYS = 21  # the incremental job re-reads the last three weeks (late-ingested rows become revisions)
 # The backfill stops where pypistats' 180-day window (the free weekly refresh) still overlaps by about a week.
 PYPISTATS_OVERLAP_DAYS = 173
-# Byte caps (GB = 1e9 bytes). Sized from the dry run 2026-11-23 (docs/kallor/utvecklaradoption.md).
-BACKFILL_MAX_GB = 300.0
-INCREMENTAL_MAX_GB = 15.0
+# Byte caps (GB = 1e9 bytes), from the dry runs 2026-11-23 (docs/kallor/utvecklaradoption.md).
+BACKFILL_MAX_GB = 240.0
+INCREMENTAL_MAX_GB = 20.0
 SOURCE_DIR = "pypi_bq"
-_FILE = re.compile(r"daily_(\d{4}-\d{2}-\d{2})_(\d{4}-\d{2}-\d{2})\.csv$")
+_FILE = re.compile(r"(daily|wed)_(\d{4}-\d{2}-\d{2})_(\d{4}-\d{2}-\d{2})\.csv$")
 
 
-def sql(start: date, end: date, projects: list[str] | None = None) -> str:
-    """Downloads per (day, project) for days in [start, end). Reads timestamp and file.project only."""
+@dataclass(frozen=True)
+class Query:
+    kind: str  # "wed" (Wednesdays only) or "daily"
+    start: date
+    end: date  # exclusive
+    projects: tuple[str, ...]
+
+    @property
+    def days(self) -> list[date]:
+        n = (self.end - self.start).days
+        days = [self.start + timedelta(days=i) for i in range(n)]
+        return [d for d in days if d.weekday() == SAMPLE_WEEKDAY] if self.kind == "wed" else days
+
+    @property
+    def filename(self) -> str:
+        return f"{self.kind}_{self.start.isoformat()}_{self.end.isoformat()}.csv"
+
+    def sql(self) -> str:
+        return sql(self.start, self.end, list(self.projects), self.days if self.kind == "wed" else None)
+
+
+def covered_days(kind: str, start: str, end: str) -> pd.DatetimeIndex:
+    days = pd.date_range(start, pd.Timestamp(end) - pd.Timedelta(days=1), freq="D")
+    return days[days.dayofweek == SAMPLE_WEEKDAY] if kind == "wed" else days
+
+
+def sql(start: date, end: date, projects: list[str] | None = None, days: list[date] | None = None) -> str:
+    """Downloads per (day, project) for days in [start, end) (or only `days`). Reads timestamp and file.project."""
     names = ", ".join(f"'{p}'" for p in (projects or PROJECTS))
+    only = ""
+    if days is not None:
+        only = "  AND DATE(timestamp) IN (" + ", ".join(f"'{d.isoformat()}'" for d in days) + ")\n"
     return (
         "-- PyPI downloads per day and project (aggregates of a public CC BY 4.0 dataset)\n"
         "SELECT DATE(timestamp) AS day, file.project AS project, COUNT(*) AS downloads\n"
         f"FROM `{TABLE}`\n"
         f"WHERE timestamp >= TIMESTAMP('{start.isoformat()}') AND timestamp < TIMESTAMP('{end.isoformat()}')\n"
+        f"{only}"
         f"  AND file.project IN ({names})\n"
         "GROUP BY day, project\nORDER BY day, project\n")
 
@@ -71,8 +111,19 @@ def year_chunks(start: date, end: date) -> list[tuple[date, date]]:
 
 
 def last_monday(today: date) -> date:
-    """Monday of the current week: the backfill ends at the last complete W-SUN week."""
+    """Monday of the current week: queries end at the last complete W-SUN week."""
     return today - timedelta(days=today.weekday())
+
+
+def backfill_end(today: date) -> date:
+    """A Monday about 25 weeks back: pypistats (180 days) covers everything after it, with a few days of overlap."""
+    return last_monday(today - timedelta(days=PYPISTATS_OVERLAP_DAYS))
+
+
+def backfill_queries(today: date) -> list[Query]:
+    """Wednesdays, one query per year, with the projects whose first year has come."""
+    return [Query("wed", s, e, tuple(p for p in PROJECTS if FIRST_YEAR[p] <= s.year))
+            for s, e in year_chunks(BACKFILL_START, backfill_end(today))]
 
 
 # ------------------------------------------------------------------ bq CLI (Actions only)
@@ -129,131 +180,125 @@ def _gb(n: int | float | None) -> float | None:
     return None if n is None else round(n / 1e9, 3)
 
 
-def plan(chunks: list[tuple[date, date]]) -> list[dict]:
-    """Dry-run every chunk (free). Returns one record per chunk with the estimate."""
-    return [{"start": s.isoformat(), "end": e.isoformat(), "estimated": dry_run_bytes(sql(s, e))} for s, e in chunks]
+def _record(q: Query) -> dict:
+    return {"kind": q.kind, "start": q.start.isoformat(), "end": q.end.isoformat(), "projects": list(q.projects),
+            "days": len(q.days)}
 
 
-def execute(chunks: list[tuple[date, date]], out_dir: Path, cap_gb: float) -> list[dict]:
-    """Dry-run all chunks, refuse if the total estimate is above `cap_gb`, then run each with its own cap."""
+def plan(queries: list[Query]) -> list[dict]:
+    """Dry-run every query (free). One record per query with the estimate."""
+    return [dict(_record(q), estimated=dry_run_bytes(q.sql())) for q in queries]
+
+
+def execute(queries: list[Query], out_dir: Path, cap_gb: float) -> list[dict]:
+    """Dry-run all queries, refuse if the total estimate is above `cap_gb`, then run each with its own cap."""
     out_dir.mkdir(parents=True, exist_ok=True)
-    records = plan(chunks)
+    records = plan(queries)
     total = sum(r["estimated"] for r in records)
     print(f"estimated total {_gb(total)} GB over {len(records)} queries (cap {cap_gb} GB)")
     if total > cap_gb * 1e9:
         _write_log(out_dir, records, refused=True)
         raise RuntimeError(f"estimate {_gb(total)} GB above cap {cap_gb} GB: refusing")
-    for r in records:
-        s, e = date.fromisoformat(r["start"]), date.fromisoformat(r["end"])
-        cap = int(r["estimated"] * 1.1) + 100_000_000  # the estimate is an upper bound; 10 % + 0.1 GB margin
-        body, stats = run_query(sql(s, e), cap)
-        (out_dir / f"daily_{r['start']}_{r['end']}.csv").write_text(body, encoding="utf-8")
+    for q, r in zip(queries, records):
+        cap = int(r["estimated"] * 1.05) + 50_000_000  # billed = estimate in the calibration; small margin
+        body, stats = run_query(q.sql(), cap)
+        (out_dir / q.filename).write_text(body, encoding="utf-8")
         r.update(stats, rows=body.count("\n") - 1)
-        print(f"{r['start']}..{r['end']}: estimated {_gb(r['estimated'])} GB, processed "
-              f"{_gb(r.get('processed'))} GB, billed {_gb(r.get('billed'))} GB, {r['rows']} rows")
-    _write_log(out_dir, records)
+        print(f"{q.filename}: estimated {_gb(r['estimated'])} GB, processed {_gb(r.get('processed'))} GB, "
+              f"billed {_gb(r.get('billed'))} GB, {r['rows']} rows")
+        _write_log(out_dir, records)  # after every query, so a later failure keeps the record
     return records
 
 
 def _write_log(out_dir: Path, records: list[dict], refused: bool = False) -> None:
-    log = {"table": TABLE, "projects": PROJECTS, "refused": refused, "queries": records,
+    log = {"table": TABLE, "refused": refused, "queries": records,
            "estimated_gb": _gb(sum(r["estimated"] for r in records)),
            "billed_gb": _gb(sum(r.get("billed", 0) for r in records))}
     (out_dir / "bytes.json").write_text(json.dumps(log, indent=1) + "\n", encoding="utf-8")
     summary = os.environ.get("GITHUB_STEP_SUMMARY")
-    if summary:
+    if summary and (refused or all("billed" in r or "stats_error" in r for r in records)):
         with open(summary, "a", encoding="utf-8") as f:
             f.write(f"PyPI BigQuery: estimated {log['estimated_gb']} GB, billed {log['billed_gb']} GB"
-                    f"{' (REFUSED)' if refused else ''}\n\n")
+                    f"{' (REFUSED or dry run)' if refused else ''}\n\n")
             for r in records:
-                f.write(f"- {r['start']}..{r['end']}: est {_gb(r['estimated'])} GB, billed {_gb(r.get('billed'))} GB\n")
+                f.write(f"- {r['kind']} {r['start']}..{r['end']}: est {_gb(r['estimated'])} GB, "
+                        f"billed {_gb(r.get('billed'))} GB\n")
 
 
 def dryrun(out_dir: Path, today: date | None = None) -> list[dict]:
-    """Estimates only, per year of the backfill and for one incremental window. Dry runs are free."""
+    """Estimates only (free): the backfill per year and one exact incremental window."""
     today = today or date.today()
     end = last_monday(today)
-    records = plan(year_chunks(BACKFILL_START, backfill_end(today)))
-    s = end - timedelta(days=REREAD_DAYS)
-    records += [dict(r, kind="incremental") for r in plan([(s, end)])]
-    # Probe: does the estimate reflect clustering? Same day with one project vs every project.
-    d0, d1 = end - timedelta(days=8), end - timedelta(days=7)
-    for kind, projects in (("probe_one_project", [CONTROL]), ("probe_twelve_projects", PROJECTS)):
-        records.append({"start": d0.isoformat(), "end": d1.isoformat(), "kind": kind,
-                        "estimated": dry_run_bytes(sql(d0, d1, projects))})
-    unfiltered = sql(d0, d1).split("  AND file.project")[0] + "GROUP BY day, project\n"
-    records.append({"start": d0.isoformat(), "end": d1.isoformat(), "kind": "probe_no_project_filter",
-                    "estimated": dry_run_bytes(unfiltered)})
+    records = plan(backfill_queries(today) + [Query("daily", end - timedelta(days=7), end, tuple(PROJECTS))])
     out_dir.mkdir(parents=True, exist_ok=True)
     _write_log(out_dir, records, refused=True)  # nothing ran
     for r in records:
-        print(f"{r['start']}..{r['end']}: estimated {_gb(r['estimated'])} GB")
+        print(f"{r['kind']} {r['start']}..{r['end']} ({r['days']} days): estimated {_gb(r['estimated'])} GB")
+    print(f"backfill total {_gb(sum(r['estimated'] for r in records[:-1]))} GB")
     return records
 
 
-def backfill_end(today: date) -> date:
-    """A Monday about 25 weeks back: pypistats (180 days) covers everything after it, with a few days of overlap."""
-    return last_monday(today - timedelta(days=PYPISTATS_OVERLAP_DAYS))
-
-
 def backfill(out_dir: Path, today: date | None = None) -> list[dict]:
-    end = backfill_end(today or date.today())
-    return execute(year_chunks(BACKFILL_START, end), out_dir, BACKFILL_MAX_GB)
+    return execute(backfill_queries(today or date.today()), out_dir, BACKFILL_MAX_GB)
 
 
-def stored_days(root: Path) -> pd.DatetimeIndex:
+def _files(root: Path, kinds: tuple[str, ...] = ("daily", "wed")) -> list[tuple[Path, re.Match]]:
+    out = []
+    for f in root.glob("*/*.csv"):
+        m = _FILE.search(f.name)
+        if m and m.group(1) in kinds:
+            out.append((f, m))
+    return sorted(out, key=lambda x: (x[0].parent.name, x[0].name))
+
+
+def stored_days(root: Path, kinds: tuple[str, ...] = ("daily", "wed")) -> pd.DatetimeIndex:
     """Days covered by any stored query under `root` (RAW_DIR/pypi_bq)."""
     days = set()
-    for f in root.glob("*/daily_*.csv"):
-        m = _FILE.search(f.name)
-        days.update(pd.date_range(m.group(1), pd.Timestamp(m.group(2)) - pd.Timedelta(days=1)))
+    for _, m in _files(root, kinds):
+        days.update(covered_days(*m.groups()))
     return pd.DatetimeIndex(sorted(days))
 
 
 def incremental_window(root: Path, today: date) -> tuple[date, date] | None:
-    """[start, end) for the weekly job: the last REREAD_DAYS days plus any later day not stored yet; None if the
-    store is empty (cold start: the caller runs the backfill)."""
-    days = stored_days(root)
-    if days.empty:
-        return None
+    """[start, end) for an exact daily run: the last REREAD_DAYS days, or from the day after the last stored
+    exact day if that is earlier (a hole is filled)."""
     end = last_monday(today)
-    start = min(end - timedelta(days=REREAD_DAYS), (days.max() + pd.Timedelta(days=1)).date())
+    start = end - timedelta(days=REREAD_DAYS)
+    days = stored_days(root, ("daily",))
+    if len(days) and days.max().date() + timedelta(days=1) < start:
+        start = days.max().date() + timedelta(days=1)
     return (start, end) if start < end else None
 
 
 def incremental(root: Path | None = None, today: date | None = None) -> list[dict]:
-    """Weekly job: query new days (+ re-read) into RAW_DIR/pypi_bq/<today>/; cold start = backfill."""
+    """Exact daily counts for recent days into RAW_DIR/pypi_bq/<today>/ (manual fallback for pypistats)."""
     today = today or date.today()
     root = root or http.RAW_DIR / SOURCE_DIR
-    out_dir = root / today.isoformat()
-    if stored_days(root).empty:
-        print("no stored PyPI days: running the backfill")
-        return backfill(out_dir, today)
     window = incremental_window(root, today)
     if window is None:
         print("nothing new")
         return []
-    return execute([window], out_dir, INCREMENTAL_MAX_GB)
+    return execute([Query("daily", *window, tuple(PROJECTS))], root / today.isoformat(), INCREMENTAL_MAX_GB)
 
 
 # ------------------------------------------------------------------ reading the stored queries
 
 
-def load_daily(root: Path | None = None) -> tuple[pd.DataFrame, pd.DatetimeIndex]:
-    """Stored counts as a wide frame (index day, one column per project) and the days covered.
+def load_daily(root: Path | None = None, kinds: tuple[str, ...] = ("daily", "wed")
+               ) -> tuple[pd.DataFrame, pd.DatetimeIndex]:
+    """Stored counts as a wide frame (index = covered day, one column per project) and the days covered.
 
     For every day the newest fetch that covered it wins, with all its projects (a project absent from that
-    query on that day had zero downloads). A covered day without a `requests` row is a gap in the table: the
-    whole row is NaN.
+    query on that day had zero downloads, or was not asked for before its first year: also 0). A covered day
+    without a `requests` row is a gap in the table: the whole row is NaN.
     """
     root = root or http.RAW_DIR / SOURCE_DIR
-    files = sorted(root.glob("*/daily_*.csv"), key=lambda f: (f.parent.name, f.name))
+    files = _files(root, kinds)
     if not files:
         raise FileNotFoundError(f"no stored PyPI BigQuery results under {root} (run the BigQuery job)")
     owner: dict[pd.Timestamp, Path] = {}
-    for f in files:  # later (newer fetch) files overwrite the owner of their days
-        m = _FILE.search(f.name)
-        for d in pd.date_range(m.group(1), pd.Timestamp(m.group(2)) - pd.Timedelta(days=1)):
+    for f, m in files:  # later (newer fetch) files overwrite the owner of their days
+        for d in covered_days(*m.groups()):
             owner[d] = f
     covered = pd.DatetimeIndex(sorted(owner))
     parts = []
@@ -273,18 +318,18 @@ def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="python -m ai_tracker.sources.pypi_bq")
     ap.add_argument("mode", choices=["dryrun", "backfill", "incremental"])
     ap.add_argument("--out", type=Path, default=None)
-    ap.add_argument("--force", action="store_true", help="backfill even if BigQuery days are stored")
+    ap.add_argument("--force", action="store_true", help="backfill even if sampled days are stored")
     a = ap.parse_args(argv)
+    root = http.RAW_DIR / SOURCE_DIR
     if a.mode == "incremental":
         incremental(a.out)
     elif a.mode == "backfill":
-        root = http.RAW_DIR / SOURCE_DIR
-        if a.out is None and not stored_days(root).empty and not a.force:
-            print(f"PyPI BigQuery days already stored under {root}: not running the backfill again (--force)")
+        if a.out is None and not stored_days(root, ("wed",)).empty and not a.force:
+            print(f"sampled PyPI days already stored under {root}: not running the backfill again (--force)")
             return 0
         backfill(a.out or root / date.today().isoformat())
     else:
-        dryrun(a.out or http.RAW_DIR / SOURCE_DIR / f"dryrun-{date.today().isoformat()}")
+        dryrun(a.out or root.with_name(SOURCE_DIR + "_dryrun") / date.today().isoformat())
     return 0
 
 

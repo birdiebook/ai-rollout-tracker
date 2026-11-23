@@ -1,10 +1,13 @@
 """PyPI weekly downloads of AI packages and two control packages (G3, track B1).
 
-Daily counts come from two views of the same BigQuery table (bigquery-public-data.pypi.file_downloads):
-- history: our own BigQuery backfill (sources/pypi_bq.py, stored under RAW_DIR/pypi_bq), where it exists;
-- weekly refresh: pypistats.org `with_mirrors` (sources/pypistats.py, every response kept under
-  RAW_DIR/pypistats), for the days after the last BigQuery day.
-A day missing from the source is a gap (filled from the weekday profile, sources/download_counts.py).
+Two series per project, both from views of the same BigQuery table (bigquery-public-data.pypi.file_downloads):
+- `g3_pypi_<p>_w`: exact weekly totals from full days, i.e. pypistats.org `with_mirrors` (sources/pypistats.py,
+  every response kept under RAW_DIR/pypistats so the history grows past 180 days) and any exact BigQuery days.
+  A missing day is filled from the weekday profile (sources/download_counts.py).
+- `g3_pypi_<p>_wed`: downloads on the Wednesday of each week, 2016 -> : the sampled BigQuery backfill
+  (sources/pypi_bq.py, RAW_DIR/pypi_bq) and from 2026-05-27 the same weekday from pypistats. An exact daily
+  history is about 1.7 TB of BigQuery quota; the Wednesday sample is about 220 GB.
+On a day both have, BigQuery (the source table) wins.
 docs/kallor/utvecklaradoption.md has the overlap check between the two and the BigQuery bytes.
 """
 
@@ -47,42 +50,76 @@ PROJECTS = {
 }
 
 
-def daily(project: str, refresh: bool = True) -> pd.Series:
-    """Combined daily counts: BigQuery days first, then pypistats days after the last BigQuery day.
-
-    Index = every covered day; NaN = gap (no `requests` row in BigQuery, or a day pypistats does not have)."""
-    if refresh:
-        pypistats.fetch(project)  # saves today's response; parsing below reads every stored response
-        if project != pypi_bq.CONTROL:
-            pypistats.fetch(pypi_bq.CONTROL)
+def _bq(kinds: tuple[str, ...]) -> pd.DataFrame:
     try:
-        wide, covered = pypi_bq.load_daily()
-        bq = wide[project] if project in wide else pd.Series(float("nan"), index=covered)
+        return pypi_bq.load_daily(kinds=kinds)[0]
     except FileNotFoundError:
-        bq = pd.Series(dtype=float)
-    ps = pypistats.stored(project)
-    control = pypistats.stored(pypi_bq.CONTROL)
-    if not ps.empty:
-        span = pd.date_range(min(ps.index.min(), control.index.min() if len(control) else ps.index.min()),
-                             ps.index.max(), freq="D")
-        # a day pypistats has for `requests` but not for the project had no downloads; a day it has for neither
-        # is a gap
-        ps = ps.reindex(span)
-        ps[ps.isna() & span.isin(control.index)] = 0.0
+        return pd.DataFrame(columns=pypi_bq.PROJECTS, dtype=float)
+
+
+def _pypistats(project: str, refresh: bool) -> pd.Series:
+    """Stored pypistats days (today's response included when `refresh`). A day pypistats has for `requests` but
+    not for the project had no downloads; a day it has for neither is a gap (NaN)."""
+    if refresh:
+        pypistats.fetch(project)  # saved under RAW_DIR; stored() reads every saved response
+        pypistats.fetch(pypi_bq.CONTROL)
+    ps, control = pypistats.stored(project), pypistats.stored(pypi_bq.CONTROL)
+    if ps.empty and control.empty:
+        return ps
+    idx = ps.index.union(control.index)
+    span = pd.date_range(idx.min(), idx.max(), freq="D")
+    ps = ps.reindex(span)
+    ps[ps.isna() & span.isin(control.index)] = 0.0
+    return ps
+
+
+def daily(project: str, kinds: tuple[str, ...] = ("daily",), refresh: bool = True) -> pd.Series:
+    """Daily counts: pypistats, overridden by stored BigQuery days of `kinds` (the source table itself).
+
+    Index = every covered day; NaN = gap."""
+    ps = _pypistats(project, refresh)
+    bq = _bq(kinds)
+    bq = bq[project] if project in bq else pd.Series(dtype=float)
     if bq.empty:
         return ps
-    after = ps[ps.index > bq.index.max()]
-    return pd.concat([bq, after]).sort_index()
+    return pd.concat([ps[~ps.index.isin(bq.index)], bq]).sort_index()
 
 
 def weekly(project: str, start: date | None = None, today: date | None = None) -> pd.Series:
+    """Exact weekly totals (W-SUN) from full days only: pypistats (and any exact BigQuery days)."""
     return download_counts.weekly(daily(project), today or date.today(), LAG_DAYS, start)
 
+
+def wednesday(project: str, start: date | None = None, today: date | None = None) -> pd.Series:
+    """Downloads on the Wednesday (UTC) of each W-SUN week: the sampled BigQuery history 2016 -> plus the same
+    weekday from pypistats. Weeks whose Wednesday is a gap, or whose Sunday + lag is after today, are left out."""
+    today = pd.Timestamp(today or date.today())
+    d = daily(project, kinds=("daily", "wed"))
+    d = d[d.index.dayofweek == pypi_bq.SAMPLE_WEEKDAY].dropna()
+    first = pd.Timestamp(start) if start is not None else d.index[(d > 0).to_numpy()].min()
+    if d.empty or pd.isna(first):
+        return pd.Series(dtype=float)
+    d = d[d.index >= first]
+    s = pd.Series(d.to_numpy(), index=d.index.to_period("W-SUN"), dtype=float)
+    return s[s.index.end_time.normalize() + pd.Timedelta(days=LAG_DAYS) <= today]
+
+
+_QUESTION = "Hur snabbt bygger utvecklare med AI-SDK:er (Python)?"
+_WED_NOTE = ("Stickprov: nedladdningar under veckans onsdag (UTC), inte veckosumma. BigQuery-historiken läser bara "
+             "onsdagar (kostnaden för exakt daglig historik är cirka 1,7 TB, se docs/kallor/utvecklaradoption.md); "
+             "från 2026-05-27 samma veckodag ur pypistats. Helgdagar som infaller en onsdag (t.ex. juldagen) syns.")
 
 SPECS = [
     Spec(key=key, branch="G3", label=f"PyPI-nedladdningar per vecka: {label}", unit="nedladdningar per vecka",
          freq="W", source=SOURCE, fetch=partial(weekly, project, start), lag_days=LAG_DAYS, license=LICENSE,
-         revised=True, publish=True, question="Hur snabbt bygger utvecklare med AI-SDK:er (Python)?",
-         note=(extra + " " + _NOTE).strip())
+         revised=True, publish=True, question=_QUESTION,
+         note=(extra + " Exakt veckosumma; historik från 2026-05-26 (pypistats 180 dagar), växer vecka för vecka. "
+               + _NOTE).strip())
+    for key, (project, start, label, extra) in PROJECTS.items()
+] + [
+    Spec(key=key.removesuffix("_w") + "_wed", branch="G3", label=f"PyPI-nedladdningar en onsdag per vecka: {label}",
+         unit="nedladdningar per dag (onsdag)", freq="W", source=SOURCE, fetch=partial(wednesday, project, start),
+         lag_days=LAG_DAYS, license=LICENSE, revised=True, publish=True, question=_QUESTION,
+         note=(extra + " " + _WED_NOTE + " " + _NOTE).strip())
     for key, (project, start, label, extra) in PROJECTS.items()
 ]
