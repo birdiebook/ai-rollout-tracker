@@ -1,0 +1,135 @@
+"""Monthly snapshot (live record) and the historical backcast (reconstruction, not a record).
+
+Snapshot date: the last calendar day of the month (the register does not name a day; see
+docs/resultat/tillstand.md). `write` refuses a date that is not a month end, a date after today (UTC), and an
+existing file (opened with mode "x"): a snapshot is written once and never rewritten, the git timestamp is the proof.
+"""
+
+from __future__ import annotations
+
+import hashlib
+import json
+import math
+from datetime import datetime, timezone
+from pathlib import Path
+
+import pandas as pd
+
+from ai_tracker import catalog, config, evaluation, observations
+from ai_tracker.state import register as R
+from ai_tracker.state.branch import branch
+from ai_tracker.state.measures import Context
+
+SNAPSHOTS = config.REPO / "snapshots"
+BACKCAST = config.REPO / "outputs" / "state_backcast.csv"
+BACKCAST_LABEL = "rekonstruerad (as-of-backcast, inte ett skarpt register)"
+
+
+def utc_today() -> pd.Timestamp:
+    return pd.Timestamp(datetime.now(timezone.utc).date())
+
+
+def month_end(month) -> pd.Timestamp:
+    return pd.Period(month, freq="M").end_time.normalize()
+
+
+def is_month_end(day) -> bool:
+    day = pd.Timestamp(day).normalize()
+    return day == month_end(day.to_period("M"))
+
+
+def _clean(x):
+    """JSON-safe: NaN/inf -> None, numpy scalars -> Python."""
+    if isinstance(x, dict):
+        return {k: _clean(v) for k, v in x.items()}
+    if isinstance(x, (list, tuple)):
+        return [_clean(v) for v in x]
+    if hasattr(x, "item") and not isinstance(x, (str, bytes)):
+        x = x.item()
+    if isinstance(x, float) and not math.isfinite(x):
+        return None
+    return x
+
+
+def register_sha256(path: Path | None = None) -> str:
+    return hashlib.sha256(Path(path or R.REGISTER_PATH).read_bytes()).hexdigest()
+
+
+def compute(when, ctx: Context) -> dict:
+    """The state of every branch as of `when` (pure: no git, no clock)."""
+    when = pd.Timestamp(when).normalize()
+    return {code: branch(code, when, ctx) for code in catalog.BRANCHES}
+
+
+def build(when, table: pd.DataFrame | None = None, ctx: Context | None = None) -> dict:
+    when = pd.Timestamp(when).normalize()
+    ctx = ctx or Context(observations.load() if table is None else table)
+    t = ctx.table
+    return _clean({
+        "snapshot": str(when.to_period("M")),
+        "date": str(when.date()),
+        "record": "skarp ögonblicksbild",
+        "created_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "git_sha": evaluation.git_sha(),
+        "register_sha256": register_sha256(),
+        "table_max_fetched_at": str(pd.Timestamp(t["fetched_at"].max()).date()) if len(t) else None,
+        "rules": {"deadband_sd": R.DEADBAND, "accelerating_at_least": R.ACCELERATING, "braking_at_most": R.BRAKING,
+                  "min_series": R.MIN_SERIES, "min_history": R.MIN_HISTORY, "pace_lag": R.PACE_LAG,
+                  "change_lag": R.CHANGE_LAG, "doubling_window_months": R.DOUBLING_WINDOW},
+        "branches": compute(when, ctx),
+    })
+
+
+def path_for(when, out_dir: Path | None = None) -> Path:
+    return Path(out_dir or SNAPSHOTS) / f"{pd.Timestamp(when).to_period('M')}.json"
+
+
+def write(when, table: pd.DataFrame | None = None, out_dir: Path | None = None, today=None) -> Path:
+    when = pd.Timestamp(when).normalize()
+    today = pd.Timestamp(today).normalize() if today is not None else utc_today()
+    if when > today:
+        raise ValueError(f"{when.date()} is in the future (today {today.date()} UTC): as_of would not be the real "
+                         "information set")
+    if not is_month_end(when):
+        raise ValueError(f"{when.date()} is not the last day of its month (the registered snapshot date)")
+    path = path_for(when, out_dir)
+    if path.exists():
+        raise FileExistsError(f"{path} exists; snapshots are never rewritten")
+    data = build(when, table)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("x", encoding="utf-8") as f:  # 'x' = fail if it appeared meanwhile
+        json.dump(data, f, indent=2, ensure_ascii=False)
+        f.write("\n")
+    return path
+
+
+def due(today=None, out_dir: Path | None = None) -> bool:
+    """True when today (UTC) is the last day of a month and that month's snapshot is not written yet."""
+    today = pd.Timestamp(today).normalize() if today is not None else utc_today()
+    return is_month_end(today) and not path_for(today, out_dir).exists()
+
+
+def backcast(start: str, end: str, table: pd.DataFrame | None = None, out: Path | None = None) -> pd.DataFrame:
+    """As-of state at every month end from `start` to `end` (YYYY-MM), one row per month and branch.
+
+    Reconstructed from today's table: each month sees only rows with known_from <= its month end, but rows
+    dated by publication lag (source="backfill") carry today's vintage. Not a live record.
+    """
+    ctx = Context(observations.load() if table is None else table)
+    rows = []
+    for month in pd.period_range(start, end, freq="M"):
+        when = month_end(month)
+        for code, b in compute(when, ctx).items():
+            rows.append({
+                "month": str(month), "date": str(when.date()), "branch": code, "index": b["index"],
+                "state": b["state"], "n_series": b["n_series"], "n_up": b["n_up"], "n_neutral": b["n_neutral"],
+                "n_down": b["n_down"],
+                "series": ";".join(f"{m['series']}:{m['direction']:+d}" for m in b["series_used"]),
+                "label": BACKCAST_LABEL,
+            })
+    df = pd.DataFrame(rows)
+    if out is not False:
+        out = Path(out or BACKCAST)
+        out.parent.mkdir(parents=True, exist_ok=True)
+        df.to_csv(out, index=False)
+    return df

@@ -119,3 +119,17 @@ förskjutna utgivningar får `max_age_days` med skäl (Indeed 83 dagar, Nvidia 1
 veckovis mot tabellens vintages. De enda övriga träffarna var shutdown-förseningarna hösten 2025, som är riktiga
 avbrott. En för gammal serie fäller veckojobbet (exitkod 2) men cachen sparas ändå. Detaljer:
 [drift.md](drift.md), avsnittet Aktualitet.
+
+## 2026-11-23 – Spår F5: tillstånd per gren och månatlig ögonblicksbild
+
+**Val:** måtten, diffusionsindexet och tillståndsregeln är implementerade exakt enligt registret
+(`src/ai_tracker/state/`). Kärnserierna ligger i `CORE_SERIES`, och ett test kräver att listan är identisk med
+registrets tabell. G1 och G9 läggs till som data. Där registret är oklart valdes den försiktigaste läsningen:
+månader aggregeras ur `as_of(beräkningsdagen)` och den sista, ofullständiga månaden tas bort, en SD kräver minst
+2 värden, tröskeln jämförs mot oavrundat index, fördubblings- och halveringstid räknas med omvänt tecken
+(kortare tid = accelererar), och det finns ingen regel för inaktuella serier. Den skarpa ögonblicksbilden tas
+**sista kalenderdagen i månaden** (`snapshot.yml`), skrivs en gång och committas av boten. Första filen blir
+`snapshots/2026-11.json`. Backcasten 2019-01 till 2026-10 är en rekonstruktion och inget skarpt register.
+Tre tolkningar bör registreras: månadsaggregeringen, tecknet för tidsmått och inaktuella serier. Detaljer:
+[resultat/tillstand.md](resultat/tillstand.md).
+

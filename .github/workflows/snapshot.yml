@@ -1,0 +1,88 @@
+# Monthly snapshot of the branch states (docs/mattregister.md sections 1, 2, 5; docs/resultat/tillstand.md).
+# Registered date: the last calendar day of the month. Cron cannot say "last day", so the job runs daily at
+# 22:41 UTC (retry 23:29 UTC) and the first step ends it unless today (UTC) is a month end without a snapshot.
+# On a month end: restore the data cache, refresh every catalog series and run the warehouse checks (a failed
+# check fails the job before the cache is saved or anything is written; the retry slot tries again), write
+# snapshots/<YYYY-MM>.json as of that date and commit only that new file to main with the bot identity.
+# An existing snapshot is never rewritten or re-committed: the git timestamp is the proof.
+# The date is fixed by the first step, so a refresh that runs past midnight still snapshots the month end.
+#
+# Permission: contents: write lets the job's own GITHUB_TOKEN push this one commit to this repository only.
+name: Monthly snapshot
+
+on:
+  schedule:
+    - cron: "41 22 * * *"  # daily 22:41 UTC; only a month end does anything
+    - cron: "29 23 * * *"  # retry slot, same UTC day
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ai-data
+  cancel-in-progress: false
+
+jobs:
+  snapshot:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 150  # a cold cache refetches every SEC filing (rate limited) and the EIA back issues
+    env:
+      PYTHONPATH: src
+      SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT }}
+      CENSUS_API_KEY: ${{ secrets.CENSUS_API_KEY }}
+      ECOS_API_KEY: ${{ secrets.ECOS_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: ci/requirements.txt
+      - name: Install pinned dependencies
+        run: python -m pip install -r ci/requirements.txt
+      - name: Is today (UTC) a month end without a snapshot?
+        id: due
+        run: python -m ai_tracker.state due
+      - name: Require SEC_USER_AGENT (no fallback for sec.gov)
+        if: steps.due.outputs.due == 'true'
+        run: |
+          if [ -z "${SEC_USER_AGENT}" ]; then
+            echo "::error::Repository secret SEC_USER_AGENT is missing. sec.gov requires a declared User-Agent with a contact address, e.g. 'ai-rollout-tracker <contact address>'. See docs/drift.md."
+            exit 1
+          fi
+      - name: Restore data cache
+        if: steps.due.outputs.due == 'true'
+        uses: actions/cache/restore@v4
+        with:
+          path: data
+          key: ai-data-${{ github.run_id }}
+          restore-keys: ai-data-
+      - name: Refresh all series and run the warehouse checks
+        if: steps.due.outputs.due == 'true'
+        run: python -m ai_tracker.pipeline weekly
+      - name: Save data cache
+        if: steps.due.outputs.due == 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: data
+          key: ai-data-${{ github.run_id }}
+      - name: Write the snapshot
+        id: snap
+        if: steps.due.outputs.due == 'true'
+        env:
+          SNAPSHOT_DATE: ${{ steps.due.outputs.date }}
+        run: python -m ai_tracker.state snapshot --date "${SNAPSHOT_DATE}"
+      - name: Commit the new snapshot to main
+        if: steps.snap.outputs.written != ''
+        env:
+          WRITTEN: ${{ steps.snap.outputs.written }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # publish refuses any path already in HEAD and any staged file other than the new snapshot
+          python -m ai_tracker.pipeline publish "${WRITTEN}"
+          if [ "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)" ]; then echo "nothing committed"; exit 0; fi
+          git pull --rebase origin main  # an add/add conflict (file appeared meanwhile) fails here: no overwrite
+          git push origin HEAD:main
