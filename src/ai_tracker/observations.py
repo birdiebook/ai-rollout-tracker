@@ -54,6 +54,17 @@ def to_periods(index, freq: str) -> pd.PeriodIndex:
     return pd.PeriodIndex(index, freq=catalog.FREQS[freq])
 
 
+def fortnight_ordinal(periods: pd.PeriodIndex) -> np.ndarray:
+    """Consecutive number of the ISO fortnight that ends in each W-SUN week.
+
+    Fortnight n of an ISO year covers ISO weeks 2n-1 and 2n; in 53-week years fortnight 26 also takes
+    week 53 (21 days). The fortnight is read from the week before the end week, so both cases map right.
+    """
+    iso = (pd.DatetimeIndex(periods.start_time) - pd.Timedelta(days=7)).isocalendar()
+    fortnight = np.minimum((iso["week"].to_numpy(dtype="int64") - 1) // 2 + 1, 26)
+    return iso["year"].to_numpy(dtype="int64") * 26 + fortnight - 1
+
+
 def new_rows(spec: catalog.Spec, values: pd.Series | pd.DataFrame, table: pd.DataFrame,
              fetched_at: date | None = None) -> pd.DataFrame:
     """Rows to append for one fetched vintage of `spec` (pure: does not read or write files)."""
@@ -68,12 +79,19 @@ def new_rows(spec: catalog.Spec, values: pd.Series | pd.DataFrame, table: pd.Dat
         df["known_from"] = pd.to_datetime(df["known_from"])
         if "source" not in df:  # optional column, e.g. "backfill" for rows dated by lag rather than a document
             df["source"] = "release"
-        seen = set(zip(existing["period"], pd.to_datetime(existing["known_from"])))
+        stored = set(zip(existing["period"], pd.to_datetime(existing["known_from"])))
+        seen = set(stored)
+        newest = df.sort_values("known_from").groupby("period").tail(1)
         cols = ["period", "value", "known_from", "source"]
         for p, v, kf, src in df.sort_values("known_from")[cols].itertuples(index=False):
             if (p, kf) not in seen:
                 rows.append((spec.key, spec.freq, p, float(v), kf, src, fetched))
                 seen.add((p, kf))
+        # Same release date, new value (the source overwrote its file, e.g. a reweighting): a revision
+        # that is known from the fetch date, never back-dated to the release.
+        for p, v, kf in newest[["period", "value", "known_from"]].itertuples(index=False):
+            if (p, kf) in stored and not np.isclose(latest[p], v, rtol=0, atol=1e-9):
+                rows.append((spec.key, spec.freq, p, float(v), fetched, "revision", fetched))
         return pd.DataFrame(rows, columns=COLUMNS)
 
     values = values.dropna().sort_index()

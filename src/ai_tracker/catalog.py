@@ -34,7 +34,9 @@ BRANCHES = {
 }
 
 # Period frequencies used on the observation table (pandas period aliases).
-FREQS = {"D": "D", "W": "W-SUN", "M": "M", "Q": "Q-DEC", "A": "Y-DEC"}
+# "2W" = ISO fortnight (Census BTOS cycles): stored as the W-SUN week the fortnight ends; consecutive
+# fortnights are numbered by ISO year * 26 + fortnight (see observations.fortnight_ordinal).
+FREQS = {"D": "D", "W": "W-SUN", "2W": "W-SUN", "M": "M", "Q": "Q-DEC", "A": "Y-DEC"}
 
 
 @dataclass
