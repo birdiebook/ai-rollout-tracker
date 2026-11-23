@@ -12,4 +12,6 @@ from ai_tracker.sources import gharchive
 
 def run(out_dir: Path) -> None:
     df = gharchive.build(workers=int(os.environ.get("GHA_WORKERS", "8")), path=out_dir / "github_ai_gharchive.csv")
+    # also in the log: the session cannot always reach the artifact blob host (weekly counts only)
+    print("BEGIN github_ai_gharchive.csv\n" + df.to_csv(index=False) + "END github_ai_gharchive.csv", flush=True)
     print(f"{len(df)} weeks, {int((df['n_hours'] >= gharchive.MIN_HOURS).sum())} with a value")

@@ -26,6 +26,8 @@ def run(out_dir: Path) -> None:
     out.index = [p.start_time.date().isoformat() for p in df.index]
     out.index.name = "week"
     out.to_csv(out_dir / "github_search_counts.csv")
+    # also in the log: the session cannot always reach the artifact blob host (counts only, public anyway)
+    print("BEGIN github_search_counts.csv\n" + out.to_csv() + "END github_search_counts.csv", flush=True)
     cache = github_search._cache_path(today)
     if cache.exists():
         (out_dir / f"counts_{today.isoformat()}.json").write_text(cache.read_text(encoding="utf-8"), encoding="utf-8")
