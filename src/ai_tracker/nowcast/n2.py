@@ -523,14 +523,16 @@ def main_live(argv=None):
 
 def add_live_args(ap: argparse.ArgumentParser) -> None:
     ap.add_argument("--origin", required=True, help="forecast origin, day 5 of the month after the target month")
-    ap.add_argument("--refresh", action="store_true", help="fetch the target and indicator series first")
+    ap.add_argument("--refresh", action="store_true", help="fetch the target, indicators and guidance series first")
     ap.add_argument("--out-dir", default=str(FORECAST_DIR))
     ap.add_argument("--table", default=None, help="observation table (default data/observations.parquet)")
 
 
 def run_live(a: argparse.Namespace) -> Path:
     if a.refresh:
-        observations.refresh([TARGET, *INDICATORS])
+        from ai_tracker.pipeline import live_keys  # same inputs as the scheduled run, incl. B2's guidance
+
+        observations.refresh(live_keys("n2"))
     path = write(a.origin, observations.load(Path(a.table) if a.table else None), Path(a.out_dir))
     print(path.read_text(encoding="utf-8"))
     return path
