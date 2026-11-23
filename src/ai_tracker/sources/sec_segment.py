@@ -26,12 +26,14 @@ data/raw/sec_segment/<date>/ are reused on later runs.
 from __future__ import annotations
 
 import json
+import time
 from dataclasses import dataclass
 from functools import lru_cache
 
 from xml.etree import ElementTree
 
 import pandas as pd
+import requests
 
 from ai_tracker import http
 from ai_tracker.sources import sec
@@ -93,7 +95,16 @@ def _cached_get(url: str) -> bytes:
     """Content of an immutable archive URL: a raw copy from an earlier run, else a (saved) GET."""
     name = http.raw_path(SOURCE, url).name
     hits = sorted((http.RAW_DIR / SOURCE).glob(f"*/{name}"))
-    return hits[-1].read_bytes() if hits else http.get(url, SOURCE).content
+    if hits:
+        return hits[-1].read_bytes()
+    for attempt in range(3):  # EDGAR's archive now and then answers 404 for a filing that loads on the next try
+        try:
+            return http.get(url, SOURCE).content
+        except requests.HTTPError as e:
+            if e.response is None or e.response.status_code != 404 or attempt == 2:
+                raise
+            time.sleep(2)
+    raise RuntimeError("unreachable")
 
 
 def instance_name(items: list[str]) -> str | None:
