@@ -205,3 +205,17 @@ B2 uppfyllde den förregistrerade befordringsregeln med stor marginal (MAE 6,4 m
 oberoende granskningen R2 godkände extraktionen. Huvudmodellen byttes därför mekaniskt enligt regeln. Johannes kan
 backa beslutet före den första skarpa körningen 2026-12-05. För N1 gav B2 lägre MAE (5,3 mot 7,0, n=9) men klarade
 inte Holm-testet, så B1 förblir huvudmodell där. Granskningen hittade en saknad Alphabet-rad, som nu är tillagd.
+
+## 2026-11-23 – Fas 6, spår F6-site: publik hemsida på GitHub Pages
+
+**Val:** statisk sida som byggs av `python -m ai_tracker.site build` i `pages.yml` efter varje lyckat datajobb.
+Siffror och listor renderas i Python (läsbara utan JavaScript). Diagrammen ritas som inline-SVG av ett eget litet
+skript, så sidan laddar ingenting från externa värdar (inget CDN behövdes). **Register:** de committade
+ögonblicksbilderna. Före den första visas den rekonstruerade historiken med etiketten "rekonstruerad historik, inte
+ett skarpt underlag". **Licenser:** licensregeln ligger på ett ställe (`site/data.py`, `publishable`): bara
+`publish=True` visas med värden, och för övriga kärnserier visas bara grenens summering och vilka serier som hålls
+inne. **Diagram per serie:** takt och förändring i takt de senaste tio åren ur samma beräkning som
+ögonblicksbilden (`measures.measure_path`, en version `as_of` beräkningsdagen). Percentiler och SD bygger på hela
+historiken. **Bygget fallerar** om datatesterna i `warehouse.py` fallerar, och då publiceras ingenting.
+Ägaren aktiverar Pages en gång (`docs/drift.md`).
+

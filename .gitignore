@@ -32,4 +32,4 @@ Thumbs.db
 CLAUDE.local.md
 
 # Static site, built in CI
-site/
+/site/

@@ -28,7 +28,7 @@ def stale_reason(key: str, when, ctx: Context) -> str:
         if rows.empty:
             return f"inaktuell: {k} har inga data kända på beräkningsdagen"
         freq = rows["freq"].iloc[0]
-        end = pd.PeriodIndex(rows["period"], freq=catalog.FREQS.get(freq, freq)).end_time.max().normalize()
+        end = pd.PeriodIndex(rows["period"].unique(), freq=catalog.FREQS.get(freq, freq)).end_time.max().normalize()
         age, bound = (when - end).days, warehouse.max_age_days(spec)
         if age > bound:
             return f"inaktuell: {k} senaste period slutade för {age} dagar sedan (gräns {bound})"
@@ -89,7 +89,7 @@ def resolve(entry: str, when, ctx: Context) -> tuple[str | None, str]:
         if rows.empty:
             continue
         freq = rows["freq"].iloc[0]
-        end = pd.PeriodIndex(rows["period"], freq={"2W": "W-SUN", "W": "W-SUN"}.get(freq, freq)).end_time.max()
+        end = pd.PeriodIndex(rows["period"].unique(), freq={"2W": "W-SUN", "W": "W-SUN"}.get(freq, freq)).end_time.max()
         cand = (end, int(m.group(1)), key)
         best = cand if best is None or cand > best else best
     if best is None:

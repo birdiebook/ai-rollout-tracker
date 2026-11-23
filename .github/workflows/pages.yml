@@ -1,0 +1,72 @@
+# Public site on GitHub Pages (phase 6): `python -m ai_tracker.site build` -> site/ -> actions/deploy-pages.
+# Runs after a successful weekly fetch, monthly snapshot or live nowcast run, and by hand (workflow_dispatch).
+# Restores the data cache those jobs save (prefix ai-data-, restore only: nothing is fetched or saved here) and builds
+# from it plus the committed snapshots/ and forecasts/ on main. The build runs the warehouse checks first: if they fail
+# the job fails and nothing is deployed (the previous site stays up). Only series with Spec.publish=True are shown.
+# Needs no secret.
+#
+# One-time setup by the owner (cannot be done from code): Settings -> Pages -> Build and deployment ->
+# Source: GitHub Actions. See docs/drift.md.
+#
+# Permissions: pages: write + id-token: write are what actions/deploy-pages needs to publish this repository's Pages
+# site (OIDC token for the Pages service); contents: read for checkout and the cache. No push to the repository.
+name: Pages
+
+on:
+  workflow_run:
+    workflows: ["Weekly data fetch", "Monthly snapshot", "Live nowcasts"]
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    # after a data job only when it succeeded (a failed run saved no new cache or wrote nothing new)
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      PYTHONPATH: src
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main  # the newest snapshot/forecast commit, also when triggered by a run on an older commit
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: ci/requirements.txt
+      - name: Install pinned dependencies
+        run: python -m pip install -r ci/requirements.txt
+      - name: Restore data cache (saved by the data jobs)
+        uses: actions/cache/restore@v4
+        with:
+          path: data
+          key: ai-data-${{ github.run_id }}
+          restore-keys: ai-data-
+      - name: Check that the cache had data
+        run: test -f data/observations.parquet || { echo "::error::no data in the cache; run 'Weekly data fetch' first"; exit 1; }
+      - name: Warehouse checks and build site/
+        run: python -m ai_tracker.site build --out site  # exit 1 on a failed warehouse check: no deploy
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

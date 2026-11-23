@@ -252,6 +252,13 @@ def own_months(rows: pd.DataFrame, when) -> int:
 
 def measure(key: str, when, ctx: Context) -> dict:
     """All registered measures of one series as of `when`. `valid` = may count in the diffusion index."""
+    return measure_path(key, when, ctx)[0]
+
+
+def measure_path(key: str, when, ctx: Context) -> tuple[dict, pd.DataFrame | None]:
+    """`measure` plus the measure's history as of `when`: a frame indexed by period (str) with the columns level
+    (aggregated/transformed input before pace), pace and change (change in pace). None when there is no data.
+    The history is the same computation the latest values come from (one vintage, as_of(when)); the site draws it."""
     when = pd.Timestamp(when)
     rule = rule_for(key, ctx)
     rows = ctx.rows(key)
@@ -271,7 +278,7 @@ def measure(key: str, when, ctx: Context) -> dict:
     meta = vintage(rows, when)
     if values.empty:
         out["reason"] = "inga data kända på beräkningsdagen"
-        return out
+        return out, None
 
     freq = rule.freq
     if freq in R.SUBMONTHLY:
@@ -281,7 +288,7 @@ def measure(key: str, when, ctx: Context) -> dict:
         freq = "M"
         if x.empty:
             out["reason"] = "ingen hel månad känd"
-            return out
+            return out, None
         latest = str(x.index[-1])
         m = meta[meta["month"] == latest]
         known_from, sources = m["known_from"].max(), sorted(set(meta["source"]))
@@ -355,4 +362,6 @@ def measure(key: str, when, ctx: Context) -> dict:
             out["valid"] = True
     if gated_note and not out["reason"]:
         out["reason"] = gated_note
-    return out
+    path = pd.DataFrame({"level": x, "pace": pace, "change": change})
+    path.index = path.index.astype(str)
+    return out, path
