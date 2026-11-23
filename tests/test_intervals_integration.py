@@ -1,6 +1,6 @@
 """Track C1 integration behind the grind G-C flag: backtests, live files, scorecard and site.
 
-Synthetic data only. With intervals.ENABLED False (the committed state) nothing changes; the tests turn it on with
+Synthetic data only. With intervals.ENABLED False nothing changes (the flag-off tests set it explicitly); the tests turn it on with
 monkeypatch to check the wiring before the register entry exists.
 """
 
@@ -66,8 +66,8 @@ def on(monkeypatch):
 # ------------------------------------------------------------------ flag off: nothing changes
 
 
-def test_flag_off_live_files_have_no_distribution(tmp_path):
-    assert not intervals.ENABLED
+def test_flag_off_live_files_have_no_distribution(tmp_path, monkeypatch):
+    monkeypatch.setattr(intervals, "ENABLED", False)
     d = json.loads(n2.write("2014-12-05", n2_table(), tmp_path).read_text(encoding="utf-8"))
     assert "distribution" not in d
     assert "distribution" not in n1.live_payload(n1_table(), n1.origin_for(pd.Period("2019Q2", "Q-DEC")))
@@ -175,7 +175,8 @@ def test_scorecard_scores_the_stored_distribution(on, tmp_path):
     assert path.read_bytes() == before
 
 
-def test_scorecard_without_flag_has_no_interval_section(tmp_path):
+def test_scorecard_without_flag_has_no_interval_section(tmp_path, monkeypatch):
+    monkeypatch.setattr(intervals, "ENABLED", False)
     table = n2_table()
     n2.write("2014-12-05", table, tmp_path / "n2")
     md = pipeline.render(pipeline.score(tmp_path, table), today="2015-01-01")
@@ -202,7 +203,8 @@ def test_site_shows_the_champions_interval(on, tmp_path):
     assert "pool" not in json.dumps(doc)  # the error pool stays in the forecast file
 
 
-def test_site_without_flag_has_no_interval_fields(tmp_path):
+def test_site_without_flag_has_no_interval_fields(tmp_path, monkeypatch):
+    monkeypatch.setattr(intervals, "ENABLED", False)
     table = n2_table()
     n2.write("2014-12-05", table, tmp_path / "n2")
     spec = catalog.Spec(key=n2.TARGET, branch="G6", label="TSMC", unit="mn TWD", freq="M", source="test",

@@ -25,8 +25,9 @@ def _frame(errors: dict, start="2000-01", lag_days=9):
     return pd.DataFrame(errors, index=months), origin, known
 
 
-def test_flag_is_off_until_gc_is_registered():
-    assert I.ENABLED is False
+def test_flag_is_on_since_gc_is_registered():
+    """Grind G-C was registered 2026-11-23 (docs/mattregister.md), so intervals are enabled."""
+    assert I.ENABLED is True
 
 
 # ------------------------------------------------------------------ pools
