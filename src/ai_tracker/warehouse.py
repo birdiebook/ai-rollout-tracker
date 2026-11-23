@@ -3,10 +3,23 @@
 Views:
 - observations : the versioned table, plus period_end and ordinal (consecutive integer per frequency)
 - obs_latest   : latest vintage per (series, period)
-- catalog      : key, freq, lag_days, revised for every catalog series
+- catalog      : key, freq, lag_days, revised, closed, max_age_days (bound below) for every catalog series
 
 Each check in CHECKS returns the violating rows; empty = pass. tests/test_warehouse.py tests the checks,
 tests/test_data_quality.py runs them on the real table when it exists. Pattern from kpif-nowcast.
+
+Freshness (`fresh`, run by `pipeline weekly`). A source that silently stops publishing passes every check
+above, so each open series also has a maximum age:
+
+    age   = today - end of the newest period known on `today` (rows with known_from <= today)
+    bound = lag_days + one period + 30 days      for D, W, 2W, M, Q (period = 1, 7, 14, 31, 92 days)
+    bound = lag_days + 400 days                   for A (annual surveys move by weeks between years)
+    stale = age > bound, or no row at all
+
+Age is measured from the period end, not from the latest known_from, so a revision of old periods never
+makes a series look fresh: only a new period does. `Spec.max_age_days` overrides the bound (reason in
+`note`, e.g. a release calendar that is offset from the period), `Spec.closed` exempts an ended series,
+and KNOWN_STALE accepts a stale series until a given date (a source outage that is understood).
 """
 
 from __future__ import annotations
@@ -19,6 +32,23 @@ from ai_tracker.observations import to_periods
 
 # Series with an accepted gap, and why. Keep this short.
 KNOWN_GAPS: dict[str, str] = {}
+
+# Stale series accepted until a date (ISO), and why: a known outage, never a permanent exemption
+# (that is Spec.max_age_days or Spec.closed). Example: {"us_imports_tw_m": ("2026-12-31", "shutdown, ...")}.
+KNOWN_STALE: dict[str, tuple[str, str]] = {}
+
+PERIOD_DAYS = {"D": 1, "W": 7, "2W": 14, "M": 31, "Q": 92}
+MARGIN_DAYS = 30
+ANNUAL_MARGIN_DAYS = 400
+
+
+def max_age_days(spec: catalog.Spec) -> int:
+    """Freshness bound in days from the newest period's end (see module docstring)."""
+    if spec.max_age_days is not None:
+        return spec.max_age_days
+    if spec.freq == "A":
+        return spec.lag_days + ANNUAL_MARGIN_DAYS
+    return spec.lag_days + PERIOD_DAYS[spec.freq] + MARGIN_DAYS
 
 CHECKS = {
     "unique_key": """
@@ -59,8 +89,9 @@ def _with_periods(table: pd.DataFrame) -> pd.DataFrame:
 
 def catalog_frame(specs: list[catalog.Spec] | None = None) -> pd.DataFrame:
     specs = catalog.ALL if specs is None else specs
-    return pd.DataFrame([(s.key, s.freq, s.lag_days, s.revised) for s in specs],
-                        columns=["key", "freq", "lag_days", "revised"])
+    return pd.DataFrame([(s.key, s.freq, s.lag_days, s.revised, s.closed, max_age_days(s),
+                          "override" if s.max_age_days is not None else "derived") for s in specs],
+                        columns=["key", "freq", "lag_days", "revised", "closed", "max_age_days", "bound"])
 
 
 def connect(table: pd.DataFrame | None = None, specs: list[catalog.Spec] | None = None) -> duckdb.DuckDBPyConnection:
@@ -86,7 +117,51 @@ def run_checks(con: duckdb.DuckDBPyConnection | None = None) -> dict[str, pd.Dat
     return out
 
 
+FRESH_SQL = """
+    with latest as (
+        select series, max(period_end) as last_end, arg_max(period, period_end) as last_period,
+               max(known_from) as last_known_from
+        from observations where known_from <= $today group by series)
+    select c.key as series, c.freq, l.last_period, l.last_end, l.last_known_from,
+           date_diff('day', l.last_end, $today) as age_days, c.max_age_days, c.bound
+    from catalog c left join latest l on l.series = c.key
+    where not c.closed and (l.series is null or date_diff('day', l.last_end, $today) > c.max_age_days)
+    order by c.key"""
+
+
+def fresh(con: duckdb.DuckDBPyConnection | None = None, today=None) -> pd.DataFrame:
+    """Stale open series on `today` (default: today, UTC date): age, bound and newest period; empty = pass.
+
+    A series with no row known on `today` is stale with age NaN. KNOWN_STALE entries are left out until
+    their date has passed.
+    """
+    con = con or connect()
+    today = pd.Timestamp(today if today is not None else pd.Timestamp.now(tz="UTC").date()).normalize()
+    df = con.execute(FRESH_SQL, {"today": today.to_pydatetime()}).df()
+    accepted = {k for k, (until, _) in KNOWN_STALE.items() if today <= pd.Timestamp(until)}
+    return df[~df["series"].isin(accepted)].reset_index(drop=True)
+
+
+def describe_stale(df: pd.DataFrame) -> list[str]:
+    """One line per stale series, for logs and the job summary."""
+    lines = []
+    for r in df.itertuples(index=False):
+        if pd.isna(r.last_end):
+            lines.append(f"{r.series} ({r.freq}): no data")
+        else:
+            lines.append(f"{r.series} ({r.freq}): newest period {r.last_period}, ended "
+                         f"{pd.Timestamp(r.last_end).date()}, age {int(r.age_days)} d > bound "
+                         f"{int(r.max_age_days)} d ({r.bound})")
+    return lines
+
+
 if __name__ == "__main__":
+    import sys
+
+    stale = fresh(today=sys.argv[1] if len(sys.argv) > 1 else None)
+    print(f"{'fresh':40s} {'ok' if stale.empty else f'{len(stale)} stale series'}")
+    for line in describe_stale(stale):
+        print("  " + line)
     for name, df in run_checks().items():
         print(f"{name:40s} {'ok' if df.empty else f'{len(df)} violations'}")
         if len(df):

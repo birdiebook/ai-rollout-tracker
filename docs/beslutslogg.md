@@ -109,3 +109,13 @@ Den senaste releasen hämtas via DDP. Eftersom DDP:s paket läggs ned 2027-03-31
 kvar via ALFRED som interimskälla med `publish=False` tills en Census API-nyckel finns. **Modellerna ändras inte:**
 `us_ip_semis` är fortfarande utesluten i fas 3, och en ny registrerad variant krävs för att använda den.
 Detaljer: [kallor/fed_g17.md](kallor/fed_g17.md).
+
+## 2026-11-23 – Spår T1: aktualitetskontroll i veckojobbet
+
+**Val:** varje öppen serie får en högsta ålder från den nyaste periodens slut: `lag_days` + en period + 30 dagar
+(D/W/2W/M/Q), `lag_days` + 400 dagar för A. **Varför periodslut och inte senaste `known_from`:** en revidering av
+gamla perioder ska inte dölja att nya perioder har slutat komma. Avslutade serier markeras `closed`, och två
+förskjutna utgivningar får `max_age_days` med skäl (Indeed 83 dagar, Nvidia 199 dagar). Gränserna prövades bakåt
+veckovis mot tabellens vintages. De enda övriga träffarna var shutdown-förseningarna hösten 2025, som är riktiga
+avbrott. En för gammal serie fäller veckojobbet (exitkod 2) men cachen sparas ändå. Detaljer:
+[drift.md](drift.md), avsnittet Aktualitet.
