@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import json
+
 import pandas as pd
 import pytest
 import requests
@@ -9,6 +11,12 @@ import requests
 from ai_tracker import catalog, observations
 from ai_tracker.series import wikipedia as series
 from ai_tracker.sources import wikipedia as wp
+
+
+@pytest.fixture(autouse=True)
+def _own_raw_dir(tmp_path, monkeypatch):
+    """Never read the shared raw cache (a real fetch today would answer instead of the fakes)."""
+    monkeypatch.setattr(wp.http, "RAW_DIR", tmp_path / "raw")
 
 
 def _payload(days: dict[str, int]) -> dict:
@@ -151,3 +159,13 @@ def test_get_waits_out_429(monkeypatch):
     monkeypatch.setattr(wp.time, "sleep", slept.append)
     assert wp._get("u") == "ok"
     assert calls == [0, 0, 0] and slept == [2.5, 2.5]
+
+
+def test_daily_reads_todays_raw_copy(monkeypatch):
+    today = pd.Timestamp.now(tz="UTC").normalize().tz_localize(None)
+    u = wp.url("en", "OpenAI", (today - pd.Timedelta(days=1)).strftime("%Y%m%d"))
+    p = wp.http.raw_path(wp.SOURCE, u)
+    p.parent.mkdir(parents=True)
+    p.write_text(json.dumps(_payload({"2026-11-01": 9})), encoding="utf-8")
+    monkeypatch.setattr(wp.http, "get", lambda *a, **k: pytest.fail("network"))
+    assert wp.daily("en", "OpenAI", today).tolist() == [9.0]

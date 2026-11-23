@@ -18,6 +18,7 @@ Licence: pageview data is CC0 1.0 (see docs/kallor/trafik.md for the quoted term
 
 from __future__ import annotations
 
+import json
 import time
 from urllib.parse import quote
 
@@ -34,23 +35,26 @@ OTHER = ("de", "fr", "es", "ja")  # the "xen" series: the four largest non-Engli
 
 http.MIN_INTERVAL.setdefault("wikimedia.org", 1.0)  # shared egress IPs hit Wikimedia's rate limit quickly
 
-# topic -> language -> titles (current title first, then former titles). Fixed before fetching.
+# topic -> language -> titles (current title first, then former titles). Fixed before fetching (commit 8139ab6);
+# fr gemini, es llm and en perplexity got former titles on 2026-11-23 after a start-date check of the first fetch
+# (the current title started abruptly; the page history or the redirect's own views showed the earlier title).
 TOPICS: dict[str, dict[str, tuple[str, ...]]] = {
     "chatgpt": {"en": ("ChatGPT",), "de": ("ChatGPT",), "fr": ("ChatGPT",), "es": ("ChatGPT",), "ja": ("ChatGPT",)},
     "claude": {"en": ("Claude (AI)", "Claude (language model)"), "de": ("Claude",),
                "fr": ("Claude (modèle de langage)",), "es": ("Claude (chatbot)",), "ja": ("Claude",)},
     "gemini": {"en": ("Google Gemini", "Gemini (chatbot)", "Bard (chatbot)", "Google Bard"),
-               "de": ("Google Gemini",), "fr": ("Gemini (intelligence artificielle)",),
+               "de": ("Google Gemini",), "fr": ("Gemini (intelligence artificielle)", "Gemini (IA)", "Google Gemini", "Gemini (chatbot)",
+                      "Bard (chatbot)"),
                "es": ("Gemini (bot conversacional)",), "ja": ("Gemini (チャットボット)",)},
     "copilot": {"en": ("Microsoft Copilot", "Bing Chat", "Bing AI"), "de": ("Microsoft Copilot",),
                 "fr": ("Microsoft Copilot",), "es": ("Microsoft Copilot",), "ja": ("Microsoft Copilot",)},
     "grok": {"en": ("Grok (chatbot)",), "de": ("Grok",), "fr": ("Grok",), "es": ("Grok (chatbot)",), "ja": ("Grok",)},
     "deepseek": {"en": ("DeepSeek",), "de": ("DeepSeek",), "fr": ("DeepSeek",), "es": ("DeepSeek",),
                  "ja": ("DeepSeek",)},
-    "perplexity": {"en": ("Perplexity AI",), "de": ("Perplexity AI",), "fr": ("Perplexity AI",),
+    "perplexity": {"en": ("Perplexity AI", "Perplexity.ai"), "de": ("Perplexity AI",), "fr": ("Perplexity AI",),
                    "es": ("Perplexity",), "ja": ("Perplexity",)},
     "llm": {"en": ("Large language model",), "de": ("Large Language Model",), "fr": ("Grand modèle de langage",),
-            "es": ("Modelo de lenguaje de gran tamaño",), "ja": ("大規模言語モデル",)},
+            "es": ("Modelo de lenguaje de gran tamaño", "Modelo extenso de lenguaje", "Modelo de lenguaje grande"), "ja": ("大規模言語モデル",)},
     "genai": {"en": ("Generative AI", "Generative artificial intelligence"),
               "de": ("Generative künstliche Intelligenz",), "fr": ("Intelligence artificielle générative",),
               "es": ("Inteligencia artificial generativa",), "ja": ("生成的人工知能",)},
@@ -67,6 +71,7 @@ TOPICS: dict[str, dict[str, tuple[str, ...]]] = {
 LAUNCH: dict[str, str] = {
     "chatgpt": "2022-11-30", "claude": "2023-03-14", "gemini": "2023-02-06", "copilot": "2023-02-07",
     "grok": "2023-11-04", "deepseek": "2023-07-17", "perplexity": "2022-12-07",
+    "anthropic": "2021-05-28",  # the company's public launch; en and es "Anthropic" had views from 2015/2019
 }
 
 
@@ -104,8 +109,12 @@ def daily(lang: str, title: str, today: pd.Timestamp | None = None) -> pd.Series
     """Daily user views of one title; a title that does not exist (404) has none."""
     today = pd.Timestamp(today or pd.Timestamp.now(tz="UTC").date()).normalize()
     end = (today - pd.Timedelta(days=1)).strftime("%Y%m%d")
+    u = url(lang, title, end)
+    cached = http.raw_path(SOURCE, u)  # today's raw copy: a rerun the same day does not ask Wikimedia again
+    if cached.exists():
+        return parse(json.loads(cached.read_text(encoding="utf-8")))
     try:
-        r = _get(url(lang, title, end))
+        r = _get(u)
     except requests.HTTPError as exc:  # only a 404 means "no views"
         if exc.response is not None and exc.response.status_code == 404:
             return pd.Series(dtype=float)
