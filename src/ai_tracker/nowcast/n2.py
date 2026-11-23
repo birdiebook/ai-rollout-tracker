@@ -85,7 +85,6 @@ MODELS = ["V1", "B2"]  # the registered Holm family for N2 (register change "B2:
 STEP2_MODELS = ["B3", "DF"]
 STEP2_UNEVALUATED = {"DF": "not built yet (C3)"}
 STEP2_BUILDS_ON = {"B3": "B2"}
-CHAMPION_AT_STEP2 = "B2"  # the champion when step 2 was registered (F-B10 "nuvarande huvudmodell"); fixed
 # B2 may not be promoted before an independent review approves the extracted guidance values (register)
 # Review R2 (docs/granskning/r2_guidance.md) approved the TSMC guidance extraction on 2026-11-23.
 REVIEW_REQUIRED: dict[str, str] = {}
@@ -507,7 +506,7 @@ def evaluate_step2(ev: pd.DataFrame, periods: dict, mae: dict, variants: list) -
     0.10 (full period, "as before for N2") and a lower MAE than every comparator candidate in the full period and from
     2023-01. A passing variant replaces the champion only if not in REVIEW_REQUIRED (it beats the champion by
     construction). The locked phase 3-4 family {V1, B2} is not recomputed."""
-    cands = [c for c in dict.fromkeys(["B0", "B1", CHAMPION_AT_STEP2, STEP2_BUILDS_ON["B3"]]) if c != "B3"]
+    cands = list(dict.fromkeys(["B0", "B1", CHAMPION, STEP2_BUILDS_ON["B3"]]))
     cands = [c for c in cands if c in variants]
     p, dm, comp = {}, {}, None
     if "B3" in variants and len(ev) >= 3:
@@ -530,7 +529,7 @@ def evaluate_step2(ev: pd.DataFrame, periods: dict, mae: dict, variants: list) -
              f"lower MAE than {'/'.join(cands)}, 2023+": per["2023+"]["mae_ok"]}
         checks["B3"] = [f"{'PASS' if ok_ else 'FAIL'}: {k}" for k, ok_ in c.items()]
         passed["B3"] = engine.passes(per)
-    d = engine.decide(passed, {v: mae["full"][v] for v in passed}, REVIEW_REQUIRED, CHAMPION_AT_STEP2)
+    d = engine.decide(passed, {v: mae["full"][v] for v in passed}, REVIEW_REQUIRED, CHAMPION)
     return {"candidates": cands, "comparator": comp, "dm": dm, "p": p, "holm": holm, "checks": checks,
             "passed": passed, "unevaluated": dict(STEP2_UNEVALUATED), "champion": d.champion,
             "conditional": d.conditional}
@@ -650,10 +649,7 @@ def main_backtest():
 
 FORECAST_DIR = evaluation.REPO / "forecasts" / "n2"
 # Set mechanically by the pre-registered promotion rule (evaluate(), docs/resultat/n2.md). B1 unless a model passes.
-# B2 promoted 2026-11-23 by the registered rule after review R2 approved the TSMC guidance. B3 promoted 2026-11-23 by
-# the step-2 rule (evaluate_step2: Holm-p 0.038 in {B3, DF}, MAE below B0/B1/B2 in both periods; run log
-# experiments/runs/20261123T214326Z_n2_tsmc.csv, docs/resultat/n2.md). A decision taken is not changed by reruns.
-CHAMPION = "B3"
+CHAMPION = "B2"  # promoted 2026-11-23 by the registered rule after review R2 approved the TSMC guidance
 
 
 def payload(fc: Forecast, table: pd.DataFrame, champion: str = CHAMPION, live_dir: Path | None = None) -> dict:
