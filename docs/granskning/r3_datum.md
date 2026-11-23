@@ -197,5 +197,5 @@ Rättat på `auto6/x2-r3-rattning`. Alla fyra strikta xfail i `tests/test_r3_dat
    senare jämförelsetalen.
 5. **Polymarket:** i `forvantningar.md` står nu att värdet är måndagens pris, märkt med föregående vecka.
 
-Hela sviten efter merge av main: 1 259 passed, 1 skipped och 26 xfailed. Alla 26 xfail kommer från R1, R2 och R5,
+Hela sviten efter merge av main: 1 259 passed, 1 skipped och 26 xfailed. Alla 26 xfail kommer från R5 (`test_r5_extraktion.py`),
 inga från R3. `python -m ai_tracker.warehouse` är grön.
