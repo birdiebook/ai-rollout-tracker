@@ -1,7 +1,8 @@
 """Live N2 forecast: python -m ai_tracker.nowcast_n2 --origin YYYY-MM-DD [--refresh]
 
-Writes forecasts/n2/<target month>.json once. Refuses to overwrite, refuses an origin that is not day 5, and
-refuses when the target month's outcome is already in the table (then it would not be a forecast).
+Writes forecasts/n2/<target month>.json once. Refuses to overwrite, refuses an origin that is not day 5, refuses an
+origin after today (UTC; as_of would not be the real information set), and refuses when the target month's outcome
+is already in the table (then it would not be a forecast).
 --refresh fetches tsmc_revenue_m and the indicators first (network).
 """
 
@@ -44,8 +45,11 @@ def payload(fc: engine.Forecast, table: pd.DataFrame, champion: str = CHAMPION) 
     }
 
 
-def write(origin, table: pd.DataFrame, out_dir: Path = FORECAST_DIR, champion: str = CHAMPION) -> Path:
+def write(origin, table: pd.DataFrame, out_dir: Path = FORECAST_DIR, champion: str = CHAMPION, today=None) -> Path:
     origin = pd.Timestamp(origin)
+    today = pd.Timestamp(today or datetime.now(timezone.utc).date())
+    if origin > today:
+        raise ValueError(f"origin {origin.date()} is in the future: as_of would not be the real information set")
     month = engine.target_for(origin)
     path = Path(out_dir) / f"{month}.json"
     if path.exists():
