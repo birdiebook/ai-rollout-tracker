@@ -430,6 +430,20 @@ def method(ctx: Context) -> dict:
             "n_published": sum(bool(s.publish) for s in ctx.specs.values())}
 
 
+def letters(letters_dir: Path) -> dict:
+    """The monthly letters (docs/manadsbrev/<YYYY-MM>.md), newest first: month, title, kind, file and the Markdown.
+    The letters are written by ai_tracker.letter under the same licence rule as the site."""
+    from ai_tracker import letter as L  # lazy: the letter module imports this one
+
+    out = []
+    for f in sorted(Path(letters_dir).glob("[0-9][0-9][0-9][0-9]-[0-9][0-9].md"), reverse=True):
+        md = f.read_text(encoding="utf-8")
+        meta = L.parse(md)
+        out.append({"month": f.stem, "month_sv": L.month_sv(f.stem), "title": meta["title"], "kind": meta["kind"],
+                    "file": f"docs/manadsbrev/{f.name}", "page": f"manadsbrev-{f.stem}.html", "markdown": md})
+    return {"letters": out}
+
+
 def build_meta(rec: Record) -> dict:
     t = rec.ctx.table
     return {"built_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"), "git_sha": evaluation.git_sha(),
@@ -439,15 +453,17 @@ def build_meta(rec: Record) -> dict:
 
 
 def assemble(ctx: Context | None = None, snapshots_dir: Path | None = None, forecasts_dir: Path | None = None,
-             today=None, history_from: str = HISTORY_FROM) -> dict:
-    """Every JSON document of the site: {"oversikt": ..., "gren/G1": ..., "prognoser": ..., "metod": ..., "build": ...}."""
+             today=None, history_from: str = HISTORY_FROM, letters_dir: Path | None = None) -> dict:
+    """Every JSON document of the site: {"oversikt": ..., "gren/G1": ..., "prognoser": ..., "metod": ...,
+    "manadsbrev": ..., "build": ...}."""
     ctx = ctx or Context(observations.load())
     today = pd.Timestamp(today).normalize() if today is not None else utc_today()
     rec = Record(ctx, Path(snapshots_dir or S.SNAPSHOTS), today, history_from)
     branches = {code: branch_view(code, rec) for code in catalog.BRANCHES}
     docs = {"oversikt": overview(rec, branches), "prognoser": nowcasts(ctx, Path(forecasts_dir or
                                                                                   config.REPO / "forecasts"), today),
-            "metod": method(ctx), "build": build_meta(rec)}
+            "metod": method(ctx), "manadsbrev": letters(Path(letters_dir or config.REPO / "docs" / "manadsbrev")),
+            "build": build_meta(rec)}
     for code, v in branches.items():
         docs[f"gren/{code}"] = {"record": rec.meta(), **v}
     return docs
