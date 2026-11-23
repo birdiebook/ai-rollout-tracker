@@ -454,3 +454,40 @@ C1:s tolkningar i `docs/steg2/c1_forslag.md` antas:
 - DM-test på CRPS mot den bästa av B0 och B1 redovisas som information och avgör ingenting.
 - Den skarpa filen lagrar felpoolen och t-parametrarna, och scorecard poängsätter den lagrade fördelningen utan
   att räkna om den.
+
+### 2026-11-23 – A5: avstämningar mellan leden (före beräkning)
+
+Härledda serier. Varje version finns först när alla komponenter för perioden har lämnats in. `known_from` = den
+senaste komponentens. Samma kalendermappning som komponenterna (mittpunktsregeln). Inga takter är beräknade.
+
+| Nyckel | Definition | Led |
+|---|---|---|
+| `x_capex_cloud` | `capex_hyp4` / (`rev_aws` + `rev_google_cloud` + `rev_msft_cloud`), samma kvartal | L3–L5 |
+| `x_rpo_cover` | `rpo_hyp4` (balans vid kvartalets slut) / summan av `capex_hyp4` för de 4 senaste kvartalen | L4–L5 |
+| `x_nvda_capex` | `rev_nvda_datacenter` / `capex_hyp4`, samma kalenderkvartal | L5–L6 |
+| `x_debt_capex` | summan av `debt_issued_hyp4` / summan av `capex_hyp4`, de 4 senaste kvartalen | L5 |
+| `x_capex_ocf` | befintlig `capex_ocf_hyp4` | L5 |
+
+- **Mått:** takt = årsförändring i log(kvot) ×100. Förändring i takt och percentiler som i avsnitt 1.
+- **Räknas inte i grenarnas diffusionsindex.** Avstämningarna redovisas separat i flödesvyn (E2) och i
+  månadsbrevet som en egen rubrik.
+- **Regimmodellen** (G-D) använder dem inte.
+
+### 2026-11-23 – D2: prognoser 1–8 kvartal (förregistrering, F-E7)
+
+D2 får köras på verklig data från och med denna post.
+
+| Del | Val |
+|---|---|
+| Mål | `capex_hyp4` och molnintäkterna enligt N4, första version |
+| Prognosdag | kalenderkvartalets slut + 20 dagar, samma som N1 och N4. Horisont h = 1–8 kvartal efter det senaste kvartal som är känt på prognosdagen |
+| B0 | senast kända nivå |
+| B1 | senast kända nivå × exp(h × medel av de 4 senaste kvartalens log-tillväxt) |
+| B2 (bara capex) | kvartal i år med helårsguidance känd på prognosdagen: N1:s B2-regel för årets återstående kvartal. Senare kvartal: B1-tillväxt från det sista guidade kvartalet |
+| V_kedja | direkt prognos per h: OLS av h-kvartalers log-tillväxt i målet på årstakten i `rpo_hyp4` och på log-avvikelsen i `x_capex_cloud` från sitt expanderande medel, båda kända på prognosdagen. Minst 12 rader per h |
+| Holdout | G-E (komplex familj D2). Utvecklingsperiod till och med 2025-06-30 |
+| Poäng | MAE och bias per h. Intervall enligt G-C med en felpool per h, där ett fel ingår först när utfallet för den horisonten är känt (F-C7) |
+| Befordran | per horisontgrupp (h1–2, h3–4, h5–8): V_kedja mot den bästa av B0, B1 och B2 med regeln i F-E6. Holm över grupperna |
+
+Ärlig not: med cirka 23 kvartal i utvecklingen och 6 i holdouten är D2 främst beskrivande. En befordran är inte
+trolig, och resultatet redovisas ändå.
