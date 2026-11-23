@@ -290,8 +290,8 @@ def load_daily(root: Path | None = None, kinds: tuple[str, ...] = ("daily", "wed
     """Stored counts as a wide frame (index = covered day, one column per project) and the days covered.
 
     For every day the newest fetch that covered it wins, with all its projects (a project absent from that
-    query on that day had zero downloads, or was not asked for before its first year: also 0). A covered day
-    without a `requests` row is a gap in the table: the whole row is NaN.
+    query on that day had zero downloads). A covered day without a `requests` row is a gap in the table: the
+    whole row is NaN. On a sampled day, a project the backfill did not ask for that year (FIRST_YEAR) is NaN.
     """
     root = root or http.RAW_DIR / SOURCE_DIR
     files = _files(root, kinds)
@@ -312,6 +312,11 @@ def load_daily(root: Path | None = None, kinds: tuple[str, ...] = ("daily", "wed
     wide = wide.reindex(index=covered, columns=PROJECTS).fillna(0.0)
     gap = ~covered.isin(rows.loc[rows["project"] == CONTROL, "day"])
     wide.loc[gap, :] = float("nan")
+    # A sampled day only has the projects the backfill asked for that year: the others are unknown, not 0.
+    sampled = pd.DatetimeIndex([d for d, f in owner.items() if f.name.startswith("wed_")])
+    for p in PROJECTS:
+        y = FIRST_YEAR[p]
+        wide.loc[wide.index.isin(sampled) & ((y is None) | (wide.index.year < (y or 0))), p] = float("nan")
     return wide, covered
 
 

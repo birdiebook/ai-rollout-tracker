@@ -45,7 +45,9 @@ PROJECTS = {
                         "Första PyPI-versionen med filer är 1.0.0 (2018-12-07); serien börjar veckan 2018-12-03."),
     "g3_pypi_llama_index_w": ("llama-index", None, "llama-index", ""),
     "g3_pypi_mcp_w": ("mcp", None, "mcp (Model Context Protocol)", ""),
-    "g3_pypi_requests_w": ("requests", None, "requests (kontrollpaket)", "Kontrollpaket, inte en AI-serie."),
+    "g3_pypi_requests_w": ("requests", date(2016, 5, 23), "requests (kontrollpaket)",
+                           "Kontrollpaket, inte en AI-serie. Tabellen börjar 2016-01-22 och saknar 2016-03-09–"
+                           "2016-05-18, så onsdagsserien börjar veckan 2016-05-23."),
     "g3_pypi_numpy_w": ("numpy", None, "numpy (kontrollpaket)",
                         "Kontrollpaket, inte en AI-serie. Ingår inte i BigQuery-historiken (kvoten), bara pypistats."),
 }
@@ -83,7 +85,7 @@ def daily(project: str, kinds: tuple[str, ...] = ("daily",), refresh: bool = Tru
     bq = bq[project] if project in bq else pd.Series(dtype=float)
     if bq.empty:
         return ps
-    return pd.concat([ps[~ps.index.isin(bq.index)], bq]).sort_index()
+    return bq.combine_first(ps).sort_index()  # BigQuery where it has a value, else pypistats
 
 
 def weekly(project: str, start: date | None = None, today: date | None = None) -> pd.Series:

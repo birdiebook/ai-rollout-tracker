@@ -192,6 +192,7 @@ def test_bq_load_daily_newest_fetch_gaps_and_zeros(tmp_path):
     assert wide.loc["2026-10-01", "mcp"] == 5 and wide.loc["2026-10-01", "openai"] == 0  # absent row = 0
     assert wide.loc["2026-10-02"].isna().all()  # no `requests` row: a gap in the table
     assert wide.loc["2026-09-09"].isna().all() and wide.loc["2026-09-02", "torch"] == 4
+    assert np.isnan(wide.loc["2026-09-02", "numpy"])  # not in the backfill: unknown, not 0
     assert wide.loc["2026-10-03", "requests"] == 110 and wide.loc["2026-10-03", "mcp"] == 0  # newer fetch wins
     only_daily, _ = pypi_bq.load_daily(tmp_path, kinds=("daily",))
     assert pd.Timestamp("2026-09-02") not in only_daily.index
@@ -240,7 +241,7 @@ def test_pypi_series_combine_bq_and_pypistats(tmp_path, monkeypatch):
               [("2026-05-13", "requests", 9), ("2026-05-13", "mcp", 1), ("2026-05-20", "requests", 9),
                ("2026-05-20", "mcp", 2), ("2026-05-27", "requests", 9), ("2026-05-27", "mcp", 3)])
     days = pd.date_range("2026-05-26", "2026-06-14")
-    for project, value in (("mcp", 10), ("requests", 100)):
+    for project, value in (("mcp", 10), ("requests", 100), ("numpy", 50)):
         p = http.raw_path("pypistats", pypistats.url(project), day=date(2026, 11, 23))
         p.parent.mkdir(parents=True, exist_ok=True)
         rows = [{"category": "with_mirrors", "date": str(d.date()), "downloads": value} for d in days
@@ -254,6 +255,7 @@ def test_pypi_series_combine_bq_and_pypistats(tmp_path, monkeypatch):
     w = pypi.weekly("mcp", today=date(2026, 6, 30))
     assert [str(x) for x in w.index] == ["2026-06-01/2026-06-07", "2026-06-08/2026-06-14"]  # 05-25 week partial
     assert list(w) == [60, 70]  # 2026-06-02 is a real zero (requests has the day)
+    assert list(pypi.wednesday("numpy", today=date(2026, 6, 30))) == [50, 50, 50]  # BigQuery has no numpy
 
 
 # ------------------------------------------------------------------ catalog and known_from
