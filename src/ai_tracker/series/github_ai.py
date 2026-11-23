@@ -69,3 +69,7 @@ SPECS = [
        "% av commits", g, "share")
     for g in ("claude", "copilot", "cursor")
 ]
+
+# GH Archive outage 2021-10-22 to 2021-10-28 (sample hours missing): ISO week 2021-W43 has 3 of 7 hours, no value.
+KNOWN_GAPS = {s.key: "GH Archive outage 2021-10-22..28: week 2021-10-25 has 3 of 7 sample hours (< 5)"
+              for s in SPECS if s.key.startswith("g3_gh_")}
