@@ -1,7 +1,8 @@
 """ALFRED (St. Louis Fed archival FRED): real vintages without an API key.
 
-Used only where the primary source is unreachable (Fed G.17: federalreserve.gov is refused by the proxy)
-and, as evidence, for historical release dates of primary sources (first vintage that contains a period).
+Used only where the primary source is unreachable (Census M3: api.census.gov needs a key, pending) and,
+as evidence, for historical release dates of primary sources (first vintage that contains a period).
+Not used for Fed G.17 any more: that comes from federalreserve.gov (sources/fed_g17.py).
 
 - vintage_dates(): the list on alfred.stlouisfed.org/series/downloaddata?seid=<id> ("Select Vintage
   Dates When Data Were Revised").
@@ -19,10 +20,9 @@ from __future__ import annotations
 import io
 import re
 
-import numpy as np
 import pandas as pd
 
-from ai_tracker import http
+from ai_tracker import http, observations
 
 BASE = "https://alfred.stlouisfed.org"
 MAX_PER_REQUEST = 12  # observed: more vintage dates in one call are silently dropped
@@ -69,14 +69,7 @@ def vintages(series_id: str, dates: list[str]) -> pd.DataFrame:
 
 def release_rows(wide: pd.DataFrame) -> pd.DataFrame:
     """Columns period (observation date), value, known_from: a row whenever a vintage adds or changes a value."""
-    rows = []
-    prev = pd.Series(np.nan, index=wide.index)
-    for vdate in wide.columns:
-        cur = wide[vdate]
-        changed = cur.notna() & (prev.isna() | ~np.isclose(cur.fillna(0), prev.fillna(0), rtol=0, atol=1e-9))
-        rows += [(obs, cur[obs], vdate) for obs in cur.index[changed]]
-        prev = cur.where(cur.notna(), prev)
-    return pd.DataFrame(rows, columns=["period", "value", "known_from"])
+    return observations.vintage_rows(wide)
 
 
 def first_release(wide: pd.DataFrame) -> pd.Series:

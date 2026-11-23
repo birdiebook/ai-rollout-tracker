@@ -98,3 +98,14 @@ jämför mot första vintage. N2:s skrivare vägrar nu också en prognosdag i fr
 ligger bara i Actions-cachen och laddas inte upp som artefakt (publikt repo, licenser). Detaljer:
 [drift.md](drift.md).
 
+## 2026-11-23 – Spår I7: Fed G.17 från primärkällan i stället för ALFRED
+
+**Val:** `us_ip_semis_m` (G3344, NAICS 3344) och den nya `us_ip_computers_m` (G3341, NAICS 3341) hämtas från
+federalreserve.gov. Skälet är att FRED:s villkor begränsar användning i samband med maskininlärning, medan Board-data
+är public domain (disclaimer.htm). **Riktiga vintages** byggs ur Fed:s releasearkiv, med 135 releaser från
+2016-04-15 inklusive årsrevisioner, och known_from är releasedatumet. Datumen stämmer exakt med ALFRED:s vintages.
+Den senaste releasen hämtas via DDP. Eftersom DDP:s paket läggs ned 2027-03-31 finns
+`current/ipdisk/ip_sa.txt` som reserv. NAICS 334413 publiceras inte separat. Serierna får `publish=True`. M3 ligger
+kvar via ALFRED som interimskälla med `publish=False` tills en Census API-nyckel finns. **Modellerna ändras inte:**
+`us_ip_semis` är fortfarande utesluten i fas 3, och en ny registrerad variant krävs för att använda den.
+Detaljer: [kallor/fed_g17.md](kallor/fed_g17.md).

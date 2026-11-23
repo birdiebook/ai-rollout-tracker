@@ -16,8 +16,8 @@ Källtyper i observationstabellen:
 |---|---|---|---|---|---|---|
 | `btos_ai_use_v1/v2/v3`, `btos_ai_expect_v1/v2/v3` (+ `_se`) | G3 | Census BTOS | 2W | v1 202319–202520 (54), v2 202524–202621 (24), v3 från 202622 (2) | Publication Date i filen | release |
 | `us_constr_datacenter`, `_nsa` | G5 | Census C30 | M | 2014-01– | max(månadsslut + 35 d, belagd release) | backfill |
-| `us_ip_semis_m` | G6 | Fed G.17 via ALFRED (IPG3344S) | M | 1972– | ALFRED-vintage | release (riktiga vintages) |
-| `us_orders_computers_electronics_m` | G6 | Census M3 via ALFRED (A34SNO) | M | 1992– | ALFRED-vintage | release (riktiga vintages) |
+| `us_ip_semis_m` | G6 | Fed G.17, federalreserve.gov (G3344) – flyttad i spår I7, se [fed_g17.md](fed_g17.md) | M | 1972– | releasedatum | release (riktiga vintages) |
+| `us_orders_computers_electronics_m` | G6 | Census M3 via ALFRED (A34SNO), interim i väntan på Census API-nyckel | M | 1992– | ALFRED-vintage | release (riktiga vintages) |
 | `us_pfi_info_proc_eq_sw`, `us_pfi_info_proc_eq`, `us_pfi_computers`, `us_pfi_software` | G5 | BEA NIPA-flatfiler | Q | 1947/1959– | max(kvartalsslut + 31 d, belagd release) | backfill |
 | `us_imports_tw_m`, `us_imports_kr_m` | G6 | Census FT-900 `country.xlsx` | M | 1985– | max(månadsslut + 41 d, belagd release) | backfill |
 | `eu_ai_ent_eu27`, `_se`, `_de`, `_fr` | G3 | Eurostat `isoc_eb_ai` | A | 2023– | 31 dec + 31 d | backfill |
@@ -103,6 +103,10 @@ overifierat. Historiken från 2014 kan vara bakåtskattad, och det är en läcka
 hämtningen och framåt blir varje ändring en `revision` med hämtdatum.
 
 ## Fed G.17 och Census M3 via ALFRED (G6)
+
+**Uppdatering 2026-11-23 (spår I7):** G.17 hämtas nu från primärkällan med riktiga vintages ur Fed:s
+releasearkiv, se [fed_g17.md](fed_g17.md). ALFRED-modulen gäller bara M3 (`series/census_m3_alfred.py`). Den är
+märkt som interimskälla med `publish=False` tills en Census API-nyckel finns. Texten nedan beskriver läget i spår I3.
 
 `federalreserve.gov` **nekas av proxyn**, och värden behöver öppnas för att G.17 ska kunna hämtas från primärkällan. Census M3 är bara
 maskinläsbar via `api.census.gov`, som kräver nyckel. Exportfunktionen i `econ/currentdata` gav HTTP 400, och
@@ -199,7 +203,7 @@ lagras som revision, och det skulle bara gå för en serie för 0–9 anställda
 
 | Vad | Orsak | Vad som löser det |
 |---|---|---|
-| G.17 från primärkälla | `www.federalreserve.gov` nekas av proxyn | öppna värden (nu via ALFRED) |
+| ~~G.17 från primärkälla~~ | löst i spår I7: `www.federalreserve.gov` är öppen | [fed_g17.md](fed_g17.md) |
 | HS 8471/8473/8542, M3 från primärkälla | `api.census.gov` kräver API-nyckel (gratis registrering) | Census API-nyckel (registreras inte av agenten) |
 | BEA-vintages från primärkälla | BEA API kräver UserID | BEA-nyckel, eller ALFRED-vintages efter beslut |
 | `www.bls.gov`, `download.bls.gov` | HTTP 403 (behövdes inte i spåret) | – |
