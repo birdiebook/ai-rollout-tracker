@@ -176,6 +176,16 @@ def weekly(keys: list[str] | None = None, today=None) -> int:
 # ------------------------------------------------------------------ live
 
 
+# Inputs of the B2 (guidance) variant, refreshed together with target and indicators before a live forecast.
+LIVE_PREFIXES = {"n2": ("tsmc_guid_",), "n1": ("guid_capex_", "capex_", "fin_lease_")}
+
+
+def live_keys(nowcast: str) -> list[str]:
+    base = [n2.TARGET, *n2.INDICATORS] if nowcast == "n2" else [n1.TARGET, *n1.INDICATORS]
+    extra = [s.key for s in catalog.ALL if s.key.startswith(LIVE_PREFIXES[nowcast]) and not s.closed]
+    return list(dict.fromkeys(base + extra))
+
+
 def run_live(d: Due, root: Path | None = None, table: pd.DataFrame | None = None, refresh: bool = True,
              today=None) -> Path | None:
     """Write the live forecast for `d` once. Returns the new path, or None if it already existed."""
@@ -187,7 +197,7 @@ def run_live(d: Due, root: Path | None = None, table: pd.DataFrame | None = None
         print(f"{path} exists; live forecasts are never rewritten. Skipping.")
         return None
     if refresh:
-        keys = [n2.TARGET, *n2.INDICATORS] if d.nowcast == "n2" else [n1.TARGET, *n1.INDICATORS]
+        keys = live_keys(d.nowcast)
         require_sec(keys)
         failed = _refresh(keys)
         if failed:  # a forecast is made once; better to retry the same day than to freeze one on stale data

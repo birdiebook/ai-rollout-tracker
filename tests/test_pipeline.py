@@ -279,3 +279,13 @@ def test_weekly_exit_code_follows_checks(monkeypatch):
     assert pipeline.weekly(["us_imports_tw_m"]) == 1
     with pytest.raises(SystemExit, match="unknown series"):
         pipeline.weekly(["no_such_series"])
+
+
+def test_live_refresh_includes_guidance_inputs():
+    from ai_tracker import pipeline
+
+    n2 = pipeline.live_keys("n2")
+    assert "tsmc_revenue_m" in n2 and "tsmc_guid_rev_usd_lo" in n2 and "tsmc_guid_fx" in n2
+    assert "tsmc_guid_rev_twd_lo" not in n2  # closed
+    n1 = pipeline.live_keys("n1")
+    assert "capex_hyp4" in n1 and "fin_lease_meta" in n1 and any(k.startswith("guid_capex_meta") for k in n1)
