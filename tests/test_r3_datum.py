@@ -335,6 +335,21 @@ def test_eia930_first_load_is_backfill_and_later_months_are_fetch_dated():
     assert got == {("2026-10", "revision"): TS("2026-12-03"), ("2026-11", "fetch"): TS("2026-12-03")}
 
 
+@pytest.mark.parametrize("key,period,expected", [
+    ("eia930_avg_pjm_m", "2015-07", "2016-07-25"),  # BA data first public 2016-07-25 (EIA press437)
+    ("eia930_avg_pjm_m", "2016-07", "2016-08-07"),  # after that: month end + 7
+    ("eia930_peak_erco_m", "2016-06", "2016-07-25"),
+    ("eia930_avg_pjm_dom_m", "2018-10", "2019-08-21"),  # sub-region data first public 2019-08-21 (TIE 40993)
+    ("eia930_avg_pjm_dom_m", "2019-08", "2019-10-01"),  # then month end + 31 (EIA: sub-region lag 1-30 days)
+])
+def test_eia930_backfill_not_before_first_publication(key, period, expected):
+    """X2 (R3 item 3): backfill rows are floored at the data element's first publication."""
+    spec = SPECS[key]
+    rows = observations.new_rows(spec, pd.Series([1.0], index=pd.PeriodIndex([period], freq="M")),
+                                 pd.DataFrame(columns=observations.COLUMNS), fetched_at=pd.Timestamp("2026-11-23").date())
+    assert list(rows["source"]) == ["backfill"] and rows["known_from"].iloc[0] == TS(expected)
+
+
 def test_eia930_month_needs_two_days_after_its_end():
     hours = pd.DataFrame([("pjm", TS("2026-10-01") + pd.Timedelta(hours=i), 100.0) for i in range(31 * 24)],
                          columns=["area", "ts", "mw"])
@@ -470,3 +485,15 @@ def test_manifold_rows_before_selection_are_flagged(table):
         g = table[table.series == f"g9_exp_mf_{q['id']}"]
         early = g[g.known_from < TS(q["selected_on"])]
         assert set(early["source"]) <= {"backfill"}, q["id"]
+
+
+@pytest.mark.real_data
+@pytest.mark.skipif(not real_table_exists(), reason="no data fetched (python -m ai_tracker.observations)")
+def test_eia930_rows_not_before_first_publication(table):
+    from ai_tracker.series import eia930 as s930
+
+    g = table[table.series.str.startswith("eia930_")]
+    for key, kf in g.groupby("series")["known_from"].min().items():
+        kind = "SUBREGION" if "_dom_" in key else "BALANCE"
+        assert kf >= TS(s930.FIRST_PUBLISHED[kind]), key
+
