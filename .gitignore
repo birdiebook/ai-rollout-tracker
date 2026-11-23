@@ -33,3 +33,6 @@ CLAUDE.local.md
 
 # Static site, built in CI
 /site/
+
+# Per-worktree settings (scripts/new_track.sh)
+.env.local

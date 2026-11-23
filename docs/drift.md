@@ -94,6 +94,49 @@ ladda ned och flera källor har licenser som inte är kontrollerade. Alla datajo
 GitHub tar bort en cache som inte använts på sju dagar. Veckohämtningen håller den varm. En kall cache betyder
 bara att allt hämtas om (backfill), vilket tar längre tid.
 
+## Delad data (parallella spår)
+
+Från steg 2 (spår I1) delar alla spår en läskopia av tabellen, och varje spår skriver bara i sin egen `data/`.
+Orkestreraren slår ihop spårens data med ett verktyg som kör datatesterna. Ingen handpåläggning, och ingen kopia
+av `data/` per spår.
+
+- **Basen** är `/home/user/ai-rollout-tracker/data` (main-utcheckningen): `observations.parquet` och
+  `fetch_log.parquet`. Spåren läser den men skriver aldrig i den. Bara `datamerge` skriver där.
+- **Nytt spår:** `scripts/new_track.sh <namn> <grenprefix>` (till exempel `scripts/new_track.sh a1-rpo auto5`)
+  skapar worktree `/home/user/wt/<namn>` på grenen `<grenprefix>/<namn>` från main, kopierar `.env` och skriver
+  `.env.local` med `AI_TRACKER_SHARED_DATA=<main>/data` och `AI_TRACKER_SHARED_RAW=<main>/data/raw`.
+  `config.get` läser miljön, sedan `.env.local` och sist `.env`, så alla `python -m ai_tracker.*` i spåret
+  använder basen utan fler steg. Båda filerna är gitignorerade.
+- **I spåret** ger `observations.load()` och `load_log()` bas ∪ spår. Vid samma (series, period, known_from)
+  vinner spårets rad, och i hämtloggen gäller samma sak för (series, fetched_at). `upsert` räknar nya rader mot
+  hela vyn, så en vanlig hämtning sparar bara det som är nytt. `drop_series` och `--rebuild` kan inte ta bort
+  rader i basen. De skriver i stället serien i `data/rebuilt_series.json`, och då döljer vyn basens rader för
+  serien. Basen läggs bara under standardtabellen. En explicit sökväg eller `--table` läser bara den filen.
+- **Merge** (orkestreraren, efter att spårets kod är mergad till main, eftersom katalogen måste känna till
+  serierna):
+
+  ```
+  python -m ai_tracker.datamerge /home/user/wt/<namn>/data [--series ...] [--replace ...] [--dry-run]
+  ```
+
+  Basen är som standard `AI_TRACKER_SHARED_DATA`, annars `data/` i utcheckningen (`--into` för en annan). Per
+  serie: *added* (ny i basen), *replaced* (ombyggd i spåret, eller angiven med `--replace`: basens rader ersätts
+  helt), *updated* (bas ∪ spår) och *unchanged*. Datatesterna i `warehouse.py` körs på hela resultatet, och
+  aktualiteten körs för de serier som slås ihop. Fallerar något skrivs ingenting, och exitkoden blir 1.
+  Skrivningen är atomär (temporär fil och rename) och sker under ett lås, och den förra basen sparas i
+  `data/merge_backups/` (de 20 senaste). En andra körning ger "nothing to merge". Hela basen tar cirka 10 sekunder.
+- **Äldre spår** med en egen full kopia av `data/` går också att slå ihop. Identiska rader blir *unchanged*. En
+  serie som byggdes om på det gamla sättet anges med `--replace`, annars ligger båda versionerna kvar.
+- **Delad rå-cache** (`AI_TRACKER_SHARED_RAW`, sätts av `new_track.sh`) flyttar `http.RAW_DIR`. Spåren läser och
+  skriver där. Det är säkert för HTTP-kopiorna, eftersom varje fil heter källa/hämtdatum/URL-hash och skrivs
+  atomärt. Två spår som hämtar samma URL samma dag skriver samma innehåll till samma namn. Det finns också
+  föränderliga filer under `RAW_DIR`: git-klonen för Indeed (`indeed/ai-tracker`, två samtidiga `git fetch` kan
+  ge ett låsfel, och då räcker det att köra igen) och Census `schedule_log.parquet` (den sista skrivningen
+  vinner, med samma innehåll samma dag). LiteLLM-klonen ligger kvar i spårets egen `data/raw`.
+- **Begränsning:** två spår som uppdaterar samma serie stegvis kan båda lägga till samma nya period med olika
+  `known_from`. Merge ger då två versioner. Planen undviker det, eftersom spåren inom en våg inte rör samma
+  serier. Kör `--dry-run` och läs *updated* om du är osäker.
+
 ## Hemsidan (GitHub Pages)
 
 **Engångsåtgärd för ägaren:** Settings → Pages → Build and deployment → Source: **GitHub Actions**. Det går inte
@@ -154,4 +197,5 @@ python -m ai_tracker.pipeline due --today 2026-12-05    # vad som är aktuellt e
 python -m ai_tracker.pipeline live                      # skarpa prognoser som är aktuella i dag
 python -m ai_tracker.pipeline scorecard                 # forecasts/SCORECARD.md
 python -m ai_tracker.pipeline --table <fil> weekly ...  # mot en annan tabell, t.ex. en kopia
+python -m ai_tracker.datamerge <spår>/data [--dry-run]  # slå ihop ett spårs data med basen (se Delad data)
 ```

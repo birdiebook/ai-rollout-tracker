@@ -250,3 +250,11 @@ Johannes godkände rekommendationerna i `docs/steg2/plan.md` avsnitt 7: BigQuery
 betalkonto) för PyPI och GH Archive, Cloudflare Radar-nyckel, nya värdar, holdout-policyn, ingen betald
 transkriptkälla och labbens rapporterade intäkter som en märkt serie. Allt ska vara gratis. Förregistreringen C0
 (holdout, mål N3–N6, B3, faktormodell, intervall, regim) står i `docs/mattregister.md` under "Steg 2" och granskas av R6.
+
+## 2026-11-23 – Delad data mellan spår (I1)
+
+Spåren läser en gemensam bas (main-utcheckningens `data/`) och skriver bara i sin egen `data/`. Vyn är bas ∪ spår,
+och spårets rad vinner vid samma nyckel. En ombyggd serie döljer basens rader via `rebuilt_series.json`. Data förs
+in i basen bara med `python -m ai_tracker.datamerge`, som kör datatesterna och aktualiteten och vägrar skriva om
+något fallerar. Valt framför en databasserver: inga nya beroenden, och filerna och datatesterna är desamma som
+förut. Detaljer finns i [drift.md](drift.md) (Delad data).
