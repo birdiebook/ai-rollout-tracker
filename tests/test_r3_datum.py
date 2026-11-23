@@ -463,10 +463,6 @@ def test_meta_lt_debt_2025q4_known_from_the_10k(table, key):
 
 @pytest.mark.real_data
 @pytest.mark.skipif(not real_table_exists(), reason="no data fetched (python -m ai_tracker.observations)")
-@bug("Manifold history before the selection day is stored as source='release', but the questions were selected on "
-     "2026-11-23 with metadata known only then (uniqueBettorCount >= 100, life >= 180 d, resolution != CANCEL): an "
-     "as_of view of G9 before selected_on is survivorship-conditioned. Per-trade values are point-in-time correct; "
-     "the set is not. Mark pre-selection rows 'backfill' (or gate set-level use on selected_on)")
 def test_manifold_rows_before_selection_are_flagged(table):
     for q in fv.load_urval():
         if q["platform"] != "manifold":
