@@ -7,7 +7,8 @@ Fetch contract. `Spec.fetch()` returns either
 - a pd.Series indexed by period (any pandas period frequency matching `Spec.freq`), or
 - a pd.DataFrame with columns period, value, known_from: for release-dated sources where each value
   carries its real release date (e.g. SEC filings with their `filed` date). Then known_from comes
-  from the source, not from `lag_days`.
+  from the source, not from `lag_days`. An optional `source` column labels rows (default "release";
+  "backfill" for rows dated by period end + lag because no dated document exists).
 
 Series live in ai_tracker/series/<source>.py (SPECS list), discovered automatically.
 `python -m ai_tracker.catalog` prints the catalog as Markdown.

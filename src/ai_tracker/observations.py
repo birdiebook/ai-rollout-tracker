@@ -66,10 +66,13 @@ def new_rows(spec: catalog.Spec, values: pd.Series | pd.DataFrame, table: pd.Dat
         df = values.dropna(subset=["value"]).copy()
         df["period"] = [str(p) for p in to_periods(df["period"], spec.freq)]
         df["known_from"] = pd.to_datetime(df["known_from"])
+        if "source" not in df:  # optional column, e.g. "backfill" for rows dated by lag rather than a document
+            df["source"] = "release"
         seen = set(zip(existing["period"], pd.to_datetime(existing["known_from"])))
-        for p, v, kf in df.sort_values("known_from")[["period", "value", "known_from"]].itertuples(index=False):
+        cols = ["period", "value", "known_from", "source"]
+        for p, v, kf, src in df.sort_values("known_from")[cols].itertuples(index=False):
             if (p, kf) not in seen:
-                rows.append((spec.key, spec.freq, p, float(v), kf, "release", fetched))
+                rows.append((spec.key, spec.freq, p, float(v), kf, src, fetched))
                 seen.add((p, kf))
         return pd.DataFrame(rows, columns=COLUMNS)
 
