@@ -243,3 +243,11 @@ Efter fas 0–6 zoomar projektet ut. I stället för nio separata grenar byggs e
 leden stäms av mot varandra och varje led får nowcast, prognos 1–8 kvartal och regimsannolikhet. Planen är uppdelad
 i vågor (0–4) med parallella spår och förregistreringsgrindar: [steg2/plan.md](steg2/plan.md). Sex beslut för
 Johannes står i planens avsnitt 7.
+
+## 2026-11-23 – Delad data mellan spår (I1)
+
+Spåren läser en gemensam bas (main-utcheckningens `data/`) och skriver bara i sin egen `data/`. Vyn är bas ∪ spår,
+och spårets rad vinner vid samma nyckel. En ombyggd serie döljer basens rader via `rebuilt_series.json`. Data förs
+in i basen bara med `python -m ai_tracker.datamerge`, som kör datatesterna och aktualiteten och vägrar skriva om
+något fallerar. Valt framför en databasserver: inga nya beroenden, och filerna och datatesterna är desamma som
+förut. Detaljer finns i [drift.md](drift.md) (Delad data).
