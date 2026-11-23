@@ -54,7 +54,16 @@ Förklara inte det.
 
 ## Faser
 
-Se `docs/plan.md`, avsnitt 8. Fas 0 ✅ (ramverk och CI). Uppdatera här när en fas är klar.
+Se `docs/plan.md`, avsnitt 8. Uppdatera här när en fas är klar.
+
+- **Fas 0** ✅ ramverk och CI
+- **Fas 1** ✅ källor och licenser (`docs/datakallor/`)
+- **Fas 2** ✅ cirka 130 serier i G1–G9 (`docs/kallor/`), måttregister låst (`docs/mattregister.md`)
+- **Fas 3** ✅ N1 (capex) och N2 (TSMC) med backtest. Läckagegranskning R1 och rättning X1
+- **Fas 4** ✅ guidance (E1), granskning R2. **N2:s huvudmodell är B2 (TSMC:s guidance)**, N1:s huvudmodell är B1
+- **Fas 5** ✅ tillstånd per gren (`python -m ai_tracker.state`), månatlig ögonblicksbild från 2026-11-30
+- **Fas 6** pågår: hemsida på GitHub Pages
+- Drift: `docs/drift.md` (veckohämtning, skarpa prognoser N2 dag 5 och N1 kvartal + 20 dagar, ögonblicksbild vid månadsslut)
 
 ## Tekniska konventioner
 
