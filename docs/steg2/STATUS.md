@@ -1,6 +1,6 @@
 # Status steg 2
 
-Uppdateras av orkestreraren vid varje milstolpe. Senast: 2026-11-23 22:30 UTC.
+Uppdateras av orkestreraren vid varje milstolpe. Senast: 2026-11-23 23:10 UTC.
 
 ## Läge
 
@@ -10,7 +10,9 @@ Uppdateras av orkestreraren vid varje milstolpe. Senast: 2026-11-23 22:30 UTC.
   PyPI/npm är mergat (PyPI-historiken är onsdagsurval, eftersom exakt historik skulle kosta cirka 1,7 TB).
   **Granskning R5 (extraktion):** klar. Nvidias guidance är godkänd för N3. AI-nyckeltal, leasingåtaganden och planer är
   godkända med rättningar (F1–F14, 26 strikta xfail-tester). Rättningarna görs efter att kvoten återställts.
-- **Våg 2** kör: N3–N6 och B3. Datasnapshoten är klar och väntar på `DATA_KEY`. Avstämningarna (A5) och D2 är
+- **Våg 2:** N3–N6 är mergade (B1 är huvudmodell för alla fyra). **B3 för TSMC passerade regeln** (MAE 5,81 mot B2 6,42,
+  Holm-p 0,038). B2 är huvudmodell tills den oberoende granskningen R7 är klar, före 2026-12-05. B3 för capex passerade inte. R3-rättningarna är mergade.
+- **Tidigare:** Datasnapshoten är klar och väntar på `DATA_KEY`. Avstämningarna (A5) och D2 är
   förregistrerade.
 
 ## Väntar på Johannes

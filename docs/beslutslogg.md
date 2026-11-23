@@ -304,3 +304,11 @@ Exakt daglig PyPI-historik för tolv paket skulle kosta cirka 2,1 TB i BigQuery.
 är därför nedladdningarna en onsdag per vecka (176 GB). Exakta veckosummor hämtas framåt via pypistats, som läser samma
 tabell och stämde exakt med BigQuery på överlappsdagen. npm har exakta veckosummor från 2015 men ingen verifierad licens
 (`publish=False`).
+
+
+## 2026-11-23 – B3 för N2 passerade regeln, men väntar på granskning
+
+B3 (TSMC:s guidance korrigerad för systematisk avvikelse) gav MAE 5,81 mot B2 6,42 och Holm-p 0,038 i steg 2-familjen.
+Spåret bytte huvudmodell mekaniskt, men CLAUDE.md kräver en oberoende granskning per positivt resultat som ska
+användas. Bytet är därför återställt (`n2.CHAMPION = "B2"`), och B3 följer med som skugga. Granskningen R7 görs före den
+första skarpa N2-prognosen 2026-12-05. N3–N6: inga varianter passerade, och B1 är huvudmodell.
