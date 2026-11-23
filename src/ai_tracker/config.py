@@ -1,4 +1,8 @@
-"""Settings from the environment, with .env (gitignored) as fallback. Never log the values."""
+"""Settings from the environment, then .env.local, then .env (both gitignored). Never log the values.
+
+.env holds secrets (copied between worktrees); .env.local holds per-worktree settings that scripts write, e.g.
+AI_TRACKER_SHARED_DATA from scripts/new_track.sh (docs/drift.md, "Delad data").
+"""
 
 from __future__ import annotations
 
@@ -20,8 +24,9 @@ def _dotenv(path: Path) -> dict[str, str]:
 
 
 def get(name: str, default: str | None = None) -> str | None:
-    """Environment variable, else .env in the repo root, else default. Empty strings count as missing."""
-    value = os.environ.get(name) or _dotenv(REPO / ".env").get(name)
+    """Environment variable, else .env.local, else .env in the repo root, else default. Empty strings count as
+    missing."""
+    value = os.environ.get(name) or _dotenv(REPO / ".env.local").get(name) or _dotenv(REPO / ".env").get(name)
     return value or default
 
 

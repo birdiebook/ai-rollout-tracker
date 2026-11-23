@@ -25,21 +25,92 @@ whose known_from has a time of day (none since the Indeed +1 day margin) are kno
 
 Storage: data/observations.parquet and data/fetch_log.parquet (not committed, rebuilt by
 `python -m ai_tracker.observations`).
+
+Shared base (parallel agent tracks, docs/drift.md "Delad data"). With AI_TRACKER_SHARED_DATA set (environment,
+.env.local or .env; see config.get) to a directory holding a base observations.parquet + fetch_log.parquet, the
+default table becomes a two-layer view:
+- load() / load_log() return base ∪ track. On an identical (series, period, known_from) the track row wins; in
+  the fetch log, on an identical (series, fetched_at).
+- Writes (save via upsert, append_log, drop_series) go only to the track's own data/ files; the base is read-only.
+- drop_series (a rebuild) cannot delete base rows, so it records the keys in data/rebuilt_series.json and the
+  view hides the base's rows of those series. `python -m ai_tracker.datamerge` then replaces them in the base.
+The base is layered only under the default table: with no `path` argument and PATH unchanged. An explicit path,
+or PATH set by a `--table` option, reads that file alone. Unset (default): one table, as before.
 """
 
 from __future__ import annotations
 
+import json
+import os
 from datetime import date
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
-from ai_tracker import catalog, publication
+from ai_tracker import catalog, config, publication
 
-PATH = Path(__file__).resolve().parents[2] / "data" / "observations.parquet"
+DEFAULT_PATH = config.REPO / "data" / "observations.parquet"
+PATH = DEFAULT_PATH
 COLUMNS = ["series", "freq", "period", "value", "known_from", "source", "fetched_at"]
 LOG_COLUMNS = ["series", "fetched_at", "n_periods", "last_period", "rows_added"]
+KEY = ["series", "period", "known_from"]
+LOG_KEY = ["series", "fetched_at"]
+SHARED_ENV = "AI_TRACKER_SHARED_DATA"
+
+
+def _shared_dir() -> Path | None:
+    value = config.get(SHARED_ENV)
+    return Path(value).expanduser() if value else None
+
+
+# Directory of the read-only base table (None = no shared base). Resolved once at import.
+SHARED_DIR: Path | None = _shared_dir()
+
+
+def base_path() -> Path | None:
+    """The shared base table under the default table, or None (unset, PATH changed, or the base is PATH itself)."""
+    if SHARED_DIR is None or PATH != DEFAULT_PATH:
+        return None
+    base = SHARED_DIR / "observations.parquet"
+    try:
+        if base.resolve() == PATH.resolve():
+            return None
+    except OSError:
+        pass
+    return base
+
+
+def rebuilt_path(path: Path | None = None) -> Path:
+    """Series whose base rows the track hides (rebuilt in the track), next to the track table."""
+    return (path or PATH).with_name("rebuilt_series.json")
+
+
+def load_rebuilt(path: Path | None = None) -> list[str]:
+    p = rebuilt_path(path)
+    return sorted(json.loads(p.read_text(encoding="utf-8"))) if p.exists() else []
+
+
+def _add_rebuilt(keys: list[str], path: Path | None = None) -> None:
+    keys = sorted(set(load_rebuilt(path)) | set(keys))
+    p = rebuilt_path(path)
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(json.dumps(keys, indent=1) + "\n", encoding="utf-8")
+
+
+def combine(base: pd.DataFrame, track: pd.DataFrame, hide: list[str] | set[str] = (),
+            key: list[str] = KEY) -> pd.DataFrame:
+    """base ∪ track: base rows of `hide` are dropped, and on an identical `key` the track row wins."""
+    base = base[~base["series"].isin(list(hide))]
+    if track.empty:
+        return base.reset_index(drop=True)
+    if base.empty:
+        return track.reset_index(drop=True)
+    # Only base rows that the track overrides go; duplicates inside one layer are left as they are (the fetch
+    # log has one row per fetch call, so two calls on one day are two rows).
+    won = pd.MultiIndex.from_frame(track[key].astype(str))
+    base = base[~pd.MultiIndex.from_frame(base[key].astype(str)).isin(won)]
+    return pd.concat([base, track[base.columns]], ignore_index=True)
 
 
 def _empty() -> pd.DataFrame:
@@ -47,8 +118,8 @@ def _empty() -> pd.DataFrame:
                                       float if c == "value" else object) for c in COLUMNS})
 
 
-def load(path: Path | None = None) -> pd.DataFrame:
-    path = path or PATH
+def read_table(path: Path) -> pd.DataFrame:
+    """One parquet file as an observation table (empty if missing), without any shared base."""
     if not path.exists():
         return _empty()
     df = pd.read_parquet(path)
@@ -57,10 +128,26 @@ def load(path: Path | None = None) -> pd.DataFrame:
     return df
 
 
-def save(df: pd.DataFrame, path: Path | None = None) -> None:
-    path = path or PATH
+def load(path: Path | None = None) -> pd.DataFrame:
+    """The table at `path`; with no `path`, the default table, layered over the shared base if one is set."""
+    track = read_table(path or PATH)
+    base = base_path() if path is None else None
+    if base is None:
+        return track
+    return combine(read_table(base), track, load_rebuilt())
+
+
+def write_parquet(df: pd.DataFrame, path: Path) -> None:
+    """Atomic write (temp file + rename): a reader in another worktree sees the old or the new file, never half."""
     path.parent.mkdir(parents=True, exist_ok=True)
-    df.to_parquet(path, index=False)
+    tmp = path.with_name(f".{path.name}.{os.getpid()}.tmp")
+    df.to_parquet(tmp, index=False)
+    os.replace(tmp, path)
+
+
+def save(df: pd.DataFrame, path: Path | None = None) -> None:
+    """Write the track table (never the shared base)."""
+    write_parquet(df, path or PATH)
 
 
 def log_path(path: Path | None = None) -> Path:
@@ -68,9 +155,8 @@ def log_path(path: Path | None = None) -> Path:
     return (path or PATH).with_name("fetch_log.parquet")
 
 
-def load_log(path: Path | None = None) -> pd.DataFrame:
-    """Fetch log for the table at `path` (empty if none)."""
-    p = log_path(path)
+def read_log(p: Path) -> pd.DataFrame:
+    """One fetch-log file (empty if missing), without any shared base."""
     if not p.exists():
         return pd.DataFrame({c: pd.Series(dtype="datetime64[ns]" if c == "fetched_at" else
                                           "int64" if c in ("n_periods", "rows_added") else object)
@@ -80,14 +166,23 @@ def load_log(path: Path | None = None) -> pd.DataFrame:
     return df
 
 
+def load_log(path: Path | None = None) -> pd.DataFrame:
+    """Fetch log for the table at `path` (empty if none); with no `path`, base ∪ track like load()."""
+    track = read_log(log_path(path))
+    base = base_path() if path is None else None
+    if base is None:
+        return track
+    return combine(read_log(log_path(base)), track, key=LOG_KEY)
+
+
 def append_log(entries: pd.DataFrame, path: Path | None = None) -> None:
+    """Append to the track's own fetch log (never the shared base's)."""
     if entries.empty:
         return
-    old = load_log(path)
-    out = entries if old.empty else pd.concat([old, entries[LOG_COLUMNS]], ignore_index=True)
     p = log_path(path)
-    p.parent.mkdir(parents=True, exist_ok=True)
-    out.to_parquet(p, index=False)
+    old = read_log(p)
+    out = entries[LOG_COLUMNS] if old.empty else pd.concat([old, entries[LOG_COLUMNS]], ignore_index=True)
+    write_parquet(out, p)
 
 
 def absent_fetches(spec: catalog.Spec, table: pd.DataFrame, log: pd.DataFrame | None = None):
@@ -221,11 +316,14 @@ def drop_series(keys: list[str], path: Path | None = None) -> int:
 
     The fetch dates of the dropped rows stay in the fetch log: a rebuild must not forget that an earlier
     fetch did not contain a period.
+
+    Over a shared base the base is not touched: the track's rows are removed, the keys are recorded in
+    rebuilt_series.json (the view hides the base's rows), and the count includes the hidden base rows.
     """
-    table = load(path)
-    keep = ~table["series"].isin(keys)
-    if (~keep).any():
-        dropped = table[~keep]
+    shared = path is None and base_path() is not None
+    view = load(path)
+    dropped = view[view["series"].isin(keys)]
+    if len(dropped):
         log = load_log(path)
         logged = set(zip(log["series"], log["fetched_at"]))
         seen = (dropped.groupby(["series", "fetched_at"])["period"].agg(["nunique", "max"]).reset_index())
@@ -233,8 +331,11 @@ def drop_series(keys: list[str], path: Path | None = None) -> int:
         append_log(pd.DataFrame({"series": missing["series"], "fetched_at": missing["fetched_at"],
                                  "n_periods": missing["nunique"].astype("int64"), "last_period": missing["max"],
                                  "rows_added": 0}), path)
-        save(table[keep].reset_index(drop=True), path)
-    return int((~keep).sum())
+        track = read_table(path or PATH)
+        save(track[~track["series"].isin(keys)].reset_index(drop=True), path)
+        if shared:
+            _add_rebuilt(sorted(set(dropped["series"])), path)
+    return len(dropped)
 
 
 def upsert(spec: catalog.Spec, values: pd.Series | pd.DataFrame, fetched_at: date | None = None,
@@ -242,10 +343,11 @@ def upsert(spec: catalog.Spec, values: pd.Series | pd.DataFrame, fetched_at: dat
     """Append a fetched vintage to the stored table and log the fetch (also when nothing is new). Returns rows
     added."""
     fetched = pd.Timestamp(fetched_at or date.today())
-    table = load(path)
+    table = load(path)  # the view (base ∪ track): new rows are new relative to everything known
     new = new_rows(spec, values, table, fetched, load_log(path))
     if len(new):
-        save(new if table.empty else pd.concat([table, new], ignore_index=True), path)
+        track = read_table(path or PATH)  # only the track file is written
+        save(new if track.empty else pd.concat([track, new], ignore_index=True), path)
     periods = values["period"] if isinstance(values, pd.DataFrame) else values.dropna().index
     periods = [str(p) for p in to_periods(periods, spec.freq)] if len(periods) else []
     append_log(pd.DataFrame({"series": [spec.key], "fetched_at": [fetched], "n_periods": [len(set(periods))],

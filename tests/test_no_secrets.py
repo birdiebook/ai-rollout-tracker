@@ -10,7 +10,7 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[1]
 EMAIL = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+\.[A-Za-z.]{2,}")
 ALLOWED = {"noreply@anthropic.com"}  # tool attribution
-RESERVED_DOMAINS = {"example.com", "example.org", "example.net"}  # RFC 2606 placeholders
+RESERVED_DOMAINS = {"example.com", "example.org", "example.net", "example.invalid"}  # RFC 2606 placeholders
 
 
 def tracked_files() -> list[Path]:

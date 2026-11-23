@@ -343,3 +343,105 @@ SpireClimbs första körningar startade 2026-11-04, så dess första hela månad
   benchmark ändå inte när dess kända frontvärde är > 0,90 eller när dess senaste kända månad med körning slutade mer
   än 90 dagar före beräkningsdagen. `superseded_by` har ingen daterad historik och verkar därför bara genom ett
   registrerat byte. Före urvalsdagen (backcast) gäller den registrerade listan.
+
+---
+
+## Steg 2: förregistrering (C0, 2026-11-23)
+
+Skrivs innan någon ny data för steg 2 har hämtats och innan någon ny metod har körts på verklig data.
+Plan: `docs/steg2/plan.md`. Grinden G-A (nya kärnserier) läggs till efter våg 1, före första takträkningen.
+
+### G-E Holdout
+
+- **Komplexa metoder** (faktormodell C3, regim C4, horisontprognoser D2) utvecklas bara med prognos- och
+  beräkningsdagar till och med **2025-06-30**, och bara med utfall kända senast den dagen.
+- **Låst holdout:** 2025-07-01–2026-10-31. Den öppnas **en gång per metodfamilj**. Öppningen loggas i
+  `docs/holdout_logg.md` med datum, git-sha och vad som utvärderas. Efter öppningen får familjens specifikation inte
+  ändras. En ändring blir en ny familj, som bara utvärderas i det skarpa registret.
+- **Enkla registrerade varianter** (C2 och baslinjer för nya mål i C5) utvärderas som tidigare över hela perioden
+  med Holm-justering.
+- **Det skarpa registret** från 2026-12 är det slutliga facit för alla familjer.
+
+### G-B Nya mål och varianter
+
+**Variantbudget:** högst 3 nya varianter per mål i steg 2, inklusive B3 (C2) och faktormodellen (C3). Holm-familjen
+per mål = alla registrerade varianter som inte är baslinjer, utvärderade i samma körning. Befordringsregeln är
+oförändrad: Holm-p < 0,10 och lägre MAE i både hela perioden och från 2023, plus granskning vid extraherade indata.
+
+| Mål | Serie och utfall | Prognosdag | Baslinjer | Varianter (registrerade nu) |
+|---|---|---|---|---|
+| **N3** Nvidias datacenterintäkter | `rev_nvda_datacenter`, första version | Räkenskapskvartalets slut + 14 dagar | B0 slumpvandring, B1 drift (4 kvartal) | B2: Nvidias guidance för total intäkt (mittpunkt) × datacenterandelen senast känd. Guidance extraheras i våg 1 (B4) och granskas |
+| **N4** Molnintäkter | `rev_aws` + `rev_google_cloud` + `rev_msft_cloud`, första version där alla tre finns | Kalenderkvartalets slut + 20 dagar | B0, B1 | V1: B1 + OLS av B1:s miss på senast kända kvartalsvisa log-tillväxt i RPO-summan (A1) |
+| **N5** Andel företag som använder AI (BTOS) | Aktiv regim, första version | Dagen före den schemalagda publiceringen | B0 senaste värde, B1 drift över de 6 senaste cyklerna inom regimen | Inga nu (bara faktormodellen, om den registreras i G-D-tillägget) |
+| **N6** Kontrakterad efterfrågan | RPO-summa för MSFT, GOOGL, AMZN och ORCL, första version där alla fyra finns | Kalenderkvartalets slut + 20 dagar | B0, B1 | V1: B1 + OLS av B1:s miss på kvartalets kända molnintäktstillväxt (N4-komponenter) |
+
+Alla mål använder den gemensamma motorn (`nowcast/engine.py`): `as_of(prognosdag)` för alla indata, utfall =
+första versionen och vakt mot utfall som redan är kända på prognosdagen. Fel = log(prognos) − log(utfall) ×100,
+och för N5 i procentenheter.
+
+**B3, guidance med systematisk avvikelse (C2), för N1, N2 och N3:**
+- Avvikelse per bolag och guidad period: d = log(utfall / guidancens mittpunkt). Mittpunkten är den senaste
+  guidance som var känd vid periodens början. TSMC per kvartal i NT$, Meta och Alphabet per kalenderår för capex,
+  Nvidia per kvartal för total intäkt.
+- Skattning på prognosdagen bara från avvikelser vars utfall var känt då: m = medel av bolagets d, krympt mot
+  medelvärdet över bolag med vikten n/(n+4), där n = bolagets antal avvikelser. Kräver n ≥ 4, annars m = 0.
+- B3 = B2 beräknad med mittpunkten × exp(m). I övrigt samma formler som B2.
+
+**Faktormodell (C3) som variant för N1–N4:**
+- Två faktorer på månadsfrekvens, skattade med EM på standardiserad takt (enligt avsnitt 1) för kärnserierna:
+  - "capex och leverantörsled": G5, G6 och G7;
+  - "efterfrågan": G2, G3, G4, RPO och G8.
+- Kvartalsserier kopplas in med Mariano–Murasawa-aggregering. Ojämn publicering hanteras med Kalman-filter.
+  Standardiseringen skattas bara på data känd på prognosdagen.
+- Variant "DF": huvudmodellens prognos (B1 för N1, N3 och N4, B2 för N2) + OLS av dess miss på faktorernas
+  nowcastade förändring under kvartalet eller månaden. Expanderande fönster, minst 12 rader.
+
+### G-C Intervall och sannolikheter (C1)
+
+- **Nivåer:** 50 %, 80 % och 95 %, samt kvantilerna 2,5, 10, 25, 50, 75, 90 och 97,5 %.
+- **Metod:** punktprognos + den empiriska fördelningen av modellens tidigare fel utom stickprov (log ×100). Ett fel
+  ingår först från utfallets `known_from`. Kräver minst 20 tidigare fel, annars normalfördelning med expanderande
+  standardavvikelse × √(1 + 1/n).
+- **Poäng:** CRPS (exakt, stickprovsbaserad), PIT och täckning per nivå. Täckningen redovisas med ett binomialt
+  90 %-band.
+- **Huvudmodell väljs som tidigare på MAE.** Intervallen redovisas för alla modeller, och dålig kalibrering
+  redovisas men byter inte huvudmodell.
+
+### G-D Regim och strukturbrott (C4)
+
+- **Regim:** Markov-switching med två tillstånd (expansion och inbromsning) på den månatliga faktorn "capex och
+  leverantörsled" och separat på "efterfrågan". Medel och varians skiljer sig mellan tillstånden, med expanderande
+  skattning. Rapporterar P(inbromsning) varje månad.
+- **Regimskifte rapporteras** när P(inbromsning) ≥ 0,8 två månader i rad, och skifte tillbaka när den är ≤ 0,2 två
+  månader i rad.
+- **Strukturbrott** (den metod som avsnitt 2 lämnade öppen): Bayesiansk online-changepoint per kärnserie på takten,
+  med hazard 1/36 per månad och normalfördelning med okänt medel och okänd varians. Ett brott rapporteras när
+  sannolikheten för körlängd 0–2 är ≥ 0,8.
+- **Ett tillägg** till G-D är tillåtet efter att C3 är implementerad, men innan holdouten öppnas för C4. Det får
+  bara gälla tekniska detaljer som specifikationen inte kunnat avgöra (t.ex. startvärden), och det dateras.
+
+### 2026-11-23 – C0 preciseras efter granskning R6 (före all körning på verklig data)
+
+Granskningen `docs/granskning/r6_c0.md` (commit 97531e9) underkände G-B och G-D och godkände G-E och G-C med
+preciseringar. Inget i steg 2 har körts på verklig data.
+
+**Beslut:** samtliga förslag i granskningen (F-E1–F-E7, F-B1–F-B22, F-C1–F-C7, F-D1–F-D8, avsnitt 7 och 8) antas
+**ordagrant** och är en del av registret genom denna hänvisning. Där granskningen ger alternativ gäller:
+
+- **F-B1:** det rekommenderade alternativet. Avvikelsen mäts mot samma guidance som B2 använder på respektive
+  prognosposition, och m skattas per position.
+- **F-E4:** C4:s specifikation, inklusive tillägget i G-D, låses och committas innan holdouten öppnas för C3.
+- **F-B9, avsnitt 7:** Holm-familjerna i steg 2 är N1 {B3, DF}, N2 {B3, DF}, N3 {B2, B3, DF}, N4 {V1, DF} och
+  N6 {V1}. Varianter som inte kan utvärderas får p = 1. Familjerna från fas 3–4 är låsta och räknas inte om. Holm över
+  alla tester i steg 2 redovisas som information men avgör inte.
+- **F-B10:** jämförelsemodellen för en variant är den bästa av B0, B1, målets aktuella huvudmodell och den modell
+  varianten bygger på.
+- **F-E6:** komplexa familjer testas på holdouten. Befordran kräver Holm-p < 0,10 och lägre MAE både på holdouten och i
+  utvecklingsperioden. Vid n < 8 på holdouten görs inget test, och varianten går in som skugga i det skarpa registret.
+  Det innebär i förväg att DF bara kan befordras på holdouten för N2.
+- **F-E7:** D2 får inte köras på verklig data förrän en egen post för D2 finns här.
+- **Planens text** om hierarkisk Bayes i C2 ersätts av registrets krympningsformel (F-B3), och planens "DF med resten av
+  våg 1 som senare variant" stryks för N3 (budgeten är full, F-B12).
+
+C1 (intervall) och C2 (B3) implementeras enligt G-C och G-B med dessa preciseringar. Avviker implementationen från
+texten gäller texten.

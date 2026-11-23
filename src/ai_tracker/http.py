@@ -2,11 +2,18 @@
 
 Never impersonate a browser or work around bot protection. A refused request is a BLOCKED source.
 Raw responses are saved under data/raw/<source>/<YYYY-MM-DD>/ (never committed).
+
+Shared raw cache: AI_TRACKER_SHARED_RAW (environment, .env.local or .env) moves RAW_DIR to a directory that
+parallel worktrees share, read and write-through. Safe for these files: each is named by source, fetch date and
+a hash of the URL, and written atomically, so two tracks fetching the same URL on the same day write the same
+content to the same name. Unset (default): data/raw in this worktree. docs/drift.md, "Delad data", lists the
+mutable files that also live under RAW_DIR.
 """
 
 from __future__ import annotations
 
 import hashlib
+import os
 import re
 import time
 from datetime import date
@@ -18,7 +25,7 @@ import requests
 from ai_tracker import config
 
 DEFAULT_UA = "ai-rollout-tracker (github.com/birdiebook/ai-rollout-tracker)"
-RAW_DIR = config.REPO / "data" / "raw"
+RAW_DIR = Path(config.get("AI_TRACKER_SHARED_RAW") or config.REPO / "data" / "raw").expanduser()
 MIN_INTERVAL = {"data.sec.gov": 0.2, "www.sec.gov": 0.2}  # SEC fair access: <= 10 req/s; we stay at 5
 _last_call: dict[str, float] = {}
 
@@ -57,6 +64,8 @@ def get(url: str, source: str, params: dict | None = None, save: bool = True, re
             full = r.url if params else url
             p = raw_path(source, full)
             p.parent.mkdir(parents=True, exist_ok=True)
-            p.write_bytes(r.content)
+            tmp = p.with_name(f".{p.name}.{os.getpid()}.tmp")
+            tmp.write_bytes(r.content)
+            os.replace(tmp, p)  # atomic: a reader in another worktree never sees half a file
         return r
     raise RuntimeError("unreachable")
