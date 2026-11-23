@@ -1,0 +1,7 @@
+# Pinned so CI and local runs give identical numbers. Used by .github/workflows/*.yml.
+numpy==2.5.3
+pandas==3.0.5
+requests==2.34.2
+pyarrow==26.0.1
+duckdb==2.0.1
+pytest==9.1.1

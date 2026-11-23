@@ -1,0 +1,101 @@
+"""Data catalog: every series in the observation table, with metadata.
+
+One `Spec` per series: branch (G1-G9, docs/plan.md), label, unit, frequency, source, licence,
+how to fetch it, publication lag (-> known_from) and whether it gets revised.
+
+Fetch contract. `Spec.fetch()` returns either
+- a pd.Series indexed by period (any pandas period frequency matching `Spec.freq`), or
+- a pd.DataFrame with columns period, value, known_from: for release-dated sources where each value
+  carries its real release date (e.g. SEC filings with their `filed` date). Then known_from comes
+  from the source, not from `lag_days`.
+
+Series are added in phase 2, after the measure register (docs/mattregister.md) is fixed.
+`python -m ai_tracker.catalog` prints the catalog as Markdown.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from typing import Callable
+
+import pandas as pd
+
+BRANCHES = {
+    "G1": "Förmåga",
+    "G2": "Kostnad",
+    "G3": "Användning",
+    "G4": "Intäkter",
+    "G5": "Investeringar och finansiering",
+    "G6": "Utbud och halvledare",
+    "G7": "Fysiska flaskhalsar",
+    "G8": "Arbete och produktivitet",
+    "G9": "Forskning och öppet ekosystem",
+}
+
+# Period frequencies used on the observation table (pandas period aliases).
+FREQS = {"D": "D", "W": "W-SUN", "M": "M", "Q": "Q-DEC", "A": "Y-DEC"}
+
+
+@dataclass
+class Spec:
+    key: str
+    branch: str  # G1..G9
+    label: str  # Swedish, for the dashboard
+    unit: str
+    freq: str  # one of FREQS
+    source: str
+    fetch: Callable[[], pd.Series | pd.DataFrame] = field(repr=False)
+    lag_days: int  # typical days after period end until published (conservative); ignored for release-dated rows
+    license: str  # licence or terms, as checked in phase 1 ("unverified" until then)
+    revised: bool = False
+    publish: bool = False  # may derived values be shown on the public dashboard? Only after the licence check
+    question: str = ""  # one line: what this series tells us about its branch
+    note: str = ""
+
+
+ALL: list[Spec] = []
+
+
+def by_key(specs: list[Spec] | None = None) -> dict[str, Spec]:
+    return {s.key: s for s in (ALL if specs is None else specs)}
+
+
+def validate(specs: list[Spec] | None = None) -> list[str]:
+    """Problems with the catalog; empty list = valid. Run by tests/test_catalog.py."""
+    specs = ALL if specs is None else specs
+    errors = []
+    seen = set()
+    for s in specs:
+        if s.key in seen:
+            errors.append(f"{s.key}: duplicate key")
+        seen.add(s.key)
+        if s.branch not in BRANCHES:
+            errors.append(f"{s.key}: unknown branch {s.branch!r}")
+        if s.freq not in FREQS:
+            errors.append(f"{s.key}: unknown freq {s.freq!r}")
+        if not s.license.strip():
+            errors.append(f"{s.key}: licence missing (write 'unverified' until checked)")
+        if s.publish and s.license.strip().lower() == "unverified":
+            errors.append(f"{s.key}: publish=True needs a checked licence")
+    return errors
+
+
+def to_markdown(specs: list[Spec] | None = None) -> str:
+    specs = ALL if specs is None else specs
+    lines = ["# Datakatalog", ""]
+    if not specs:
+        return "\n".join(lines + ["Inga serier ännu (läggs till i fas 2)."]) + "\n"
+    for code, name in BRANCHES.items():
+        rows = [s for s in specs if s.branch == code]
+        if not rows:
+            continue
+        lines += [f"## {code} {name}", "", "| Nyckel | Serie | Enhet | Frekv. | Källa | Licens | Publiceras |",
+                  "|---|---|---|---|---|---|---|"]
+        lines += [f"| `{s.key}` | {s.label} | {s.unit} | {s.freq} | {s.source} | {s.license} | "
+                  f"{'ja' if s.publish else 'nej'} |" for s in rows]
+        lines.append("")
+    return "\n".join(lines)
+
+
+if __name__ == "__main__":
+    print(to_markdown())

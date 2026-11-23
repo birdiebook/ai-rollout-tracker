@@ -1,0 +1,66 @@
+# CLAUDE.md – ai-rollout-tracker
+
+## Vad projektet är
+
+Projektet följer **AI-utrullningen i världen kvantitativt, neutralt och öppet**. Det ska synas när
+utvecklingen ändrar takt, i båda riktningarna. Systerprojekt till kpif-nowcast, och det använder samma
+metod: versionerad data, förregistrering, tidsstämplade prognoser och ärlig rapportering.
+Plan och faser finns i [`docs/plan.md`](docs/plan.md).
+
+**Målet är bästa möjliga lösning.** Varje val ska ge snabb och effektiv progress med kvalitet. Metoden
+följer målet: ramverket från kpif-nowcast används där det passar och byts ut där något annat är bättre.
+Det är inte ett lärprojekt.
+
+Arbetssättet är agentiskt: agenten skriver koden och gör räknejobbet, Johannes styr, granskar och fattar
+besluten. Johannes har bakgrund inom BI och data engineering och kan SQL, pipelines och datakvalitet väl.
+Förklara inte det.
+
+## Arbetsregler
+
+1. **Neutral spårning.** Varje gren (G1–G9) beskrivs med nivå, takt, förändring i takt och överraskning.
+   Inga larmnivåer, och inget val av riktning.
+2. **Förregistrering.** Mått, beräkningssätt och tillståndsregler låses i `docs/mattregister.md` innan
+   data analyseras. Ändringar loggas med datum och motivering.
+3. **Flagga läckagerisk direkt.** Varje värde har `known_from`: inlämningsdatum för SEC-dokument,
+   publiceringsdatum för övrigt. Inga features beräknas över hela perioden.
+4. **Jämför alltid mot baslinje:** naiv baslinje och bolagens egen guidance där den finns.
+5. **Var ärlig om osäkerhet.** Kvartalsserier är korta och har regimbrott. Säg när något kan vara slump,
+   och när något inte gick att verifiera.
+6. **Förklara kort** de modelleringsval som spelar roll. Stanna bara vid verkliga beslutspunkter och ge
+   en rekommendation, inte en meny.
+7. **Beslutsloggen** (`docs/beslutslogg.md`) uppdateras kort vid viktiga val.
+
+## Licenser och publicering (publikt repo)
+
+- Data committas aldrig. Allt hämtas med skript så att det är reproducerbart.
+- Varje `Spec` har `license`. `publish=True`, alltså att visas på den publika sidan, kräver en kontrollerad licens.
+- Från rapporter och transkript publiceras bara extraherade siffror med källhänvisning, aldrig själva texten.
+- LLM-extraherade värden sparas med dokument, plats och ordagrant citat, och stickprovsgranskas innan de används.
+- Inga hemligheter i koden (`.env`). Inga personliga uppgifter och inga innehav i repot.
+- API:er som kräver kontaktuppgift i User-Agent (SEC) får en generisk klientidentitet från `.env`.
+
+## Agentiskt arbete
+
+- Bedöm arbete i agentlinsen: parallella spår, inte människotimmar. Enheten är ett **agentspår**, en
+  avgränsad leverans med tester i egen worktree. Kostnad per spår står i
+  [`docs/agentkalibrering.md`](docs/agentkalibrering.md).
+- De verkliga flaskhalsarna är statistisk budget, datatillgång och licenser (BLOCKED), verifiering
+  (ett granskningsspår per positivt resultat) och kalendertid (kvartalsutfall).
+- Agenten får committa, merga och pusha till `main` när pytest är grönt på det sammanslagna resultatet och
+  reglerna ovan är uppfyllda. Parallella spår körs på egna grenar (`auto*/<spår>`).
+- **Skyddat:** skarpa prognoser i `forecasts/` och ögonblicksbilder i `snapshots/` skrivs bara av
+  rutinen och skrivs aldrig om i efterhand, eftersom tidsstämpeln är beviset.
+- **Aldrig:** force-push, omskrivning av historik på main, radera andras grenar, data eller hemligheter i git.
+
+## Faser
+
+Se `docs/plan.md`, avsnitt 8. Fas 0 ✅ (ramverk och CI). Uppdatera här när en fas är klar.
+
+## Tekniska konventioner
+
+- Python. Kod i `src/ai_tracker/`, tester i `tests/`, `python -m pytest -q`.
+- Observationstabellen: `data/observations.parquet` med kolumnerna series, freq, period, value,
+  known_from, source och fetched_at. Läs med `observations.as_of()`. Datatester finns i `warehouse.py`.
+- Backtest körs med **expanding window / rolling origin**: träna bara på data före varje prognostidpunkt.
+- Kod och kommentarer på engelska, dokumentation i `docs/` på svenska.
+- Redigera filer med svenska tecken via Edit/Python, aldrig PowerShell Get/Set-Content.
