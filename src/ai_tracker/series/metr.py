@@ -12,5 +12,6 @@ SPECS = [
          question="Referens: hur långa uppgifter klarar de bästa agenterna?",
          note="REFERENSSERIE, inte kärnserie. Högsta p50 bland modeller släppta t.o.m. månaden, per "
               "release-månad; known_from = max(datum i sidans uppdateringslogg, 2026-03-03). Fryst sedan "
-              "2026-05; värden över 16 h är enligt METR opålitliga."),
+              "2026-05; värden över 16 h är enligt METR opålitliga. Avslutad: METR uppdaterar inte längre "
+              "benchmarken (sidan, september 2026).", closed=True),
 ]
