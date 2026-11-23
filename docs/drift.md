@@ -45,6 +45,25 @@ starten. Försöket 21:19 tar en dag där det första fallerade (till exempel at
   aldrig. Prognosfilerna läses och ändras aldrig. Scorecarden uppdateras på varje prognosdag, så ett nytt utfall
   syns i den vid nästa prognosdag (N2 varje månad).
 
+## Månadsbrev
+
+`snapshot.yml` skriver månadens brev (`docs/manadsbrev/<YYYY-MM>.md`, `python -m ai_tracker.letter --month
+<YYYY-MM>`) direkt efter ögonblicksbilden och committar båda i samma commit. Brevet genereras deterministiskt,
+utan språkmodell:
+
+- Grenarnas tillstånd, index och mått per serie läses bara ur ögonblicksbilden. Jämförelsemånaden är förra
+  månadens ögonblicksbild, eller en rekonstruktion märkt "(rekonstruerad)" när den saknas.
+- Nowcasts kommer ur de committade prognosfilerna. Utfall, revideringar, guidance och inaktuella serier kommer
+  ur tabellen kapad till ögonblicksbildens informationsmängd (`known_from` ≤ datumet och `fetched_at` ≤
+  `table_max_fetched_at`).
+- Serier med `publish=False` namnges bara i avsnittet "Visas inte av licensskäl" och visas aldrig med värden.
+- Utan ögonblicksbild vägrar kommandot. `--reconstructed` skriver ett brev ur as-of-backcasten med
+  "(rekonstruerad)" i rubriken och en varningsruta överst.
+
+Brevet är inte ett register som ögonblicksbilden. Det kan genereras om, och `pipeline publish` committar det när
+det är nytt eller ändrat. Om brevsteget fallerar committas ögonblicksbilden ändå (steget har
+`continue-on-error`), och brevet körs för hand. Hemsidan visar breven under Månadsbrev.
+
 ## Aktualitet: en källa som slutar uppdateras
 
 Datatesterna fångar fel i tabellen, men inte en källa som tyst slutar publicera eller byter adress. Därför har
@@ -196,6 +215,7 @@ python -m ai_tracker.pipeline weekly [serier...]       # hämta + datatester + a
 python -m ai_tracker.pipeline due --today 2026-12-05    # vad som är aktuellt en viss dag (läser bara)
 python -m ai_tracker.pipeline live                      # skarpa prognoser som är aktuella i dag
 python -m ai_tracker.pipeline scorecard                 # forecasts/SCORECARD.md
+python -m ai_tracker.letter --month 2026-11            # månadsbrev ur snapshots/2026-11.json
 python -m ai_tracker.pipeline --table <fil> weekly ...  # mot en annan tabell, t.ex. en kopia
 python -m ai_tracker.datamerge <spår>/data [--dry-run]  # slå ihop ett spårs data med basen (se Delad data)
 ```

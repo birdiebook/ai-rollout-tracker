@@ -419,3 +419,38 @@ och för N5 i procentenheter.
   sannolikheten för körlängd 0–2 är ≥ 0,8.
 - **Ett tillägg** till G-D är tillåtet efter att C3 är implementerad, men innan holdouten öppnas för C4. Det får
   bara gälla tekniska detaljer som specifikationen inte kunnat avgöra (t.ex. startvärden), och det dateras.
+
+### 2026-11-23 – C0 preciseras efter granskning R6 (före all körning på verklig data)
+
+Granskningen `docs/granskning/r6_c0.md` (commit 97531e9) underkände G-B och G-D och godkände G-E och G-C med
+preciseringar. Inget i steg 2 har körts på verklig data.
+
+**Beslut:** samtliga förslag i granskningen (F-E1–F-E7, F-B1–F-B22, F-C1–F-C7, F-D1–F-D8, avsnitt 7 och 8) antas
+**ordagrant** och är en del av registret genom denna hänvisning. Där granskningen ger alternativ gäller:
+
+- **F-B1:** det rekommenderade alternativet. Avvikelsen mäts mot samma guidance som B2 använder på respektive
+  prognosposition, och m skattas per position.
+- **F-E4:** C4:s specifikation, inklusive tillägget i G-D, låses och committas innan holdouten öppnas för C3.
+- **F-B9, avsnitt 7:** Holm-familjerna i steg 2 är N1 {B3, DF}, N2 {B3, DF}, N3 {B2, B3, DF}, N4 {V1, DF} och
+  N6 {V1}. Varianter som inte kan utvärderas får p = 1. Familjerna från fas 3–4 är låsta och räknas inte om. Holm över
+  alla tester i steg 2 redovisas som information men avgör inte.
+- **F-B10:** jämförelsemodellen för en variant är den bästa av B0, B1, målets aktuella huvudmodell och den modell
+  varianten bygger på.
+- **F-E6:** komplexa familjer testas på holdouten. Befordran kräver Holm-p < 0,10 och lägre MAE både på holdouten och i
+  utvecklingsperioden. Vid n < 8 på holdouten görs inget test, och varianten går in som skugga i det skarpa registret.
+  Det innebär i förväg att DF bara kan befordras på holdouten för N2.
+- **F-E7:** D2 får inte köras på verklig data förrän en egen post för D2 finns här.
+- **Planens text** om hierarkisk Bayes i C2 ersätts av registrets krympningsformel (F-B3), och planens "DF med resten av
+  våg 1 som senare variant" stryks för N3 (budgeten är full, F-B12).
+
+C1 (intervall) och C2 (B3) implementeras enligt G-C och G-B med dessa preciseringar. Avviker implementationen från
+texten gäller texten.
+
+### 2026-11-23 – G-C: tolkningar från C1 fastställs (före första körningen på verklig data)
+
+C1:s tolkningar i `docs/steg2/c1_forslag.md` antas:
+- En period som har både en skarp prognos och en rekonstruerad backtestprognos räknas en gång, med det skarpa felet.
+- Varje modell utvärderas på alla sina egna backtestrader som har en fördelning. Delperioden från 2023 redovisas separat.
+- DM-test på CRPS mot den bästa av B0 och B1 redovisas som information och avgör ingenting.
+- Den skarpa filen lagrar felpoolen och t-parametrarna, och scorecard poängsätter den lagrade fördelningen utan
+  att räkna om den.

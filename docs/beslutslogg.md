@@ -258,3 +258,11 @@ och spårets rad vinner vid samma nyckel. En ombyggd serie döljer basens rader 
 in i basen bara med `python -m ai_tracker.datamerge`, som kör datatesterna och aktualiteten och vägrar skriva om
 något fallerar. Valt framför en databasserver: inga nya beroenden, och filerna och datatesterna är desamma som
 förut. Detaljer finns i [drift.md](drift.md) (Delad data).
+
+
+## 2026-11-23 – Månadsbrev
+
+Brevet genereras deterministiskt ur ögonblicksbilden (inga LLM-texter i driften), committas tillsammans med den och
+visas på hemsidan. Grenarnas tillstånd och mått läses bara ur ögonblicksbilden. Prognoser, revideringar och guidance
+läses ur de committade prognosfilerna och tabellen avgränsad till ögonblicksbildens informationsmängd. Ett fel i brevet
+stoppar aldrig ögonblicksbilden.

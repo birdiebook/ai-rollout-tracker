@@ -7,7 +7,8 @@
     python -m ai_tracker.pipeline n2-live            N2 only (day 5: previous month)
     python -m ai_tracker.pipeline n1-live            N1 only (quarter end + 20 days: the quarter just ended)
     python -m ai_tracker.pipeline scorecard          forecasts/SCORECARD.md: live forecasts vs first-vintage outcome
-    python -m ai_tracker.pipeline publish PATH...    git-commit new forecast files + SCORECARD.md, or new snapshots (CI)
+    python -m ai_tracker.pipeline publish PATH...    git-commit new forecast files + SCORECARD.md, or new snapshots and
+                                                     their monthly letters (CI)
 
 Timing rule. A live forecast is only made on its registered origin, and the origin is *today* in UTC: the routine
 refreshes its series and then reads them with as_of(origin). Every row fetched today has known_from <= today, so the
@@ -16,7 +17,8 @@ n1|n2` still allows a manual run with an explicit --origin). If the registered d
 shifted.
 
 Immutability. A forecast file that exists is never rewritten (the writers open with mode "x"), a due origin whose
-file exists is skipped, and `publish` refuses a path that is already in HEAD.
+file exists is skipped, and `publish` refuses a path that is already in HEAD. A monthly letter
+(docs/manadsbrev/<YYYY-MM>.md) is not immutable: `publish` commits it when it is new or differs from HEAD.
 """
 
 from __future__ import annotations
@@ -35,7 +37,7 @@ from pathlib import Path
 import pandas as pd
 
 from ai_tracker import catalog, config, observations, warehouse
-from ai_tracker.nowcast import engine, n1, n2
+from ai_tracker.nowcast import engine, intervals, n1, n2
 
 FORECASTS = config.REPO / "forecasts"
 SCORECARD = FORECASTS / "SCORECARD.md"
@@ -260,9 +262,63 @@ def score(root: Path | None = None, table: pd.DataFrame | None = None) -> dict[s
                 ok = math.isfinite(x) and math.isfinite(row["outcome"]) and x > 0
                 row[f"err_{v}"] = engine.log_error(x, row["outcome"]) if ok else float("nan")
             row["err_champion"] = row.get(f"err_{d['champion']}", float("nan"))
+            if intervals.ENABLED:  # grind G-C: scores of the distribution stored in the file, never recomputed
+                _score_distribution(row, d, variants)
             rows.append(row)
         out[sub] = pd.DataFrame(rows)
     return out
+
+
+DIST_FIELDS = ("crps", "pit", *(f"hit_{intervals.level_key(L)}" for L in intervals.LEVELS))
+
+
+def _score_distribution(row: dict, d: dict, variants) -> None:
+    """Columns <field>_<variant> (crps, pit, hit_50/80/95) and the champion's stored intervals (interval_<L>,
+    in levels) from the file's `distribution` block. NaN where the file has none or no outcome is known."""
+    block = d.get("distribution") or {}
+    champ = (block.get("models") or {}).get(d["champion"]) or {}
+    for L in intervals.LEVELS:
+        k = intervals.level_key(L)
+        row[f"interval_{k}"] = (champ.get("intervals") or {}).get(k)
+    for v in [*variants, "champion"]:
+        model = d["champion"] if v == "champion" else v
+        sc = intervals.score_live(block, model, row[f"err_{v}"]) if row["status"] == "utfall" else {}
+        for f in DIST_FIELDS:
+            row[f"{f}_{v}"] = sc.get(f, float("nan"))
+
+
+def _coverage_cell(hits: pd.Series, level: float) -> str:
+    if not len(hits):
+        return ""
+    lo, hi = intervals.binomial_band(len(hits), level)
+    return f"{_fmt(hits.mean(), 2)} [{_fmt(lo, 2)}–{_fmt(hi, 2)}]"
+
+
+def _interval_lines(df: pd.DataFrame, variants) -> list[str]:
+    """Scorecard section for the stored distributions (only with intervals.ENABLED)."""
+    if "crps_champion" not in df:
+        return []
+    keys = [intervals.level_key(L) for L in intervals.LEVELS]
+    lines = ["", f"### Intervall ({intervals.REGISTER_REF})", "",
+             "| Period | " + " | ".join(f"{k} % intervall huvudmodell" for k in keys) + " |",
+             "|" + "---|" * (1 + len(keys))]
+    for r in df.itertuples(index=False):
+        r = r._asdict()
+        cells = [f"{_fmt(r[f'interval_{k}'][0])} – {_fmt(r[f'interval_{k}'][1])}" if r[f"interval_{k}"] else ""
+                 for k in keys]
+        lines.append(f"| {r['period']} | " + " | ".join(cells) + " |")
+    scored = df[df["status"] == "utfall"]
+    if len(scored):
+        lines += ["", "| Variant | n | " + " | ".join(f"Täckning {k} %" for k in keys) + " | CRPS |",
+                  "|" + "---|" * (3 + len(keys))]
+        for v in ["champion", *variants]:
+            g = scored[scored[f"crps_{v}"].notna()]
+            name = "huvudmodell" if v == "champion" else v
+            cov = " | ".join(_coverage_cell(g[f"hit_{k}_{v}"], L) for k, L in zip(keys, intervals.LEVELS))
+            lines.append(f"| {name} | {len(g)} | {cov} | {_fmt(g[f'crps_{v}'].mean(), 2) if len(g) else ''} |")
+        lines += ["", "Täckning [binomialt 90 %-band, 5:e–95:e percentilen av Bin(n, nivå)/n]. Täckningen blir "
+                  "meningsfull först efter många utfall (för N2 cirka 12 månader). Kalibreringen byter inte huvudmodell."]
+    return lines
 
 
 def _fmt(x, nd=1) -> str:
@@ -301,6 +357,7 @@ def render(scores: dict[str, pd.DataFrame], today=None) -> str:
                 name = "huvudmodell" if v == "champion" else v
                 lines.append(f"| {name} | {len(e)} | {_fmt(e.abs().mean(), 2)} | {_fmt(e.mean(), 2)} |")
             lines += ["", "Få utfall: skillnader mellan varianter kan vara slump."]
+        lines += _interval_lines(df, variants)
         lines.append("")
     return "\n".join(lines)
 
@@ -324,38 +381,51 @@ def _git(repo: Path, *args: str, check: bool = True) -> subprocess.CompletedProc
 
 SNAPSHOT_PATH = re.compile(r"snapshots/\d{4}-\d{2}\.json")
 FORECAST_PATH = re.compile(r"forecasts/[^/]+/[^/]+\.json")
+LETTER_PATH = re.compile(r"docs/manadsbrev/\d{4}-\d{2}\.md")
 
 
 def publish(paths: list[str], repo: Path | None = None, scorecard_path: str = "forecasts/SCORECARD.md") -> bool:
-    """Commit new forecast files (and the scorecard) or new monthly snapshots with the bot identity. Does not push.
+    """Commit new forecast files (and the scorecard), new monthly snapshots or monthly letters with the bot
+    identity. Does not push.
 
-    Only paths that are not yet in HEAD are committed: a forecast or snapshot that is already committed is never
-    committed again, so a second run is a no-op. Returns True if a commit was made.
+    Only forecasts and snapshots that are not yet in HEAD are committed: one that is already committed is never
+    committed again, so a second run is a no-op. A letter is committed when it is new or differs from HEAD (it is
+    regenerated from the snapshot, not a record). Returns True if a commit was made.
     """
     repo = Path(repo or config.REPO)
-    new = []
+    new, letters = [], []
     for p in paths:
+        if LETTER_PATH.fullmatch(p):
+            if not (repo / p).is_file():
+                raise SystemExit(f"{p} does not exist")
+            in_head = _git(repo, "cat-file", "-e", f"HEAD:{p}", check=False).returncode == 0
+            if in_head and _git(repo, "diff", "--quiet", "HEAD", "--", p, check=False).returncode == 0:
+                print(f"{p} is unchanged. Skipping.")
+            else:
+                letters.append(p)
+            continue
         if not (FORECAST_PATH.fullmatch(p) or SNAPSHOT_PATH.fullmatch(p)):
-            raise SystemExit(f"refusing to publish {p}: only forecasts/<nowcast>/<period>.json "
-                             "or snapshots/<YYYY-MM>.json")
+            raise SystemExit(f"refusing to publish {p}: only forecasts/<nowcast>/<period>.json, "
+                             "snapshots/<YYYY-MM>.json or docs/manadsbrev/<YYYY-MM>.md")
         if _git(repo, "cat-file", "-e", f"HEAD:{p}", check=False).returncode == 0:
             print(f"{p} is already committed; live forecasts and snapshots are never re-committed. Skipping.")
             continue
         if not (repo / p).is_file():
             raise SystemExit(f"{p} does not exist")
         new.append(p)
-    if not new:
+    if not new and not letters:
         print("nothing to publish")
         return False
     forecasts = [p for p in new if FORECAST_PATH.fullmatch(p)]
     snapshots = [p for p in new if SNAPSHOT_PATH.fullmatch(p)]
-    _git(repo, "add", "--", *new)
+    _git(repo, "add", "--", *new, *letters)
     if forecasts and (repo / scorecard_path).is_file():
         _git(repo, "add", "--", scorecard_path)
     staged = _git(repo, "diff", "--cached", "--name-status").stdout.split("\n")
     staged = [line.split("\t") for line in staged if line]
-    allowed = set(new) | ({scorecard_path} if forecasts else set())
-    if any(f not in allowed for _, f in staged) or any(s != "A" for s, f in staged if f in new):
+    allowed = set(new) | set(letters) | ({scorecard_path} if forecasts else set())
+    if (any(f not in allowed for _, f in staged) or any(s != "A" for s, f in staged if f in new)
+            or any(s not in ("A", "M") for s, f in staged if f in letters)):
         raise SystemExit(f"unexpected staged changes: {staged}")
     parts = []
     if forecasts:
@@ -363,8 +433,10 @@ def publish(paths: list[str], repo: Path | None = None, scorecard_path: str = "f
         parts.append(f"Live forecast {periods} (origin {utc_today().date()})")
     if snapshots:
         parts.append(f"Monthly snapshot {', '.join(Path(p).stem for p in snapshots)} (written {utc_today().date()})")
+    if letters:
+        parts.append(f"Monthly letter {', '.join(Path(p).stem for p in letters)}")
     _git(repo, "-c", f"user.name={BOT_NAME}", "-c", f"user.email={BOT_EMAIL}", "commit", "-m", "; ".join(parts))
-    print(f"committed {new}")
+    print(f"committed {new + letters}")
     return True
 
 
