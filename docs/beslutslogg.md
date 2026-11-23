@@ -312,3 +312,13 @@ B3 (TSMC:s guidance korrigerad för systematisk avvikelse) gav MAE 5,81 mot B2 6
 Spåret bytte huvudmodell mekaniskt, men CLAUDE.md kräver en oberoende granskning per positivt resultat som ska
 användas. Bytet är därför återställt (`n2.CHAMPION = "B2"`), och B3 följer med som skugga. Granskningen R7 görs före den
 första skarpa N2-prognosen 2026-12-05. N3–N6: inga varianter passerade, och B1 är huvudmodell.
+
+
+## 2026-11-23 – R5:s tolkningsfrågor avgjorda
+
+Johannes valde rekommendationerna:
+- **F2:** B4:s tolkning 7 tillämpas som den står. H20-nedskrivningen kodas −2, och 2026Q2 blir 0.
+- **F4–F6:** granskningens läsning gäller. Microsofts koder för 2025Q1 (0) och 2024Q2 (+1) läggs till, och de 8
+  produkttalen kodas eller listas under "Inte kodat".
+
+Rättningarna F1–F14 görs i ett eget spår efter att kvoten har återställts.

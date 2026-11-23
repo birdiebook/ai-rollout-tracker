@@ -26,8 +26,6 @@ Uppdateras av orkestreraren vid varje milstolpe. Senast: 2026-11-23 23:10 UTC.
 3. **Cloudflare Radar har licensen CC BY-NC 4.0.** Serierna visas på hemsidan eftersom sidan är icke-kommersiell. Ska
    sidan någon gång användas kommersiellt måste de dras tillbaka.
 
-4. **Tolkningsfrågor från R5 (F2, F4–F6).** Rekommendation: tillämpa B4:s tolkning 7 som den står. Orkestreraren
-   väljer rekommendationen om inget annat sägs.
 5. **PyPI-historik i Actions-cachen** (cirka 176 GB av månadskvoten på 1 TB) kan vänta till nästa kvotmånad.
 
 ## Viktiga datum
