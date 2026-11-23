@@ -137,7 +137,8 @@ Endast `total_count` används. Inga commits eller texter sparas.
 - **known_from och revidering:** värdena ändras i efterhand: commits med gammalt datum mergas senare, repon
   raderas eller blir privata, och indexet byggs om. Varje körning frågar om de **8 senaste hela veckorna**. En ny
   vecka får `known_from` = min(veckans slut + 1 dag, hämtdatum), och ett ändrat värde blir en revidering med
-  hämtdatumet. Första hämtningen (2024-01 till nu) är dagens version och får `source="backfill"`: där läcker
+  hämtdatumet. Första hämtningen (de 12 senaste veckorna, se ändringarna nedan) är dagens version och får
+  `source="backfill"`, och äldre veckor som läggs till senare får hämtdatumet som undre gräns. Där läcker
   senare revideringar in (överlevande repon, sena merges). Detta ska beaktas i varje backtest.
 - **Bakåtdaterade commits (upptäckt vid datakontrollen 2026-11-23):** committer-datumet sätts av klienten.
   Träffar för `"noreply@anthropic.com"` med datum i januari 2024, före Claude Code, är bakåtdaterade commits
@@ -154,10 +155,13 @@ Endast `total_count` används. Inga commits eller texter sparas.
 1. **Takt:** GitHubs sekundära gräns för sökning slog till redan vid cirka 10 frågor per minut från sessionen
    (anonymt via proxyn, "You have exceeded a secondary rate limit"). Frågorna går nu med minst 6 sekunders
    mellanrum i veckohämtningen, och en sekundär 403 ger 90 s × försök i väntan.
-2. **Kall start i Actions:** högst 40 veckor (200 frågor, cirka 20 minuter) per körning, nyaste först. En tom
-   cache i Actions fyller alltså historiken bakåt under fem veckokörningar. Hela backfillen (151 veckor) körs en
-   gång med jobbet `github_search_counts` (`job.yml`, `GITHUB_TOKEN`, 2,5 s mellanrum) och laddas in i spårets tabell.
-3. Startveckan (2024-01-01), frågorna och måtten är oförändrade.
+2. **Kall start och backfill:** den hela backfillen (151 veckor, 755 frågor) gick inte att köra. Jobbet
+   `github_search_counts` i Actions med `GITHUB_TOKEN` och 2,5 s mellanrum fick bara **cirka 140 svar på 75 minuter**
+   (sekundär gräns, väntan 90 s × försök). Därför: högst **12 veckor** per hämtning (nyaste först) och högst
+   **30 minuters** frågetid per körning (delad av alla `g3_ghs_*`). En tom tabell får de 12 senaste veckorna,
+   och varje veckokörning lägger sedan till ungefär 4 äldre veckor utöver de 8 som frågas om. Historiken bakåt till
+   2024-01 fylls alltså först efter cirka 35 veckokörningar. Serien är i praktiken **löpande från 2026-09**.
+3. Startveckan (2024-01-01), de 8 omfrågade veckorna, frågorna och måtten är oförändrade.
 
 ## Budget (BigQuery)
 
