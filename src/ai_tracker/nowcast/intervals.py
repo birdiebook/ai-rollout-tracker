@@ -46,7 +46,7 @@ from ai_tracker import evaluation
 
 # Grind G-C is registered (docs/mattregister.md, G-C and "C0 preciseras efter granskning R6"). The flag stays False
 # until the orchestrator makes the first, registered run after merge; it is not turned on to look at results first.
-ENABLED = False
+ENABLED = True
 REGISTER_REF = "grind G-C, docs/mattregister.md"
 
 QUANTILES = (0.025, 0.10, 0.25, 0.50, 0.75, 0.90, 0.975)

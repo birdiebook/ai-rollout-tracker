@@ -445,3 +445,12 @@ preciseringar. Inget i steg 2 har körts på verklig data.
 
 C1 (intervall) och C2 (B3) implementeras enligt G-C och G-B med dessa preciseringar. Avviker implementationen från
 texten gäller texten.
+
+### 2026-11-23 – G-C: tolkningar från C1 fastställs (före första körningen på verklig data)
+
+C1:s tolkningar i `docs/steg2/c1_forslag.md` antas:
+- En period som har både en skarp prognos och en rekonstruerad backtestprognos räknas en gång, med det skarpa felet.
+- Varje modell utvärderas på alla sina egna backtestrader som har en fördelning. Delperioden från 2023 redovisas separat.
+- DM-test på CRPS mot den bästa av B0 och B1 redovisas som information och avgör ingenting.
+- Den skarpa filen lagrar felpoolen och t-parametrarna, och scorecard poängsätter den lagrade fördelningen utan
+  att räkna om den.
