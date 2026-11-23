@@ -183,5 +183,5 @@ def joined(values: pd.Series, stored: set) -> pd.Series:
 def fetch(key: str, name: str, kind: str) -> pd.Series:
     """Spec.fetch for series `key`: share (%) or level of query `name`."""
     stored = stored_periods(key)
-    df = counts(stored)
+    df = counts(stored, max_weeks=MAX_WEEKS_PER_FETCH)  # read at call time (a one-off backfill sets None)
     return joined(share(name, df) if kind == "share" else level(name, df), stored)
