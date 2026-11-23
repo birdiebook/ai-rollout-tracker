@@ -31,20 +31,23 @@ _NOTE = ("Nedladdningar per vecka (måndag–söndag, UTC) inklusive speglar (ba
 
 # key -> (PyPI project, explicit series start (a Monday) or None, label, note)
 PROJECTS = {
-    "g3_pypi_openai_w": ("openai", None, "openai (OpenAI:s SDK)", ""),
+    "g3_pypi_openai_w": ("openai", date(2020, 2, 17), "openai (OpenAI:s SDK)",
+                         "Första versionen med filer kom 2020-02-18; serien börjar veckan 2020-02-17."),
     "g3_pypi_anthropic_w": ("anthropic", None, "anthropic (Anthropics SDK)", ""),
     "g3_pypi_google_generativeai_w": ("google-generativeai", None, "google-generativeai (Googles äldre Gemini-SDK)",
                                       ""),
     "g3_pypi_google_genai_w": ("google-genai", None, "google-genai (Googles Gemini-SDK)", ""),
     "g3_pypi_langchain_w": ("langchain", None, "langchain", ""),
     "g3_pypi_langchain_core_w": ("langchain-core", None, "langchain-core", ""),
-    "g3_pypi_transformers_w": ("transformers", date(2019, 9, 23), "transformers (Hugging Face)",
+    "g3_pypi_transformers_w": ("transformers", date(2019, 9, 30), "transformers (Hugging Face)",
                                "Namnet transformers hade ett annat paket 2016 (0.1); Hugging Face 2.0.0 kom "
-                               "2019-09-26, så serien börjar veckan 2019-09-23."),
+                               "2019-09-26 (en torsdag), så serien börjar veckan 2019-09-30."),
     "g3_pypi_torch_w": ("torch", date(2018, 12, 3), "torch (PyTorch)",
                         "Första PyPI-versionen med filer är 1.0.0 (2018-12-07); serien börjar veckan 2018-12-03."),
     "g3_pypi_llama_index_w": ("llama-index", None, "llama-index", ""),
-    "g3_pypi_mcp_w": ("mcp", None, "mcp (Model Context Protocol)", ""),
+    "g3_pypi_mcp_w": ("mcp", date(2024, 11, 18), "mcp (Model Context Protocol)",
+                      "Första versionen med filer (0.9.1) kom 2024-11-20; enstaka nedladdningar av namnet innan "
+                      "räknas inte, serien börjar veckan 2024-11-18."),
     "g3_pypi_requests_w": ("requests", date(2016, 5, 23), "requests (kontrollpaket)",
                            "Kontrollpaket, inte en AI-serie. Tabellen börjar 2016-01-22 och saknar 2016-03-09–"
                            "2016-05-18, så onsdagsserien börjar veckan 2016-05-23."),
