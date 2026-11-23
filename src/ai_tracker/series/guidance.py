@@ -16,6 +16,8 @@ known_from_after_period_end allows known_from >= period end + lag_days).
 
 from __future__ import annotations
 
+from dataclasses import replace
+
 from functools import lru_cache
 
 import pandas as pd
@@ -57,10 +59,17 @@ TSMC_SPECS = [
          lag_days=TSMC_LAG, license=TSMC_LICENSE, revised=True, publish=True,
          question="Vad väntade TSMC sig av kvartalet när det började (baslinje B2 för N2)?",
          note="period = kvartalet som guidas; known_from = 6-K:ns inlämningsdatum (första dokument med värdet). "
-              "Uppdateringar mitt i kvartalet är nya vintages. Koncernbas från 2006Q2. Se docs/kallor/guidance.md.")
+              "Uppdateringar mitt i kvartalet är nya vintages. Koncernbas från 2006Q2. Se docs/kallor/guidance.md. "
+              + ("Avslutad: TSMC guidar i US$ från 2017Q3." if cur == "TWD" else
+                 "Aktualitet: nästa kvartals guidance kommer ca 2-3 veckor efter kvartalets slut, gräns 60 dagar."),
+         closed=cur == "TWD", max_age_days=None if cur == "TWD" else 60)
     for key, field, cur, label, unit in _TSMC
 ]
 
-CAPEX_SPECS = guidance_capex.specs()
+# Capex guidance is irregular (a number in some quarters, only a direction in others), so the derived bound
+# does not fit; a series is overdue only if no new guidance has appeared for about a year.
+CAPEX_SPECS = [replace(s, max_age_days=400,
+                       note=s.note + " Aktualitet: oregelbunden guidance, gräns 400 dagar.")
+               for s in guidance_capex.specs()]
 
 SPECS = TSMC_SPECS + CAPEX_SPECS
