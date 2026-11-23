@@ -212,3 +212,23 @@ def test_site_without_flag_has_no_interval_fields(tmp_path):
     assert "intervals" not in nc["forecasts"][0] and nc["coverage"] == []
     assert "80 % intervall" not in R.nowcast_section(nc, {"repo": "https://example.invalid/r"})
     assert not math.isnan(nc["forecasts"][0]["value"])
+
+
+def test_n2_live_pool_includes_committed_live_errors(on, tmp_path):
+    """F-C4: a committed live forecast whose outcome is known at the next origin enters the pool (replacing the
+    reconstruction of its month); one whose outcome is not yet known does not."""
+    table = n2_table(last="2014-12")
+    n2_dir = tmp_path / "n2"
+    first = json.loads(n2.write("2014-12-05", n2_table(last="2014-10"), n2_dir).read_text(encoding="utf-8"))
+    later = pd.concat([table, _rows(n2.TARGET, "M", [pd.Period("2014-12", "M")], [1.0], ["2015-01-10"])])
+    # origin 2015-01-05: 2014-11 is known (2014-12-10), so the live 2014-11 error is in the pool
+    d = n2.live_distribution(n2.forecast("2015-01-05", table), table, n2_dir)
+    y = float(table[(table["series"] == n2.TARGET) & (table["period"] == "2014-11")]["value"].iloc[0])
+    e_live = round(100 * (math.log(first["variants"]["B1"]) - math.log(y)), intervals.POOL_DECIMALS)
+    assert d["models"]["B1"]["n_live"] == 1 and e_live in d["models"]["B1"]["pool"]
+    without = n2.live_distribution(n2.forecast("2015-01-05", table), table, None)
+    assert without["models"]["B1"]["n_pool"] == d["models"]["B1"]["n_pool"]  # replaced, not added
+    # at the 2014-11 origin itself its outcome (2014-12-10) is not known: the live file never enters its own pool
+    fc = n2.forecast("2014-12-05", n2_table(last="2014-10"))
+    early = n2.live_distribution(fc, later, n2_dir)
+    assert early["models"]["B1"]["n_live"] == 0

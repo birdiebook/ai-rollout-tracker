@@ -13,7 +13,7 @@ import pytest
 
 from ai_tracker.nowcast import intervals as I
 
-P = lambda s: pd.Period(s, freq="M")  # noqa: E731
+P = lambda s: pd.Period(s, freq="M")
 
 
 def _frame(errors: dict, start="2000-01", lag_days=9):
@@ -305,7 +305,7 @@ def test_live_block_uses_only_known_errors_and_round_trips():
     block = I.live_block({"A": 100 * math.log(1000.0), "B": float("nan"), "C": 1.0}, e, known, o)
     a = block["models"]["A"]
     assert a["n_pool"] == 50 and a["method"] == "empirical"
-    assert block["models"]["B"] == {"method": None, "n_pool": 50} and "C" not in block["models"]
+    assert block["models"]["B"] == {"method": None, "n_pool": 50, "n_live": 0} and "C" not in block["models"]
     q = [a["quantiles"][k] for k in block["quantile_levels"]]
     assert q == sorted(q) and q[3] == pytest.approx(1000 * math.exp(-np.median(e["A"].iloc[:50]) / 100), rel=1e-3)
     lo, hi = a["intervals"]["80"]
@@ -323,3 +323,66 @@ def test_stored_student_t_parameters_are_used_not_recomputed():
     d = I.ErrorDistribution.from_pool(np.arange(10.0))
     stored = d.to_json() | {"scale": d.scale * 2}
     assert I.ErrorDistribution.from_json(stored).scale == pytest.approx(d.scale * 2, rel=1e-12)
+
+
+# ------------------------------------------------------------------ registered additions (G-C, F-C4, F-C5)
+
+
+def test_binomial_band_is_the_5th_and_95th_percentile():
+    from math import comb
+    n, L = 30, 0.8
+    cdf = np.cumsum([comb(n, k) * L**k * (1 - L) ** (n - k) for k in range(n + 1)])
+    lo, hi = I.binomial_band(n, L)
+    assert lo * n == int(np.argmax(cdf >= 0.05)) and hi * n == int(np.argmax(cdf >= 0.95))
+    assert lo < L < hi
+    lo500, hi500 = I.binomial_band(500, 0.95)
+    assert hi500 - lo500 == pytest.approx(2 * 1.645 * math.sqrt(0.95 * 0.05 / 500), abs=0.01)
+
+
+def test_calibration_reports_the_binomial_band(iid_scored):
+    *_, s = iid_scored
+    cal = I.calibration(s).set_index("model")
+    for L in I.LEVELS:
+        k = I.level_key(L)
+        lo, hi = cal.at["A", f"band_{k}"]
+        assert lo < L < hi and [lo, hi] == list(I.binomial_band(int(cal.at["A", "n"]), L))
+
+
+def _live_file(root, period, origin, variants):
+    import json
+    root.mkdir(parents=True, exist_ok=True)
+    p = root / f"{period}.json"
+    p.write_text(json.dumps({"month": period, "origin": origin, "champion": "A", "value": variants["A"],
+                             "variants": variants}), encoding="utf-8")
+    return p
+
+
+def test_live_errors_enter_the_pool_only_from_their_outcomes_known_from(tmp_path):
+    months = pd.period_range("2020-01", periods=4, freq="M")
+    outcomes = pd.DataFrame({"value": [100.0, 100.0, 100.0, 100.0],
+                             "known_from": pd.to_datetime(["2020-02-10", "2020-03-10", "2020-04-10", "2020-05-10"])},
+                            index=months)
+    files = [_live_file(tmp_path, "2020-01", "2020-02-05", {"A": 110.0, "B": None}),
+             _live_file(tmp_path, "2020-02", "2020-03-05", {"A": 90.0, "B": 95.0}),
+             _live_file(tmp_path, "2020-03", "2020-04-05", {"A": 105.0, "B": 95.0}),
+             _live_file(tmp_path, "2020-04", "2020-05-11", {"A": 1.0, "B": 1.0})]  # outcome known at its origin
+    e, kf = I.live_errors(files, outcomes, ["A", "B"], "2020-04-09")
+    # 2020-03's outcome comes 2020-04-10, after the as-of day; 2020-04 is never a forecast
+    assert list(e.index.astype(str)) == ["2020-01", "2020-02"]
+    assert e.at[months[0], "A"] == pytest.approx(100 * math.log(1.1)) and np.isnan(e.at[months[0], "B"])
+    assert e.at[months[1], "B"] == pytest.approx(100 * math.log(0.95))
+    e2, _ = I.live_errors(files, outcomes, ["A", "B"], "2020-04-10")
+    assert list(e2.index.astype(str)) == ["2020-01", "2020-02", "2020-03"]
+
+
+def test_live_error_replaces_the_backtest_reconstruction_of_its_period():
+    months = pd.period_range("2019-01", periods=24, freq="M")
+    bt = pd.DataFrame({"A": np.arange(24.0)}, index=months)
+    kf = pd.Series([(m + 1).start_time + pd.Timedelta(days=9) for m in months], index=months)
+    live = pd.DataFrame({"A": [-50.0]}, index=pd.PeriodIndex([months[5]]))
+    lkf = pd.Series([kf.iloc[5]], index=live.index)
+    e, k = I.merge_live(bt, kf, live, lkf)
+    assert len(e) == 24 and e.at[months[5], "A"] == -50.0 and k.equals(kf)
+    block = I.live_block({"A": 100.0}, e, k, kf.iloc[-1], live_index=live.index)
+    assert block["models"]["A"]["n_pool"] == 24 and block["models"]["A"]["n_live"] == 1
+    assert -50.0 in block["models"]["A"]["pool"] and 5.0 not in block["models"]["A"]["pool"]

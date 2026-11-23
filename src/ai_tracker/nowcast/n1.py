@@ -464,15 +464,20 @@ def evaluate_intervals(errors: pd.DataFrame) -> dict:
     return {"full": intervals.evaluate(scored, VARIANTS, BASELINES), "2023Q1-": intervals.evaluate(sub, VARIANTS, BASELINES)}
 
 
-def live_distribution(table: pd.DataFrame, origin, levels: dict) -> dict:
-    """The live file's `distribution` block: each variant's error pool from the backtest reconstruction of
+def live_distribution(table: pd.DataFrame, origin, levels: dict, live_dir=None) -> dict:
+    """The live file's `distribution` block (grind G-C, F-C4): each variant's pool = the backtest reconstruction of
     capex_hyp4 on the rows known at the origin (truncated table: as_of for earlier origins is unchanged, and only
-    outcomes known at the origin exist), via intervals.live_block (which filters on known_from again)."""
+    outcomes known at the origin exist) plus the committed live forecasts in `live_dir` whose outcome is known at
+    the origin (a live error replaces the reconstruction of its quarter). intervals.live_block filters again."""
     origin = pd.Timestamp(origin)
-    errors = backtest_unit(table[table["known_from"] <= origin], TARGET).set_index("quarter")
+    t = table[table["known_from"] <= origin]
+    errors = backtest_unit(t, TARGET).set_index("quarter")
+    files = sorted(Path(live_dir).glob("*.json")) if live_dir else []
+    live, live_kf = intervals.live_errors(files, engine.first_vintages(t, TARGET), VARIANTS, origin)
+    e, known = intervals.merge_live(errors[VARIANTS], errors["outcome_known_from"], live, live_kf)
     logs = {v: (100 * math.log(x) if x is not None and x > 0 and not math.isnan(x) else float("nan"))
             for v, x in levels.items()}
-    return intervals.live_block(logs, errors[VARIANTS], errors["outcome_known_from"], origin)
+    return intervals.live_block(logs, e, known, origin, live_index=live.index)
 
 
 def b2_usage(errors: pd.DataFrame) -> pd.DataFrame:
@@ -543,7 +548,7 @@ def format_report(out: dict) -> str:
 # ------------------------------------------------------------------ live forecast
 
 
-def live_payload(table: pd.DataFrame, origin) -> dict:
+def live_payload(table: pd.DataFrame, origin, live_dir=None) -> dict:
     origin = pd.Timestamp(origin)
     q = target_quarter(origin)
     info = engine.InfoSet(table, origin)
@@ -554,7 +559,7 @@ def live_payload(table: pd.DataFrame, origin) -> dict:
         note = f"champion {champion} not available ({f.reasons.get(champion)}); fell back to {DEFAULT_CHAMPION}"
         champion = DEFAULT_CHAMPION
     registered = origin == origin_for(q)
-    extra = {"distribution": live_distribution(table, origin, f.levels)} if intervals.ENABLED else {}
+    extra = {"distribution": live_distribution(table, origin, f.levels, live_dir)} if intervals.ENABLED else {}
     return {
         "nowcast": "N1", "target": TARGET, "quarter": str(q), "origin": origin.date().isoformat(),
         "registered_origin": registered, "unit": "MUSD",
@@ -571,4 +576,4 @@ def live_payload(table: pd.DataFrame, origin) -> dict:
 def write_live(table: pd.DataFrame, origin, out_dir, today=None):
     """forecasts/n1/<quarter>.json, written once (engine.write_live)."""
     path = Path(out_dir) / f"{target_quarter(pd.Timestamp(origin))}.json"
-    return engine.write_live(path, origin, lambda: live_payload(table, origin), today)
+    return engine.write_live(path, origin, lambda: live_payload(table, origin, live_dir=Path(out_dir)), today)

@@ -438,14 +438,20 @@ def evaluate_intervals(frame: pd.DataFrame) -> dict:
             "2023+": intervals.evaluate(scored[scored["period"] >= SUBPERIOD_START], VARIANTS)}
 
 
-def live_distribution(fc: Forecast, table: pd.DataFrame) -> dict:
-    """The live file's `distribution` block: each variant's error pool from the backtest reconstruction on the
-    rows known at the origin (run() on the truncated table: earlier origins see the same as_of, and only outcomes
-    known at the origin exist), via intervals.live_block (which filters on known_from again)."""
+def live_distribution(fc: Forecast, table: pd.DataFrame, live_dir: Path | None = None) -> dict:
+    """The live file's `distribution` block (grind G-C, F-C4): each variant's pool = the backtest reconstruction on
+    the rows known at the origin (run() on the truncated table: earlier origins see the same as_of, and only
+    outcomes known at the origin exist) plus the committed live forecasts in `live_dir` whose outcome is known at
+    the origin (a live error replaces the reconstruction of its month). intervals.live_block filters on known_from
+    again."""
     t = slim(table)
-    frame = run(t[t["known_from"] <= fc.origin])
+    t = t[t["known_from"] <= fc.origin]
+    frame = run(t)
     errors = frame[[f"e_{v}" for v in VARIANTS]].rename(columns=lambda c: c[2:])
-    return intervals.live_block(fc.logs, errors, frame["outcome_known_from"], fc.origin)
+    files = sorted(Path(live_dir).glob("*.json")) if live_dir else []
+    live, live_kf = intervals.live_errors(files, first_vintages(t), VARIANTS, fc.origin)
+    errors, known = intervals.merge_live(errors, frame["outcome_known_from"], live, live_kf)
+    return intervals.live_block(fc.logs, errors, known, fc.origin, live_index=live.index)
 
 
 def b2_usage(frame: pd.DataFrame) -> pd.DataFrame:
@@ -513,7 +519,7 @@ FORECAST_DIR = evaluation.REPO / "forecasts" / "n2"
 CHAMPION = "B2"  # promoted 2026-11-23 by the registered rule after review R2 approved the TSMC guidance
 
 
-def payload(fc: Forecast, table: pd.DataFrame, champion: str = CHAMPION) -> dict:
+def payload(fc: Forecast, table: pd.DataFrame, champion: str = CHAMPION, live_dir: Path | None = None) -> dict:
     levels = fc.levels()
     if levels.get(champion) is None:
         raise RuntimeError(f"champion {champion} has no forecast for {fc.month}")
@@ -530,7 +536,7 @@ def payload(fc: Forecast, table: pd.DataFrame, champion: str = CHAMPION) -> dict
         "inputs": [{"series": s, "period": p, "value": v, "known_from": str(pd.Timestamp(k).date())}
                    for s, p, v, k in fc.inputs.used],
         "table_max_fetched_at": str(pd.Timestamp(t["fetched_at"].max()).date()) if len(t) else None,
-        **({"distribution": live_distribution(fc, table)} if intervals.ENABLED else {}),
+        **({"distribution": live_distribution(fc, table, live_dir)} if intervals.ENABLED else {}),
     }
 
 
@@ -541,7 +547,7 @@ def write(origin, table: pd.DataFrame, out_dir: Path = FORECAST_DIR, champion: s
     def build() -> dict:
         if str(month) in set(table.loc[table["series"] == TARGET, "period"]):
             raise RuntimeError(f"outcome for {month} is already in the table; this would not be a live forecast")
-        return payload(forecast(origin, table), table, champion)
+        return payload(forecast(origin, table), table, champion, live_dir=Path(out_dir))
 
     return engine.write_live(Path(out_dir) / f"{month}.json", origin, build, today, stamp_key="created_utc")
 

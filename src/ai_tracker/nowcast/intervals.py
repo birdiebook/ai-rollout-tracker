@@ -1,52 +1,51 @@
 """Probabilistic forecasts for the nowcasts: a forecast distribution from the model's own past out-of-sample errors.
 
-OFF until grind G-C is registered. `ENABLED` stays False until docs/mattregister.md has the entry for grind G-C
-(interval levels, CRPS, calibration rule; written by track C0, see docs/steg2/plan.md section 5 and the proposal in
-docs/steg2/c1_forslag.md). While it is False nothing here is called by the backtests, the live writers, the scorecard
-or the site; the code is exercised by the tests on synthetic data only. Turning it on is a one-line change after the
-register entry exists, and the first real run is the registered one.
+Registered as grind G-C in docs/mattregister.md ("Steg 2: förregistrering", G-C) with the amendment "C0 preciseras
+efter granskning R6", which adopts F-C1-F-C7 of docs/granskning/r6_c0.md verbatim. Where this code and that text
+differ, the text wins. `ENABLED` is still False: the first real run is made by the orchestrator after merge, and
+until then nothing here is called by the backtests, the live writers, the scorecard or the site (the tests use
+synthetic data only).
 
-Method (proposal C1, docs/steg2/c1_forslag.md):
-- Everything is in error space, e = 100 * (log forecast - log outcome), the unit the backtests already use.
-- Error pool for model v at origin t: every earlier out-of-sample error of v whose outcome (first vintage) has
-  known_from <= t. An error enters the pool on the day its outcome becomes known, never earlier (`pool`). The pool
-  is expanding: nothing is dropped.
-- n = pool size. n < MIN_ERRORS: no distribution. MIN_ERRORS <= n < MIN_EMPIRICAL: Student-t prediction
-  distribution for a new draw from a normal with unknown mean and variance, e ~ mean + sd * sqrt(1 + 1/n) * t(n-1)
-  (exact coverage for iid normal errors; it is the small-sample inflation). n >= MIN_EMPIRICAL: the empirical
-  distribution of the pool.
-- Empirical quantiles: Hyndman-Fan type 6 (position p(n+1), numpy "weibull"). For exchangeable errors the interval
-  between the type-6 quantiles (1-L)/2 and (1+L)/2 covers a new error with probability L (exact when the positions
-  are integers). It needs p(n+1) >= 1 for p = 0.025, i.e. n >= 39, which is why MIN_EMPIRICAL is 40 and not 20:
-  with 20 errors the 2.5 % and 97.5 % quantiles are the sample min and max, and [min, max] covers only
-  19/21 = 90.5 %.
-- Outcome space: y = f - e, so Q_y(p) = f - Q_e(1 - p), and an interval covers y iff Q_e((1-L)/2) <= e <=
-  Q_e((1+L)/2). PIT of the outcome = P(Y <= y) = P(E >= e) = 1 - F_e(e).
-- CRPS (exact, in log x100 points): empirical distribution of the pool, mean|x_i - e| - sum|x_i - x_j| / (2 n^2);
-  Student-t: closed form (Jordan, Krüger and Lerch 2019, scoringRules::crps_t). CRPS is translation invariant and
-  y -> f - y is a reflection, so CRPS(F_y, y) = CRPS(F_e, e).
-- PIT for the empirical case is the mid-rank (#{x > e} + 0.5 #{x = e} + 0.5) / (n + 1): discrete uniform for
-  exchangeable errors, deterministic (no randomisation).
-- Coverage test per level: hit h = 1{covered}; t = (mean h - L) / se, se^2 = max(Newey-West long-run variance of h,
-  L(1-L)) / n (lag rule as in evaluation.py; the binomial floor avoids a zero variance when every forecast hits);
-  p from Student's t with n-1 df; Holm over the levels.
+Implemented as registered:
+- F-C1: everything is in error space, e = 100 * (log f - log y). Outcome quantiles Q_y(p) = f * exp(-Q_e(1-p)/100).
+  Coverage, PIT and CRPS are computed in error space, where they are equivalent (CRPS is unchanged by translation
+  and reflection). An interval covers y iff Q_e((1-L)/2) <= e <= Q_e((1+L)/2); PIT of y = P(E >= e) = 1 - F_e(e).
+- F-C2: empirical quantiles Hyndman-Fan type 6 (numpy "weibull"); the empirical distribution from n >= 40; for
+  8 <= n < 40, e ~ mean + s * sqrt(1 + 1/n) * t(n-1), s the sample SD (ddof 1); n < 8: no interval. (Type 6 gives
+  exact coverage for exchangeable errors when p(n+1) is an integer, and needs n >= 39 to reach the 2.5 % quantile;
+  with 20 errors [min, max] covers only 19/21 = 90.5 %.)
+- F-C3: the mean of the pool is included in the t case (bias counted, as in the empirical distribution).
+- F-C4: the pool is the model's pseudo-out-of-sample errors from the registered backtest plus its live errors, each
+  from its outcome's (first vintage) known_from. A model's exclusion from a common sample never affects its own
+  pool. Where a period has both a live forecast and a backtest reconstruction, the live error is used and the
+  period counts once (`merge_live`; the text says "plus", and counting one period twice would double its weight).
+- F-C5: a level fails calibration when Holm-p < 0.10 over the three levels in a t-test of the hit rate against L,
+  variance max(Newey-West, L(1-L)) / n, p from t(n-1). The binomial band (5th-95th percentile of Bin(n, L)/n) is
+  reported as a complement. Failed calibration never changes the champion (chosen on MAE as before).
+- F-C6: CRPS of the empirical distribution = mean|x_i - e| - sum|x_i - x_j| / (2 n^2); the t case in closed form
+  (Jordan, Krüger and Lerch 2019). PIT of the empirical distribution is the mid-rank
+  (#{x > e} + 0.5 #{x = e} + 0.5) / (n + 1), no randomisation.
+- F-C7: horizons (D2) are not covered here; they get their own register entry.
+- Levels 50/80/95 % and quantiles 2.5, 10, 25, 50, 75, 90, 97.5 % (G-C).
 
 Statistics use numpy only (as evaluation.py).
 """
 
 from __future__ import annotations
 
+import json
 import math
 from dataclasses import dataclass
 from functools import lru_cache
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
 from ai_tracker import evaluation
 
-# Grind G-C (docs/steg2/plan.md, section 5): stays False until docs/mattregister.md has the G-C entry. Do not turn
-# it on to look at results first; the register entry comes before any real run (CLAUDE.md, förregistrering).
+# Grind G-C is registered (docs/mattregister.md, G-C and "C0 preciseras efter granskning R6"). The flag stays False
+# until the orchestrator makes the first, registered run after merge; it is not turned on to look at results first.
 ENABLED = False
 REGISTER_REF = "grind G-C, docs/mattregister.md"
 
@@ -55,7 +54,8 @@ LEVELS = (0.50, 0.80, 0.95)
 MIN_ERRORS = 8  # fewer past errors: no distribution
 MIN_EMPIRICAL = 40  # from here the empirical pool (type 6 reaches the 2.5 % quantile from n = 39)
 PIT_BINS = 10
-CALIBRATION_ALPHA = 0.10  # proposed: a level fails calibration at Holm-p < 0.10 (as the promotion rule)
+CALIBRATION_ALPHA = 0.10  # F-C5: a level fails calibration at Holm-p < 0.10 over the three levels
+BAND = (0.05, 0.95)  # G-C / F-C5: binomial 90 % band of the coverage, reported as a complement
 POOL_DECIMALS = 4  # errors stored in the live JSON (0.0001 log x100 points)
 
 
@@ -166,7 +166,7 @@ class ErrorDistribution:
         return len(self.pool)
 
     @classmethod
-    def from_pool(cls, pool) -> "ErrorDistribution | None":
+    def from_pool(cls, pool) -> ErrorDistribution | None:
         """The registered rule: None below MIN_ERRORS, Student t below MIN_EMPIRICAL, else empirical."""
         x = np.asarray(pool, dtype=float)
         x = np.sort(x[np.isfinite(x)])
@@ -224,7 +224,7 @@ class ErrorDistribution:
         return out
 
     @classmethod
-    def from_json(cls, d: dict) -> "ErrorDistribution | None":
+    def from_json(cls, d: dict) -> ErrorDistribution | None:
         """Rebuild from a stored block, using the stored method and parameters (not today's constants)."""
         if not d or d.get("method") not in ("empirical", "student_t"):
             return None
@@ -321,6 +321,17 @@ def coverage_test(hits, level: float) -> CoverageTest:
     return CoverageTest(level, n, float(h.mean()), se, stat, evaluation.t_two_sided_p(stat, n - 1))
 
 
+def binomial_band(n: int, level: float, probs=BAND) -> tuple[float, float]:
+    """5th and 95th percentile of Bin(n, level) / n (G-C, F-C5): the smallest k with P(K <= k) >= prob."""
+    if n <= 0:
+        return float("nan"), float("nan")
+    logp = [math.lgamma(n + 1) - math.lgamma(k + 1) - math.lgamma(n - k + 1)
+            + (k * math.log(level) if k else 0.0) + ((n - k) * math.log1p(-level) if n - k else 0.0)
+            for k in range(n + 1)]
+    cdf = np.cumsum(np.exp(logp))
+    return tuple(float(np.searchsorted(cdf, p - 1e-12) / n) for p in probs)
+
+
 def pit_histogram(pit, bins: int = PIT_BINS) -> list[int]:
     x = np.asarray(pit, dtype=float)
     x = x[np.isfinite(x)]
@@ -329,8 +340,8 @@ def pit_histogram(pit, bins: int = PIT_BINS) -> list[int]:
 
 
 def calibration(scored: pd.DataFrame, levels=LEVELS, alpha: float = CALIBRATION_ALPHA) -> pd.DataFrame:
-    """One row per model over the rows of `scored` that have a distribution: n (and per method), coverage and
-    Holm-adjusted coverage-test p per level, mean CRPS, mean quantile score, PIT mean, PIT variance (uniform: 0.5
+    """One row per model over the rows of `scored` that have a distribution: n (and per method), coverage, its
+    binomial 90 % band and Holm-adjusted coverage-test p per level, mean CRPS, mean quantile score, PIT mean, PIT variance (uniform: 0.5
     and 1/12 = 0.0833; a larger variance means too narrow intervals), PIT histogram, and `calibrated` (no level
     with Holm-p < alpha)."""
     out = []
@@ -343,6 +354,7 @@ def calibration(scored: pd.DataFrame, levels=LEVELS, alpha: float = CALIBRATION_
         for L, t in tests.items():
             k = level_key(L)
             row[f"coverage_{k}"] = t.coverage
+            row[f"band_{k}"] = list(binomial_band(t.n, L))
             row[f"p_{k}"] = t.p
             row[f"holm_{k}"] = holm[k]
         row.update(crps=float(g["crps"].mean()), quantile_score=float(g["quantile_score"].mean()),
@@ -357,7 +369,9 @@ def crps_dm(scored: pd.DataFrame, a: str, b: str) -> evaluation.DMResult:
     """DM test on CRPS between models a and b, on the periods where both have a distribution. CRPS is a loss >= 0,
     so evaluation.dm_test's |loss| difference is the CRPS difference. With a `unit` column holding several units
     (N1b) the pooled DM of engine.pooled_dm is used (lag and df from the number of periods)."""
-    from ai_tracker.nowcast import engine  # engine does not import this module; local import keeps it that way
+    from ai_tracker.nowcast import (
+        engine,  # engine does not import this module; local import keeps it that way
+    )
 
     s = scored[scored["method"].notna()]
     pooled = "unit" in s and s["unit"].nunique() > 1
@@ -416,30 +430,77 @@ def markdown(res: dict, title: str = "") -> str:
         return f"{title}: no model has a distribution."
     lines = [f"{title}: {res['first']}..{res['last']}, {res['n_periods']} periods (each model on its own rows), "
              f"best baseline by CRPS {res['best_baseline']} (DM on pairwise common rows)",
-             "| Model | n | first | t / emp | " + " | ".join(f"Cov {level_key(L)} (Holm p)" for L in LEVELS)
+             "| Model | n | first | t / emp | " + " | ".join(f"Cov {level_key(L)} [bin. 90 % band] (Holm p)" for L in LEVELS)
              + " | CRPS | dCRPS | DM p | PIT mean | PIT var | Calibrated |",
              "|" + "---|" * (9 + len(LEVELS))]
     for r in cal.itertuples():
         r = r._asdict()
         dm = res["dm"].get(r["model"], {})
-        cov = " | ".join(f"{r[f'coverage_{level_key(L)}']:.2f} ({r[f'holm_{level_key(L)}']:.2f})" for L in LEVELS)
+        cov = " | ".join(f"{r[f'coverage_{level_key(L)}']:.2f} [{r[f'band_{level_key(L)}'][0]:.2f}, "
+                         f"{r[f'band_{level_key(L)}'][1]:.2f}] ({r[f'holm_{level_key(L)}']:.2f})" for L in LEVELS)
         lines.append(f"| {r['model']} | {r['n']} | {r['first']} | {r['n_student_t']} / {r['n_empirical']} | {cov} | {r['crps']:.3f} | "
                      f"{dm.get('mean_diff', float('nan')):+.3f} | {dm.get('p', float('nan')):.3f} | "
                      f"{r['pit_mean']:.3f} | {r['pit_var']:.4f} | {'yes' if r['calibrated'] else 'no'} |")
     return "\n".join(lines)
 
 
+# ------------------------------------------------------------------ live errors (F-C4)
+
+
+def live_errors(files, outcomes: pd.DataFrame, models, as_of) -> tuple[pd.DataFrame, pd.Series]:
+    """Errors of committed live forecasts whose outcome is known at `as_of` (F-C4).
+
+    files: live forecast JSON paths (forecasts/<nowcast>/*.json), read only. outcomes: engine.first_vintages() of
+    the target (value, known_from on a PeriodIndex). A file's error enters only if its outcome's first vintage has
+    known_from <= as_of, and never if the outcome was known at the file's own origin (not a forecast).
+    Returns (errors per model on the period index, known_from on the same index).
+    """
+    as_of = pd.Timestamp(as_of)
+    freq = outcomes.index.freq if isinstance(outcomes.index, pd.PeriodIndex) else None
+    rows, kf = {}, {}
+    for f in sorted(files):
+        d = json.loads(Path(f).read_text(encoding="utf-8"))
+        period = pd.Period(d.get("quarter") or d.get("month"), freq=freq)
+        if period not in outcomes.index:
+            continue
+        known = pd.Timestamp(outcomes.at[period, "known_from"])
+        if known > as_of or known <= pd.Timestamp(d["origin"]):
+            continue
+        y = float(outcomes.at[period, "value"])
+        lv = d.get("variants") or {}
+        rows[period] = {v: (100 * (math.log(float(lv[v])) - math.log(y))
+                            if lv.get(v) is not None and float(lv[v]) > 0 and y > 0 else float("nan"))
+                        for v in models}
+        kf[period] = known
+    idx = pd.PeriodIndex(sorted(rows), freq=freq) if rows else pd.PeriodIndex([], freq=freq)
+    return (pd.DataFrame([rows[p] for p in idx], index=idx, columns=list(models)),
+            pd.Series([kf[p] for p in idx], index=idx, dtype="datetime64[ns]"))
+
+
+def merge_live(errors: pd.DataFrame, known_from: pd.Series, live: pd.DataFrame,
+               live_known: pd.Series) -> tuple[pd.DataFrame, pd.Series]:
+    """Backtest errors plus live errors (F-C4). A period with a live forecast takes the live errors (the whole row)
+    instead of the backtest reconstruction, so each period counts once."""
+    if live.empty:
+        return errors, known_from
+    keep = ~errors.index.isin(live.index)
+    e = pd.concat([errors[keep], live.reindex(columns=errors.columns)]).sort_index()
+    k = pd.concat([pd.to_datetime(known_from.reindex(errors.index)[keep]), live_known]).sort_index()
+    return e, k
+
+
 # ------------------------------------------------------------------ live forecast block
 
 
 def live_block(logs: dict, errors: pd.DataFrame, known_from: pd.Series, origin,
-               quantiles=QUANTILES, levels=LEVELS) -> dict:
+               quantiles=QUANTILES, levels=LEVELS, live_index=None) -> dict:
     """The `distribution` block of a live forecast file.
 
     logs: model -> 100 * log forecast (NaN if unavailable). errors: the backtest errors per model (columns), index
     = target period, with the outcomes' first-vintage known_from. Only errors with known_from <= origin enter.
     Per model: the stored distribution (method, pool and t parameters, so the scorecard rebuilds exactly this
-    distribution), quantiles and central intervals of the outcome in levels (exp of 100 * log / 100).
+    distribution), quantiles and central intervals of the outcome in levels, Q_y(p) = f * exp(-Q_e(1-p)/100) (F-C1).
+    `errors` already includes the live errors (merge_live, F-C4); n_live counts the pool's errors from live files.
     """
     origin = pd.Timestamp(origin)
     models = {}
@@ -448,12 +509,14 @@ def live_block(logs: dict, errors: pd.DataFrame, known_from: pd.Series, origin,
             continue
         d = distribution_at(errors[v], known_from, origin)
         n = len(pool(errors[v], known_from, origin))
+        live = errors[v][errors.index.isin(live_index)] if live_index is not None else errors[v].iloc[:0]
+        n_live = len(pool(live, known_from, origin))
         if d is None or f is None or not np.isfinite(f):
-            models[v] = {"method": None, "n_pool": n}
+            models[v] = {"method": None, "n_pool": n, "n_live": n_live}
             continue
         q = d.outcome_quantiles(float(f), quantiles)
         qi = {L: (f - d.quantile((1 + L) / 2), f - d.quantile((1 - L) / 2)) for L in levels}
-        models[v] = {**d.to_json(),
+        models[v] = {**d.to_json(), "n_live": n_live,
                      "quantiles": {quantile_key(p): float(math.exp(x / 100)) for p, x in q.items()},
                      "intervals": {level_key(L): [float(math.exp(lo / 100)), float(math.exp(hi / 100))]
                                    for L, (lo, hi) in qi.items()}}

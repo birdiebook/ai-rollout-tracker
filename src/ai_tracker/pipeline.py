@@ -285,6 +285,13 @@ def _score_distribution(row: dict, d: dict, variants) -> None:
             row[f"{f}_{v}"] = sc.get(f, float("nan"))
 
 
+def _coverage_cell(hits: pd.Series, level: float) -> str:
+    if not len(hits):
+        return ""
+    lo, hi = intervals.binomial_band(len(hits), level)
+    return f"{_fmt(hits.mean(), 2)} [{_fmt(lo, 2)}–{_fmt(hi, 2)}]"
+
+
 def _interval_lines(df: pd.DataFrame, variants) -> list[str]:
     """Scorecard section for the stored distributions (only with intervals.ENABLED)."""
     if "crps_champion" not in df:
@@ -305,9 +312,10 @@ def _interval_lines(df: pd.DataFrame, variants) -> list[str]:
         for v in ["champion", *variants]:
             g = scored[scored[f"crps_{v}"].notna()]
             name = "huvudmodell" if v == "champion" else v
-            cov = " | ".join(_fmt(g[f"hit_{k}_{v}"].mean(), 2) if len(g) else "" for k in keys)
+            cov = " | ".join(_coverage_cell(g[f"hit_{k}_{v}"], L) for k, L in zip(keys, intervals.LEVELS))
             lines.append(f"| {name} | {len(g)} | {cov} | {_fmt(g[f'crps_{v}'].mean(), 2) if len(g) else ''} |")
-        lines += ["", "Täckningen blir meningsfull först efter många utfall (för N2 cirka 12 månader)."]
+        lines += ["", "Täckning [binomialt 90 %-band, 5:e–95:e percentilen av Bin(n, nivå)/n]. Täckningen blir "
+                  "meningsfull först efter många utfall (för N2 cirka 12 månader). Kalibreringen byter inte huvudmodell."]
     return lines
 
 

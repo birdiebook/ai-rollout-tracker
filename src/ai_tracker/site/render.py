@@ -359,10 +359,13 @@ def nowcast_section(n: dict, build: dict) -> str:
                    + "".join(f"<th>Täckning {esc(k)} %</th>" for k in keys) + '<th>CRPS</th></tr></thead><tbody>'
                    + "".join(f'<tr><td>{"huvudmodell" if c["variant"] == "champion" else esc(c["variant"])}</td>'
                              f'<td class="num">{c["n"]}</td>'
-                             + "".join(f'<td class="num">{num(c.get(f"coverage_{k}"))}</td>' for k in keys)
+                             + "".join(f'<td class="num">{num(c.get(f"coverage_{k}"))} '
+                                       f'[{num((c.get(f"band_{k}") or [None, None])[0])}–'
+                                       f'{num((c.get(f"band_{k}") or [None, None])[1])}]</td>' for k in keys)
                              + f'<td class="num">{num(c["crps"])}</td></tr>' for c in cov)
-                   + "</tbody></table></div><p class='small muted'>Täckning = andel utfall inom intervallet. "
-                     "Den blir meningsfull först efter många utfall.</p>")
+                   + "</tbody></table></div><p class='small muted'>Täckning = andel utfall inom intervallet, med ett binomialt "
+                     "90 %-band inom hakparentes. Den blir meningsfull först efter många utfall, och dålig kalibrering "
+                     "byter inte huvudmodell.</p>")
     elif n.get("scorecard_error"):
         sc = f'<p class="reason">Scorecarden kunde inte beräknas: {esc(n["scorecard_error"])}</p>'
     chart = ""

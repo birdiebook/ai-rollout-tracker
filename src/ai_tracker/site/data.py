@@ -435,6 +435,7 @@ def _coverage(scored: list[dict], variants) -> list[dict]:
             k = intervals.level_key(L)
             hits = [r[f"hit_{k}_{v}"] for r in g if r.get(f"hit_{k}_{v}") is not None]
             row[f"coverage_{k}"] = _num(sum(hits) / len(hits), 3) if hits else None
+            row[f"band_{k}"] = [_num(x, 3) for x in intervals.binomial_band(len(hits), L)] if hits else None
         out.append(row)
     return out
 
