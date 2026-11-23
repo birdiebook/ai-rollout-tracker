@@ -41,3 +41,13 @@ ger ett definitionsbrott, och bruttot matchar de andra tre bolagens rader. Därf
 **Omräkningar som inte bryts ned per kvartal läggs inte i ett enda kvartal.** Kvartalet behåller då
 sin tidigare version. Det är konservativt, och några helår summerar därför inte till det senaste
 helårsvärdet. Detaljer: [kallor/sec.md](kallor/sec.md).
+
+## 2026-11-23 – G2: pris vid fast förmåga byggs själva (fas 2, spår I6)
+
+**Val:** `g2_price_at_capability` byggs av LiteLLM:s git-historik (MIT, commit-datum på `main` som
+`known_from`) och Epochs ECI (CC BY), med bara förstapartspriser och en explicit mappningstabell. Tröskeln
+141,16 (o1) låstes i måttregistret vid första bygget. **Varför förstapart:** återförsäljares priser för
+öppna modeller beror på hosting och inte på modellen, och urvalet av återförsäljare i LiteLLM ändras över
+tid. **Variant:** `g2_price_at_capability_gpqa` med Epochs egna GPQA-körningar har ärliga tidsstämplar för
+förmågan, men är en brusig benchmark nära taket. Båda redovisas, och huvudmåttet är fortfarande ECI-varianten.
+Detaljer: [kallor/pris_formaga.md](kallor/pris_formaga.md).
