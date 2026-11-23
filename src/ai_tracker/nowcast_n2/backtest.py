@@ -152,6 +152,7 @@ def main():
     for v, lines in res.checks.items():
         print(f"{v}: " + " | ".join(lines))
     print(f"Promoted outright: {res.promoted}. Champion: {res.champion}. Conditional: {res.conditional or '-'}")
+    ev = res.frame
     use = b2_usage(ev)
     print(f"B2 used guidance in {int(use['guidance'].sum())} of {int(use['months'].sum())} months; "
           f"fallbacks: {ev.loc[~ev['b2_source'].str.startswith('guidance'), 'b2_source'].value_counts().to_dict()}")
