@@ -207,3 +207,12 @@ Segmentserier finns: `rev_aws` (2014Q1), `rev_google_cloud` (2020Q1), `rev_msft_
 (2016Q3–2024Q2), `rev_msft_server_cloud_fy25` (2023Q3–2026Q2), `rev_msft_azure` (2026Q3), `rev_nvda_datacenter`
 (2017Q2), `rev_orcl_cloud` (2021Q3), `rev_orcl_oci` (2024Q3). Microsofts omsegmenteringar (FY2018, FY2025,
 FY2027) är egna serier, inte skarvar. Källa och kontroller: `docs/kallor/sec_segment.md`. Ingen takt beräknad.
+
+### 2026-11-23 – G4: segmentintäkter ersätter totala intäkter som kärnserier
+
+Avsnitt 5 angav att segmentintäkter ersätter totala intäkter när de finns. Urvalet görs efter
+definitionsstabilitet (inga definitionsbrott) och relevans för AI och moln, inte efter vad serierna visar:
+
+| Gren | Kärnserier | Anmärkning |
+|---|---|---|
+| G4 | `rev_aws`, `rev_google_cloud`, `rev_msft_cloud`, `rev_nvda_datacenter`, `rev_orcl_cloud` | Inga definitionsbrott. Microsofts segmentserier (Intelligent Cloud, Server products) har brott 2017, 2024 och 2026 och används inte. Oracles kvartal märks en månad tidigt (räkenskapsår), och årstakten påverkas inte. Totala intäkter (`rev_*`) finns kvar i katalogen som beskrivning |

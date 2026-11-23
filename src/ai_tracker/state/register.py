@@ -30,7 +30,7 @@ CORE_SERIES: dict[str, list[str]] = {
     "G1": [],
     "G2": ["g2_price_at_capability_gpqa"],
     "G3": ["btos_ai_use_<aktiv regim>", "eu_ai_ent_eu27", "eu_ai_ent_se"],
-    "G4": ["rev_msft", "rev_googl", "rev_amzn", "rev_meta", "rev_nvda"],
+    "G4": ["rev_aws", "rev_google_cloud", "rev_msft_cloud", "rev_nvda_datacenter", "rev_orcl_cloud"],
     "G5": ["capex_hyp4", "us_constr_datacenter", "us_pfi_info_proc_eq_sw", "capex_ocf_hyp4"],
     "G6": ["tsmc_revenue_m", "us_ip_semis_m", "us_ip_computers_m", "us_imports_tw_m", "us_imports_kr_m"],
     "G7": ["us_elec_sales_com_{va,tx,ga,az,or,oh}_m"],

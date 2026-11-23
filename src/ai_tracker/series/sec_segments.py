@@ -107,15 +107,28 @@ def _fetch(line: Line, i: int):
     return fetch
 
 
+# Lines Microsoft dropped in its FY2027 re-segmentation (10-Q filed 2026-10-28).
+DISCONTINUED = {
+    "rev_msft_intelligent_cloud_fy25": "segmentet togs bort i Microsofts nya segmentindelning för FY2027.",
+    "rev_msft_server_cloud_fy25": "raden togs bort i Microsofts nya segmentindelning för FY2027.",
+}
+
+
 def _spec(line: Line, i: int) -> Spec:
     members = ", ".join(f"{a}={m}" for a, m in line.members)
     note = f"Medlemmar: {members}."
     if line.regime_notes:
         note += " " + line.regime_notes[i]
+    superseded = i < len(line.keys) - 1
+    discontinued = line.keys[i] in DISCONTINUED
+    if superseded:
+        note += " Avslutad: ersatt av nästa definition efter ett definitionsbrott."
+    elif discontinued:
+        note += " Avslutad: " + DISCONTINUED[line.keys[i]]
     return Spec(key=line.keys[i], branch="G4", label=f"Segmentintäkter, {line.label}", unit="MUSD", freq="Q",
                 source=SOURCE, fetch=_fetch(line, i), lag_days=line.lag_days, license=LICENSE, revised=True,
                 publish=True, question="Hur snabbt växer de intäkter som AI- och molninvesteringarna ska bära?",
-                note=note)
+                note=note, closed=superseded or discontinued)
 
 
 SPECS = [_spec(line, i) for line in LINES for i in range(len(line.keys))]
