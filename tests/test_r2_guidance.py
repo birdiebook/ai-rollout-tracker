@@ -14,6 +14,8 @@ import pandas as pd
 import pytest
 
 from ai_tracker import observations
+
+from conftest import real_table_exists
 from ai_tracker.sources import guidance_capex as gc
 
 
@@ -191,12 +193,14 @@ TSMC = {
     "2026Q4": ("USD", [("2026-10-15", 52.3, 54.3)], [("2026-10-15", 31.8)]),
 }
 
-needs_table = pytest.mark.skipif(not observations.PATH.exists(), reason="data/observations.parquet not built")
+def needs_table(f):
+    """Reads the real observation table (shared base + track view in a track worktree)."""
+    return pytest.mark.real_data(pytest.mark.skipif(not real_table_exists(), reason="data/observations.parquet not built")(f))
 
 
 @pytest.fixture(scope="module")
 def stored() -> pd.DataFrame:
-    o = pd.read_parquet(observations.PATH)
+    o = observations.load()
     o = o[o["series"].str.startswith("tsmc_guid_")].copy()
     o["period"] = o["period"].astype(str)
     return o
