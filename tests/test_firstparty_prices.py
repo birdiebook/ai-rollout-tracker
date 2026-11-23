@@ -13,6 +13,22 @@ from ai_tracker.series import price_capability as pc
 from ai_tracker.sources import firstparty_prices as fp
 from ai_tracker.sources import model_map
 
+
+@pytest.fixture(autouse=True)
+def _anthropic_collected(monkeypatch, request):
+    """The collector logic is tested as if Anthropic were collected; in production it is paused (see below)."""
+    if request.node.name == "test_anthropic_is_paused_pending_owner_decision":
+        return
+    from dataclasses import replace
+
+    providers = dict(fp.PROVIDERS)
+    providers["anthropic"] = replace(providers["anthropic"], status="OK")
+    monkeypatch.setattr(fp, "PROVIDERS", providers)
+
+
+def test_anthropic_is_paused_pending_owner_decision():
+    assert fp.PROVIDERS["anthropic"].status == "BLOCKED" and fp.collected() == []
+
 T = pd.Timestamp
 
 # Shape of platform.claude.com/docs/en/about-claude/pricing.md as fetched 2026-11-23 (rows abridged).

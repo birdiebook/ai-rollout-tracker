@@ -266,3 +266,11 @@ Brevet genereras deterministiskt ur ögonblicksbilden (inga LLM-texter i driften
 visas på hemsidan. Grenarnas tillstånd och mått läses bara ur ögonblicksbilden. Prognoser, revideringar och guidance
 läses ur de committade prognosfilerna och tabellen avgränsad till ögonblicksbildens informationsmängd. Ett fel i brevet
 stoppar aldrig ögonblicksbilden.
+
+## 2026-11-23 – Förstapartspriser: Anthropic pausad i väntan på beslut
+
+Spår B5 byggde veckovisa ögonblicksbilder av förstapartspriser. Bara Anthropics prissida gick att nå, eftersom de
+andra fem leverantörernas värdar är blockerade. Anthropics villkor förbjuder automatisk åtkomst till tjänsterna "except
+... where we otherwise explicitly permit it". Det är oklart om `llms.txt` och `robots.txt` räknas som sådant tillstånd.
+Insamlingen är därför pausad (`status="BLOCKED"`, serien stängd) tills Johannes har beslutat. Koden och korskontrollen
+mot LiteLLM finns kvar och stämde exakt för alla 23 aktuella modeller.

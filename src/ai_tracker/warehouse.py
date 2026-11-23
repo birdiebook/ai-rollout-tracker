@@ -50,7 +50,6 @@ KNOWN_STALE: dict[str, tuple[str, str]] = {
     "g1_epoch_bench_runs_spireclimb": ("2027-01-07", "new series: first month known 2026-12-31"),
     # Track B5: own first-party price snapshots from 2026-11-23, no backfill; the first complete month (2026-11) is
     # known 2026-12-01 and computed by the first weekly run after that (Monday 2026-12-07).
-    "g2_fp_price_at_capability_gpqa_anthropic": ("2026-12-15", "new series: first month known 2026-12-01"),
 }
 
 PERIOD_DAYS = {"D": 1, "W": 7, "2W": 14, "M": 31, "Q": 92}

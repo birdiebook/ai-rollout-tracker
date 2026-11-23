@@ -104,5 +104,6 @@ SPECS = [
          unit="USD per 1M tokens (3:1 input:output)", freq="M", source="Egna ögonblicksbilder av Anthropics prissida × Epoch AI GPQA Diamond",
          fetch=fetch_anthropic, lag_days=LAG_DAYS, license=LICENSE, revised=True, publish=False,
          question="Samma mått som g2_price_at_capability_gpqa, men med priset direkt från utvecklaren (oberoende av LiteLLM)",
-         note="Egna veckovisa ögonblicksbilder från 2026-11-23, ingen bakåtfyllning. En utvecklare. Se docs/kallor/priser.md"),
+         note="Egna veckovisa ögonblicksbilder från 2026-11-23, ingen bakåtfyllning. En utvecklare. Se docs/kallor/priser.md. "
+              "Avslutad (pausad): insamlingen väntar på beslut om Anthropics villkor.", closed=True),
 ]
