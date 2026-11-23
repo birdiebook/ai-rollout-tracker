@@ -128,6 +128,9 @@ def pooled_dm(frame: pd.DataFrame, a: str, b: str, h: int = 1) -> evaluation.DMR
     f = frame.dropna(subset=[a, b])
     d = f[a].abs() - f[b].abs()
     n_obs = len(d)
+    if f["quarter"].nunique() < 3:  # too few common periods for a DM test (HLN factor is 0 at T = 1)
+        return evaluation.DMResult(int(f["quarter"].nunique()), 0, float(d.mean()) if n_obs else float("nan"),
+                                   0.0, float("nan"), float("nan"), 0.0)
     mean = float(d.mean())
     sums = (d - mean).groupby(f["quarter"]).sum().sort_index().to_numpy()
     T = len(sums)
