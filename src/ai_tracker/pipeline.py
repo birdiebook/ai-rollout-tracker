@@ -35,7 +35,7 @@ from pathlib import Path
 import pandas as pd
 
 from ai_tracker import catalog, config, observations, warehouse
-from ai_tracker.nowcast import engine, n1, n2
+from ai_tracker.nowcast import engine, intervals, n1, n2
 
 FORECASTS = config.REPO / "forecasts"
 SCORECARD = FORECASTS / "SCORECARD.md"
@@ -260,9 +260,55 @@ def score(root: Path | None = None, table: pd.DataFrame | None = None) -> dict[s
                 ok = math.isfinite(x) and math.isfinite(row["outcome"]) and x > 0
                 row[f"err_{v}"] = engine.log_error(x, row["outcome"]) if ok else float("nan")
             row["err_champion"] = row.get(f"err_{d['champion']}", float("nan"))
+            if intervals.ENABLED:  # grind G-C: scores of the distribution stored in the file, never recomputed
+                _score_distribution(row, d, variants)
             rows.append(row)
         out[sub] = pd.DataFrame(rows)
     return out
+
+
+DIST_FIELDS = ("crps", "pit", *(f"hit_{intervals.level_key(L)}" for L in intervals.LEVELS))
+
+
+def _score_distribution(row: dict, d: dict, variants) -> None:
+    """Columns <field>_<variant> (crps, pit, hit_50/80/95) and the champion's stored intervals (interval_<L>,
+    in levels) from the file's `distribution` block. NaN where the file has none or no outcome is known."""
+    block = d.get("distribution") or {}
+    champ = (block.get("models") or {}).get(d["champion"]) or {}
+    for L in intervals.LEVELS:
+        k = intervals.level_key(L)
+        row[f"interval_{k}"] = (champ.get("intervals") or {}).get(k)
+    for v in [*variants, "champion"]:
+        model = d["champion"] if v == "champion" else v
+        sc = intervals.score_live(block, model, row[f"err_{v}"]) if row["status"] == "utfall" else {}
+        for f in DIST_FIELDS:
+            row[f"{f}_{v}"] = sc.get(f, float("nan"))
+
+
+def _interval_lines(df: pd.DataFrame, variants) -> list[str]:
+    """Scorecard section for the stored distributions (only with intervals.ENABLED)."""
+    if "crps_champion" not in df:
+        return []
+    keys = [intervals.level_key(L) for L in intervals.LEVELS]
+    lines = ["", f"### Intervall ({intervals.REGISTER_REF})", "",
+             "| Period | " + " | ".join(f"{k} % intervall huvudmodell" for k in keys) + " |",
+             "|" + "---|" * (1 + len(keys))]
+    for r in df.itertuples(index=False):
+        r = r._asdict()
+        cells = [f"{_fmt(r[f'interval_{k}'][0])} – {_fmt(r[f'interval_{k}'][1])}" if r[f"interval_{k}"] else ""
+                 for k in keys]
+        lines.append(f"| {r['period']} | " + " | ".join(cells) + " |")
+    scored = df[df["status"] == "utfall"]
+    if len(scored):
+        lines += ["", "| Variant | n | " + " | ".join(f"Täckning {k} %" for k in keys) + " | CRPS |",
+                  "|" + "---|" * (3 + len(keys))]
+        for v in ["champion", *variants]:
+            g = scored[scored[f"crps_{v}"].notna()]
+            name = "huvudmodell" if v == "champion" else v
+            cov = " | ".join(_fmt(g[f"hit_{k}_{v}"].mean(), 2) if len(g) else "" for k in keys)
+            lines.append(f"| {name} | {len(g)} | {cov} | {_fmt(g[f'crps_{v}'].mean(), 2) if len(g) else ''} |")
+        lines += ["", "Täckningen blir meningsfull först efter många utfall (för N2 cirka 12 månader)."]
+    return lines
 
 
 def _fmt(x, nd=1) -> str:
@@ -301,6 +347,7 @@ def render(scores: dict[str, pd.DataFrame], today=None) -> str:
                 name = "huvudmodell" if v == "champion" else v
                 lines.append(f"| {name} | {len(e)} | {_fmt(e.abs().mean(), 2)} | {_fmt(e.mean(), 2)} |")
             lines += ["", "Få utfall: skillnader mellan varianter kan vara slump."]
+        lines += _interval_lines(df, variants)
         lines.append("")
     return "\n".join(lines)
 

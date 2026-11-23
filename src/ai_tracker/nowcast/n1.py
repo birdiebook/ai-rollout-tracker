@@ -48,7 +48,7 @@ import numpy as np
 import pandas as pd
 
 from ai_tracker import evaluation
-from ai_tracker.nowcast import engine
+from ai_tracker.nowcast import engine, intervals
 
 TARGET = "capex_hyp4"
 COMPANIES = ["capex_msft", "capex_googl", "capex_amzn", "capex_meta"]
@@ -347,6 +347,7 @@ def backtest_unit(table: pd.DataFrame, target: str) -> pd.DataFrame:
         except NotAvailable:
             continue
         row = {"unit": target, "quarter": q, "origin": origin.date(), "outcome": float(fv[q]),
+               "outcome_known_from": outcomes.at[q, "known_from"],
                "n_train": f.n_train, "lambda": f.lam, "positions": str(f.positions),
                "reason": "; ".join(sorted(set(f.reasons.values()))),
                "b2_sources": "; ".join(f"{c}: {v}" for c, v in f.b2_sources.items()),
@@ -423,6 +424,9 @@ def run_backtest(table: pd.DataFrame, log: bool = True) -> dict:
            "N1b": {"errors": n1b, "eval": evaluate(n1b, pooled=True)}}
     out["N1"]["promotion"] = promotion(out["N1"]["eval"])
     out["N1b"]["promotion"] = promotion(out["N1b"]["eval"])  # reported only; N1 decides
+    if intervals.ENABLED:  # grind G-C: off until the register entry exists
+        for key in ("N1", "N1b"):
+            out[key]["intervals"] = evaluate_intervals(out[key]["errors"])
     if log:
         for key, name in (("N1", "n1"), ("N1b", "n1b")):
             rows = []
@@ -434,6 +438,41 @@ def run_backtest(table: pd.DataFrame, log: bool = True) -> dict:
                                  "dm_p_vs_baseline": r["dm"][v]["p"] if v in MODELS else ""})
             out[key]["log"] = evaluation.log_run(f"{name}_backtest", rows)
     return out
+
+
+# ------------------------------------------------------------------ forecast distributions (C1, grind G-C)
+
+
+def interval_scores(errors: pd.DataFrame) -> pd.DataFrame:
+    """Rolling-origin error distributions (intervals.score_frame) per unit of backtest_unit() rows. Every row of the
+    backtest feeds the pools, also those before the evaluation period; an error enters a pool only from its
+    outcome's first-vintage known_from."""
+    parts = []
+    for unit, g in errors.groupby("unit", sort=False):
+        e = g.set_index("quarter")
+        s = intervals.score_frame(e[VARIANTS], pd.to_datetime(e["origin"]), e["outcome_known_from"])
+        parts.append(s.assign(unit=unit))
+    return pd.concat(parts, ignore_index=True) if parts else pd.DataFrame()
+
+
+def evaluate_intervals(errors: pd.DataFrame) -> dict:
+    """Interval evaluation (intervals.evaluate): each variant on every backtest row where it has a distribution,
+    full period and from 2023Q1. Not restricted to the point evaluation's common sample, which starts with V1 in
+    2024Q2. Reported only; the champion is decided by promotion() on MAE."""
+    scored = interval_scores(errors)
+    sub = scored[scored["period"] >= SUBPERIOD] if len(scored) else scored
+    return {"full": intervals.evaluate(scored, VARIANTS, BASELINES), "2023Q1-": intervals.evaluate(sub, VARIANTS, BASELINES)}
+
+
+def live_distribution(table: pd.DataFrame, origin, levels: dict) -> dict:
+    """The live file's `distribution` block: each variant's error pool from the backtest reconstruction of
+    capex_hyp4 on the rows known at the origin (truncated table: as_of for earlier origins is unchanged, and only
+    outcomes known at the origin exist), via intervals.live_block (which filters on known_from again)."""
+    origin = pd.Timestamp(origin)
+    errors = backtest_unit(table[table["known_from"] <= origin], TARGET).set_index("quarter")
+    logs = {v: (100 * math.log(x) if x is not None and x > 0 and not math.isnan(x) else float("nan"))
+            for v, x in levels.items()}
+    return intervals.live_block(logs, errors[VARIANTS], errors["outcome_known_from"], origin)
 
 
 def b2_usage(errors: pd.DataFrame) -> pd.DataFrame:
@@ -492,6 +531,8 @@ def format_report(out: dict) -> str:
                          f"MAE B1 {r['MAE_B1']:.2f}, B2 {r['MAE_B2']:.2f}"
                          + (f", sum of company B1 {r['MAE_B1_companies']:.2f}" if "MAE_B1_companies" in r else "")
                          + f", DM p {r['p']:.3f}, MDE {r['mde']:.2f}")
+        for per, r in (out[key].get("intervals") or {}).items():  # only when intervals.ENABLED (grind G-C)
+            lines.append("\n" + intervals.markdown(r, f"{key} intervals {per}"))
         p = out[key]["promotion"]
         lines.append(f"{key} promotion: champion {p['champion']} "
                      + ", ".join(f"{v}: passes rule={p['checks'][v]['promoted']}" for v in MODELS)
@@ -513,6 +554,7 @@ def live_payload(table: pd.DataFrame, origin) -> dict:
         note = f"champion {champion} not available ({f.reasons.get(champion)}); fell back to {DEFAULT_CHAMPION}"
         champion = DEFAULT_CHAMPION
     registered = origin == origin_for(q)
+    extra = {"distribution": live_distribution(table, origin, f.levels)} if intervals.ENABLED else {}
     return {
         "nowcast": "N1", "target": TARGET, "quarter": str(q), "origin": origin.date().isoformat(),
         "registered_origin": registered, "unit": "MUSD",
@@ -522,6 +564,7 @@ def live_payload(table: pd.DataFrame, origin) -> dict:
         "lambda_v2": None if math.isnan(f.lam) else f.lam, "ols_coef_v1": f.ols_coef,
         "month_positions": f.positions, "note": note,
         "inputs": info.inputs(),
+        **extra,
     }
 
 
