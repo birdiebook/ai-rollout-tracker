@@ -282,3 +282,17 @@ hämtning per vecka). Serien är fortfarande `publish=False`, eftersom sidan int
 insamlingen från Anthropics webbplatser (prissidan i B5 och nyhetssidorna i B6). G2 vilar på LiteLLM, som
 korskontrollen bekräftade. Inga återkommande automatiska hämtningar görs från anthropic.com, claude.com eller
 platform.claude.com. Redan hämtade meningar granskas mot sparade hashar.
+
+
+## 2026-11-23 – Våg 1: el, neoclouds och labbens intäkter
+
+- **PJM** (kapacitetsauktioner och lastprognoser) har `publish=False`, eftersom PJM:s villkor för icke-medlemmar
+  förbjuder vidarepublicering. Lastprognoserna lagras som årsversioner: perioden är rapportåret, och värdet är
+  prognosen för år +1, +5 och +10.
+- **ERCOT:s kö för stora laster** är PARTIAL. Siffrorna finns bara som diagram i PDF-presentationer, och ingen serie
+  byggs utan en granskad extraktion.
+- **Neoclouds:** Oracle, CoreWeave, Nebius (6-K, efter dekonsolideringen av Toloka) och IREN. CoreWeaves capex är
+  kassaflödesraden, inte bolagets egen periodiserade capex.
+- **Labbens intäkter:** bara Anthropic har förstapartsuttalanden. Nyhetsrumssiffrorna och S-1:ns definierade
+  "Run-Rate Revenue" är separata serier som aldrig blandas. Anthropic är börsnoterat från 2026-11-19, och reviderade
+  intäkter läggs till via SEC när den första 10-Q:n kommer.
