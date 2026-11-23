@@ -33,6 +33,8 @@ from ai_tracker.sources import plans as _plans
 
 # Series with an accepted gap, and why. Keep this short.
 KNOWN_GAPS: dict[str, str] = {
+    "lab_rev_anthropic_company_run_rate": "self-reported figures on irregular dates (period = the stated date)",
+    "lab_rev_anthropic_claude_code_run_rate": "self-reported figures on irregular dates (period = the stated date)",
     "guid_capex_msft_q_lo": "Microsoft gives a capex number for the next quarter only in some calls; else a direction",
     "guid_capex_msft_q_dir_qoq": "2025Q3 was guided as a number (over $30bn), not as a direction",
 }
