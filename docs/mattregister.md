@@ -136,3 +136,15 @@ Källan för `tsmc_revenue_m` är TSMC:s 6-K till SEC, och `known_from` är inl�
 lämnades 61 (21 %) in dag 8 eller tidigare. Den tidigaste var dag 6. Med dag 8 skulle var femte prognos göras när
 utfallet redan var känt. Prognosdagen blir därför **dag 5** i månaden efter. Ändringen bygger bara på
 publiceringsdatum, och ingen modell har körts.
+
+### 2026-11-23 – N1 och N2: indikatorer enligt vad fas 2 levererade (före analys)
+
+- `us_imports_tw` blir `us_imports_tw_m`: **total** import från Taiwan (Census FT-900). HS-nivå (8471/8473/8542)
+  kräver en nyckel till api.census.gov och finns inte än.
+- `us_ip_semis` (`us_ip_semis_m`) finns bara via ALFRED. FRED:s villkor begränsar användning i samband med
+  maskininlärning, och primärkällan (federalreserve.gov) är blockerad. Serien **ingår inte** i modellerna i fas 3.
+  Den läggs till först efter ett beslut, och då som en ny registrerad variant, inte i efterhand i V1 eller V2.
+- N1 V1/V2 använder alltså `us_imports_tw_m` och `us_constr_datacenter` (säsongsjusterad). N2 V1 använder
+  `us_imports_tw_m` (Korea- och Taiwanserierna är blockerade).
+- `us_imports_tw_m` och `us_constr_datacenter` är bakåtfyllda: bara den senaste versionen finns, så revideringar
+  läcker in i backtesten. Det redovisas med resultatet.
