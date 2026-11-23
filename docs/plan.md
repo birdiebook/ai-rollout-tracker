@@ -159,6 +159,9 @@ Fas 0–3 ryms i en körning (cirka 15 spår inklusive granskning, enligt `docs/
 Fas 4–6 i nästa. Flaskhalsarna är licenskontroll, åtkomst till källor och kalendertiden: N1 får ett skarpt
 utfall per kvartal, N2 ett per månad.
 
+**Steg 2** (efter fas 0–6): flödesmodell över hela AI-ekonomin, sannolikhetsprognoser 1–8 kvartal och
+regimsannolikhet. Detaljerad plan med vågor, spår och beroenden: [`steg2/plan.md`](steg2/plan.md).
+
 ## 9. Beslut
 
 | Beslut | Val (2026-11-23) |

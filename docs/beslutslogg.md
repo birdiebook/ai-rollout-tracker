@@ -235,3 +235,11 @@ inne. **Diagram per serie:** takt och förändring i takt de senaste tio åren u
 historiken. **Bygget fallerar** om datatesterna i `warehouse.py` fallerar, och då publiceras ingenting.
 Ägaren aktiverar Pages en gång (`docs/drift.md`).
 
+
+
+## 2026-11-23 – Steg 2 planeras: flödesmodell, sannolikheter och regim
+
+Efter fas 0–6 zoomar projektet ut. I stället för nio separata grenar byggs en kedja från användning till el, där
+leden stäms av mot varandra och varje led får nowcast, prognos 1–8 kvartal och regimsannolikhet. Planen är uppdelad
+i vågor (0–4) med parallella spår och förregistreringsgrindar: [steg2/plan.md](steg2/plan.md). Sex beslut för
+Johannes står i planens avsnitt 7.
