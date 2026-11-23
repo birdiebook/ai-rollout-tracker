@@ -1,4 +1,4 @@
-# Weekly snapshot collector: Epoch AI (benchmarks, ECI, models database, hardware), METR, arXiv.
+# Weekly snapshot collector: Epoch AI (benchmarks, ECI, models database, hardware), METR, arXiv, first-party API prices.
 # Our own weekly snapshots are what gives ECI and the models database an honest known_from
 # (docs/mattregister.md 2026-11-23), so this must keep running. No secrets needed.
 # data/ lives in the Actions cache (never committed): restore the newest "ai-data-" entry, collect, save a new one.
@@ -47,6 +47,19 @@ jobs:
           status = observations.refresh(keys)
           failed = {k: v for k, v in status.items() if v.startswith("FAILED")}
           open("collect_failed.txt", "w").write("\n".join(f"{k} {v}" for k, v in failed.items()))
+          PY
+      # Track B5: weekly snapshot of first-party API prices (only developers whose pricing page is reachable and
+      # allowed, docs/kallor/priser.md), stored in data/raw/firstparty_prices/, then the own-snapshot G2 series.
+      - name: Collect first-party price snapshots
+        run: |
+          python - <<'PY'
+          from ai_tracker import observations
+          from ai_tracker.series import firstparty_prices
+          status = observations.refresh([s.key for s in firstparty_prices.SPECS])
+          failed = [f"{k} {v}" for k, v in status.items() if v.startswith("FAILED")]
+          if failed:
+              with open("collect_failed.txt", "a") as fh:
+                  fh.write("\n" + "\n".join(failed))
           PY
       - name: Save data
         if: always()
