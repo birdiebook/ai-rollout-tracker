@@ -72,6 +72,7 @@ MODELS = ["V1", "V2", "B2"]  # the registered Holm family for N1 (register chang
 STEP2_MODELS = ["B3", "DF"]
 STEP2_UNEVALUATED = {"DF": "not built yet (C3)"}
 STEP2_BUILDS_ON = {"B3": "B2"}
+CHAMPION_AT_STEP2 = "B1"  # the champion when step 2 was registered (F-B10 "nuvarande huvudmodell"); fixed
 # B3 companies (as B2: Meta and Alphabet) -> b3.GROUPS key. Their guided quantity is full-year capex.
 B3_COMPANIES = {"capex_meta": "meta", "capex_googl": "googl"}
 # B2 may not be promoted before an independent review approves the extracted guidance values (register)
@@ -486,7 +487,7 @@ def evaluate(errors: pd.DataFrame, pooled: bool) -> dict:
 def _step2(common: pd.DataFrame, m: dict, pooled: bool) -> dict:
     """Step-2 family {B3, DF} in one period (F-B9, F-B10): B3 against the best of B0, B1, the current champion and
     B2 on MAE; Holm over {B3, DF} with DF at p = 1 (not built). The locked family {V1, V2, B2} is untouched."""
-    cands = list(dict.fromkeys(["B0", "B1", CHAMPION, STEP2_BUILDS_ON["B3"]]))
+    cands = [c for c in dict.fromkeys(["B0", "B1", CHAMPION_AT_STEP2, STEP2_BUILDS_ON["B3"]]) if c != "B3"]
     comp = engine.best_baseline({c: m[c]["MAE"] for c in cands}, cands)
     r = engine.pooled_dm(common.assign(quarter=common["quarter"].astype(str)), "B3", comp) if pooled \
         else evaluation.dm_test(common["B3"].to_numpy(), common[comp].to_numpy())
@@ -511,7 +512,8 @@ def promotion_step2(res: dict) -> dict:
             c[per]["comparator"] = s2["comparator"]
         c["promoted"] = engine.passes({p: c[p] for p in ("full", "2023Q1-")})
         checks["B3"], passed["B3"] = c, c["promoted"]
-    d = engine.decide(passed, {v: res["full"]["metrics"][v]["MAE"] for v in passed}, REVIEW_REQUIRED, CHAMPION)
+    d = engine.decide(passed, {v: res["full"]["metrics"][v]["MAE"] for v in passed}, REVIEW_REQUIRED,
+                      CHAMPION_AT_STEP2)
     return {"champion": d.champion, "checks": checks, "conditional": d.conditional,
             "unevaluated": dict(STEP2_UNEVALUATED)}
 

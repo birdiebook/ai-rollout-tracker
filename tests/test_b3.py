@@ -233,11 +233,11 @@ def test_n2_step2_comparator_is_b2_and_holm_counts_df():
     assert set(good.holm) == {"V1", "B2"}  # the locked family is not recomputed with B3
     # better than B1 but worse than B2: fails against the F-B10 comparator
     bad = n2.evaluate(_n2_frame(e2 * 0.3, e2 * 0.6)).step2
-    assert bad["passed"] == {"B3": False} and bad["champion"] == n2.CHAMPION
+    assert bad["passed"] == {"B3": False} and bad["champion"] == n2.CHAMPION_AT_STEP2 == "B2"
     # no B3 column: unevaluated, p = 1
     frame = _n2_frame(e2, e2).drop(columns="e_B3")
     none = n2.evaluate(frame).step2
-    assert none["p"] == {"B3": 1.0, "DF": 1.0} and none["passed"] == {} and none["champion"] == n2.CHAMPION
+    assert none["p"] == {"B3": 1.0, "DF": 1.0} and none["passed"] == {} and none["champion"] == n2.CHAMPION_AT_STEP2
 
 
 def test_n2_step2_needs_both_periods():
@@ -394,9 +394,9 @@ def test_n1_step2_promotion_mechanics():
     assert p["checks"]["B3"]["full"]["comparator"] == "B2"
     # beats B1 (the champion) but not B2: fails (F-B10)
     q = n1.promotion_step2(_res({**base, "B3": 4.5}, 0.02))
-    assert not q["checks"]["B3"]["promoted"] and q["champion"] == n1.CHAMPION
+    assert not q["checks"]["B3"]["promoted"] and q["champion"] == n1.CHAMPION_AT_STEP2
     r = n1.promotion_step2(_res({**base, "B3": 3.0}, 0.2))  # Holm fails
-    assert not r["checks"]["B3"]["promoted"] and r["champion"] == n1.CHAMPION
+    assert not r["checks"]["B3"]["promoted"] and r["champion"] == n1.CHAMPION_AT_STEP2
 
 
 def test_n1_step2_holm_family_has_df_at_one(capex):
