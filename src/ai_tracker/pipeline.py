@@ -7,7 +7,8 @@
     python -m ai_tracker.pipeline n2-live            N2 only (day 5: previous month)
     python -m ai_tracker.pipeline n1-live            N1 only (quarter end + 20 days: the quarter just ended)
     python -m ai_tracker.pipeline scorecard          forecasts/SCORECARD.md: live forecasts vs first-vintage outcome
-    python -m ai_tracker.pipeline publish PATH...    git-commit new forecast files + SCORECARD.md, or new snapshots (CI)
+    python -m ai_tracker.pipeline publish PATH...    git-commit new forecast files + SCORECARD.md, or new snapshots and
+                                                     their monthly letters (CI)
 
 Timing rule. A live forecast is only made on its registered origin, and the origin is *today* in UTC: the routine
 refreshes its series and then reads them with as_of(origin). Every row fetched today has known_from <= today, so the
@@ -16,7 +17,8 @@ n1|n2` still allows a manual run with an explicit --origin). If the registered d
 shifted.
 
 Immutability. A forecast file that exists is never rewritten (the writers open with mode "x"), a due origin whose
-file exists is skipped, and `publish` refuses a path that is already in HEAD.
+file exists is skipped, and `publish` refuses a path that is already in HEAD. A monthly letter
+(docs/manadsbrev/<YYYY-MM>.md) is not immutable: `publish` commits it when it is new or differs from HEAD.
 """
 
 from __future__ import annotations
@@ -324,38 +326,51 @@ def _git(repo: Path, *args: str, check: bool = True) -> subprocess.CompletedProc
 
 SNAPSHOT_PATH = re.compile(r"snapshots/\d{4}-\d{2}\.json")
 FORECAST_PATH = re.compile(r"forecasts/[^/]+/[^/]+\.json")
+LETTER_PATH = re.compile(r"docs/manadsbrev/\d{4}-\d{2}\.md")
 
 
 def publish(paths: list[str], repo: Path | None = None, scorecard_path: str = "forecasts/SCORECARD.md") -> bool:
-    """Commit new forecast files (and the scorecard) or new monthly snapshots with the bot identity. Does not push.
+    """Commit new forecast files (and the scorecard), new monthly snapshots or monthly letters with the bot
+    identity. Does not push.
 
-    Only paths that are not yet in HEAD are committed: a forecast or snapshot that is already committed is never
-    committed again, so a second run is a no-op. Returns True if a commit was made.
+    Only forecasts and snapshots that are not yet in HEAD are committed: one that is already committed is never
+    committed again, so a second run is a no-op. A letter is committed when it is new or differs from HEAD (it is
+    regenerated from the snapshot, not a record). Returns True if a commit was made.
     """
     repo = Path(repo or config.REPO)
-    new = []
+    new, letters = [], []
     for p in paths:
+        if LETTER_PATH.fullmatch(p):
+            if not (repo / p).is_file():
+                raise SystemExit(f"{p} does not exist")
+            in_head = _git(repo, "cat-file", "-e", f"HEAD:{p}", check=False).returncode == 0
+            if in_head and _git(repo, "diff", "--quiet", "HEAD", "--", p, check=False).returncode == 0:
+                print(f"{p} is unchanged. Skipping.")
+            else:
+                letters.append(p)
+            continue
         if not (FORECAST_PATH.fullmatch(p) or SNAPSHOT_PATH.fullmatch(p)):
-            raise SystemExit(f"refusing to publish {p}: only forecasts/<nowcast>/<period>.json "
-                             "or snapshots/<YYYY-MM>.json")
+            raise SystemExit(f"refusing to publish {p}: only forecasts/<nowcast>/<period>.json, "
+                             "snapshots/<YYYY-MM>.json or docs/manadsbrev/<YYYY-MM>.md")
         if _git(repo, "cat-file", "-e", f"HEAD:{p}", check=False).returncode == 0:
             print(f"{p} is already committed; live forecasts and snapshots are never re-committed. Skipping.")
             continue
         if not (repo / p).is_file():
             raise SystemExit(f"{p} does not exist")
         new.append(p)
-    if not new:
+    if not new and not letters:
         print("nothing to publish")
         return False
     forecasts = [p for p in new if FORECAST_PATH.fullmatch(p)]
     snapshots = [p for p in new if SNAPSHOT_PATH.fullmatch(p)]
-    _git(repo, "add", "--", *new)
+    _git(repo, "add", "--", *new, *letters)
     if forecasts and (repo / scorecard_path).is_file():
         _git(repo, "add", "--", scorecard_path)
     staged = _git(repo, "diff", "--cached", "--name-status").stdout.split("\n")
     staged = [line.split("\t") for line in staged if line]
-    allowed = set(new) | ({scorecard_path} if forecasts else set())
-    if any(f not in allowed for _, f in staged) or any(s != "A" for s, f in staged if f in new):
+    allowed = set(new) | set(letters) | ({scorecard_path} if forecasts else set())
+    if (any(f not in allowed for _, f in staged) or any(s != "A" for s, f in staged if f in new)
+            or any(s not in ("A", "M") for s, f in staged if f in letters)):
         raise SystemExit(f"unexpected staged changes: {staged}")
     parts = []
     if forecasts:
@@ -363,8 +378,10 @@ def publish(paths: list[str], repo: Path | None = None, scorecard_path: str = "f
         parts.append(f"Live forecast {periods} (origin {utc_today().date()})")
     if snapshots:
         parts.append(f"Monthly snapshot {', '.join(Path(p).stem for p in snapshots)} (written {utc_today().date()})")
+    if letters:
+        parts.append(f"Monthly letter {', '.join(Path(p).stem for p in letters)}")
     _git(repo, "-c", f"user.name={BOT_NAME}", "-c", f"user.email={BOT_EMAIL}", "commit", "-m", "; ".join(parts))
-    print(f"committed {new}")
+    print(f"committed {new + letters}")
     return True
 
 

@@ -10,6 +10,7 @@ import html
 import math
 
 from ai_tracker import catalog
+from ai_tracker.site import markdown as MD
 
 SITE_TITLE = "AI-utrullningen"
 STATE_ICON = {"accelererar": "↑", "stabil": "→", "bromsar in": "↓", "för få serier": "·"}
@@ -76,7 +77,7 @@ def change_text(v: dict) -> str:
 
 def nav(active: str) -> str:
     items = [("index.html", "Översikt", "oversikt"), ("prognoser.html", "Prognoser", "prognoser"),
-             ("metod.html", "Metod och källor", "metod")]
+             ("manadsbrev.html", "Månadsbrev", "manadsbrev"), ("metod.html", "Metod och källor", "metod")]
     links = "".join(f'<a href="{href}"{" aria-current=\"page\"" if key == active else ""}>{label}</a>'
                     for href, label, key in items)
     return f'<nav class="top" aria-label="Huvudmeny"><a class="brand" href="index.html">{SITE_TITLE}</a>{links}</nav>'
@@ -415,3 +416,31 @@ def method_page(doc: dict, build: dict) -> str:
 <div class="table-wrap"><table><thead><tr><th>Gren</th><th>Serie</th><th>Namn</th><th>Skäl</th></tr></thead><tbody>{withheld}</tbody></table></div>
 </section>"""
     return page(f"Metod och källor – {SITE_TITLE}", "metod", body, None, build)
+
+
+# ------------------------------------------------------------------ monthly letters
+
+
+def letters_page(doc: dict, build: dict) -> str:
+    items = "".join(
+        f'<li><a href="{esc(x["page"])}">{esc(x["month_sv"].capitalize())}</a>'
+        f'{kind_note(x["kind"])} <span class="muted small">· <a href="{esc(build["repo"])}/blob/main/{esc(x["file"])}">'
+        f'Markdown i git</a></span></li>' for x in doc["letters"])
+    listing = f'<ul class="letters">{items}</ul>' if items else "<p>Inga månadsbrev än.</p>"
+    body = f"""<section class="intro prose">
+<h1>Månadsbrev</h1>
+<p class="lead">Ett brev per månadsslut: vilka grenar och serier som ändrade takt, nya skarpa prognoser och utfall, och nyheter i datan. Brevet genereras automatiskt och deterministiskt från månadens ögonblicksbild (ingen språkmodell), och committas tillsammans med den.</p>
+<p>Brev märkta <em>rekonstruerad</em> är skrivna från en beräkning i efterhand, inte från en skarp ögonblicksbild.</p>
+{listing}
+</section>"""
+    return page(f"Månadsbrev – {SITE_TITLE}", "manadsbrev", body, None, build)
+
+
+def letter_page(letter: dict, build: dict) -> str:
+    content = MD.render(letter["markdown"], {"Visas inte av licensskäl": "withheld"})
+    body = f"""<p class="crumb"><a href="manadsbrev.html">Månadsbrev</a> › {esc(letter["month"])}</p>
+<article class="letter prose">
+{content}
+<p class="small muted">Källa: <a href="{esc(build["repo"])}/blob/main/{esc(letter["file"])}">{esc(letter["file"])}</a>.</p>
+</article>"""
+    return page(f"{letter['title']} – {SITE_TITLE}", "manadsbrev", body, None, build)
