@@ -274,3 +274,6 @@ andra fem leverantörernas värdar är blockerade. Anthropics villkor förbjuder
 ... where we otherwise explicitly permit it". Det är oklart om `llms.txt` och `robots.txt` räknas som sådant tillstånd.
 Insamlingen är därför pausad (`status="BLOCKED"`, serien stängd) tills Johannes har beslutat. Koden och korskontrollen
 mot LiteLLM finns kvar och stämde exakt för alla 23 aktuella modeller.
+
+**Uppdatering samma dag:** Johannes godkände spåret, och insamlingen av Anthropics prissida är påslagen igen (en
+hämtning per vecka). Serien är fortfarande `publish=False`, eftersom sidan inte anger någon licens för vidarepublicering.

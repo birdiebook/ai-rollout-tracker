@@ -114,9 +114,9 @@ class Provider:
 _PROXY = "host refused by the sandbox proxy (403 at CONNECT, 'no rule or network setting allows this host')"
 PROVIDERS: dict[str, Provider] = {
     "anthropic": Provider(
-        "anthropic", "BLOCKED", "https://platform.claude.com/docs/en/about-claude/pricing.md", "2026-11-23",
-        "paused 2026-11-23 pending the owner's decision: Anthropic's terms forbid automated access to the Services "
-        "unless explicitly permitted; whether llms.txt/robots.txt counts as permission is unclear (docs/kallor/priser.md)",
+        "anthropic", "OK", "https://platform.claude.com/docs/en/about-claude/pricing.md", "2026-11-23",
+        "machine-readable Markdown pricing page listed in platform.claude.com/llms.txt; robots.txt allows all but "
+        "/api/; one request per week; approved by the owner 2026-11-23 (docs/beslutslogg.md)",
         parse_anthropic, "anthropic"),
     "openai": Provider("openai", "BLOCKED", "https://platform.openai.com/docs/pricing", "2026-11-23",
                        f"openai.com, platform.openai.com: {_PROXY}", litellm_provider="openai"),
