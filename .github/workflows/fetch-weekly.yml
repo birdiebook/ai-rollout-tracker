@@ -1,5 +1,8 @@
 # Weekly data fetch (Mondays). Refreshes every catalog series into the Actions cache and runs the warehouse checks.
-# Nothing is committed and no data artifact is uploaded (artifacts of a public repo are downloadable; licences). Scheduled runs only happen on the default branch (main); run by hand with workflow_dispatch.
+# Nothing is committed. The only data artifact is the encrypted snapshot (data-snapshot, AES-256-GCM with the DATA_KEY
+# secret, 14 days): artifacts of a public repo are downloadable and several licences forbid republishing, so data never
+# leaves the job unencrypted. Without the DATA_KEY secret the snapshot steps are skipped. docs/drift.md, "Datasnapshot".
+# Scheduled runs only happen on the default branch (main); run by hand with workflow_dispatch.
 # A failed check fails the job before the cache is saved, so a bad table never replaces the cached one.
 # A stale series (freshness check, exit 2) saves the cache first and then fails the job.
 # Shares the concurrency group and cache key prefix with the other data jobs (nowcast.yml, collect-weekly.yml).
@@ -61,8 +64,33 @@ jobs:
         with:
           path: data
           key: ai-data-${{ github.run_id }}
+      # After the cache save and before the stale check, so a table that passed the checks is snapshotted even when
+      # the job then fails on freshness. The key is passed only as an env var to the pack step and never echoed.
+      - name: Check for DATA_KEY secret
+        id: datakey
+        env:
+          DATA_KEY: ${{ secrets.DATA_KEY }}
+        run: |
+          if [ -n "${DATA_KEY}" ]; then echo "present=true" >> "$GITHUB_OUTPUT"; else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::DATA_KEY secret not set: no encrypted data snapshot this run (docs/drift.md, Datasnapshot)."
+          fi
+      - name: Pack encrypted data snapshot
+        if: steps.datakey.outputs.present == 'true'
+        env:
+          DATA_KEY: ${{ secrets.DATA_KEY }}
+        run: python -m ai_tracker.datasnapshot pack --out snapshot-out/data-snapshot.aisnap
+      - name: Upload encrypted data snapshot
+        if: steps.datakey.outputs.present == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: data-snapshot
+          path: snapshot-out/data-snapshot.aisnap
+          retention-days: 14
+          compression-level: 0  # already compressed and encrypted
+          if-no-files-found: error
       - name: Fail on stale series
-        if: steps.weekly.outputs.rc == '2'
+        if: always() && steps.weekly.outputs.rc == '2'  # also when a snapshot step failed
         run: |
           echo "::error::Stale series (see the fetch step log and docs/drift.md, section Aktualitet)."
           exit 1
