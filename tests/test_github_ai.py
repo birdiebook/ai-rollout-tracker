@@ -121,8 +121,8 @@ def test_search_weeks_and_queries():
     assert github_search.last_complete_monday(date(2026, 11, 22)) == date(2026, 11, 9)
     full = github_search.weeks_to_query(today, max_weeks=None)
     assert full[0] == date(2024, 1, 1) and full[-1] == date(2026, 11, 16) and len(full) == 151
-    first = github_search.weeks_to_query(today)  # cold start: the newest 40 weeks, contiguous
-    assert len(first) == 40 and first == full[-40:]
+    first = github_search.weeks_to_query(today)  # cold start: the newest 12 weeks, contiguous
+    assert len(first) == 12 and first == full[-12:]
     stored = {str(pd.Period(w, "W-SUN")) for w in full}
     recent = github_search.weeks_to_query(today, stored)
     assert len(recent) == 8 and recent[0] == date(2026, 9, 28)
@@ -217,7 +217,7 @@ def test_search_series_backfill_then_recent_weeks(tmp_path, monkeypatch):
     monkeypatch.setattr(observations, "PATH", tmp_path / "observations.parquet")
     asked = []
 
-    def fake_counts(stored, today=None, get=None, max_weeks=github_search.MAX_WEEKS_PER_FETCH):
+    def fake_counts(stored, today=None, get=None, max_weeks=None):
         weeks = github_search.weeks_to_query(date(2026, 11, 23), stored, max_weeks)
         asked.append(len(weeks))
         df = pd.DataFrame({n: 100.0 for n in github_search.QUERIES}, index=pd.PeriodIndex(weeks, freq="W-SUN"))
@@ -226,9 +226,9 @@ def test_search_series_backfill_then_recent_weeks(tmp_path, monkeypatch):
 
     monkeypatch.setattr(github_search, "counts", fake_counts)
     spec = catalog.by_key(github_ai.SPECS)["g3_ghs_ai_coauthor_share_w"]
-    for k in range(6):
+    for k in range(37):
         observations.upsert(spec, spec.fetch(), fetched_at=date(2026, 11, 23))
-    assert asked == [40, 40, 40, 40, 23, 8]  # a cold start fills 151 weeks over five runs, then 8 a run
+    assert asked[:2] == [12, 12] and asked[-2:] == [11, 8]  # 4 older weeks a run until 2024-01, then 8 a run
     t = observations.load()
     assert t["period"].nunique() == 151
-    assert (t["source"] == "backfill").sum() == 40
+    assert (t["source"] == "backfill").sum() == 12

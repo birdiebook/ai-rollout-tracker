@@ -15,13 +15,15 @@ from ai_tracker.sources import github_search
 
 def run(out_dir: Path) -> None:
     github_search.MIN_INTERVAL = float(os.environ.get("GHS_MIN_INTERVAL", "2.5"))
-    deadline = time.monotonic() + 60 * float(os.environ.get("GHS_DEADLINE_MIN", "75"))
+    deadline = time.monotonic() + 60 * float(os.environ.get("GHS_DEADLINE_MIN", "45"))
     today = datetime.now(timezone.utc).date()
 
     def get(q: str):  # stop asking near the job timeout so the artifact is still uploaded
         return github_search.total_count(q) if time.monotonic() < deadline else None
 
-    df = github_search.counts(set(), today=today, get=get, max_weeks=None)
+    # the live path of a cold start (the newest MAX_WEEKS_PER_FETCH weeks); a full backfill from 2024 does not fit
+    # (2026-11-23: 140 answers in 75 minutes under the secondary rate limit)
+    df = github_search.counts(set(), today=today, get=get, max_weeks=github_search.MAX_WEEKS_PER_FETCH)
     out = df.copy()
     out.index = [p.start_time.date().isoformat() for p in df.index]
     out.index.name = "week"

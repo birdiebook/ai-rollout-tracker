@@ -30,7 +30,8 @@ SOURCE = "github_search"
 API = "https://api.github.com/search/commits"
 START = date(2024, 1, 1)  # Monday
 REQUERY_WEEKS = 8
-MAX_WEEKS_PER_FETCH = 40  # 200 queries, about 20 minutes at MIN_INTERVAL
+MAX_WEEKS_PER_FETCH = 12  # 60 queries; measured 2026-11-23 in Actions: about 2 answers per minute (secondary limit)
+FETCH_BUDGET_MIN = 30.0  # minutes of querying per run (shared by all g3_ghs_* series), then the rest waits a week
 MIN_INTERVAL = 6.0  # seconds; the primary limit is 30 searches per minute, the secondary limit is stricter
 SECONDARY_WAIT = 90.0  # seconds to back off after a secondary-rate-limit 403
 QUERIES = {
@@ -180,8 +181,18 @@ def joined(values: pd.Series, stored: set) -> pd.Series:
     return values.loc[keep]
 
 
+_deadline: list[float] = []
+
+
+def budgeted(q: str) -> int | None:
+    """total_count within the run's time budget (first call starts the clock); None after it."""
+    if not _deadline:
+        _deadline.append(time.monotonic() + 60 * FETCH_BUDGET_MIN)
+    return total_count(q) if time.monotonic() < _deadline[0] else None
+
+
 def fetch(key: str, name: str, kind: str) -> pd.Series:
     """Spec.fetch for series `key`: share (%) or level of query `name`."""
     stored = stored_periods(key)
-    df = counts(stored, max_weeks=MAX_WEEKS_PER_FETCH)  # read at call time (a one-off backfill sets None)
+    df = counts(stored, get=budgeted, max_weeks=MAX_WEEKS_PER_FETCH)  # cap read at call time
     return joined(share(name, df) if kind == "share" else level(name, df), stored)
