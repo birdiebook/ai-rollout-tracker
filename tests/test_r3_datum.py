@@ -264,6 +264,27 @@ def test_asml_bookings_regimes_are_closed_and_exclude_2016_and_2026():
     assert "2017Q1" in seen and "2025Q4" in seen
 
 
+def test_asml_split_table_q2_2013_reads_the_including_column_and_the_previous_quarter():
+    """X2 (R3 item 4): the Cymer-split key figures of 17 July 2013 (layout as in the release, numbers as published)."""
+    text = ("ASML reports second quarter 2013 results. Q2 2013 ASML (excluding Cymer) June 2013 Cymer* Preliminary "
+            "Purchase Price Allocation Q2 2013 ASML (including Cymer) Q1 2013 ASML Net sales 1,155 32 1,187 892 of "
+            "which service and field option sales 239 32 271 215 Net bookings, excluding EUV 1,065 1,065 715 Net "
+            "bookings, excluding EUV (units) 38 38 25 Gross profit 483 18 (19 ) 482 341")
+    rel = asml_sec.parse_release(text)
+    assert rel is not None and rel.quarter == pd.Period("2013Q2", "Q")
+    assert rel.figures["net_sales"] == {pd.Period("2013Q2", "Q"): (1187.0, "net sales"),
+                                        pd.Period("2013Q1", "Q"): (892.0, "net sales")}
+    assert {q: v for q, (v, _) in rel.figures["net_bookings"].items()} == {pd.Period("2013Q2", "Q"): 1065.0,
+                                                                          pd.Period("2013Q1", "Q"): 715.0}
+    assert all(d == "net bookings, excluding euv" for _, d in rel.figures["net_bookings"].values())
+
+
+def test_asml_presentation_exhibits_are_skipped():
+    """The 2017-04-19 6-K's presentation (asml20170418presentatd98.htm) has no bookings row and was parsed first."""
+    assert asml_sec.SKIP_DOC.search("asml20170418presentatd98.htm")
+    assert not asml_sec.SKIP_DOC.search("pressreleasequarterlyresul.htm")
+
+
 @pytest.mark.parametrize("seed", range(6))
 def test_asml_vintages_point_in_time(seed):
     rnd = random.Random(300 + seed)
