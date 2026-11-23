@@ -26,3 +26,18 @@ GA, AZ, OR, OH och USA ur EPM:s arkivnummer (tabell 5.4.A) och EIA-861M. `known_
 läckageflagga. **vast.ai (G6): BLOCKED.** Villkoren (version 2026-09-01) förbjuder automatiserad
 insamling och prisindex utan skriftligt avtal, så ingen insamlare och inget dagligt arbetsflöde byggdes.
 Detaljer: [kallor/indeed_vast_eia.md](kallor/indeed_vast_eia.md).
+
+## 2026-11-23 – SEC-serier: kalendermappning, Amazons capex och omräkningar
+
+**Kalenderkvartal = kvartalet som innehåller räkenskapskvartalets mittpunkt.** För MSFT, GOOGL, AMZN och
+META är det samma som slutdatumets kvartal, eftersom alla deras kvartal slutar på kalenderkvartalets
+sista dag. För Nvidia blir aug–okt Q3, så Nvidia ligger ungefär en månad efter. **Varför inte
+slutdatum:** då blir aug–okt "Q4", och värdet blir känt före periodens slut, vilket bryter
+läckagekontrollen.
+**Amazons capex = brutto (`PaymentsToAcquireProductiveAssets`), från 2017Q3.** De äldre taggarna är
+netto efter incitament, och en av dem bytte definition 2018. **Varför:** att skarva brutto mot netto
+ger ett definitionsbrott, och bruttot matchar de andra tre bolagens rader. Därför börjar `capex_hyp4`
+2017Q3. En nettoserie med historik från 2008 går att bygga om måttregistret väljer netto.
+**Omräkningar som inte bryts ned per kvartal läggs inte i ett enda kvartal.** Kvartalet behåller då
+sin tidigare version. Det är konservativt, och några helår summerar därför inte till det senaste
+helårsvärdet. Detaljer: [kallor/sec.md](kallor/sec.md).
