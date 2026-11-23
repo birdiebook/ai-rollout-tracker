@@ -182,7 +182,22 @@ som anges (högst 60 s, 12 försök) och har 1 s mellan anrop. I Actions har job
 
 ## 4. Datakontroller
 
-PLACEHOLDER
+Gjorda 2026-11-23 (nivåer och konsistens, inga takter):
+
+- **Wikipedia, summering:** `g3_wiki_chatgpt_en` för veckan 2026-11-16–22 är 291 440. Det är summan av de sju
+  dagsvärden som hämtades separat för "ChatGPT" (43 254, 50 970, 49 796, 48 215, 39 835, 29 378 och 29 992).
+- **Radar, oberoende av fönster:** GPTBot 13,35 % och ClaudeBot 8,23 % för veckan 2024-12-30 är lika i proben
+  (fönster 2024-12-23–2025-12-08) och i jobbet (fönster 2024-12-16–2025-12-01). Andelarna beror alltså inte på
+  fönstret.
+- **Radar, andelar summerar:** de fem syftesgrupperna i CRAWL_PURPOSE (Training, Mixed Purpose, Search, User Action,
+  Undeclared) summerar till 100,0 per dag i proben. Det gör också HUMAN, NON_AI_BOT, AI_BOT och MIXED_PURPOSE.
+- **Tabellen:** 37 serier, 7 173 rader, alla `source=backfill`. `python -m ai_tracker.warehouse` är grön (inklusive
+  aktualitet) och hela pytest är grön efter sammanslagning med main. Inga hål.
+- **known_from i backfillen:** Wikipedias sista vecka (2026-11-16–22) har `known_from` 2026-11-24 och Radars
+  2026-11-23. Wikipedia-veckan är alltså osynlig för `as_of` i dag, fast data fanns. Det är den konservativa sidan.
+
+**Körningar:** Radar-proben (`jobs/cf_radar_probe.py`, borttagen efter användning, commit da28b5b) gick två gånger, och jobbet `cloudflare_radar` en gång (run 45268148454, cirka 2 minuter för 13 serier i
+tre fönster). Wikipedia hämtades lokalt: 74 titlar, varav de flesta fick 429 en eller flera gånger på den delade IP:n.
 
 ## 5. BLOCKED och värdar
 
