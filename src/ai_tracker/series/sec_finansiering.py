@@ -136,7 +136,7 @@ NOTES = {
     ("debt_repaid", "googl"): "Alphabets rad 'Repayments of debt' omfattar även annan upplåning; före 2024 troligen också "
                               "amortering på finansiell leasing (ej verifierat).",
     ("lt_debt", "googl"): "Bokfört värde, obligationer. 2020–2024 taggade Alphabet balansraden inkl. finansiell leasing "
-                          "(annan tagg); serien börjar därför 2023Q4 (omräknade jämförelsetal).",
+                          "(annan tagg); serien börjar därför 2024Q4.",
     ("lt_debt", "orcl"): "Notes payable and other borrowings, kortfristiga + långfristiga (inkl. företagscertifikat).",
     ("lt_debt", "crwv"): "DebtInstrumentCarryingAmount (nominellt utestående), ~1 % över bokfört värde; balansraderna "
                          "taggas med egna taggar från 2026Q2.",
