@@ -1,0 +1,63 @@
+# Weekly snapshot collector: Epoch AI (benchmarks, ECI, models database, hardware), METR, arXiv.
+# Our own weekly snapshots are what gives ECI and the models database an honest known_from
+# (docs/mattregister.md 2026-11-23), so this must keep running. No secrets needed.
+# data/ lives in the Actions cache (never committed): restore the newest "ai-data-" entry, collect, save a new one.
+# Other collectors use the same cache prefix and the same concurrency group, so runs never overlap.
+name: Collect weekly
+
+on:
+  schedule:
+    - cron: "17 4 * * 1"  # Mondays 04:17 UTC: the week (W-SUN) ended the day before
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ai-data
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    env:
+      PYTHONPATH: src
+      ARXIV_MAX_CALLS: "900"  # resumable: a first backfill (~550 calls) may need more than one run
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Install pinned dependencies
+        run: python -m pip install -r ci/requirements.txt
+      - name: Restore data
+        uses: actions/cache/restore@v4
+        with:
+          path: data
+          key: ai-data-${{ github.run_id }}
+          restore-keys: ai-data-
+      - name: Collect weekly series
+        id: collect
+        run: |
+          python - <<'PY'
+          from ai_tracker import observations
+          from ai_tracker.series import arxiv, epoch_hub, metr
+          keys = [s.key for m in (epoch_hub, metr, arxiv) for s in m.SPECS]
+          status = observations.refresh(keys)
+          failed = {k: v for k, v in status.items() if v.startswith("FAILED")}
+          open("collect_failed.txt", "w").write("\n".join(f"{k} {v}" for k, v in failed.items()))
+          PY
+      - name: Save data
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: data
+          key: ai-data-${{ github.run_id }}
+      - name: Data quality checks
+        run: |
+          python -m ai_tracker.warehouse
+          python -m pytest -q tests/test_data_quality.py
+      - name: Report failed sources
+        run: |
+          if [ -s collect_failed.txt ]; then cat collect_failed.txt; exit 1; fi
