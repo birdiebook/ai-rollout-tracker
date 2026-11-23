@@ -5,7 +5,13 @@ contract (first vintage, outcome-known guard, promotion rule, immutable writer):
     python -m ai_tracker.nowcast backtest n2                          pre-registered backtest, logged to experiments/runs/
     (python -m ai_tracker.nowcast_n2 [...] and python -m ai_tracker.nowcast_n2.backtest remain as compatibility shims)
 
-Pre-registered and implemented exactly: B0, B1, V1 and B2, nothing else.
+Pre-registered and implemented exactly: B0, B1, V1 and B2, and in step 2 B3 (C2), nothing else.
+
+B3 (step 2, register G-B and "C0 preciseras efter granskning R6", F-B1-F-B3, F-B9-F-B11; shared logic in b3.py):
+B2 with the quarter's NT$ midpoint G x exp(m_k), k = the target month's position in its quarter (1-3). m_k is
+estimated at the origin from TSMC's earlier quarters: d = log(U / G at the origin of that quarter's k-th month),
+U = the quarter's three first vintages, only quarters whose U was known at the origin, shrunk per F-B3 (n >= 4).
+Holm family {B3, DF} with DF at p = 1; comparator = the best of B0, B1, the champion (B2) and B2 (evaluate_step2).
 
 Timing
 - Target month m. Origin = day 5 of month m+1 (register change 2026-11-23; earliest 6-K ever filed is day 6).
@@ -61,7 +67,7 @@ import numpy as np
 import pandas as pd
 
 from ai_tracker import evaluation, observations
-from ai_tracker.nowcast import engine, intervals
+from ai_tracker.nowcast import b3, engine, intervals
 
 TARGET = "tsmc_revenue_m"
 INDICATORS = ["us_imports_tw_m"]  # register change 2026-11-23: us_ip_semis excluded, Korea/Taiwan blocked
@@ -71,8 +77,15 @@ DROPPED_INDICATORS = {
     "tw_exports_m": "BLOCKED (Taiwan MOF/customs)",
     "us_ip_semis": "not in the registered variants (Fed G.17 primary source since I7; needs a new registered variant)",
 }
-VARIANTS = ["B0", "B1", "V1", "B2"]
-MODELS = ["V1", "B2"]  # the registered Holm family for N2 (register change "B2: TSMC före 2017Q3 ...")
+VARIANTS = ["B0", "B1", "V1", "B2", "B3"]
+MODELS = ["V1", "B2"]  # the registered Holm family for N2 (register change "B2: TSMC före 2017Q3 ..."), locked
+# Step 2 (register "C0 preciseras efter granskning R6", F-B9): the Holm family for N2 in step 2 is {B3, DF}. A member
+# that is not evaluated yet enters with p = 1. F-B10: B3 is compared with the best of B0, B1, the current champion
+# and B2 (the model B3 builds on).
+STEP2_MODELS = ["B3", "DF"]
+STEP2_UNEVALUATED = {"DF": "not built yet (C3)"}
+STEP2_BUILDS_ON = {"B3": "B2"}
+CHAMPION_AT_STEP2 = "B2"  # the champion when step 2 was registered (F-B10 "nuvarande huvudmodell"); fixed
 # B2 may not be promoted before an independent review approves the extracted guidance values (register)
 # Review R2 (docs/granskning/r2_guidance.md) approved the TSMC guidance extraction on 2026-11-23.
 REVIEW_REQUIRED: dict[str, str] = {}
@@ -114,6 +127,11 @@ class Inputs:
     b2: float = np.nan  # 100 * log forecast (= b1 when B2 falls back)
     b2_source: str = ""  # "guidance NT$" | "guidance US$xFX" | "B1: <reason>"
     b2_guidance: float = np.nan  # G, the quarter's guided revenue in mn NT$ (NaN on fallback)
+    b2_known: float = np.nan  # sum of the quarter's months known at the origin (B3 reuses B2's pieces)
+    b2_share: float = np.nan  # B1 share of month m among the quarter's unknown months
+    b3: float = np.nan  # 100 * log forecast (= b2 when B2 falls back to B1)
+    b3_source: str = ""
+    b3_shift: dict = field(default_factory=dict)  # b3.Shift.as_dict() at this origin and position
 
 
 def month_inputs(month: pd.Period, table) -> Inputs:
@@ -204,12 +222,66 @@ def _b2(inp: Inputs, y: pd.Series, by_series: dict) -> None:
     inp.b2 = 100 * np.log(rest * b1[m] / sum(b1.values()))
     inp.b2_source = source
     inp.b2_guidance = g
+    inp.b2_known = float(sum(y[k] for k in known))
+    inp.b2_share = b1[m] / sum(b1.values())
     y_kf = engine.vintage_known_from(by_series[TARGET], inp.origin)
     for k in sorted(set(known) | {k - 12 for k in unknown} | {last, last - 12}):
         rec = (TARGET, str(k), float(y[k]), y_kf[k])
         if rec not in inp.used:
             inp.used.append(rec)
     inp.used.extend(used)
+
+
+# ------------------------------------------------------------------ B3 (step 2, C2; shared logic in b3.py)
+
+
+def position(month: pd.Period) -> int:
+    """F-B1: the origin position k = 1-3 of target month m within its quarter."""
+    return (month.month - 1) % 3 + 1
+
+
+def b3_deviations(table: pd.DataFrame | None, records: dict | None = None,
+                  outcomes: pd.DataFrame | None = None) -> pd.DataFrame:
+    """TSMC's deviations d_{P,k} = log(U_P / G_P(o_{P,k})) (b3.py; F-B1, F-B2). G = the guidance B2 used at the
+    origin of the quarter's k-th month (none where B2 fell back to B1). U_P = sum of the quarter's three months'
+    first vintages in NT$, known from the latest of their known_from. Pass `records` and `outcomes` when built."""
+    if records is None:
+        t = slim(table)
+        outcomes = first_vintages(t)
+        if outcomes.empty:
+            return b3.empty()
+        records = build_records(t, outcomes.index.max())
+    guidance = [(m.asfreq("Q-DEC"), position(m), r.origin, r.b2_guidance) for m, r in sorted(records.items())
+                if r.b2_source.startswith("guidance")]
+    quarters = {str(q): [(TARGET, k) for k in pd.period_range(q.asfreq("M", "s"), q.asfreq("M", "e"), freq="M")]
+                for q in sorted({g[0] for g in guidance})}
+    return b3.deviations("tsmc", guidance, b3.summed_outcomes({TARGET: outcomes}, quarters))
+
+
+def b3_pool(table: pd.DataFrame, records: dict, outcomes: pd.DataFrame) -> pd.DataFrame:
+    """B3's pool for N2: TSMC's deviations plus those of the other companies in its group ("quarterly_revenue",
+    b3.BUILDERS; Nvidia once N3 adds its builder)."""
+    own = b3_deviations(None, records, outcomes)
+    other = b3.group_pool(table, b3.GROUPS["tsmc"], skip=("ai_tracker.nowcast.n2:b3_deviations",))
+    parts = [p for p in (own, other) if len(p)]
+    return pd.concat(parts, ignore_index=True) if parts else b3.empty()
+
+
+def _b3(inp: Inputs, pool: pd.DataFrame) -> None:
+    """B3 = B2 with the guidance midpoint x exp(m_k) (G-B, F-B1, F-B3). Same formulas and fallbacks as B2."""
+    inp.b3, inp.b3_source, inp.b3_shift = inp.b2, inp.b2_source, {}
+    if not np.isfinite(inp.b2) or not inp.b2_source.startswith("guidance"):
+        return
+    s = b3.shift(pool, "tsmc", position(inp.month), inp.origin)
+    inp.b3_shift = s.as_dict()
+    if s.m == 0.0:
+        return
+    rest = b3.scaled(inp.b2_guidance, s.m) - inp.b2_known
+    if rest <= 0:
+        inp.b3, inp.b3_source = inp.b1, "B1: guidance x exp(m) minus known months <= 0"
+        return
+    inp.b3 = 100 * np.log(rest * inp.b2_share)
+    inp.b3_source = f"{inp.b2_source} x exp(m)"
 
 
 # ------------------------------------------------------------------ ridge
@@ -267,12 +339,16 @@ class Forecast:
         return {v: (float(np.exp(f / 100)) if np.isfinite(f) else None) for v, f in self.logs.items()}
 
 
-def forecast_from(month: pd.Period, records: dict, outcomes: pd.DataFrame) -> Forecast:
+def forecast_from(month: pd.Period, records: dict, outcomes: pd.DataFrame, pool: pd.DataFrame | None = None
+                  ) -> Forecast:
     """V1 trained on earlier months whose first-vintage outcome is known at this month's origin.
 
     `records` maps month -> Inputs (each built with as_of at its own origin), `outcomes` = first_vintages().
+    `pool`: B3's deviations (b3_pool()); None = TSMC's own deviations from `records` and `outcomes` (the group has no
+    other company with deviations yet; run() and forecast() always pass b3_pool()). Filtered on the origin in b3.
     """
     inp = records[month]
+    _b3(inp, b3_deviations(None, records, outcomes) if pool is None else pool)
     origin = inp.origin
     value, known = outcomes["value"].to_dict(), outcomes["known_from"].to_dict()
     rows = []
@@ -283,7 +359,7 @@ def forecast_from(month: pd.Period, records: dict, outcomes: pd.DataFrame) -> Fo
         if known[k] > origin or not np.isfinite(rk.b1) or len(rk.x) != len(INDICATORS):
             continue
         rows.append(([rk.x[i] for i in INDICATORS], 100 * np.log(value[k]) - rk.b1))
-    logs = {"B0": inp.b0, "B1": inp.b1, "V1": np.nan, "B2": inp.b2}
+    logs = {"B0": inp.b0, "B1": inp.b1, "V1": np.nan, "B2": inp.b2, "B3": inp.b3}
     lam = np.nan
     if rows and np.isfinite(inp.b1) and len(inp.x) == len(INDICATORS):
         X = np.array([r[0] for r in rows], dtype=float)
@@ -315,7 +391,8 @@ def forecast(origin, table: pd.DataFrame) -> Forecast:
     t = t[t["known_from"] <= origin]
     month = target_for(origin)
     records = build_records(t, month)
-    return forecast_from(month, records, first_vintages(t))
+    outcomes = first_vintages(t)
+    return forecast_from(month, records, outcomes, b3_pool(table[table["known_from"] <= origin], records, outcomes))
 
 
 # ------------------------------------------------------------------ backtest
@@ -335,9 +412,10 @@ class Result:
     holm: dict = None  # variant -> Holm-adjusted p over the registered family
     checks: dict = None  # variant -> list of PASS/FAIL lines
     conditional: dict = None  # variant -> status, for variants that pass but need a review first
+    step2: dict = None  # step-2 family {B3, DF}: comparator, Holm, checks, champion (evaluate_step2)
 
 
-COLUMNS = ["month", "origin", "outcome_known_from", "n_train", "lambda", "imports_lag", "b2_source",
+COLUMNS = ["month", "origin", "outcome_known_from", "n_train", "lambda", "imports_lag", "b2_source", "b3_m", "b3_n",
            *[f"e_{v}" for v in VARIANTS]]
 
 
@@ -351,6 +429,7 @@ def run(table: pd.DataFrame) -> pd.DataFrame:
     outcomes = first_vintages(t)
     last = outcomes.index.max()
     records = build_records(t, last)
+    pool = b3_pool(table, records, outcomes)  # the full table: other group members' series are not in slim()
     rows, known = [], []
     for m in sorted(records):
         if m not in outcomes.index:
@@ -359,7 +438,7 @@ def run(table: pd.DataFrame) -> pd.DataFrame:
         if note:
             known.append(note)
             continue
-        f = forecast_from(m, records, outcomes)
+        f = forecast_from(m, records, outcomes, pool)
         y = 100 * np.log(outcomes.at[m, "value"])
         imp_last = [p for s, p, *_ in f.inputs.used if s == "us_imports_tw_m"]
         rows.append({
@@ -367,6 +446,7 @@ def run(table: pd.DataFrame) -> pd.DataFrame:
             "n_train": f.n_train, "lambda": f.lam,
             "imports_lag": (m - pd.Period(max(imp_last), "M")).n if imp_last else np.nan,
             "b2_source": f.inputs.b2_source,
+            "b3_m": f.inputs.b3_shift.get("m", 0.0), "b3_n": f.inputs.b3_shift.get("n", 0),
             **{f"e_{v}": f.logs[v] - y for v in VARIANTS},
         })
     frame = pd.DataFrame(rows, columns=COLUMNS).set_index("month")
@@ -416,7 +496,44 @@ def evaluate(frame: pd.DataFrame) -> Result:
         passed[v] = engine.passes(per)
     d = engine.decide(passed, mae["full"], REVIEW_REQUIRED, "B1")
     return Result(ev, summary, baseline, holm.get("V1", np.nan), bool(d.winners), d.champion, checks.get("V1", []),
-                  holm, checks, d.conditional)
+                  holm, checks, d.conditional, evaluate_step2(ev, periods, mae, variants))
+
+
+def evaluate_step2(ev: pd.DataFrame, periods: dict, mae: dict, variants: list) -> dict:
+    """Step-2 family {B3, DF} (F-B9, F-B10, F-B11), on the same months as evaluate().
+
+    Comparator for B3 = the best by full-period MAE of B0, B1, the current champion and B2 (the model B3 builds on);
+    DM of B3 against it on the full period, Holm over {B3, DF} with DF at p = 1 (not built). Passing needs Holm-p <
+    0.10 (full period, "as before for N2") and a lower MAE than every comparator candidate in the full period and from
+    2023-01. A passing variant replaces the champion only if not in REVIEW_REQUIRED (it beats the champion by
+    construction). The locked phase 3-4 family {V1, B2} is not recomputed."""
+    cands = [c for c in dict.fromkeys(["B0", "B1", CHAMPION_AT_STEP2, STEP2_BUILDS_ON["B3"]]) if c != "B3"]
+    cands = [c for c in cands if c in variants]
+    p, dm, comp = {}, {}, None
+    if "B3" in variants and len(ev) >= 3:
+        comp = engine.best_baseline(mae["full"], cands)
+        r = evaluation.dm_test(ev["e_B3"], ev[f"e_{comp}"])
+        dm = {"vs": comp, "mean_diff": r.mean_diff, "p": r.p, "mde": r.mde, "n": r.n}
+        p["B3"] = r.p if np.isfinite(r.p) else 1.0
+    else:
+        p["B3"] = 1.0
+    p.update({v: 1.0 for v in STEP2_UNEVALUATED})
+    holm = evaluation.holm(p)
+    checks, passed = {}, {}
+    if comp is not None:
+        per = {"full": engine.period_check(mae["full"]["B3"], min(mae["full"][c] for c in cands), holm["B3"],
+                                           PROMOTION_P),
+               "2023+": engine.period_check(mae["2023+"]["B3"], min(mae["2023+"][c] for c in cands))}
+        c = {f"Holm-p {holm['B3']:.3f} < {PROMOTION_P} (step-2 family {'+'.join(STEP2_MODELS)}, DF p = 1)":
+             per["full"]["holm_ok"],
+             f"lower MAE than {'/'.join(cands)}, full period": per["full"]["mae_ok"],
+             f"lower MAE than {'/'.join(cands)}, 2023+": per["2023+"]["mae_ok"]}
+        checks["B3"] = [f"{'PASS' if ok_ else 'FAIL'}: {k}" for k, ok_ in c.items()]
+        passed["B3"] = engine.passes(per)
+    d = engine.decide(passed, {v: mae["full"][v] for v in passed}, REVIEW_REQUIRED, CHAMPION_AT_STEP2)
+    return {"candidates": cands, "comparator": comp, "dm": dm, "p": p, "holm": holm, "checks": checks,
+            "passed": passed, "unevaluated": dict(STEP2_UNEVALUATED), "champion": d.champion,
+            "conditional": d.conditional}
 
 
 # ------------------------------------------------------------------ forecast distributions (C1, grind G-C)
@@ -466,6 +583,12 @@ def log(result: Result):
     rows = [{"target": TARGET, "variant": r.variant, "period": f"{r.period} {r.range}", "n": r.n,
              "MAE": round(r.MAE, 4), "dm_p_vs_baseline": "" if np.isnan(r.dm_p) else round(r.dm_p, 4)}
             for r in result.summary.itertuples()]
+    s2 = result.step2 or {}
+    if s2.get("comparator"):  # step-2 test of B3 against its F-B10 comparator (row label says so)
+        full = result.summary[(result.summary["period"] == "full") & (result.summary["variant"] == "B3")].iloc[0]
+        rows.append({"target": TARGET, "variant": f"B3 step2 vs {s2['comparator']} (Holm {s2['holm']['B3']:.4f})",
+                     "period": f"full {full['range']}", "n": int(full["n"]), "MAE": round(float(full["MAE"]), 4),
+                     "dm_p_vs_baseline": round(float(s2["dm"]["p"]), 4)})
     return evaluation.log_run("n2_tsmc", rows)
 
 
@@ -488,6 +611,15 @@ def main_backtest():
     for v, lines in res.checks.items():
         print(f"{v}: " + " | ".join(lines))
     print(f"Promoted outright: {res.promoted}. Champion: {res.champion}. Conditional: {res.conditional or '-'}")
+    s2 = res.step2
+    print(f"\nStep 2 family {STEP2_MODELS} (DF unevaluated, p = 1): comparator for B3 = {s2['comparator']} "
+          f"(best of {s2['candidates']}), DM {s2['dm']}, raw p {s2['p']}, Holm {s2['holm']}")
+    for v, lines in s2["checks"].items():
+        print(f"{v}: " + " | ".join(lines))
+    print(f"Step 2 champion: {s2['champion']}. Conditional: {s2['conditional'] or '-'}")
+    ev3 = res.frame
+    print(f"B3 shifted (m != 0) in {(ev3['b3_m'] != 0).sum()} of {len(ev3)} evaluated months; "
+          f"m range {ev3['b3_m'].min():+.4f}..{ev3['b3_m'].max():+.4f}")
     ev = res.frame
     use = b2_usage(ev)
     print(f"B2 used guidance in {int(use['guidance'].sum())} of {int(use['months'].sum())} months; "
@@ -503,8 +635,10 @@ def main_backtest():
     pos = ev.assign(pos=[(m.month - 1) % 3 + 1 for m in ev.index])
     for k, d in pos.groupby("pos"):
         r = evaluation.dm_test(d["e_B2"], d["e_B1"])
+        r3 = evaluation.dm_test(d["e_B3"], d["e_B2"])
         print(f"info (not registered) month {k} of the quarter, n={len(d)}: MAE B1 {d['e_B1'].abs().mean():.2f}, "
-              f"B2 {d['e_B2'].abs().mean():.2f}, bias B2 {d['e_B2'].mean():+.2f}, DM p {r.p:.4f}")
+              f"B2 {d['e_B2'].abs().mean():.2f}, bias B2 {d['e_B2'].mean():+.2f}, DM p {r.p:.4f}; "
+              f"B3 {d['e_B3'].abs().mean():.2f}, bias B3 {d['e_B3'].mean():+.2f}, DM p B3 vs B2 {r3.p:.4f}")
     if intervals.ENABLED:  # grind G-C: off until the register entry exists
         for name, r in evaluate_intervals(frame).items():
             print("\n" + intervals.markdown(r, f"N2 intervals {name}"))
@@ -516,7 +650,10 @@ def main_backtest():
 
 FORECAST_DIR = evaluation.REPO / "forecasts" / "n2"
 # Set mechanically by the pre-registered promotion rule (evaluate(), docs/resultat/n2.md). B1 unless a model passes.
-CHAMPION = "B2"  # promoted 2026-11-23 by the registered rule after review R2 approved the TSMC guidance
+# B2 promoted 2026-11-23 by the registered rule after review R2 approved the TSMC guidance. B3 promoted 2026-11-23 by
+# the step-2 rule (evaluate_step2: Holm-p 0.038 in {B3, DF}, MAE below B0/B1/B2 in both periods; run log
+# experiments/runs/20261123T214326Z_n2_tsmc.csv, docs/resultat/n2.md). A decision taken is not changed by reruns.
+CHAMPION = "B3"
 
 
 def payload(fc: Forecast, table: pd.DataFrame, champion: str = CHAMPION, live_dir: Path | None = None) -> dict:
@@ -533,6 +670,7 @@ def payload(fc: Forecast, table: pd.DataFrame, champion: str = CHAMPION, live_di
         "value": levels[champion],
         "variants": levels,
         "v1": {"n_train": fc.n_train, "lambda": fc.lam, "features": fc.inputs.x},
+        "b3": {"source": fc.inputs.b3_source, "shift": fc.inputs.b3_shift},
         "inputs": [{"series": s, "period": p, "value": v, "known_from": str(pd.Timestamp(k).date())}
                    for s, p, v, k in fc.inputs.used],
         "table_max_fetched_at": str(pd.Timestamp(t["fetched_at"].max()).date()) if len(t) else None,
