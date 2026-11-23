@@ -252,3 +252,45 @@ redan passerat 0,90 (0,951 och 1,0). Successorregeln slår inte till, eftersom f
 Det kräver ett beslut av Johannes innan serierna används i diffusionsindex. Förslag: en benchmark med
 `superseded_by` eller utan Epoch-körning på 90 dagar räknas som avslutad och ersätts enligt successorregeln. Det
 är inte infört, och serierna är byggda enligt regeln som den står.
+
+### 2026-11-23 – G1 och G9: avslutade benchmarks, en per familj, försiktigare datum och kärnserier (före analys)
+
+Fas 2 I5 visade att urvalsregeln valde två benchmarks som Epoch har ersatt (`superseded_by`) och inte kört sedan
+2026-06-08. Deras frontvärden står därför still av mätskäl. Ändringarna nedan bygger bara på metadata
+(`superseded_by`, senaste körning, antal modeller, benchmarkens namn). Inga frontvärden över tid har analyserats.
+
+- **Avslutad benchmark:** en benchmark med `superseded_by` eller utan Epoch-körning på 90 dagar räknas som avslutad
+  och ersätts enligt successorregeln, på samma sätt som när frontvärdet passerar 0,90.
+- **En per familj:** högst en benchmark per familj (samma namnprefix före första versions- eller variantled, t.ex.
+  `spireclimb_*`). Inom familjen väljs den med flest Epoch-körda modeller, och vid lika antal basvarianten.
+- **Datum:** benchmarkvärden får `known_from` = `Started at` + 30 dagar, eftersom körningen startar före publicering.
+  Från första hämtningen gäller i stället `first_seen` om den är senare. Fördröjningen mäts och redovisas efter 6 månader.
+- Spår F6 kör urvalsregeln med ändringarna som kod och lägger till resultatet (valda benchmarks och antal) som en
+  daterad post här. Kärnserierna för G1 är de valda benchmarkernas frontserier.
+
+| Gren | Kärnserier | Anmärkning |
+|---|---|---|
+| G1 | `g1_epoch_bench_frontier_<valda>`, `g1_epoch_train_compute_frontier`, `g1_epoch_eci_frontier` | `<valda>` = resultatet av urvalsregeln. ECI är spärrad tills det finns 24 månader egna ögonblicksbilder (bakåtfylld). Träningsberäkningen är bakåtfylld och flaggas |
+| G9 | `g9_arxiv_cs_ai`, `g9_arxiv_cs_lg`, `g9_arxiv_cs_cl`, `g9_epoch_open_weights_share`, `g9_epoch_notable_models` | arXiv per primärkategori. Epoch-databasens serier är spärrade tills det finns 24 månader egna ögonblicksbilder |
+
+### 2026-11-23 – B2: TSMC före 2017Q3 och definitionen för N1 (före utvärdering)
+
+Guidance har extraherats (fas 4 E1) men inte jämförts med utfall.
+
+- **N2 B2:** fram till 2017Q2 guidade TSMC i NT$. Då används mittpunkten i NT$ direkt, och växelkursen behövs inte.
+  Från 2017Q3 gäller mittpunkten i US$ × den antagna växelkursen enligt den tidigare posten.
+- **N1 B2**, per bolag och sedan summerat till `capex_hyp4`:
+  - **Meta:** helårsintervallets mittpunkt avser capex inklusive amortering på finansiell leasing. Det motsvarar
+    `capex_meta` + `fin_lease_meta`. Implicit helår för `capex_meta` = mittpunkten − (kända kvartal av
+    `fin_lease_meta` + B1-prognos för årets okända kvartal av `fin_lease_meta`).
+  - **Alphabet:** helårsguidance i pressmeddelandet har samma definition som `capex_googl` och används direkt.
+  - **Kvartal:** (implicit helår − årets kända kvartal) × B1-andelen. Andelen räknas som för N2 B2: B1:s prognos för
+    kvartalet delat med summan av B1:s prognoser för årets okända kvartal.
+  - **Amazon och Microsoft:** B1, eftersom guidancen har en annan definition (Amazon netto efter incitament,
+    Microsoft inklusive finansiell leasing vid tecknande) som inte går att översätta till våra serier.
+  - **Saknas guidance** som är känd på prognosdagen: B1 för det bolaget.
+  - Riktningsangivelser (upp/ner) används inte i B2.
+- **Utvärdering:** B2 är en variant. Holm-justeringen görs över alla varianter för målet (N1: V1, V2 och B2; N2: V1 och B2).
+  Befordran sker enligt samma regel som tidigare.
+- **Krav före befordran:** en oberoende granskning av extraktionen ska godkänna de värden som B2 använder.
+  Annars befordras B2 inte, oavsett resultat.

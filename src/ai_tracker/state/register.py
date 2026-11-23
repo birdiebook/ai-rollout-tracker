@@ -27,7 +27,7 @@ REGISTER_PATH = config.REPO / "docs" / "mattregister.md"
 # G1 and G9 are not registered yet: add their names here when the register gets them (the test fails until
 # this structure and the register agree again).
 CORE_SERIES: dict[str, list[str]] = {
-    "G1": [],
+    "G1": ["g1_epoch_bench_frontier_<valda>", "g1_epoch_train_compute_frontier", "g1_epoch_eci_frontier"],
     "G2": ["g2_price_at_capability_gpqa"],
     "G3": ["btos_ai_use_<aktiv regim>", "eu_ai_ent_eu27", "eu_ai_ent_se"],
     "G4": ["rev_aws", "rev_google_cloud", "rev_msft_cloud", "rev_nvda_datacenter", "rev_orcl_cloud"],
@@ -35,7 +35,7 @@ CORE_SERIES: dict[str, list[str]] = {
     "G6": ["tsmc_revenue_m", "us_ip_semis_m", "us_ip_computers_m", "us_imports_tw_m", "us_imports_kr_m"],
     "G7": ["us_elec_sales_com_{va,tx,ga,az,or,oh}_m"],
     "G8": ["ai_postings_share_{us,gb,de,fr,ca,au,ie,it,nl}_d"],
-    "G9": [],
+    "G9": ["g9_arxiv_cs_ai", "g9_arxiv_cs_lg", "g9_arxiv_cs_cl", "g9_epoch_open_weights_share", "g9_epoch_notable_models"],
 }
 
 # "<aktiv regim>": the regime series are <prefix>v<n>; the active one is resolved per computation date.
