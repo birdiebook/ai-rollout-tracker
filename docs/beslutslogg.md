@@ -144,3 +144,15 @@ träffar korslistningar och saknar filter för primär kategori. Alla poster per
 och unionen inklusive korslistningar sparas som en egen serie. **Varför:** varje värde ska gå att spela upp
 `as_of()` utan att en senare körning eller korslistning läcker in. Benchmarkurvalet följer regeln exakt. Problemet
 med ersatta benchmarks är flaggat i måttregistret för beslut. Detaljer: [kallor/epoch_arxiv.md](kallor/epoch_arxiv.md).
+
+## 2026-11-23 – Spår E1: bolagens guidance extraherad (fas 4), ingen jämförelse med utfall
+
+**TSMC:** tolkas deterministiskt ur 6-K (pressmeddelande och presentation, från 2019 som exhibits). Det ger
+2006Q2–2026Q4 utan luckor: intäktsintervall (NT$ t.o.m. 2017Q2, US$ därefter), växelkurs från 2008Q3 och
+marginaler. Uppdateringar mitt i kvartalet blir vintages. **Hyperscalers:** agenten har läst och kodat 101 värden i
+`curated/guidance_capex.csv` (bara siffror, referenser och hash). Kvantitativ guidance finns för Meta i alla 20
+N1-kvartal, för Alphabet i 7 och för Amazon och Microsoft i 3. Transkripten för Alphabet och Amazon nekas av
+proxyn. Definitionerna skiljer sig (Meta inklusive amortering på leasing, Amazon netto, Microsoft inklusive nya
+finansiella leasingavtal). **Förslag** till B2 för N1 (B1 ersatt av guidance-implicerat kvartal för Meta och
+Alphabet) och en flagga för N2:s B2 (NT$-intervall före 2017Q3) finns i [kallor/guidance.md](kallor/guidance.md).
+Orkestreraren låser B2 i registret.
