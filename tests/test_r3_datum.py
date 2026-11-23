@@ -200,11 +200,6 @@ def frame(rows):
     return pd.DataFrame([(p, v, TS(k)) for p, v, k in rows], columns=["period", "value", "known_from"])
 
 
-@bug("sec_financing.first_available picks the formula per period from the full history: when a later filing tags "
-     "the missing component only as a comparative (Meta's LongTermDebtCurrent = 0 at 2025-12-31 in the 2026-10-22 "
-     "10-Q), the period's earlier vintage from the fallback formula is dropped and the period is dated 266 days late "
-     "(lt_debt_meta 2025Q4: 2026-10-22 instead of 2026-01-29). Conservative, not a leak, but it opens a hole in "
-     "as_of views (and in lt_debt_hyp4) for nine months")
 def test_first_available_keeps_the_first_publication_of_an_unchanged_value():
     parts = frame([("2025Q4", 58744, "2026-10-22"), ("2026Q3", 83669, "2026-10-22")])  # noncurrent + current
     noncurrent = frame([("2025Q3", 28834, "2025-10-30"), ("2025Q4", 58744, "2026-01-29"),
@@ -212,6 +207,24 @@ def test_first_available_keeps_the_first_publication_of_an_unchanged_value():
     s = sf.first_available([parts, noncurrent])
     first = s.groupby("period")["known_from"].min()
     assert first["2025Q4"] == TS("2026-01-29")
+
+
+@pytest.mark.parametrize("seed", range(8))
+def test_first_available_point_in_time(seed):
+    """X2: as of any d, each period comes from the first formula that has it with rows known by d."""
+    rnd = random.Random(400 + seed)
+    frames = []
+    for _ in range(3):
+        rows = [(rnd.choice(["2025Q1", "2025Q2", "2025Q3"]), rnd.choice([10, 20, 30]),
+                 str(rnd.choice(list(DATES[:15])).date())) for _ in range(rnd.randint(0, 6))]
+        frames.append(frame(rows).drop_duplicates(["period", "known_from"]))
+    s = sf.first_available(frames)
+    for d in list(DATES[:16]) + [x - pd.Timedelta(days=1) for x in DATES[:16]]:
+        ref = {}
+        for f in frames:
+            for p, v in f[f.known_from <= d].sort_values("known_from").groupby("period")["value"].last().items():
+                ref.setdefault(p, v)
+        assert as_of_rows(s, d) == ref, d
 
 
 def test_first_available_never_dates_a_period_earlier_than_its_formula():
@@ -442,8 +455,6 @@ def test_pjm_rows_use_the_posting_table(table):
 
 @pytest.mark.real_data
 @pytest.mark.skipif(not real_table_exists(), reason="no data fetched (python -m ai_tracker.observations)")
-@bug("lt_debt_meta 2025Q4 is dated 2026-10-22 although Meta's 10-K (0001628280-26-003942, filed 2026-01-29) reported "
-     "the balance (58,744): sec_financing.first_available, see test_first_available_keeps_the_first_publication_...")
 @pytest.mark.parametrize("key", ["lt_debt_meta", "lt_debt_hyp4"])
 def test_meta_lt_debt_2025q4_known_from_the_10k(table, key):
     g = table[(table.series == key) & (table.period == "2025Q4")]
