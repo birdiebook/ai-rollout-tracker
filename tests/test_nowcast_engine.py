@@ -60,3 +60,17 @@ def test_promotion_rule_and_review_gate():
     d = engine.decide({"V1": False, "B2": True}, mae, {"B2": "waiting for review"}, default="B1")
     assert d.champion == "B1" and d.winners == []
     assert engine.best_baseline({"B0": 2.0, "B1": 2.0}) == "B0" and engine.best_baseline({"B0": 3.0, "B1": 2.0}) == "B1"
+
+
+def test_pooled_dm_with_too_few_common_periods_returns_nan():
+    import math
+
+    import pandas as pd
+
+    from ai_tracker.nowcast import engine
+
+    one = pd.DataFrame({"quarter": ["2026Q1"], "unit": ["a"], "x": [1.0], "y": [2.0]})
+    r = engine.pooled_dm(one, "x", "y")
+    assert math.isnan(r.p)
+    empty = one.iloc[0:0]
+    assert math.isnan(engine.pooled_dm(empty, "x", "y").p)

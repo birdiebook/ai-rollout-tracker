@@ -68,7 +68,7 @@ def build_site(tmp_path, live: bool = False) -> Path:
     write_forecast(tmp_path / "forecasts")
     site = tmp_path / "site"
     B.build(site, ctx=ctx, snapshots_dir=snaps, forecasts_dir=tmp_path / "forecasts", today=TODAY,
-            history_from="2026-05", checks=False)
+            history_from="2026-05", checks=False, letters_dir=tmp_path / "letters")
     return site
 
 

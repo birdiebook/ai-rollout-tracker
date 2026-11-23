@@ -56,6 +56,9 @@
     spec.series.forEach(function (s) {
       s.x = s.periods.map(px);
       s.x.forEach(function (x, i) { if (s.values[i] != null && isFinite(x)) { xs.push(x); ys.push(s.values[i]); } });
+      (s.ranges || []).forEach(function (r) {  // interval whiskers: [{lo: [...], hi: [...], width}]
+        s.x.forEach(function (x, i) { if (r.lo[i] != null && r.hi[i] != null && isFinite(x)) ys.push(r.lo[i], r.hi[i]); });
+      });
     });
     if (!xs.length) { holder.textContent = 'Inga värden att visa.'; return; }
     (spec.refs || []).forEach(function (r) { ys.push(r); });
@@ -96,6 +99,13 @@
     (spec.refs || []).forEach(function (r) { svgEl('line', { x1: m.l, x2: W - m.r, y1: Y(r), y2: Y(r), 'class': 'ref' }, svg); });
     spec.series.forEach(function (s) {
       if (s.kind === 'dot') {
+        (s.ranges || []).forEach(function (r) {
+          s.x.forEach(function (x, i) {
+            if (r.lo[i] == null || r.hi[i] == null || !isFinite(x)) return;
+            svgEl('line', { x1: X(x), x2: X(x), y1: Y(r.lo[i]), y2: Y(r.hi[i]), stroke: s.color, 'stroke-width': r.width || 2,
+              'stroke-opacity': 0.55, 'stroke-linecap': 'round' }, svg);
+          });
+        });
         s.x.forEach(function (x, i) {
           if (s.values[i] == null || !isFinite(x)) return;
           svgEl('circle', { cx: X(x), cy: Y(s.values[i]), r: 4.5, fill: s.color, stroke: 'var(--surface-1)', 'stroke-width': 2 }, svg);
@@ -154,6 +164,10 @@
         row.style.setProperty('--key', s.color);
         htmlEl('strong', '', row, fmt(s.values[j], nd));
         row.appendChild(document.createTextNode(' ' + s.label));
+        (s.ranges || []).forEach(function (r) {
+          if (r.lo[j] != null && r.hi[j] != null) row.appendChild(document.createTextNode(
+            ', ' + r.label + ' ' + fmt(r.lo[j], nd) + '–' + fmt(r.hi[j], nd)));
+        });
       });
       tip.style.display = 'block';
       var tw = tip.offsetWidth, left = cx + 10;
@@ -237,10 +251,14 @@
       var n = (DATA.nowcasts || []).filter(function (x) { return x.id === id; })[0];
       if (!n || !n.history) return null;
       var fc = n.forecasts || [];
+      var iv = function (k, j) { return fc.map(function (f) { return f.intervals && f.intervals[k] ? f.intervals[k][j] : null; }); };
+      var ranges = fc.some(function (f) { return f.intervals; })  // only when the site has intervals (grind G-C)
+        ? [{ label: '95 %', lo: iv('95', 0), hi: iv('95', 1), width: 1.5 }, { label: '50 %', lo: iv('50', 0), hi: iv('50', 1), width: 5 }]
+        : [];
       return { series: [
         { label: 'utfall', periods: n.history.periods, values: n.history.values, color: 'var(--series-1)' },
         { label: 'skarp prognos', kind: 'dot', periods: fc.map(function (f) { return f.period; }),
-          values: fc.map(function (f) { return f.value; }), color: 'var(--series-2)' }
+          values: fc.map(function (f) { return f.value; }), color: 'var(--series-2)', ranges: ranges }
       ], height: 220 };
     }
   };
