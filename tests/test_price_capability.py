@@ -180,5 +180,5 @@ def test_specs_in_catalog():
     specs = catalog.by_key()
     for key in ("g2_price_at_capability", "g2_price_at_capability_gpqa"):
         s = specs[key]
-        assert (s.branch, s.freq, s.lag_days, s.revised) == ("G2", "M", 0, True)
+        assert (s.branch, s.freq, s.lag_days, s.revised) == ("G2", "M", 1, True)  # +1 day margin (R1)
         assert "MIT" in s.license and "CC BY" in s.license

@@ -5,11 +5,22 @@ the second month after, 29-35 days after month end in 2011-2026 (first ALFRED vi
 release's total private series TLPRVCONS that contains the month). Releases later than that (shutdowns
 2013, 2018-19, 2025 and the catch-up schedule into 2026) are listed in LATE with their documented date.
 The xlsx holds only the latest vintage: history before our first fetch is backfill with revisions in it.
+
+First publication of the category: "Data center" was first published separately with the May 2024 release on
+2024-07-01, back to 2014-01 (notices in pr202403.pdf, pr202404.pdf, pr202405.pdf and pdf/news.pdf; R1 review,
+docs/granskning/r1_lackage.md 3.1). Every month 2014-01..2024-04 is therefore known from 2024-07-01, never
+from month end + 35 days (the series did not exist then).
+
+Seasonal adjustment: the SA file (privsatime.xlsx) is estimated with today's seasonal factors, which are fitted
+on data after each historical month (annual revisions in July re-estimate SA about 7 years back). SA history
+before our first fetch therefore also leaks through the factors, not only through revised NSA values.
 """
 
 from __future__ import annotations
 
 from functools import partial
+
+import pandas as pd
 
 from ai_tracker import publication
 from ai_tracker.catalog import Spec
@@ -24,6 +35,8 @@ LAG_DAYS = 35
 LATE = {"2018-11": "2019-02-01", "2018-12": "2019-03-04", "2019-01": "2019-03-13", "2025-08": "2025-11-17",
         "2025-09": "2026-01-21", "2025-10": "2026-01-21", "2025-11": "2026-02-27", "2025-12": "2026-02-27",
         "2026-01": "2026-03-23", "2026-02": "2026-05-07", "2026-03": "2026-05-07"}
+FIRST_PUBLISHED = "2024-07-01"  # May 2024 release: first time "Data center" was published, back to 2014-01
+LATE.update({str(p): FIRST_PUBLISHED for p in pd.period_range("2014-01", "2024-04", freq="M")})
 
 
 def _spec(kind: str) -> Spec:
@@ -41,8 +54,10 @@ def _spec(kind: str) -> Spec:
         revised=True,  # p/r flags: the two latest months are revised monthly, annual revision in July
         publish=True,
         question="Hur mycket byggs det i datacenter just nu (byggnader, inte servrar)?",
-        note="Strukturer, inte utrustning (servrar och rack ingår inte). Kategorin finns från 2014-01; "
-             "allt före första egna hämtningen är backfill (dagens vintage). Se docs/kallor/census_eu.md.",
+        note="Strukturer, inte utrustning (servrar och rack ingår inte). Kategorin publicerades första gången "
+             "2024-07-01 (bakåt till 2014-01), så 2014-01–2024-04 är kända först då. Allt före första egna "
+             "hämtningen är backfill (dagens vintage"
+             + (", och säsongsrensat med dagens säsongsfaktorer" if sa else "") + "). Se docs/kallor/census_eu.md.",
     )
 
 
