@@ -16,7 +16,7 @@ from pathlib import Path
 import pandas as pd
 
 from ai_tracker import catalog, config, evaluation, observations, pipeline
-from ai_tracker.nowcast import intervals, n1
+from ai_tracker.nowcast import intervals, n1, n3, n4, n5, n6
 from ai_tracker.nowcast import n2
 from ai_tracker.nowcast import n2 as n2_live
 from ai_tracker.state import register as R
@@ -73,8 +73,60 @@ NOWCAST_INFO = {
             "B2": "TSMC:s kvartalsguidance utslagen per månad",
         },
     },
+    "n3": {
+        "title": "Nvidias datacenterintäkter",
+        "frequency": "kvartal (Nvidias räkenskapskvartal, märkt med kalenderkvartalet för mittpunkten)",
+        "origin_rule": "räkenskapskvartalets slut + 14 dagar, före rapporten",
+        "results_doc": "docs/resultat/n3.md",
+        "variants": {
+            "B0": "slumpvandring: förra kvartalet",
+            "B1": "drift: förra kvartalet × medel av de fyra senaste kvartalens tillväxt",
+            "B2": "Nvidias intäktsguidance (mittpunkt) × senast kända datacenterandel (villkorad: granskning R5)",
+        },
+    },
+    "n4": {
+        "title": "Molnintäkter (AWS + Google Cloud + Microsoft Cloud)",
+        "frequency": "kvartal",
+        "origin_rule": "kvartalets slut + 20 dagar, före den första rapporten",
+        "results_doc": "docs/resultat/n4.md",
+        "target_label": "Molnintäkter, summa AWS + Google Cloud + Microsoft Cloud", "unit": "MUSD",
+        "source": "SEC EDGAR XBRL (segmentintäkter)", "license": "offentlig information (SEC)",
+        "components": list(n4.COMPONENTS),
+        "variants": {
+            "B0": "slumpvandring: förra kvartalet",
+            "B1": "drift: förra kvartalet × medel av de fyra senaste kvartalens tillväxt",
+            "V1": "B1 + OLS på senast kända kvartalstillväxt i RPO-summan",
+        },
+    },
+    "n5": {
+        "title": "Andel amerikanska företag som använder AI (BTOS, aktiv regim)",
+        "frequency": "varannan vecka",
+        "origin_rule": "dagen före den schemalagda publiceringen. B1 kräver 7 tidigare publiceringar i samma "
+                       "frågeregim, och regimen v3 har högst 6 cykler, så ingen skarp prognos görs i v3",
+        "results_doc": "docs/resultat/n5.md",
+        "decimals": 1, "error_unit": "procentenheter",
+        "variants": {
+            "B0": "senaste värdet",
+            "B1": "drift över de 6 senaste cyklerna inom regimen",
+        },
+    },
+    "n6": {
+        "title": "Kontrakterad efterfrågan (RPO, MSFT + GOOGL + AMZN + ORCL)",
+        "frequency": "kvartal",
+        "origin_rule": "kvartalets slut + 20 dagar",
+        "results_doc": "docs/resultat/n6.md",
+        "variants": {
+            "B0": "slumpvandring: förra kvartalet",
+            "B1": "drift: förra kvartalet × medel av de fyra senaste kvartalens tillväxt",
+            "V1": "B1 + OLS på senast kända kvartalstillväxt i molnintäkterna (N4)",
+        },
+    },
 }
-NOWCAST_MODULES = {"n1": (n1.TARGET, n1.VARIANTS, n1.CHAMPION), "n2": (n2.TARGET, n2.VARIANTS, n2_live.CHAMPION)}
+NOWCAST_DERIVED = {n4.TARGET: n4.COMPONENTS}
+NOWCAST_MODULES = {"n1": (n1.TARGET, n1.VARIANTS, n1.CHAMPION), "n2": (n2.TARGET, n2.VARIANTS, n2_live.CHAMPION),
+                   "n3": (n3.TARGET, n3.VARIANTS, n3.CHAMPION), "n4": (n4.TARGET, n4.VARIANTS, n4.CHAMPION),
+                   "n5": (n5.key(n5.VERSIONS[-1]), n5.VARIANTS, n5.CHAMPION),
+                   "n6": (n6.TARGET, n6.VARIANTS, n6.CHAMPION)}
 
 # Per-series fields copied from a measure (state.measures.measure) to the site. Anything not listed stays out.
 SERIES_FIELDS = ("series", "entry", "resolved", "method", "freq", "measure_freq", "latest_period", "known_from",
@@ -100,6 +152,8 @@ def publishable(key: str | None, ctx: Context) -> bool:
     """May values of `key` be shown? Spec.publish=True; a derived series needs every component publishable."""
     if not key:
         return False
+    if key in NOWCAST_DERIVED:  # a nowcast target summed from components (N4): every component publishable
+        return all(publishable(c, ctx) for c in NOWCAST_DERIVED[key])
     if key in ctx.derived:
         num, den = ctx.derived[key][:2]
         return publishable(num, ctx) and publishable(den, ctx)
@@ -357,10 +411,9 @@ def _target_history(key: str, ctx: Context, when) -> dict | None:
 
 
 def next_origin(nowcast: str, today, root: Path, horizon_days: int = 200) -> tuple[str, str] | None:
-    fn = pipeline.n1_due if nowcast == "n1" else pipeline.n2_due
     day = pd.Timestamp(today).normalize()
     for i in range(horizon_days):
-        d = fn(day + pd.Timedelta(days=i))
+        d = pipeline.due_for(nowcast, day + pd.Timedelta(days=i))
         if d is not None and not d.path(root).exists():
             return str(d.origin.date()), d.period
     return None
@@ -383,7 +436,7 @@ def nowcasts(ctx: Context, forecasts_dir: Path, today) -> dict:
             rec = {k: d[k] for k in FORECAST_FIELDS if k in d}
             rec["value"] = _num(rec.get("value"), 6)
             rec["variants"] = {k: _num(v, 6) for k, v in (rec.get("variants") or {}).items()}
-            rec["period"] = d.get("quarter") or d.get("month")
+            rec["period"] = d.get("quarter") or d.get("month") or d.get("period")
             rec["file"] = f"forecasts/{sub}/{f.name}"
             if intervals.ENABLED:  # grind G-C: the champion's stored central intervals, in levels (no error pool)
                 rec["intervals"] = _champion_intervals(d)
@@ -402,8 +455,11 @@ def nowcasts(ctx: Context, forecasts_dir: Path, today) -> dict:
         nxt = next_origin(sub, today, forecasts_dir)
         out.append({
             "id": sub, "label": sub.upper(), "title": info["title"], "target": target,
-            "target_label": spec.label if spec else target, "unit": spec.unit if spec else "",
-            "source": spec.source if spec else "", "license": short_license(spec.license) if spec else "",
+            "target_label": spec.label if spec else info.get("target_label", target),
+            "unit": spec.unit if spec else info.get("unit", ""),
+            "source": spec.source if spec else info.get("source", ""),
+            "license": short_license(spec.license) if spec else info.get("license", ""),
+            "decimals": info.get("decimals", 0), "error_unit": info.get("error_unit", "100 × log"),
             "frequency": info["frequency"], "origin_rule": info["origin_rule"], "results_doc": info["results_doc"],
             "champion": champion, "shadows": [v for v in variants if v != champion],
             "variants": [{"id": v, "text": info["variants"].get(v, v)} for v in variants],

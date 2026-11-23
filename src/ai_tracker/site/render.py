@@ -315,18 +315,19 @@ def nowcast_section(n: dict, build: dict) -> str:
     nxt = (f"Nästa skarpa prognos: {esc(n['next_period'])}, görs {esc(n['next_origin'])}."
            if n.get("next_origin") else "")
     var_ids = [x["id"] for x in n["variants"]]
+    dec = n.get("decimals", 0)
     with_iv = any(f.get("intervals") for f in n["forecasts"])  # only with intervals.ENABLED (grind G-C)
 
     def iv_cell(f):
         lo, hi = ((f.get("intervals") or {}).get("80") or [None, None])
-        return f'<td class="num">{num(lo, 0)} – {num(hi, 0)}</td>' if lo is not None else "<td></td>"
+        return f'<td class="num">{num(lo, dec)} – {num(hi, dec)}</td>' if lo is not None else "<td></td>"
 
     if n["forecasts"]:
         head = "".join(f"<th>{esc(v)}</th>" for v in var_ids) + ("<th>80 % intervall</th>" if with_iv else "")
         rows = "".join(
             f'<tr><td>{esc(f["period"])}</td><td>{esc(f.get("origin"))}</td><td>{esc(f.get("champion"))}</td>'
-            f'<td class="num">{num(f.get("value"), 0)}</td>'
-            + "".join(f'<td class="num">{num((f.get("variants") or {}).get(v), 0)}</td>' for v in var_ids)
+            f'<td class="num">{num(f.get("value"), dec)}</td>'
+            + "".join(f'<td class="num">{num((f.get("variants") or {}).get(v), dec)}</td>' for v in var_ids)
             + (iv_cell(f) if with_iv else "")
             + f'<td><a href="{esc(build["repo"])}/blob/main/{esc(f["file"])}">fil</a></td></tr>' for f in n["forecasts"])
         fc = (f'<div class="table-wrap"><table><thead><tr><th>Period</th><th>Origin</th><th>Huvudmodell</th>'
@@ -336,8 +337,8 @@ def nowcast_section(n: dict, build: dict) -> str:
     sc = ""
     if n["scorecard"]:
         rows = "".join(
-            f'<tr><td>{esc(r.get("period"))}</td><td>{esc(r.get("champion"))}</td><td class="num">{num(r.get("forecast"), 0)}</td>'
-            f'<td class="num">{num(r.get("outcome"), 0)}</td><td>{esc(r.get("known_from"))}</td>'
+            f'<tr><td>{esc(r.get("period"))}</td><td>{esc(r.get("champion"))}</td><td class="num">{num(r.get("forecast"), dec)}</td>'
+            f'<td class="num">{num(r.get("outcome"), dec)}</td><td>{esc(r.get("known_from"))}</td>'
             f'<td class="num">{num(r.get("err_champion"), 2, signed=True)}</td>'
             + "".join(f'<td class="num">{num(r.get(f"err_{v}"), 2, signed=True)}</td>' for v in var_ids)
             + f'<td>{esc(r.get("status"))}</td></tr>' for r in n["scorecard"])
@@ -378,6 +379,7 @@ def nowcast_section(n: dict, build: dict) -> str:
     return f"""<section class="nowcast" id="{esc(n['id'])}">
 <h2>{esc(n['label'])}: {esc(n['title'])}</h2>
 <p>Mål: <code>{esc(n['target'])}</code>, {esc(n['target_label'])}, första publicerade värdet. Frekvens: {esc(n['frequency'])}. Prognosdag: {esc(n['origin_rule'])}. {nxt}</p>
+<p>Fel: {esc(n.get("error_unit", "100 × log"))} (prognos − utfall).</p>
 <p>Huvudmodell nu: <strong>{esc(n['champion'])}</strong>. Skuggor: {esc(', '.join(n['shadows']))}.</p>
 <ul class="variants">{variants}</ul>
 {chart}
@@ -391,7 +393,7 @@ def nowcast_section(n: dict, build: dict) -> str:
 def nowcast_page(doc: dict, build: dict) -> str:
     body = f"""<section class="intro">
 <h1>Prognoser</h1>
-<p class="lead">Två nowcasts med scorecard. Varje skarp prognos görs på en registrerad prognosdag med bara data som var känd den dagen, committas till git och skrivs aldrig om. Tidsstämpeln i git är beviset. Utfallet är målseriens första publicerade värde, och felet är 100 × (log prognos − log utfall).</p>
+<p class="lead">Nowcasts med scorecard. Varje skarp prognos görs på en registrerad prognosdag med bara data som var känd den dagen, committas till git och skrivs aldrig om. Tidsstämpeln i git är beviset. Utfallet är målseriens första publicerade värde, och felet är 100 × (log prognos − log utfall), för andelar (N5) prognos − utfall i procentenheter.</p>
 <p>Huvudmodellen är den som stod i filen när prognosen gjordes. Övriga varianter visas som skuggor och jämförs på samma utfall. Alla prognoser i <a href="{esc(build['repo'])}/tree/main/forecasts">forecasts/</a>.</p>
 </section>
 {''.join(nowcast_section(n, build) for n in doc['nowcasts'])}"""

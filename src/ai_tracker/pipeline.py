@@ -6,6 +6,8 @@
     python -m ai_tracker.pipeline live               run every live routine whose registered origin is today
     python -m ai_tracker.pipeline n2-live            N2 only (day 5: previous month)
     python -m ai_tracker.pipeline n1-live            N1 only (quarter end + 20 days: the quarter just ended)
+    python -m ai_tracker.pipeline n3-live ... n6-live  N3 (Nvidia fiscal quarter end + 14 days), N4 and N6 (quarter end
+                                                     + 20 days), N5 (the day before a scheduled BTOS publication)
     python -m ai_tracker.pipeline scorecard          forecasts/SCORECARD.md: live forecasts vs first-vintage outcome
     python -m ai_tracker.pipeline publish PATH...    git-commit new forecast files + SCORECARD.md, or new snapshots and
                                                      their monthly letters (CI)
@@ -37,7 +39,7 @@ from pathlib import Path
 import pandas as pd
 
 from ai_tracker import catalog, config, observations, warehouse
-from ai_tracker.nowcast import engine, intervals, n1, n2
+from ai_tracker.nowcast import engine, intervals, n1, n2, n3, n4, n5, n6
 
 FORECASTS = config.REPO / "forecasts"
 SCORECARD = FORECASTS / "SCORECARD.md"
@@ -46,7 +48,14 @@ BOT_EMAIL = "41898282+github-actions[bot]@users.noreply.github.com"
 NOWCASTS = {  # forecasts/<dir>: label, target, variants in display order
     "n1": ("N1", n1.TARGET, n1.VARIANTS),
     "n2": ("N2", n2.TARGET, n2.VARIANTS),
+    "n3": ("N3", n3.TARGET, n3.VARIANTS),
+    "n4": ("N4", n4.TARGET, n4.VARIANTS),
+    "n5": ("N5", n5.key(n5.VERSIONS[-1]), n5.VARIANTS),
+    "n6": ("N6", n6.TARGET, n6.VARIANTS),
 }
+# Targets that are not table series: the scorecard builds their rows from the components (first vintage of the sum)
+OUTCOME_ROWS = {"n4": n4.outcome_table, "n6": n6.outcome_table}
+ADDITIVE = {"n5"}  # errors in percentage points (forecast - outcome), not 100 * log
 SEC_MESSAGE = (
     "SEC_USER_AGENT is not set. sec.gov requires a declared User-Agent with a contact address and this project "
     "uses no fallback. Add the repository secret SEC_USER_AGENT = 'ai-rollout-tracker <contact address>' "
@@ -63,7 +72,7 @@ def utc_today() -> pd.Timestamp:
 
 @dataclass(frozen=True)
 class Due:
-    nowcast: str  # "n1" | "n2"
+    nowcast: str  # "n1" ... "n6"
     origin: pd.Timestamp
     period: str  # target period, e.g. "2026-11" or "2026Q4"
 
@@ -83,8 +92,43 @@ def n1_due(today) -> Due | None:
     return Due("n1", today, str(q)) if n1.origin_for(q) == today else None
 
 
+def n3_due(today) -> Due | None:
+    today = pd.Timestamp(today).normalize()
+    q = n3.target_quarter(today)
+    return Due("n3", today, str(q)) if n3.origin_for(q) == today else None
+
+
+def n4_due(today) -> Due | None:
+    d = n1_due(today)
+    return Due("n4", d.origin, d.period) if d else None
+
+
+def n6_due(today) -> Due | None:
+    d = n1_due(today)
+    return Due("n6", d.origin, d.period) if d else None
+
+
+def n5_due(today, schedule_file: Path | None = None) -> Due | None:
+    """The day before a scheduled BTOS publication in the logged schedule (as known today); None without a logged
+    schedule. A scheduled date that cannot be trusted (funding lapse, unreviewed wording) is not due."""
+    today = pd.Timestamp(today).normalize()
+    try:
+        c = n5.scheduled_cycle(today, schedule_file)
+    except n5.NotAvailable as e:
+        print(f"n5: {e}; not due")
+        return None
+    return Due("n5", today, n5.file_stem(c["period"])) if c else None
+
+
+DUE = {"n2": n2_due, "n1": n1_due, "n3": n3_due, "n4": n4_due, "n5": n5_due, "n6": n6_due}
+
+
+def due_for(nowcast: str, today) -> Due | None:
+    return DUE[nowcast](today)
+
+
 def due(today) -> list[Due]:
-    return [d for d in (n2_due(today), n1_due(today)) if d is not None]
+    return [d for d in (fn(today) for fn in DUE.values()) if d is not None]
 
 
 # ------------------------------------------------------------------ helpers
@@ -176,13 +220,22 @@ def weekly(keys: list[str] | None = None, today=None) -> int:
 
 
 # Inputs of the B2 (guidance) variant, refreshed together with target and indicators before a live forecast.
-LIVE_PREFIXES = {"n2": ("tsmc_guid_",), "n1": ("guid_capex_", "capex_", "fin_lease_")}
+LIVE_PREFIXES = {"n2": ("tsmc_guid_",), "n1": ("guid_capex_", "capex_", "fin_lease_"), "n3": ("nvda_guid_rev",),
+                 "n5": (n5.PREFIX,)}
+LIVE_BASE = {
+    "n1": [n1.TARGET, *n1.INDICATORS],
+    "n2": [n2.TARGET, *n2.INDICATORS],
+    "n3": [n3.TARGET, n3.TOTAL, n3.GUIDANCE],
+    "n4": [*n4.COMPONENTS, *n4.RPO.components],  # target components and V1's regressor (RPO sum)
+    "n5": [],
+    "n6": [*n6.COMPONENTS, *n4.COMPONENTS],  # target components and V1's regressor (cloud sum)
+}
 
 
 def live_keys(nowcast: str) -> list[str]:
-    base = [n2.TARGET, *n2.INDICATORS] if nowcast == "n2" else [n1.TARGET, *n1.INDICATORS]
-    extra = [s.key for s in catalog.ALL if s.key.startswith(LIVE_PREFIXES[nowcast]) and not s.closed]
-    return list(dict.fromkeys(base + extra))
+    extra = [s.key for s in catalog.ALL if s.key.startswith(LIVE_PREFIXES.get(nowcast, ())) and not s.closed
+             and not s.key.endswith("_se")]
+    return list(dict.fromkeys(LIVE_BASE[nowcast] + extra))
 
 
 def run_live(d: Due, root: Path | None = None, table: pd.DataFrame | None = None, refresh: bool = True,
@@ -204,8 +257,16 @@ def run_live(d: Due, root: Path | None = None, table: pd.DataFrame | None = None
     table = observations.load() if table is None else table
     if d.nowcast == "n2":
         out = n2.write(d.origin, table, path.parent, today=today)
-    else:
+    elif d.nowcast == "n1":
         out = n1.write_live(table, d.origin, path.parent, today=today)
+    elif d.nowcast == "n5":
+        try:
+            out = n5.write_live(table, d.origin, path.parent, today=today)
+        except n5.NotAvailable as e:  # registered refusal (e.g. B1 not formable in a short regime): nothing written
+            _annotate("warning", f"n5 {d.period}: {e}")
+            return None
+    else:
+        out = {"n3": n3, "n4": n4, "n6": n6}[d.nowcast].write_live(table, d.origin, path.parent, today=today)
     assert Path(out) == path, (out, path)
     print(f"wrote {out}")
     return Path(out)
@@ -239,13 +300,15 @@ def score(root: Path | None = None, table: pd.DataFrame | None = None) -> dict[s
     out = {}
     for sub, (_, default_target, variants) in NOWCASTS.items():
         rows = []
-        for f in sorted((root / sub).glob("*.json")):
+        files = sorted((root / sub).glob("*.json"))
+        t = OUTCOME_ROWS[sub](table) if sub in OUTCOME_ROWS and files else table
+        for f in files:
             d = json.loads(f.read_text(encoding="utf-8"))
             target = d.get("target", default_target)
-            period = d.get("quarter") or d.get("month")
+            period = d.get("quarter") or d.get("month") or d.get("period")
             origin = pd.Timestamp(d["origin"])
-            fv = engine.first_vintage(table, target)
-            fkf = engine.first_known_from(table, target) if len(fv) else pd.Series(dtype="datetime64[ns]")
+            fv = engine.first_vintage(t, target)
+            fkf = engine.first_known_from(t, target) if len(fv) else pd.Series(dtype="datetime64[ns]")
             fv.index, fkf.index = fv.index.astype(str), fkf.index.astype(str)
             row = {"period": period, "origin": origin.date().isoformat(), "champion": d["champion"],
                    "forecast": _num(d["value"]), "outcome": float("nan"), "known_from": "", "status": "väntar"}
@@ -259,8 +322,11 @@ def score(root: Path | None = None, table: pd.DataFrame | None = None) -> dict[s
                     row["status"] = "utfall"
             for v in variants:
                 x = _num(d.get("variants", {}).get(v))
-                ok = math.isfinite(x) and math.isfinite(row["outcome"]) and x > 0
-                row[f"err_{v}"] = engine.log_error(x, row["outcome"]) if ok else float("nan")
+                ok = math.isfinite(x) and math.isfinite(row["outcome"]) and (sub in ADDITIVE or x > 0)
+                if not ok:
+                    row[f"err_{v}"] = float("nan")
+                else:
+                    row[f"err_{v}"] = x - row["outcome"] if sub in ADDITIVE else engine.log_error(x, row["outcome"])
             row["err_champion"] = row.get(f"err_{d['champion']}", float("nan"))
             if intervals.ENABLED:  # grind G-C: scores of the distribution stored in the file, never recomputed
                 _score_distribution(row, d, variants)
@@ -336,6 +402,8 @@ def render(scores: dict[str, pd.DataFrame], today=None) -> str:
     for sub, df in scores.items():
         label, target, variants = NOWCASTS[sub]
         lines += [f"## {label} – `{target}`", ""]
+        if sub in ADDITIVE:
+            lines += ["Fel i procentenheter: prognos − utfall.", ""]
         if df.empty:
             lines += ["Inga skarpa prognoser än.", ""]
             continue
@@ -452,7 +520,7 @@ def main(argv: list[str] | None = None) -> int:
     w.add_argument("keys", nargs="*")
     dp = sub.add_parser("due")
     dp.add_argument("--today", default=None, help="date to check (default: today UTC); read-only")
-    for name in ("live", "n2-live", "n1-live"):
+    for name in ("live", *(f"{k}-live" for k in DUE)):
         p = sub.add_parser(name)
         p.add_argument("--no-refresh", action="store_true", help="use the stored table as is")
     sub.add_parser("scorecard")
@@ -474,7 +542,7 @@ def main(argv: list[str] | None = None) -> int:
             print(f"{today.date()}: nothing due")
         _gh_output(due="true" if todo else "false", nowcasts=" ".join(d.nowcast for d in todo))
         return 0
-    if a.cmd in ("live", "n2-live", "n1-live"):
+    if a.cmd == "live" or a.cmd.endswith("-live"):
         live(None if a.cmd == "live" else a.cmd[:2], refresh=not a.no_refresh)
         return 0
     if a.cmd == "scorecard":
