@@ -181,7 +181,7 @@ def test_live_writer(tmp_path, table):
     assert path.name == "2016-12.json"
     d = json.loads(path.read_text())
     assert d["month"] == "2016-12" and d["origin"] == "2017-01-05" and d["champion"] == n2.CHAMPION
-    assert d["value"] == d["variants"][n2.CHAMPION] and set(d["variants"]) == set(n2.VARIANTS)
+    assert d["value"] == d["variants"][n2.CHAMPION] and set(d["variants"]) == set(n2.VARIANTS) | {"DF"}
     assert d["git_sha"] and d["created_utc"].endswith("Z")
     assert all(pd.Timestamp(i["known_from"]) <= pd.Timestamp("2017-01-05") for i in d["inputs"])
     assert {i["series"] for i in d["inputs"]} == {n2.TARGET, "us_imports_tw_m"}

@@ -88,7 +88,26 @@ def path_for(when, out_dir: Path | None = None) -> Path:
     return Path(out_dir or SNAPSHOTS) / f"{pd.Timestamp(when).to_period('M')}.json"
 
 
-def write(when, table: pd.DataFrame | None = None, out_dir: Path | None = None, today=None) -> Path:
+def regime_section(when, table: pd.DataFrame, out_dir: Path | None = None) -> dict:
+    """C4 (regime and breaks) as its own section, not part of the branch states (c4_spec section 1). Chained on the
+    previous month's snapshot section when it exists. A failure is recorded in the section, never stops the snapshot."""
+    from ai_tracker.regime import live as regime_live  # heavy (factor model); only for live snapshots
+
+    prev_path = path_for(month_end(pd.Timestamp(when).to_period("M") - 1), out_dir)
+    previous = None
+    if prev_path.is_file():
+        previous = json.loads(prev_path.read_text(encoding="utf-8")).get(regime_live.SECTION)
+        if previous is not None and "blocks" not in previous:  # an earlier failed section: start a new chain
+            previous = None
+    try:
+        return regime_live.section(table, when, previous)
+    except Exception as e:  # noqa: BLE001 - the branch states are the record; C4 is descriptive (F-D6)
+        return {"model": "C4", "error": f"{type(e).__name__}: {e}"}
+
+
+def write(when, table: pd.DataFrame | None = None, out_dir: Path | None = None, today=None,
+          regime: bool | None = None) -> Path:
+    """`regime`: include the C4 section (default: from regime.live.FIRST_LIVE, the first snapshot after the holdout)."""
     when = pd.Timestamp(when).normalize()
     today = pd.Timestamp(today).normalize() if today is not None else utc_today()
     if when > today:
@@ -99,7 +118,16 @@ def write(when, table: pd.DataFrame | None = None, out_dir: Path | None = None, 
     path = path_for(when, out_dir)
     if path.exists():
         raise FileExistsError(f"{path} exists; snapshots are never rewritten")
+    table = observations.load() if table is None else table
     data = build(when, table)
+    if regime is None:
+        from ai_tracker.regime.live import FIRST_LIVE
+
+        regime = when >= FIRST_LIVE
+    if regime:
+        from ai_tracker.regime.live import SECTION
+
+        data[SECTION] = _clean(regime_section(when, table, out_dir))
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("x", encoding="utf-8") as f:  # 'x' = fail if it appeared meanwhile
         json.dump(data, f, indent=2, ensure_ascii=False)

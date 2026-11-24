@@ -665,7 +665,7 @@ def payload(fc: Forecast, table: pd.DataFrame, champion: str = CHAMPION, live_di
     if levels.get(champion) is None:
         raise RuntimeError(f"champion {champion} has no forecast for {fc.month}")
     t = slim(table)
-    return {
+    out = {
         "target": TARGET,
         "unit": "mn TWD",
         "month": str(fc.month),
@@ -680,6 +680,9 @@ def payload(fc: Forecast, table: pd.DataFrame, champion: str = CHAMPION, live_di
         "table_max_fetched_at": str(pd.Timestamp(t["fetched_at"].max()).date()) if len(t) else None,
         **({"distribution": live_distribution(fc, table, live_dir)} if intervals.ENABLED else {}),
     }
+    from ai_tracker.nowcast import df  # C3 shadow on B2 (F-B19); late import: df imports this module
+
+    return df.attach_live(out, "N2", table, fc.origin, fc.month, levels)
 
 
 def write(origin, table: pd.DataFrame, out_dir: Path = FORECAST_DIR, champion: str = CHAMPION, today=None) -> Path:
