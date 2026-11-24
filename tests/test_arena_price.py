@@ -198,3 +198,19 @@ def test_specs_in_catalog():
         s = by[key]
         assert s.branch == "G2" and s.freq == "M" and s.lag_days == 1
     assert catalog.validate() == []
+
+
+def test_retired_keys_drop_out_by_the_deprecation_date_known_at_month_end():
+    from ai_tracker.sources import litellm_prices
+
+    snap = {"m-old": {"deprecation_date": "2024-02-15", "input_cost_per_token": 1e-6},
+            "m-bad": {"deprecation_date": "soon"}, "m-new": {"input_cost_per_token": 1e-6}}
+    assert litellm_prices.extract_deprecations(snap) == [("m-old", T("2024-02-15"))]
+    boards = [board("2024-01-20", {"ref": 1200, "cheap": 1201})]
+    s = snaps(PRICES[:2] + [("2024-01-31", "k-ref", "openai", 30.0, 60.0), ("2024-01-31", "k-cheap", "openai", 1.0, 4.0)])
+    sha = {d: d.replace("-", "") for d in ("2024-01-31", "2024-02-20")}
+    deps = pd.DataFrame({"snapshot_date": pd.to_datetime(["2024-01-31", "2024-02-20"]),
+                         "sha": [sha["2024-01-31"], sha["2024-02-20"]], "key": ["k-cheap", "k-cheap"],
+                         "deprecation_date": pd.to_datetime(["2024-02-15", "2024-02-15"])})
+    t = ap.build(boards, s, CHAIN, pd.Period("2024-02", "M"), pairs_at=lambda when: PAIRS, deprecations=deps)
+    assert t.set_index("period")["key"].to_dict() == {"2024-01": "k-cheap", "2024-02": "k-ref"}

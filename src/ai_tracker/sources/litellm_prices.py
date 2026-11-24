@@ -36,6 +36,7 @@ FILE = "model_prices_and_context_window.json"
 RAW = config.REPO / "data" / "raw" / "litellm"
 CLONE = RAW / "repo"
 CACHE = RAW / "snapshots_v2.parquet"  # bump the suffix when extract() changes
+DEPRECATION_CACHE = RAW / "deprecations_v1.parquet"  # bump when extract_deprecations() changes
 MODES = ("chat", "responses")
 COLUMNS = ["snapshot_date", "sha", "key", "provider", "input_per_m", "output_per_m"]
 
@@ -106,6 +107,46 @@ def _read_blobs(shas: list[str], clone: Path) -> dict[str, dict]:
             out[sha] = json.loads(text)
         except json.JSONDecodeError:  # a broken commit on main: skip it, the next sample covers it
             out[sha] = None
+    return out
+
+
+def extract_deprecations(snapshot: dict) -> list[tuple[str, pd.Timestamp]]:
+    """(key, deprecation_date) for entries whose `deprecation_date` parses as a date (LiteLLM lists the developer's
+    announced retirement date, usually ahead of time)."""
+    rows = []
+    for key, v in snapshot.items():
+        if not isinstance(v, dict) or not v.get("deprecation_date"):
+            continue
+        day = pd.to_datetime(str(v["deprecation_date"]), errors="coerce")
+        if pd.notna(day):
+            rows.append((key, day.normalize()))
+    return rows
+
+
+def deprecations(refresh: bool = True, clone: Path = CLONE, cache: Path = DEPRECATION_CACHE) -> pd.DataFrame:
+    """`deprecation_date` per key in every sampled snapshot (snapshot_date, sha, key, deprecation_date; one marker row
+    with key "" per snapshot), incremental over its own cache. Same sample as snapshots(), so a month-end price snapshot has its deprecation dates as known
+    then."""
+    cols = ["snapshot_date", "sha", "key", "deprecation_date"]
+    old = pd.read_parquet(cache) if cache.exists() else pd.DataFrame(columns=cols)
+    if not refresh and len(old):
+        return old
+    update_clone(clone)
+    sample = sample_commits(file_commits(clone))
+    todo = sample[~sample["sha"].isin(set(old["sha"]))]
+    rows = []
+    if len(todo):
+        blobs = _read_blobs(list(todo["sha"]), clone)
+        for sha, day in zip(todo["sha"], todo["snapshot_date"]):
+            if blobs[sha] is not None:  # marker row (key "") so a snapshot without deprecations is not re-read
+                rows += [(day, sha, "", pd.NaT)] + [(day, sha, *r) for r in extract_deprecations(blobs[sha])]
+    new = pd.DataFrame(rows, columns=cols)
+    out = pd.concat([old, new], ignore_index=True) if len(old) else new
+    out = out[out["sha"].isin(set(sample["sha"]))].reset_index(drop=True)
+    out["snapshot_date"] = pd.to_datetime(out["snapshot_date"])
+    out["deprecation_date"] = pd.to_datetime(out["deprecation_date"])
+    cache.parent.mkdir(parents=True, exist_ok=True)
+    out.to_parquet(cache, index=False)
     return out
 
 

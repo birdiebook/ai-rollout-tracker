@@ -14,6 +14,8 @@ Vintages follow sources/vintages.py: the first row of a month is known month end
 month end; a board published by month end but documented later adds a row on its evidence date when the value
 changes. known_from = max(board vintage date, price known_from = month end + 1). Rows whose board exists only in the
 dataset's bulk upload are source="backfill".
+A key that LiteLLM's month-end file lists with `deprecation_date` <= month end does not count (retired model; rule added
+2026-11-24 after the first build, docs/kallor/g2_arena_pris.md section 2).
 """
 
 from __future__ import annotations
@@ -111,10 +113,22 @@ def _norm(boards: list[Board]) -> list[Board]:
     return sorted(out, key=lambda b: (b[0], b[2]))
 
 
+def live_prices(snaps: pd.DataFrame, when: pd.Timestamp, deprecations: pd.DataFrame | None) -> pd.DataFrame:
+    """Price rows of the snapshot at `when`, without keys that the same snapshot lists as retired by `when`
+    (LiteLLM `deprecation_date` <= when, as known then)."""
+    prices = pc.prices_at(snaps, when)
+    if deprecations is None or prices.empty:
+        return prices
+    d = deprecations[deprecations["sha"].isin(set(prices["sha"])) & (deprecations["key"] != "")]
+    retired = set(d.loc[d["deprecation_date"] <= pd.Timestamp(when), "key"])
+    return prices[~prices["key"].isin(retired)]
+
+
 def build(boards: list[Board], snaps: pd.DataFrame, chain: tuple[tuple[str, str], ...], last_month: pd.Period,
-          pairs_at=arena_map.pairs_at) -> pd.DataFrame:
+          pairs_at=arena_map.pairs_at, deprecations: pd.DataFrame | None = None) -> pd.DataFrame:
     """Vintaged monthly rows: period, value, known_from, source + diagnostics (key, name, rating, threshold,
-    reference, board, n_qualifying). Months FIRST_MONTH .. last_month (pass only complete months)."""
+    reference, board, n_qualifying). Months FIRST_MONTH .. last_month (pass only complete months).
+    `deprecations` (litellm_prices.deprecations()): keys retired by month end per the month-end snapshot are dropped."""
     bs = _norm(boards)
     rows = []
     for m in pd.period_range(FIRST_MONTH, last_month, freq="M") if FIRST_MONTH <= last_month else []:
@@ -122,7 +136,7 @@ def build(boards: list[Board], snaps: pd.DataFrame, chain: tuple[tuple[str, str]
         cand = [b for b in bs if b[0] <= end]
         if not cand:
             continue
-        prices = pc.prices_at(snaps, end)
+        prices = live_prices(snaps, end, deprecations)
         pairs = pairs_at(end)
         base = max(end + pd.Timedelta(days=1), end + pd.Timedelta(days=PRICE_LAG_DAYS))
         days = sorted({base} | {b[2] for b in cand if b[2] > end})
@@ -174,15 +188,15 @@ def coverage(boards: list[Board], chain: tuple[tuple[str, str], ...]) -> pd.Data
 def _inputs():
     from ai_tracker.sources import arena, litellm_prices
 
-    return arena.subset_boards("text"), litellm_prices.snapshots()
+    return arena.subset_boards("text"), litellm_prices.snapshots(), litellm_prices.deprecations()
 
 
 @lru_cache(maxsize=None)
 def table(variant: str) -> pd.DataFrame:
     from ai_tracker.sources import vintages
 
-    boards, snaps = _inputs()
-    return build(boards, snaps, CHAINS[variant], vintages.last_complete_month())
+    boards, snaps, deps = _inputs()
+    return build(boards, snaps, CHAINS[variant], vintages.last_complete_month(), deprecations=deps)
 
 
 def fetch(variant: str) -> pd.DataFrame:
