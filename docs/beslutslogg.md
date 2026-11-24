@@ -398,3 +398,5 @@ Johannes valde rekommendationerna i [riktning.md](riktning.md):
 
 Projektet byggs främst för Johannes och några vänner, inte för många användare. De fyra målgrupperna i [riktning.md](riktning.md) är en ribba för kvaliteten på förståelsen, inte en plan för spridning. Arbete som bara gäller spridning prioriteras inte: engelsk version, separata vyer per målgrupp, nedladdningar och kommersiell användning. Licensklassningen (K2) behålls, eftersom repot och sidan är publika och klassningen är billig.
 
+Tillägg samma dag: sidan är Johannes främsta sätt att ta in informationen och ska vara ambitiös. Den ska vara intressant och givande att utforska. Den nya sidan enligt `docs/steg3/hemsida_vision.md` fortsätter i full skala. Månadsbrevet ligger kvar som det är (automatiskt) men prioriteras inte. Varje nytt mått ska därför levereras så att sidan kan visa och förklara det.
+
