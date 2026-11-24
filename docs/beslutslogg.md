@@ -404,3 +404,14 @@ Johannes valde rekommendationerna:
   serier men finns i CSV:n och i `useful_lives.changes()`.
 - `publish=True` enligt registret. Kontrollen mot nyhämtade dokument gav 0 fel av 305. Den oberoende granskningen
   avgör om det står kvar.
+
+## 2026-11-24 – P3: N7, avskrivningar 1–8 kvartal
+
+- Förregistrerat före körning (`52a2231`): mål `dep_hyp4`, poolad utvärdering N7b per bolag, baslinjerna B0 och B1 och två
+  varianter. V1 är en rak linje på capex med N ur 3–10 år, och V2 använder bolagens angivna nyttjandeperiod för servrar
+  (P2a). Ingen V3 med capexguidance, eftersom den skulle kosta tre Holm-platser för mycket liten styrka.
+- **N7b avgör, inte summan.** `dep_hyp4` börjar 2023Q1 och har inga utvärderade rader, eftersom MSFT:s brottkvartal
+  2025Q4–2026Q3 inte poängsätts. Det är en avvikelse från N1, där N1b bara redovisades. Den är beslutad i förväg.
+- **Utfall: ingen variant klarar regeln, och B1 är huvudmodell i alla horisontgrupper.** V1 överskattar systematiskt
+  (förhållandet mellan avskrivningar och capex har sjunkit) och är sämre än B1 på kort sikt. V2 har lägre MAE än B1 på
+  3–8 kvartal i båda perioderna, men långt från signifikant. Resultat: `docs/resultat/n7.md`.
