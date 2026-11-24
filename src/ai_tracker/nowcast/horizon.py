@@ -214,11 +214,18 @@ def kedja(info: engine.InfoSet, y: pd.Series, L: pd.Period, path: Path) -> None:
         path.reasons["V_kedja"] = f"V_kedja: < {MIN_TRAIN} training rows for h {short}"
 
 
-def forecast(table: pd.DataFrame, target: Target, origin, brk: dict | None = None) -> Path:
+def target_breaks(t: pd.DataFrame, target: Target) -> dict:
+    """Definition breaks of the target's components (F-B8, cloud only; capex has no break rule)."""
+    return quarterly.breaks(t, quarterly.Aggregate(target.key, target.components)) if target.components else {}
+
+
+def forecast(table: pd.DataFrame, target: Target, origin, brk: dict | None = None, live: bool = False,
+             info: engine.InfoSet | None = None) -> Path:
     """Every model's path at `origin` from the prepared table, everything as_of(origin). Raises HoldoutClosed for an
-    origin after the development period (G-E), before anything is read."""
-    origin = guard.check(origin, f"D2 {target.name}", family=FAMILY)
-    info = engine.InfoSet(table, origin)
+    origin after the development period (G-E), before anything is read; live=True (horizon_live only) also allows an
+    origin on or after D2's first live origin, never one inside the holdout. `info` (optional) records the inputs."""
+    origin = guard.check(origin, f"D2 {target.name}", family=FAMILY, live=live)
+    info = info if info is not None else engine.InfoSet(table, origin)
     y = info.get(target.key)
     y = y[y > 0]
     path = Path(target, origin, None)
@@ -258,9 +265,15 @@ def run(table: pd.DataFrame, target: Target, end=guard.DEV_END) -> pd.DataFrame:
     origins = dev_origins(end)
     for o in origins:  # refuse before reading anything
         guard.check(o, f"D2 {target.name}", family=FAMILY)
-    t = prepare(guard.dev_table(table))
+    return frame(prepare(guard.dev_table(table)), target, origins)
+
+
+def frame(t: pd.DataFrame, target: Target, origins) -> pd.DataFrame:
+    """The (origin, h) rows of `origins` on the prepared table `t`, scored against the first vintages in `t`. The
+    caller decides what `t` holds: the development run passes the rows known by DEV_END, horizon_live's error pool
+    the rows known at the live origin (development origins only)."""
     outcomes = engine.first_vintages(t, target.key)
-    brk = quarterly.breaks(t, quarterly.Aggregate(target.key, target.components)) if target.components else {}
+    brk = target_breaks(t, target)
     rows = []
     for o in origins:
         p = forecast(t, target, o, brk)

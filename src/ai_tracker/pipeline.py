@@ -8,6 +8,7 @@
     python -m ai_tracker.pipeline n1-live            N1 only (quarter end + 20 days: the quarter just ended)
     python -m ai_tracker.pipeline n3-live ... n6-live  N3 (Nvidia fiscal quarter end + 14 days), N4 and N6 (quarter end
                                                      + 20 days), N5 (the day before a scheduled BTOS publication)
+    python -m ai_tracker.pipeline d2-live            D2 horizons 1-8 (shadow): N1's origin, from 2027-01-20
     python -m ai_tracker.pipeline scorecard          forecasts/SCORECARD.md: live forecasts vs first-vintage outcome
     python -m ai_tracker.pipeline publish PATH...    git-commit new forecast files + SCORECARD.md, or new snapshots and
                                                      their monthly letters (CI)
@@ -40,7 +41,7 @@ from pathlib import Path
 import pandas as pd
 
 from ai_tracker import catalog, config, observations, warehouse
-from ai_tracker.nowcast import engine, intervals, n1, n2, n3, n4, n5, n6
+from ai_tracker.nowcast import engine, horizon_live, intervals, n1, n2, n3, n4, n5, n6
 
 FORECASTS = config.REPO / "forecasts"
 SCORECARD = FORECASTS / "SCORECARD.md"
@@ -110,6 +111,12 @@ def n6_due(today) -> Due | None:
     return Due("n6", d.origin, d.period) if d else None
 
 
+def d2_due(today) -> Due | None:
+    """D2 (horizons 1-8, shadow): N1's origin, but only from D2's first live origin (the holdout stays closed)."""
+    d = n1_due(today)
+    return Due("d2", d.origin, d.period) if d and horizon_live.is_origin(d.origin) else None
+
+
 def n5_due(today, schedule_file: Path | None = None) -> Due | None:
     """The day before a scheduled BTOS publication in the logged schedule (as known today); None without a logged
     schedule. A scheduled date that cannot be trusted (funding lapse, unreviewed wording) is not due."""
@@ -122,7 +129,7 @@ def n5_due(today, schedule_file: Path | None = None) -> Due | None:
     return Due("n5", today, n5.file_stem(c["period"])) if c else None
 
 
-DUE = {"n2": n2_due, "n1": n1_due, "n3": n3_due, "n4": n4_due, "n5": n5_due, "n6": n6_due}
+DUE = {"n2": n2_due, "n1": n1_due, "n3": n3_due, "n4": n4_due, "n5": n5_due, "n6": n6_due, "d2": d2_due}
 
 
 def due_for(nowcast: str, today) -> Due | None:
@@ -223,7 +230,7 @@ def weekly(keys: list[str] | None = None, today=None) -> int:
 
 # Inputs of the B2 (guidance) variant, refreshed together with target and indicators before a live forecast.
 LIVE_PREFIXES = {"n2": ("tsmc_guid_",), "n1": ("guid_capex_", "capex_", "fin_lease_"), "n3": ("nvda_guid_rev",),
-                 "n5": (n5.PREFIX,)}
+                 "n5": (n5.PREFIX,), "d2": ("guid_capex_", "capex_", "fin_lease_")}
 LIVE_BASE = {
     "n1": [n1.TARGET, *n1.INDICATORS],
     "n2": [n2.TARGET, *n2.INDICATORS],
@@ -231,6 +238,7 @@ LIVE_BASE = {
     "n4": [*n4.COMPONENTS, *n4.RPO.components],  # target components and V1's regressor (RPO sum)
     "n5": [],
     "n6": [*n6.COMPONENTS, *n4.COMPONENTS],  # target components and V1's regressor (cloud sum)
+    "d2": [n1.TARGET, *n1.COMPANIES, *n4.COMPONENTS, *n4.RPO.components],  # both targets, B2 and V_kedja's inputs
 }
 
 
@@ -261,6 +269,8 @@ def run_live(d: Due, root: Path | None = None, table: pd.DataFrame | None = None
         out = n2.write(d.origin, table, path.parent, today=today)
     elif d.nowcast == "n1":
         out = n1.write_live(table, d.origin, path.parent, today=today)
+    elif d.nowcast == "d2":
+        out = horizon_live.write_live(table, d.origin, path.parent, today=today)
     elif d.nowcast == "n5":
         try:
             out = n5.write_live(table, d.origin, path.parent, today=today)
@@ -393,7 +403,7 @@ def _fmt(x, nd=1) -> str:
     return "" if x is None or (isinstance(x, float) and not math.isfinite(x)) else f"{x:,.{nd}f}".replace(",", " ")
 
 
-def render(scores: dict[str, pd.DataFrame], today=None) -> str:
+def render(scores: dict[str, pd.DataFrame], today=None, d2: pd.DataFrame | None = None) -> str:
     today = pd.Timestamp(today or utc_today())
     lines = ["# Scorecard – skarpa prognoser", "",
              "Genereras av `python -m ai_tracker.pipeline scorecard`. Prognosfilerna i `forecasts/<nowcast>/` "
@@ -429,6 +439,8 @@ def render(scores: dict[str, pd.DataFrame], today=None) -> str:
             lines += ["", "Få utfall: skillnader mellan varianter kan vara slump."]
         lines += _interval_lines(df, variants)
         lines.append("")
+    if d2 is not None:  # D2 (horizons 1-8, shadow): one row per file, target and h (horizon_live.score)
+        lines += horizon_live.render(d2)
     return "\n".join(lines)
 
 
@@ -437,7 +449,8 @@ def scorecard(root: Path | None = None, table: pd.DataFrame | None = None, out: 
     root = Path(root or FORECASTS)
     out = Path(out or root / "SCORECARD.md")
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(render(score(root, table), today), encoding="utf-8")
+    table = observations.load() if table is None else table
+    out.write_text(render(score(root, table), today, d2=horizon_live.score(root, table)), encoding="utf-8")
     print(f"wrote {out}")
     return out
 

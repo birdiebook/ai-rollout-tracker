@@ -393,14 +393,77 @@ def nowcast_section(n: dict, build: dict) -> str:
 </section>"""
 
 
+def horizons_section(d: dict, build: dict) -> str:
+    """D2 (horizons 1-8, shadow): a small fan chart per target from the newest live file, its paths and the per-h
+    scorecard summary."""
+    if not d:
+        return ""
+    groups = ", ".join(f"{g}" for g in d.get("groups") or {})
+    if d.get("origin"):
+        head = (f'<p>Senaste prognosdag: {esc(d["origin"])} (<a href="{esc(build["repo"])}/blob/main/{esc(d["file"])}">'
+                f'fil</a>).')
+    else:
+        head = f"<p>Inga D2-prognoser än. Första prognosdag: {esc(d.get('first_live'))}."
+    if d.get("next_origin"):
+        head += f" Nästa: {esc(d['next_origin'])} (kvartal {esc(d['next_period'])})."
+    head += "</p>"
+    if d.get("error"):
+        head += f'<p class="reason">D2 kunde inte läsas: {esc(d["error"])}</p>'
+    parts = []
+    for t in d.get("targets") or []:
+        champ = ", ".join(f"{esc(g)}: {esc(m)}" for g, m in (t.get("champion_by_group") or {}).items())
+        block = [f'<h3>{esc(t["label"])} (<code>{esc(t["target"])}</code>)</h3>',
+                 f"<p>Huvudmodell per horisontgrupp: {champ}. Skugga: V_kedja.</p>"]
+        if not t.get("publishable"):
+            block.append('<p class="small muted">Värdena visas inte: licensen för målserien är inte kontrollerad.</p>')
+        elif t.get("fan"):
+            block.append(f'<figure class="chart" data-chart="fan" data-id="{esc(t["id"])}"><figcaption>'
+                         f'{esc(t["label"])} ({esc(t["unit"])}): utfall (senaste version), huvudmodellens bana från '
+                         f'L = {esc(t["base"])} och 50-, 80- och 95-procentsintervall per h där felpoolen räcker.'
+                         f'</figcaption></figure>')
+            models = t["models"]
+            rows = "".join(
+                f'<tr><td class="num">{p["h"]}</td><td>{esc(p["quarter"])}</td><td>{esc(p["champion"])}</td>'
+                f'<td class="num">{num(p["value"], 0)}</td>'
+                f'<td class="num">{num(p["interval_80"][0], 0)} – {num(p["interval_80"][1], 0)}</td>'
+                + "".join(f'<td class="num">{num(p["models"].get(m), 0)}</td>' for m in models) + "</tr>"
+                for p in t["paths"])
+            block.append('<div class="table-wrap"><table><thead><tr><th>h</th><th>Kvartal</th><th>Huvudmodell</th>'
+                         '<th>Prognos</th><th>80 % intervall</th>'
+                         + "".join(f"<th>{esc(m)}</th>" for m in models) + f"</tr></thead><tbody>{rows}</tbody>"
+                         "</table></div>")
+        if t.get("summary"):
+            models = t["models"]
+            rows = "".join(
+                f'<tr><td class="num">{s["h"]}</td><td class="num">{s["n"]}</td>'
+                f'<td class="num">{num(s.get("mae_champion"))}</td>'
+                + "".join(f'<td class="num">{num(s.get(f"mae_{m}"))}</td>' for m in models)
+                + f'<td class="num">{num(s.get("bias_champion"), 2, signed=True)}</td>'
+                  f'<td class="num">{num(s.get("coverage_80"))}</td></tr>' for s in t["summary"])
+            block.append('<div class="table-wrap"><table class="narrow"><thead><tr><th>h</th><th>n</th>'
+                         '<th>MAE huvudmodell</th>' + "".join(f"<th>MAE {esc(m)}</th>" for m in models)
+                         + '<th>Bias huvudmodell</th><th>Täckning 80 %</th></tr></thead><tbody>' + rows
+                         + "</tbody></table></div><p class='small muted'>n = prognosdagar med utfall för h. Få "
+                           "utfall: skillnader kan vara slump.</p>")
+        parts.append("\n".join(block))
+    return f"""<section class="nowcast" id="d2">
+<h2>D2: prognoser 1–8 kvartal (skugga)</h2>
+<p>Mål: capex för de fyra största hyperscalers och molnintäkterna enligt N4, första publicerade värdet. Prognosdag: kvartalets slut + 20 dagar (samma som N1 och N4). Horisont h = 1–8 kvartal efter det senaste kända kvartalet L. Modeller: B0 (senaste nivå), B1 (drift), B2 (bolagens guidance, bara capex) och V_kedja (direkt OLS per h på RPO-årstakten och capex/moln-kvoten, skugga). Horisontgrupper: {esc(groups)}. Intervallen bygger på en felpool per modell och h, och ett fel kommer in först när dess utfall är känt.</p>
+{head}
+{''.join(parts)}
+<p class="small">Utveckling och registrering: <a href="{esc(build['repo'])}/blob/main/docs/resultat/d2_utveckling.md">docs/resultat/d2_utveckling.md</a>.</p>
+</section>"""
+
+
 def nowcast_page(doc: dict, build: dict) -> str:
     body = f"""<section class="intro">
 <h1>Prognoser</h1>
 <p class="lead">Nowcasts med scorecard. Varje skarp prognos görs på en registrerad prognosdag med bara data som var känd den dagen, committas till git och skrivs aldrig om. Tidsstämpeln i git är beviset. Utfallet är målseriens första publicerade värde, och felet är 100 × (log prognos − log utfall), för andelar (N5) prognos − utfall i procentenheter.</p>
 <p>Huvudmodellen är den som stod i filen när prognosen gjordes. Övriga varianter visas som skuggor och jämförs på samma utfall. Alla prognoser i <a href="{esc(build['repo'])}/tree/main/forecasts">forecasts/</a>.</p>
 </section>
-<nav class="branches" aria-label="Mål">{''.join(f'<a href="#{esc(n["id"])}">{esc(n["label"])}</a>' for n in doc['nowcasts'])}<a href="#regim">Regim</a></nav>
+<nav class="branches" aria-label="Mål">{''.join(f'<a href="#{esc(n["id"])}">{esc(n["label"])}</a>' for n in doc['nowcasts'])}<a href="#d2">D2</a><a href="#regim">Regim</a></nav>
 {''.join(nowcast_section(n, build) for n in doc['nowcasts'])}
+{horizons_section(doc.get("horizons") or {}, build)}
 {regime_section(doc.get("regime") or {}, build)}"""
     return page(f"Prognoser – {SITE_TITLE}", "prognoser", body, "data/prognoser.json", build)
 

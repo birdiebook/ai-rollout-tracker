@@ -44,6 +44,7 @@
   }
 
   /* spec: {series: [{label, periods, values, color, dash, kind: 'line'|'dot'}], refs: [y], band: [lo, hi],
+            fans: [{label, periods, lo, hi, opacity}] (shaded areas between lo and hi, gaps where null),
             zero: bool, ymin, ymax, height, spark, nd} */
   function draw(fig, spec) {
     var old = fig.querySelector('.plot');
@@ -59,6 +60,10 @@
       (s.ranges || []).forEach(function (r) {  // interval whiskers: [{lo: [...], hi: [...], width}]
         s.x.forEach(function (x, i) { if (r.lo[i] != null && r.hi[i] != null && isFinite(x)) ys.push(r.lo[i], r.hi[i]); });
       });
+    });
+    (spec.fans || []).forEach(function (f) {
+      f.x = f.periods.map(px);
+      f.x.forEach(function (x, i) { if (f.lo[i] != null && f.hi[i] != null && isFinite(x)) { xs.push(x); ys.push(f.lo[i], f.hi[i]); } });
     });
     if (!xs.length) { holder.textContent = 'Inga värden att visa.'; return; }
     (spec.refs || []).forEach(function (r) { ys.push(r); });
@@ -95,6 +100,19 @@
       svgEl('rect', { x: m.l, width: W - m.l - m.r, y: Y(spec.band[1]), height: Math.max(0, Y(spec.band[0]) - Y(spec.band[1])),
         fill: 'var(--band)' }, svg);
     }
+    (spec.fans || []).forEach(function (f) {  // one polygon per contiguous run of defined intervals
+      var run = [];
+      var flush = function () {
+        if (run.length > 1) {
+          var up = run.map(function (i) { return X(f.x[i]).toFixed(1) + ',' + Y(f.hi[i]).toFixed(1); });
+          var down = run.slice().reverse().map(function (i) { return X(f.x[i]).toFixed(1) + ',' + Y(f.lo[i]).toFixed(1); });
+          svgEl('polygon', { points: up.concat(down).join(' '), fill: f.color || 'var(--series-2)', 'fill-opacity': f.opacity || 0.15 }, svg);
+        }
+        run = [];
+      };
+      f.x.forEach(function (x, i) { if (f.lo[i] != null && f.hi[i] != null && isFinite(x)) run.push(i); else flush(); });
+      flush();
+    });
     if (spec.zero && y0 < 0 && y1 > 0) svgEl('line', { x1: m.l, x2: W - m.r, y1: Y(0), y2: Y(0), 'class': 'zero' }, svg);
     (spec.refs || []).forEach(function (r) { svgEl('line', { x1: m.l, x2: W - m.r, y1: Y(r), y2: Y(r), 'class': 'ref' }, svg); });
     spec.series.forEach(function (s) {
@@ -133,13 +151,17 @@
     if (spec.spark) return;
     // legend (>= 2 series, or a band)
     var keyed = spec.series.filter(function (s) { return s.values.some(function (v) { return v != null; }); });
-    if (keyed.length > 1 || spec.band) {
+    if (keyed.length > 1 || spec.band || (spec.fans || []).length) {
       var lg = htmlEl('div', 'legend', holder);
       keyed.forEach(function (s) {
         var it = htmlEl('span', s.kind === 'dot' ? 'dot' : (s.dash ? 'dash' : ''), lg, s.label);
         it.style.setProperty('--key', s.color);
       });
       if (spec.band) htmlEl('span', 'band', lg, spec.bandLabel || 'dödband');
+      (spec.fans || []).forEach(function (f) {
+        var it = htmlEl('span', 'band', lg, f.label);
+        it.style.setProperty('--band', 'color-mix(in srgb, ' + (f.color || 'var(--series-2)') + ' ' + Math.round((f.opacity || 0.15) * 100) + '%, transparent)');
+      });
     }
     // hover: crosshair snaps to the nearest period, one tooltip for every series
     var all = {};
@@ -253,6 +275,19 @@
       if (!s || !s.path || !s.path.pace.some(function (v) { return v != null; })) { fig.remove(); return null; }
       var time = s.method === 'doubling' || s.method === 'halving';
       return { spark: true, zero: !time, series: [{ label: 'takt', periods: s.path.periods, values: s.path.pace, color: 'var(--series-1)' }] };
+    },
+    fan: function (fig) {  // prognoser.html, D2: outcome history, the champion's path from L and its intervals
+      var id = fig.getAttribute('data-id');
+      var t = ((DATA.horizons || {}).targets || []).filter(function (x) { return x.id === id; })[0];
+      if (!t || !t.fan) return null;
+      var f = t.fan, iv = f.intervals || {};
+      var fans = [['95', 0.12], ['80', 0.18], ['50', 0.28]].filter(function (k) { return iv[k[0]]; }).map(function (k) {
+        return { label: k[0] + ' %', periods: f.periods, lo: iv[k[0]].lo, hi: iv[k[0]].hi, opacity: k[1], color: 'var(--series-2)' };
+      });
+      var series = [];
+      if (t.history) series.push({ label: 'utfall', periods: t.history.periods, values: t.history.values, color: 'var(--series-1)' });
+      series.push({ label: 'huvudmodell', periods: f.periods, values: f.values, color: 'var(--series-2)', dash: true });
+      return { series: series, fans: fans, height: 200 };
     },
     nowcast: function (fig) {
       var id = fig.getAttribute('data-id');

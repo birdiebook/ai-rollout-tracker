@@ -17,7 +17,7 @@ from pathlib import Path
 import pandas as pd
 
 from ai_tracker import catalog, config, evaluation, observations, pipeline
-from ai_tracker.nowcast import intervals, n1, n3, n4, n5, n6
+from ai_tracker.nowcast import horizon, horizon_live, intervals, n1, n3, n4, n5, n6
 from ai_tracker.nowcast import n2
 from ai_tracker.nowcast import n2 as n2_live
 from ai_tracker.site import flow as F
@@ -504,7 +504,49 @@ def nowcasts(ctx: Context, forecasts_dir: Path, today, calibration: dict | None 
             "history": _target_history(target, ctx, today),
             "backtest_calibration": (calibration or {}).get(sub),
         })
-    return {"nowcasts": out}
+    return {"nowcasts": out, "horizons": horizons(ctx, forecasts_dir, today)}
+
+
+def horizons(ctx: Context, forecasts_dir: Path, today) -> dict:
+    """D2 (horizons 1-8, shadow): the newest live file's paths and fan per target (values only for a publishable
+    target), and the per-h scorecard summary. Before the first live file: only the rule and the next origin."""
+    forecasts_dir = Path(forecasts_dir)
+    error = None
+    try:
+        latest = horizon_live.latest(forecasts_dir)
+        scores = horizon_live.score(forecasts_dir, ctx.table)
+    except Exception as e:  # noqa: BLE001 - a failure must not take the site down; say so on the page
+        latest, scores, error = None, pd.DataFrame(), f"{type(e).__name__}: {e}"
+    nxt = next_origin("d2", today, forecasts_dir, horizon_days=400)
+    targets = []
+    for name, tg in horizon.TARGETS.items():
+        show = publishable(tg.key, ctx)
+        tp = ((latest or {}).get("targets") or {}).get(name)
+        rec = {"id": f"d2-{name}", "name": name, "target": tg.key, "label": tg.label, "unit": horizon_live.UNIT,
+               "publishable": show, "models": list(tg.models), "champion_by_group": horizon_live.CHAMPION[name],
+               "base": tp.get("base") if tp else None, "fan": None, "paths": [], "history": None, "summary": []}
+        if show and tp and tp.get("base"):
+            fan = horizon_live.band(tp)
+            rec["fan"] = {"periods": fan["periods"], "champion": fan["champion"],
+                          "values": [_num(v, 6) for v in fan["values"]],
+                          "intervals": {k: {"lo": [_num(v, 6) for v in iv["lo"]], "hi": [_num(v, 6) for v in iv["hi"]]}
+                                        for k, iv in fan["intervals"].items()}}
+            for i, (hs, p) in enumerate(sorted(tp["paths"].items(), key=lambda kv: int(kv[0]))):
+                rec["paths"].append({"h": int(hs), "quarter": p["quarter"], "champion": p["champion"],
+                                     "value": _num(p.get("value"), 6),
+                                     "models": {m: _num(v, 6) for m, v in (p.get("models") or {}).items()},
+                                     "interval_80": [rec["fan"]["intervals"]["80"]["lo"][i + 1],
+                                                     rec["fan"]["intervals"]["80"]["hi"][i + 1]]})
+            rec["history"] = _target_history(tg.key, ctx, today)
+        if show and len(scores):
+            rec["summary"] = [{k: (_num(v, 4) if isinstance(v, float) else v) for k, v in r.items()}
+                              for r in horizon_live.summary(scores, name) if r["n"]]
+        targets.append(rec)
+    return {"first_live": str(horizon_live.FIRST_LIVE.date()), "origin": (latest or {}).get("origin"),
+            "file": (latest or {}).get("file"), "next_origin": nxt[0] if nxt else None,
+            "next_period": nxt[1] if nxt else None, "groups": {g: list(hs) for g, hs in horizon.GROUPS.items()},
+            "interval_levels": [intervals.level_key(L) for L in intervals.LEVELS], "targets": targets,
+            "error": error}
 
 
 def _champion_intervals(d: dict) -> dict | None:
