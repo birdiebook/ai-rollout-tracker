@@ -68,7 +68,7 @@
             <span class="code">{l.code}</span>
             {@render nowcastChips(l)}
           </div>
-          <a class="name" href={resolve('/flode')}>{l.name}</a>
+          <a class="name" href={resolve('/flode/[led]', { led: l.code })}>{l.name}</a>
           {#each l.branches as b (b.code)}
             {@render branchBlock(l, b.code, b.alsoIn, false)}
           {/each}
@@ -112,7 +112,7 @@
               </div>
               <p class="more">
                 {@render nowcastChips(l)}
-                <a href={resolve('/flode')}>{l.code} i flödet →</a>
+                <a href={resolve('/flode/[led]', { led: l.code })}>{l.code} i flödet →</a>
               </p>
             </div>
           </details>
