@@ -276,3 +276,18 @@ def test_df_evaluate_comparator_and_holm():
 def test_origin_before_sample_start_has_no_factor(table):
     v = realtime.estimate(table, "2009-06-05")
     assert not v.available("capex") and not v.available("demand") and v.path.empty
+
+
+@pytest.mark.real_data
+def test_real_table_holdout_guard_raises_before_any_estimate():
+    from ai_tracker import observations
+    from conftest import real_table_exists
+
+    if not real_table_exists():
+        pytest.skip("no real observation table")
+    t = observations.load()
+    for o in ("2025-07-01", "2025-10-20", "2026-12-05"):
+        with pytest.raises(guard.HoldoutClosed):
+            realtime.vintage(t, o, cache=False)
+    with pytest.raises(guard.HoldoutClosed):
+        realtime.realtime_monthly(t, "2025-01", "2026-10", cache=False)
