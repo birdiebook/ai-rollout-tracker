@@ -565,3 +565,104 @@ historik från datasetets massuppladdning 2026-04-02 är daterad därefter. Inga
 | Gren | Kärnserier | Anmärkning |
 |---|---|---|
 | G1 | `g1_epoch_bench_frontier_<valda>`, `g1_epoch_train_compute_frontier`, `g1_epoch_eci_frontier`, `g1_arena_text_top` | ECI spärrad (bakåtfylld). Arena från 2024-01 |
+
+### 2026-11-24 – Diffusionsindex v2: en röst per källfamilj (beslut 2026-11-24, gäller från ögonblicksbilden 2026-11-30)
+
+Johannes beslut 2026-11-24 (beslutspunkt 2 i `docs/riktning.md`). Diffusionsindexet i avsnitt 2 ger i dag en röst
+per serie. Flera kärnserier är skivor av samma källa: G8 är nio länder ur Indeeds data, G9 har tre arXiv-kategorier och
+G7 sex delstater ur samma EIA-tabell. Skivor av samma källa samvarierar och får enigheten att se större ut än den är.
+v2 ger därför en röst per källfamilj.
+
+Ärlig not: den rekonstruerade historiken med v1 har redan setts (spår F5 och F6, `docs/resultat/tillstand.md`).
+Ändringen motiveras av att serierna inte är oberoende, inte av vad historiken visade. Inget värde med v2 har räknats
+på verklig data före denna post. Väntad effekt, bara efter konstruktion: grenar med en eller två familjer (G2, G8 och
+G9 så länge Epoch-databasens serier är spärrade) får inget tillstånd, och G7 med tre familjer ligger på gränsen.
+Påståendena blir försiktigare åt båda hållen.
+
+**Källfamilj.** Kärnserier som kommer från samma källa, mäter samma begrepp och bara skiljer sig i skiva (land,
+delstat, balansområde, zon, paket, kategori, bransch eller frågeregim) är en familj.
+- En klammerpost i kärnserietabellen (t.ex. `ai_postings_share_{us,gb,...}_d`) är alltid en familj.
+- Serier från olika bolag (olika inlämnare) eller olika källor är olika familjer.
+- Olika begrepp ur samma källa är olika familjer.
+- `<valda>` i G1 ger en familj per vald benchmark. Urvalsregeln (2026-11-23) väljer redan högst en benchmark per
+  benchmarkfamilj, så två valda benchmarks mäter olika förmågor.
+
+**Familjetabell.** Den täcker varje post i de gällande kärnserietabellerna exakt en gång. Koden läser tabellen
+(`state.register.FAMILIES`, ett test jämför de två).
+
+| Gren | Källfamilj | Kärnserier | Källa och begrepp |
+|---|---|---|---|
+| G1 | `g1_epoch_bench_<valda>` | `g1_epoch_bench_frontier_<valda>` | Epochs benchmarkhubb, frontvärde. En familj per vald benchmark |
+| G1 | `g1_epoch_train_compute` | `g1_epoch_train_compute_frontier` | Epochs modelldatabas, största träningsberäkning |
+| G1 | `g1_epoch_eci` | `g1_epoch_eci_frontier` | Epochs benchmarkhubb, ECI |
+| G1 | `g1_arena_text` | `g1_arena_text_top` | LMArena, högsta betyg i textrankningen |
+| G2 | `g2_price_at_capability` | `g2_price_at_capability_gpqa` | LiteLLM och Epoch, pris vid fast förmåga |
+| G3 | `btos_ai_use` | `btos_ai_use_<aktiv regim>` | Census BTOS, andel företag som använder AI, alla frågeregimer |
+| G3 | `eu_ai_ent` | `eu_ai_ent_eu27`, `eu_ai_ent_se` | Eurostat isoc_eb_ai, andel företag som använder AI (Sverige ingår i EU27) |
+| G3 | `g3_npm` | `g3_npm_{openai,anthropic_sdk,langchain,vercel_ai}_w` | npm, nedladdningar av AI-paket |
+| G3 | `g3_pypi` | `g3_pypi_{openai,anthropic,langchain,llama_index}_wed` | PyPI, nedladdningar av AI-paket |
+| G3 | `g3_wiki` | `g3_wiki_{chatgpt,llm,genai}_en` | Wikimedia, sidvisningar för AI-artiklar |
+| G3 | `g3_cf_ai_crawler` | `g3_cf_bots_ai_crawler_share` | Cloudflare Radar, AI-crawlers andel av botarnas förfrågningar |
+| G3 | `g3_cf_ai_purpose` | `g3_cf_ai_purpose_user_action` | Cloudflare Radar, andel AI-förfrågningar på uppdrag av en användare |
+| G4 | `rev_aws` | `rev_aws` | Amazon (SEC), segmentintäkt AWS |
+| G4 | `rev_google_cloud` | `rev_google_cloud` | Alphabet (SEC), segmentintäkt Google Cloud |
+| G4 | `rev_msft_cloud` | `rev_msft_cloud` | Microsoft (SEC), Microsoft Cloud |
+| G4 | `rev_nvda_datacenter` | `rev_nvda_datacenter` | Nvidia (SEC), segmentintäkt Data Center |
+| G4 | `rev_orcl_cloud` | `rev_orcl_cloud` | Oracle (SEC), segmentintäkt Cloud |
+| G4 | `rpo_hyp4` | `rpo_hyp4` | SEC, RPO för MSFT, GOOGL, AMZN och ORCL (summa) |
+| G5 | `capex_hyp4` | `capex_hyp4` | SEC, capex för de fyra största (summa) |
+| G5 | `us_constr_datacenter` | `us_constr_datacenter` | Census C30, byggutgifter för datacenter |
+| G5 | `us_pfi_info_proc_eq_sw` | `us_pfi_info_proc_eq_sw` | BEA NIPA, investeringar i IT-utrustning och programvara |
+| G5 | `capex_ocf_hyp4` | `capex_ocf_hyp4` | SEC, capex som andel av operativt kassaflöde för de fyra största |
+| G5 | `capex_orcl` | `capex_orcl` | Oracle (SEC), capex |
+| G6 | `tsmc_revenue_m` | `tsmc_revenue_m` | TSMC (6-K), månadsintäkt |
+| G6 | `us_ip_g17` | `us_ip_semis_m`, `us_ip_computers_m` | Fed G.17, industriproduktion per bransch |
+| G6 | `us_imports_ft900` | `us_imports_tw_m`, `us_imports_kr_m` | Census FT-900, varuimport per land |
+| G6 | `rev_amd_datacenter` | `rev_amd_datacenter` | AMD (SEC), segmentintäkt Data Center |
+| G6 | `rev_avgo_semis` | `rev_avgo_semis` | Broadcom (SEC), segmentintäkt halvledare |
+| G6 | `rev_mrvl_datacenter` | `rev_mrvl_datacenter` | Marvell (SEC), intäkt från slutmarknaden datacenter |
+| G6 | `asml_net_sales` | `asml_net_sales` | ASML (6-K), nettoomsättning |
+| G7 | `us_elec_sales_com` | `us_elec_sales_com_{va,tx,ga,az,or,oh}_m` | EIA (EPM och 861M), elförsäljning till kommersiell sektor per delstat |
+| G7 | `eia930_avg` | `eia930_avg_{pjm_dom,erco,azps,soco,srp}_m` | EIA-930, medellast per balansområde |
+| G7 | `pjm_lf_peak` | `pjm_lf_peak_{dom,rto}_h5` | PJM, lastprognos för sommartoppen per zon |
+| G8 | `ai_postings_share` | `ai_postings_share_{us,gb,de,fr,ca,au,ie,it,nl}_d` | Indeed Hiring Lab, andel platsannonser som nämner AI, per land |
+| G9 | `g9_arxiv` | `g9_arxiv_cs_ai`, `g9_arxiv_cs_lg`, `g9_arxiv_cs_cl` | arXiv, nya artiklar per primärkategori |
+| G9 | `g9_epoch_open_weights` | `g9_epoch_open_weights_share` | Epochs modelldatabas, andel modeller med öppna vikter |
+| G9 | `g9_epoch_notable_models` | `g9_epoch_notable_models` | Epochs modelldatabas, antal notable-modeller |
+
+Antal familjer: G1 3 plus antalet valda benchmarks (i dag 2, alltså 5), G2 1, G3 7, G4 6, G5 5, G6 7, G7 3, G8 1 och
+G9 3. Spärrade serier (ECI, Epochs modelldatabas i G9) räknas inte förrän spärren släpper, och då inte heller deras
+familj.
+
+**Gränsfall**, avgjorda mekaniskt med regeln ovan:
+- `capex_ocf_hyp4` har samma täljare som `capex_hyp4`, men är ett annat begrepp (andel av kassaflödet). Två familjer,
+  även om riktningarna kan samvariera.
+- npm och PyPI mäter samma begrepp i olika register. Olika källor, alltså två familjer.
+- EIA:s elförsäljning och EIA-930 har samma utgivare men olika undersökningar och begrepp (såld el till kommersiell
+  sektor mot medellast i balansområdet). Två familjer. PJM:s lastprognos och EIA-930:s DOM är olika källor och olika
+  begrepp (prognos mot utfall).
+- Epochs serier (benchmarks, ECI, träningsberäkning, öppna vikter och antal modeller) har samma utgivare men olika
+  begrepp. Egna familjer. ECI väger samman hubbens benchmarkresultat, och de valda benchmarkerna körs till stor del på
+  samma modeller. Det är en kvarvarande samvariation som regeln inte fångar.
+- `rpo_hyp4` och segmentintäkterna i G4 har delvis samma inlämnare men olika begrepp. Egna familjer.
+- Fed G.17 (halvledare och datorer) är branschskivor av samma index, och FT-900 (Taiwan och Sydkorea) är landskivor av
+  samma tabell. En familj var.
+- PJM RTO innehåller DOM, och EU27 innehåller Sverige. Båda paren är redan en familj.
+
+**Regel v2:**
+- Vilka serier som räknas och riktningen per serie, d ∈ {−1, 0, +1}, är oförändrade (avsnitt 2 och ändringarna).
+- Familjens röst = medelvärdet av (d + 1)/2 över familjens räknade serier. En familj med en serie röstar 1, 0,5 eller 0.
+- **index_v2** = medelvärdet av familjernas röster över familjer med minst en räknad serie.
+- Tillstånd med oförändrade gränser, jämförda oavrundat: *accelererar* om index ≥ 0,67, *bromsar in* om index ≤ 0,33,
+  annars *stabil*. Med färre än 3 räknade familjer visas indexet men inget tillstånd ("för få källor").
+- Om varje familj har en serie är index_v2 = index_v1. Testerna kontrollerar det.
+
+**v1** är regeln i avsnitt 2 (en röst per serie, minst 3 serier, "för få serier"). Den räknas och publiceras bredvid
+under namnet v1. v1 blir inte officiell regel igen utan en ny registerpost.
+
+**Gäller** från den första skarpa ögonblicksbilden 2026-11-30 (`snapshots/2026-11.json`). Ögonblicksbilden anger
+regelversionen och familjetabellen. Rekonstruerad historik räknas med båda reglerna och märks som rekonstruktion.
+
+**Framtida kärnserier** tilldelas en familj i samma registerpost som lägger till dem, i en tabell med kolumnerna
+`Gren | Källfamilj | Kärnserier`. En senare familjetabell ersätter grenens familjer, på samma sätt som en senare
+kärnserietabell ersätter grenens kärnserier.
