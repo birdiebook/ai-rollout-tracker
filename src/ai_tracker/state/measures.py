@@ -276,6 +276,8 @@ def measure_path(key: str, when, ctx: Context) -> tuple[dict, pd.DataFrame | Non
             gated_note = f"bakåtfylld: {n_own} < {R.OWN_SNAPSHOT_MONTHS} mån egna ögonblicksbilder, bara beskrivning"
 
     values = observations.as_of(key, when, rows)
+    if key in R.SERIES_START and not values.empty:  # registered scale break: measure only from the start period
+        values = values[values.index >= pd.Period(R.SERIES_START[key], values.index.freq)]
     meta = vintage(rows, when)
     if values.empty:
         out["reason"] = "inga data kända på beräkningsdagen"

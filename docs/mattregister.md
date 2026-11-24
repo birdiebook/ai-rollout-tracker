@@ -548,3 +548,20 @@ D2 skrivs som skugga från 2027-01-20 (`forecasts/d2/<kvartal>.json`). Huvudmode
 (B0, B1 eller B2) som hade lägst medel-MAE över gruppens horisonter i utvecklingsperioden: capex B2 (h1–2, h3–4) och
 B1 (h5–8), moln B1 i alla grupper. Valet för capex h3–4 är knappt (19,2 mot 19,8). V_kedja är skugga överallt.
 Holdout-prognosdagarna (2025-07-01–2027-01-19) körs aldrig.
+
+### 2026-11-24 – G1: Arena-toppen som kärnserie (efter spår G12, före takträkning)
+
+`g1_arena_text_top` (högsta betyg i LMArenas textrankning per månad, daterat med tidsstämplade commits från den
+ursprungliga topplistan) läggs till som kärnserie i G1. Urvalet bygger på tillgång, historik och ärliga datum. Bakåtfylld
+historik från datasetets massuppladdning 2026-04-02 är daterad därefter. Inga takter är beräknade.
+- **Mått:** nivån i Arena-poäng, som redan är en logit-skala. Takt = 12-månadersförändring i poäng (metod "share",
+  differens).
+- **Bara Bradley–Terry-eran,** från 2024-01. Elo-perioden före bytet används inte. Skalbrotten 2025-05-16 och 2025-07-23
+  noteras som kända brott.
+- **Referensserier, inte kärnserier:** gapet mot en referensmodell och "style control", eftersom de mäter samma sak.
+  SWE-bench (ingen licens, ändrad inlämningspolicy) och AWS GPU-priser (bara ett prisbyte på hela historiken) ingår
+  inte heller.
+
+| Gren | Kärnserier | Anmärkning |
+|---|---|---|
+| G1 | `g1_epoch_bench_frontier_<valda>`, `g1_epoch_train_compute_frontier`, `g1_epoch_eci_frontier`, `g1_arena_text_top` | ECI spärrad (bakåtfylld). Arena från 2024-01 |

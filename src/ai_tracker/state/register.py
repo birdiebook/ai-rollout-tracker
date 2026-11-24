@@ -28,7 +28,7 @@ REGISTER_PATH = config.REPO / "docs" / "mattregister.md"
 # Mirrors the register table literally (one entry per backticked name in the "Kärnserier" cell).
 # tests/test_state.py fails until this structure and the register agree.
 CORE_SERIES: dict[str, list[str]] = {
-    "G1": ["g1_epoch_bench_frontier_<valda>", "g1_epoch_train_compute_frontier", "g1_epoch_eci_frontier"],
+    "G1": ["g1_epoch_bench_frontier_<valda>", "g1_epoch_train_compute_frontier", "g1_epoch_eci_frontier", "g1_arena_text_top"],
     "G2": ["g2_price_at_capability_gpqa"],
     "G3": ["btos_ai_use_<aktiv regim>", "eu_ai_ent_eu27", "eu_ai_ent_se", "g3_npm_{openai,anthropic_sdk,langchain,vercel_ai}_w", "g3_pypi_{openai,anthropic,langchain,llama_index}_wed", "g3_wiki_{chatgpt,llm,genai}_en", "g3_cf_bots_ai_crawler_share", "g3_cf_ai_purpose_user_action"],
     "G4": ["rev_aws", "rev_google_cloud", "rev_msft_cloud", "rev_nvda_datacenter", "rev_orcl_cloud", "rpo_hyp4"],
@@ -63,8 +63,10 @@ SUBMONTHLY = {"D", "W", "2W"}  # aggregated to calendar months before any pace i
 # front = running max), "doubling" (G1, front = running max), "halving" (G2 price, front = running min).
 # g9_epoch_open_weights_share is a share (unit "andel (0–1)", which would default to logit): register section 1,
 # shares in level and percentage points (a 0-1 share is scaled x100). Logit is registered for G1 benchmarks only.
-METHOD_OVERRIDES: dict[str, str] = {"g9_epoch_open_weights_share": "share"}
+METHOD_OVERRIDES: dict[str, str] = {"g9_epoch_open_weights_share": "share", "g1_arena_text_top": "share"}
 AGG_OVERRIDES: dict[str, str] = {}  # "mean" | "sum" for D/W/2W series
+# Registered start periods (scale breaks): measures use only periods from here (register 2026-11-24, Arena BT era).
+SERIES_START: dict[str, str] = {"g1_arena_text_top": "2024-01"}
 
 # Series that are live nowcast targets: surprise = outcome minus the committed live nowcast (forecasts/<dir>/).
 NOWCAST_TARGETS = {"capex_hyp4": "n1", "tsmc_revenue_m": "n2"}
