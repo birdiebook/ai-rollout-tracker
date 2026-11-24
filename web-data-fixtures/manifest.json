@@ -91,9 +91,9 @@
   {
    "path": "flow.json",
    "schema": "flow",
-   "bytes": 50964,
-   "gzip_bytes": 14307,
-   "sha256": "262fa849f4ea21bbd8b825158d6b6d1042de2f86b83ed6019187dba68514537c"
+   "bytes": 50980,
+   "gzip_bytes": 14303,
+   "sha256": "1e1fc4a954098016027431bc9caaa11354d5316fce6f01a08f3893c1b8d951d5"
   },
   {
    "path": "letters.json",
@@ -154,9 +154,9 @@
   {
    "path": "nowcast/n5.json",
    "schema": "nowcast",
-   "bytes": 2057,
-   "gzip_bytes": 911,
-   "sha256": "9da17036339c4b33c298584b221a6cca2143d486a9404825b333ec7c08d63790"
+   "bytes": 2073,
+   "gzip_bytes": 920,
+   "sha256": "30272cfaa95a14b7db6ef0096496ac383e10bd979b20f9279583aa827a980d39"
   },
   {
    "path": "nowcast/n6.json",
@@ -168,9 +168,9 @@
   {
    "path": "overview.json",
    "schema": "overview",
-   "bytes": 10492,
-   "gzip_bytes": 1967,
-   "sha256": "9a4e08f5f002b3c78f8d8931aafc429cec112f9250d41155ad34f9b7c9ad7f14"
+   "bytes": 10508,
+   "gzip_bytes": 1968,
+   "sha256": "843c9d9217b1f2c51deb317698f01835f42c8f248c6e1beca755683334126b8b"
   },
   {
    "path": "regime.json",
@@ -449,8 +449,8 @@
   {
    "group": "flow.json",
    "files": 1,
-   "bytes": 50964,
-   "gzip_bytes": 14307
+   "bytes": 50980,
+   "gzip_bytes": 14303
   },
   {
    "group": "letters",
@@ -473,14 +473,14 @@
   {
    "group": "nowcast",
    "files": 7,
-   "bytes": 23831,
-   "gzip_bytes": 8561
+   "bytes": 23847,
+   "gzip_bytes": 8570
   },
   {
    "group": "overview.json",
    "files": 1,
-   "bytes": 10492,
-   "gzip_bytes": 1967
+   "bytes": 10508,
+   "gzip_bytes": 1968
   },
   {
    "group": "regime.json",
@@ -515,8 +515,8 @@
  ],
  "totals": {
   "files": 59,
-  "bytes": 577174,
-  "gzip_bytes": 156412
+  "bytes": 577222,
+  "gzip_bytes": 156418
  },
  "budgets": {
   "per_file": [
