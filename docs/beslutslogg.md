@@ -343,3 +343,9 @@ R7:s läsning "från 2017Q2, alla positioner". Regeln tillämpades mekaniskt: `n
 gränsen 0,10 är mindre än i C2:s körning (0,038), och vinsten är i praktiken en korrektion av TSMC:s konstanta bias
 (cirka +1,6 %). N1 är oförändrad (körlogg identisk med 20261123T214413Z). Den första skarpa prognosen med B3 görs
 2026-12-05.
+
+## 2026-11-24 – Holdouten öppnas för C3 och C4
+
+Johannes godkände rekommendationen att öppna holdouten för faktormodellen (C3) och regimmodellen (C4) i en körning.
+Båda specifikationerna var låsta (`5431f41`, `735dc64`) innan. D2:s holdout öppnas inte för test, eftersom n < 8
+prognosdagar ger skugga direkt (registret 2026-11-24). Öppningen loggas i `docs/holdout_logg.md`.
