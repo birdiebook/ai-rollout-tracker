@@ -19,7 +19,8 @@ above, so each open series also has a maximum age:
 Age is measured from the period end, not from the latest known_from, so a revision of old periods never
 makes a series look fresh: only a new period does. `Spec.max_age_days` overrides the bound (reason in
 `note`, e.g. a release calendar that is offset from the period), `Spec.closed` exempts an ended series,
-and KNOWN_STALE accepts a stale series until a given date (a source outage that is understood).
+KNOWN_STALE accepts a stale series until a given date (a source outage that is understood), and a series whose
+API key is not set (keyed.py) is left out until the key is added.
 """
 
 from __future__ import annotations
@@ -28,7 +29,7 @@ import duckdb
 import numpy as np
 import pandas as pd
 
-from ai_tracker import catalog, observations
+from ai_tracker import catalog, keyed, observations
 from ai_tracker.observations import to_periods
 from ai_tracker.sources import plans as _plans
 
@@ -199,6 +200,7 @@ def fresh(con: duckdb.DuckDBPyConnection | None = None, today=None) -> pd.DataFr
     today = pd.Timestamp(today if today is not None else pd.Timestamp.now(tz="UTC").date()).normalize()
     df = con.execute(FRESH_SQL, {"today": today.to_pydatetime()}).df()
     accepted = {k for k, (until, _) in KNOWN_STALE.items() if today <= pd.Timestamp(until)}
+    accepted |= keyed.unconfigured(df["series"])  # their API key is not set: not fetchable here (keyed.py)
     return df[~df["series"].isin(accepted)].reset_index(drop=True)
 
 

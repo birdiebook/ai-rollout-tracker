@@ -1297,3 +1297,73 @@ subjektet och verbet. Det stod inte i posten ovan. Tolkningen ändras inte. Kän
 **7. Urval av kandidatmeningar för capex-guidance (R11-1).** Meningen efter varje mening med ett capex-ord är också en
 kandidat (`guidance_capex.candidates`). Kontrollen `python -m ai_tracker.guidance_check --neighbours` listar sådana
 meningar med ett belopp som inte är kodade.
+
+### 2026-11-24 – M2: import av servrar, datordelar och halvledare per land (katalogserier, inte kärnserier)
+
+Spår M2 (förslag 4 i `docs/riktning.md`). Posten låser serier, källor och datering innan något värde i serierna har
+hämtats. Inga mått (takt, förändring i takt) räknas, och serierna ingår inte i grenarnas index. Att göra någon av dem
+till kärnserie kräver en egen registerpost och en granskning. Gren G6. Publiceras: ja (Census, amerikanskt
+federalt verk).
+
+**Ländernas koder** (Census `CTY_CODE`): `tw` 5830 Taiwan, `mx` 2010 Mexiko, `vn` 5520 Vietnam, `my` 5570 Malaysia,
+`th` 5490 Thailand, `cn` 5700 Kina, `world` hela världen (0000 i filen, `-` i API:t).
+
+| Nyckel | Källa | Innehåll | Frekv. | known_from |
+|---|---|---|---|---|
+| `us_imp_eu{21300,21301,21320}_{tw,mx,vn,my,th,cn,world}_a` | `enduse_imports.xlsx` (Annual Country by 5-digit End-Use Code), ingen nyckel | import per land och end-use-kod: 21300 datorer, 21301 datortillbehör och datordelar, 21320 halvledare. MUSD per år, ej säsongsrensad | A | 31 dec + 191 dagar (10 juli året efter) |
+| `us_imp_hs{8471,847150,847180,847330,8542}_{tw,mx,vn,my,th,cn,world}_m` | Census API `intltrade/imports/hs`, kräver `CENSUS_API_KEY` | `GEN_VAL_MO` (general imports, totalvärde) per land och HS-kod: 8471 alla datorer och enheter, 8471.50 processorenheter, 8471.80 andra enheter, 8473.30 delar till 8471, 8542 integrerade kretsar. MUSD, ej säsongsrensad, från 2013-01 | M | max(månadsslut + 41 dagar, sena FT-900-releaser i `census_trade.LATE`) |
+
+**Datering och läckage:**
+- *Årsfilen* byts ut vid FT-900:s årsrevision och har ingen versionshistorik. Årsrevisionen kom 4–9 juni 2018–2026
+  (`final_YYYY.pdf`, "FOR RELEASE"). Filens Last-Modified på servern är 2026-06-09 12:31 GMT, samma minut som
+  releasen (8:30 EDT). Att äldre versioner av filen kom vid samma release går inte att verifiera, så regeln har en
+  månads marginal. Hela historiken 2016–2025 är backfill med vintage 2026-06-09.
+- *HS-serierna* släpps med FT-900 och dateras därför som `us_imports_tw_m`. API:t har bara senaste vintage, så första
+  hämtningen är backfill. Ändrade värden blir revisioner med hämtdagen som `known_from`.
+- En månad inom svarets period som saknar post för ett land och en kod räknas som 0. Antagandet är att API:t bara har
+  poster för handel som har ägt rum, och det kontrolleras vid första hämtningen med nyckel.
+
+**Kända brott, skarvas inte:** HS 2017 (2017-01) och HS 2022 (2022-01). I HS 2022 kom den nya positionen 8524
+(platta bildskärmsmoduler), som kan ha flyttat varor från 8473.30. Brotten noteras och analyseras inte här.
+
+**Utan nyckel:** hämtningen av HS-serierna hoppas över (SKIPPED, inte FAILED), ingenting skrivs, och serierna
+undantas från aktualitetskontrollen tills nyckeln finns (`ai_tracker.keyed`). Veckojobbet fallerar alltså inte.
+
+**Inga nyckelfria månadsdata per land:** Census nyckelfria end-use-sidor har månadsdata bara för hela världen
+(FT-900 Exhibit 8, säsongsrensad) och per land bara som årssummor. Därför är årsfilen den nyckelfria leveransen.
+
+### 2026-11-24 – M2: nollregeln, brottet i end-use-klassificeringen och Census-notisen (rättning efter granskning R13)
+
+Tillägg till posten "2026-11-24 – M2: import av servrar, datordelar och halvledare per land". Den posten skrivs inte
+om. Granskning: `docs/granskning/r13_census_hs.md`. Rättningsspår X10 (`auto14/x10-census-hs`). Inga HS-data har
+hämtats, eftersom ingen session har haft `CENSUS_API_KEY`. Ändringen görs alltså innan något värde i HS-serierna har
+setts.
+
+**Nollregeln för HS-serierna (R13-1).**
+- *Skäl.* Regeln var "en månad inom svarets period som saknar post räknas som 0". Koden fyllde nollor över båda svarens
+  gemensamma period, landanropet och världsanropet tillsammans. Om svaren slutar på olika månader, till exempel om
+  releasen sker mellan de två anropen, får alla 30 landserier en falsk nolla för den månad som bara världssvaret har.
+  Nollor efter seriens sista post döljer dessutom att en månad saknas.
+- *Ny regel.* En månad mellan seriens egen första och sista post som saknar post räknas som 0. Månader före den första
+  eller efter den sista posten fylls inte. De saknas tills en post kommer, och dateras då med den vanliga regeln, alltså
+  efter den senaste hämtningen som saknade perioden.
+- *Effekt.* Inga lagrade värden ändras, eftersom HS-serierna inte har några rader. En serie börjar vid sin första post i
+  stället för vid svarets första månad. Guiden stöder att en saknad post betyder ingen handel (204 = ingen handel).
+  Antalet månader utan post kontrolleras vid första hämtningen med nyckel
+  (`python -m ai_tracker.sources.census_hs check`). Ändras regeln efter att data har setts, loggas det här med datum
+  och motivering.
+
+**Kända brott, tillägg (R13-4).** Årsserierna `us_imp_eu{21300,21301,21320}_*_a` har ett brott i end-use-klassificeringen
+mellan 2018 och 2019. Census omklassificerade end-use-koderna från januari 2022 och lade in ändringen för 2019–2021 vid
+årsrevisionen 2022-06-07 (`notices/20220308_enduse_changes.pdf`). 2016–2018 följer alltså den äldre klassificeringen och
+2019–2025 den nya. För hela världen ändrades 2019 mellan årsrevisionerna 2021 och 2022 med +7 MUSD (datorer), −28 MUSD
+(datortillbehör) och −301 MUSD (halvledare, −0,56 %). Effekten per land går inte att mäta. Brottet skarvas inte, och
+inga värden ändras.
+
+**Publicering (R13-2).** HS-serierna har kvar `publish=True`. Census API:s villkor ber om en notis på en framträdande
+plats. Notisen ligger i `Spec.notice` och visas med seriens attribution (raden vid varje diagram och nedladdning) och i
+den gamla sidans sidfot när någon serie med notis har rader.
+
+**Hämtningen (R13-3, R13-6).** Ett misslyckat anrop sparas i processens cache, så en körning frågar API:t högst en gång
+per svar. Ett anrop som får timeout eller 429/5xx efter två nya försök delas upp i ett anrop per år med samma form
+(`time=from ÅÅÅÅ-01 to ÅÅÅÅ-12`, syntax enligt guiden). Data, datering och nollregel påverkas inte av uppdelningen.

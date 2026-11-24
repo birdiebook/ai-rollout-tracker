@@ -129,6 +129,11 @@ datatesterna.
   fyra veckor efter kalenderkvartalet, 199 dagar). Gränserna är prövade bakåt mot tabellens riktiga vintages
   (veckovis 2015–2026). De enda träffarna utöver dessa var shutdown-förseningarna hösten 2025 (Census, BEA, G.17),
   och dem ska kontrollen fånga.
+- **Serier som kräver en nyckel som saknas** (`ai_tracker.keyed`, i dag Census HS-serierna och `CENSUS_API_KEY`):
+  hämtningen hoppas över (`SKIPPED`, ingenting skrivs) och serierna undantas från kontrollen tills nyckeln finns.
+  Med nyckeln gäller samma gränser som för andra serier. Har en överhoppad serie redan rader, skrivs en varning.
+  Första gången nyckeln finns: kör `python -m ai_tracker.sources.census_hs check` (skriver inget i tabellen) och gå
+  igenom listan i [kallor/census_hs.md](kallor/census_hs.md).
 - **Exitkod:** 1 om ett datatest fallerar (cachen sparas inte), 2 om bara serier är för gamla. Med 2 sparar
   workflowet cachen, eftersom tabellen i sig är korrekt, och fäller sedan jobbet i steget *Fail on stale series*.
   Med `pipeline weekly <serier>` kontrolleras bara de serierna.
@@ -286,7 +291,7 @@ Settings → Secrets and variables → Actions → New repository secret:
 | Namn | Värde | Krävs |
 |---|---|---|
 | `SEC_USER_AGENT` | `ai-rollout-tracker <kontaktadress>` | **ja**. sec.gov och bls.gov (`download.bls.gov`, `www.bls.gov`, BLS-serierna från spår M1) kräver en deklarerad User-Agent med kontaktuppgift och svarar annars 403. Det finns ingen reserv: saknas den fallerar `fetch-weekly.yml` och `nowcast.yml` direkt med ett tydligt meddelande. Namnet gäller numera båda värdarna |
-| `CENSUS_API_KEY` | nyckel från api.census.gov | när den finns (används inte av koden än) |
+| `CENSUS_API_KEY` | nyckel från api.census.gov (gratis, aktiveras via mejl) | nej, men den låser upp 35 månadsserier: USA:s import per HS-kod (8471, 8471.50, 8471.80, 8473.30, 8542) från Taiwan, Mexiko, Vietnam, Malaysia, Thailand, Kina och hela världen, från 2013 (`us_imp_hs*_m`, [kallor/census_hs.md](kallor/census_hs.md)). Saknas den hoppas de serierna över (SKIPPED) och undantas från aktualitetskontrollen, så jobbet fallerar inte |
 | `DATA_KEY` | lång slumpad lösenfras, till exempel `python -c "import secrets; print(secrets.token_urlsafe(32))"` | för datasnapshoten. Samma värde läggs in som miljövariabel i molnmiljön (`docs/miljo.md`). Saknas den hoppas snapshot-stegen över. Värdet sparas också utanför GitHub (lösenordshanterare), eftersom en secret inte går att läsa ut igen |
 | `ECOS_API_KEY` | nyckel från Bank of Korea ECOS | när den finns (används inte av koden än, se N2:s blockerade indikatorer) |
 

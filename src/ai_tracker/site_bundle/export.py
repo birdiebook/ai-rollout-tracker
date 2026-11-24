@@ -153,8 +153,9 @@ def licence_block(key: str, ctx: Context) -> dict:
     else:
         parts = [ctx.specs.get(k) for k in ctx.derived.get(key, ())[:2]]
         text = "; ".join(f"{p.key}: {p.license}" for p in parts if p)
+    notice = "".join(f" {n}" for n in D.notices(key, ctx))  # required by the source's terms (Spec.notice, R13-2)
     return {"short": meta["license"], "text": text,
-            "attribution": f"Källa: {meta['source']}. Licens: {meta['license']}. Bearbetning: ai-rollout-tracker."}
+            "attribution": f"Källa: {meta['source']}. Licens: {meta['license']}. Bearbetning: ai-rollout-tracker.{notice}"}
 
 
 def series_doc(key: str, rec: D.Record, history: dict[str, dict], recon_keys: set[str], core_keys: set[str]) -> dict:

@@ -392,6 +392,7 @@ Johannes valde rekommendationerna:
 
 
 
+
 ## 2026-11-24 – Riktning efter steg 2: pengarna, makron och förväntningarna först
 
 Johannes valde rekommendationerna i [riktning.md](riktning.md):
@@ -519,6 +520,16 @@ Tillägg samma dag: sidan är Johannes främsta sätt att ta in informationen oc
 ## 2026-11-24 – Rättelse om index v2:s effekt
 
 Beslutet om index v2 motiverades bland annat med att v2 gör tillstånden mer försiktiga åt båda hållen. Backcasten på riktiga data (rekonstruktion, 2026-05 till 2026-10) visar att det inte stämmer genomgående. G8 blir "för få källor", men G6 blir "accelererar" i två månader där v1 sa "stabil", och G7 blir "bromsar in" i två månader. Skälet är att varje familj väger tungt när familjerna är få. Huvudskälet för beslutet, att indexet ska räkna oberoende källor, gäller fortfarande. Rekommendationen är att behålla v2. Johannes informeras.
+
+## 2026-11-24 – M2: serverimport per land, årsfil nu och HS-serier bakom Census-nyckeln
+
+- Census har inga nyckelfria månadsdata per land och vara. Nyckelfritt finns årssummor per land och end-use-kod
+  (2016–2025). Spåret hämtar dem som 21 katalogserier i G6 (datorer, datordelar och halvledare från Taiwan, Mexiko,
+  Vietnam, Malaysia, Thailand, Kina och hela världen), daterade 10 juli efter årsrevisionen i juni.
+- Månadsserierna per HS-kod (8471, 8471.50, 8471.80, 8473.30, 8542) och land är byggda mot Census API men väntar på
+  `CENSUS_API_KEY`. Utan nyckeln hoppas de över och fäller inte veckojobbet (`ai_tracker.keyed`).
+- Inga av serierna är kärnserier, och inga mått är räknade. Census API:s villkor kräver en notis på hemsidan när
+  HS-serierna visas. Detaljer: [kallor/census_hs.md](kallor/census_hs.md).
 
 ## 2026-11-24 – P3: N7, avskrivningar 1–8 kvartal
 
@@ -680,6 +691,22 @@ sex poolade revideringsindex blir `okänd` när F1 mergas (R10-1).
 - Källdokumentet citerar inte längre hela meningar, och noten för `_lo`-serierna säger att punkter och intervall blandas.
 - CoreWeaves ändring kodas inte om ur S-1 (known_from står kvar, konservativt). N-3 kodas inte, eftersom inget använder
   raden. N-4 (ändringar för en del av flottan syns inte i serierna) tas i granskningen av P3/N7.
+
+## 2026-11-24 – X10: rättning av M2 efter R13
+
+- **Nollregeln (R13-1):** en månad utan post räknas som 0 bara mellan seriens egen första och sista post, aldrig före
+  eller efter. Då kan en release mellan landanropet och världsanropet inte ge falska nollor. Tillägg i registret samma
+  dag. Inga värden ändras, eftersom HS-serierna inte har några rader.
+- **Census API:s notis (R13-2):** HS-serierna behåller `publish=True`. Notisen ligger i `Spec.notice` och visas med
+  seriens attribution på den nya sidan och i sidfoten på den gamla, när serien har rader. Webbsessionen behöver inte
+  ändra något, eftersom attributionen redan visas.
+- **Hämtningen (R13-3):** ett misslyckat anrop sparas i cachen, så en körning frågar API:t högst en gång per svar.
+  Timeout och 5xx efter två nya försök leder till ett anrop per år med samma form (guidens syntax). Ett API som
+  hänger kostar nu cirka 13 minuter per körning i stället för cirka 7 timmar.
+- **End-use-brottet 2018/2019 (R13-4)** och skottårsformuleringen (R13-5) är rättade i dokumentet och i `NOTE`.
+- **Första hämtningen med nyckel (R13-6) är inte gjord.** Sessionen hade ingen `CENSUS_API_KEY`. Listan är nu ett
+  kommando: `python -m ai_tracker.sources.census_hs check`. Rekommendation: kör det i en session med nyckeln före
+  nästa måndag, annars blir veckojobbet det första riktiga anropet.
 
 ## 2026-11-24 – X8: rättning av F1 efter R11
 

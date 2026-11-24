@@ -138,7 +138,8 @@ def page(title: str, active: str, body: str, data_src: str | None, build: dict) 
     footer = (f'<footer><p>{NOT_INVESTMENT_ADVICE}</p><p>Byggd {esc(build["built_utc"])} från '
               f'<a href="{esc(build["repo"])}">{esc(build["repo"].removeprefix("https://"))}</a> '
               f'(git {esc(build["git_sha"])}). Läge {esc(rec["month"])}: {esc(rec["label"])}. '
-              f'Data hämtad senast {esc(build.get("table_max_fetched_at"))}.</p></footer>')
+              f'Data hämtad senast {esc(build.get("table_max_fetched_at"))}.</p>'
+              + "".join(f'<p class="notice">{esc(n)}</p>' for n in build.get("notices") or []) + '</footer>')
     return f"""<!doctype html>
 <html lang="sv">
 <head>

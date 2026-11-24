@@ -48,7 +48,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from ai_tracker import catalog, config, publication
+from ai_tracker import catalog, config, keyed, publication
 
 DEFAULT_PATH = config.REPO / "data" / "observations.parquet"
 PATH = DEFAULT_PATH
@@ -392,6 +392,8 @@ def refresh(keys: list[str] | None = None) -> dict[str, str]:
         try:
             n = upsert(spec, spec.fetch())
             status[spec.key] = f"ok +{n}"
+        except keyed.MissingKey as exc:  # key not added yet (keyed.py): nothing written, not a failure
+            status[spec.key] = f"SKIPPED: {exc}"
         except Exception as exc:  # noqa: BLE001 - report and continue
             status[spec.key] = f"FAILED: {type(exc).__name__}: {str(exc)[:120]}"
         print(f"{spec.key:32s} {status[spec.key]}")

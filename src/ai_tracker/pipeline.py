@@ -167,6 +167,13 @@ def require_sec(keys: list[str] | None = None) -> None:
 def _refresh(keys: list[str] | None) -> list[str]:
     """Refresh `keys` (None = the whole catalog); returns the keys that failed."""
     status = observations.refresh(keys)
+    skipped = [k for k, v in status.items() if v.startswith("SKIPPED")]
+    if skipped:  # an API key the owner has not added yet (keyed.py): a notice, not a failure
+        _annotate("notice", f"{len(skipped)} series skipped: {status[skipped[0]][len('SKIPPED: '):]}")
+        stored = sorted(set(skipped) & set(observations.load()["series"].unique()))
+        if stored:  # the key was there before: these series are now left out of the freshness check (review R13-9)
+            _annotate("warning", f"{len(stored)} skipped series already have rows and are exempt from the freshness "
+                                 f"check while their key is missing, e.g. {stored[0]}")
     return [k for k, v in status.items() if v.startswith("FAILED")]
 
 
