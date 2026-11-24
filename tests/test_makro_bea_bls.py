@@ -115,6 +115,11 @@ def test_parse_workbook_rejects_conflicting_split_tables_and_missing_codes():
         bea_nipa.parse_workbook(_workbook(SECTION1), {"B852RZ": "T40202"})
 
 
+def test_parse_workbook_rejects_bea_html_answer_for_a_missing_file():
+    with pytest.raises(ValueError, match="not an xlsx"):
+        bea_nipa.parse_workbook(b"<!DOCTYPE html><title>BEA: Data Tools</title>", {"Y034RY": "T10502"})
+
+
 def test_check_release_date():
     rel = bea_nipa.Release("GDP_and_PI/2025/Q3/Initial_December-22-2025", T("2025-12-22"), "Initial", "2025Q3")
     bea_nipa.check_release_date(rel, T("2025-12-23"))
@@ -340,3 +345,19 @@ def test_bls_hosts_get_the_declared_contact_user_agent(monkeypatch):
     assert http.user_agent("download.bls.gov") == "ai-rollout-tracker contact@example.org"
     assert http.user_agent("www.bls.gov") == "ai-rollout-tracker contact@example.org"
     assert http.user_agent("apps.bea.gov") == http.DEFAULT_UA
+
+
+def test_cpi_nsa_stored_from_1952_and_october_2025_gap_is_registered(monkeypatch):
+    from ai_tracker import warehouse
+
+    monkeypatch.setattr(bls, "_CACHE", {})
+    monkeypatch.setattr(bls, "_CALENDARS", {})
+    flat = ("series_id\tyear\tperiod\tvalue\tfootnote_codes\n"
+            "CUUR0000SEHF01\t1951\tM12\t20.0\t\n"
+            "CUUR0000SEHF01\t1952\tM01\t20.1\t\n")
+    monkeypatch.setattr(http, "get", lambda url, source, **kw: _Resp(text=ARCHIVE_HTML) if "news-release" in url
+                        else _Resp(text=flat))
+    rows = bls.release_rows("CUUR0000SEHF01")
+    assert [str(p) for p in rows["period"]] == ["1952-01"]
+    assert {"us_cpi_electricity_nsa_m", "us_cpi_electricity_sa_m"} <= set(warehouse.KNOWN_GAPS)
+    assert "us_ppi_data_processing_m" not in warehouse.KNOWN_GAPS

@@ -629,3 +629,16 @@ nyhetsreleaser (`www.bls.gov/bls/news-release/cpi.htm` och `ppi.htm`, referensm�
   för referensmånad m + 4. En referensmånad utan egen release och månader före arkivet behandlas som för KPI.
 - Filens datum = max(senaste releasedag i arkivet, filens Last-Modified).
 - Regeldaterade rader märks `backfill`. Från andra hämtningen blir varje ändrat värde en `revision` med hämtdatum.
+
+### 2026-11-24 – M1: rättelser av fakta i registerposten ovan (efter hämtningen, reglerna ändras inte)
+
+Tre faktauppgifter i posten "M1: AI-relaterat bidrag till BNP-tillväxt och priser" var fel. Reglerna gäller oförändrade.
+- BEA:s senaste release ligger under `apps.bea.gov/national/Release/XLS/Survey/` (xlsx-filer trots namnet), inte
+  `XLSX/Survey/`. Den sökvägen svarar med HTTP 200 och en HTML-sida.
+- Katalognamnet i BEA:s arkiv avviker från "Data published" i nästan alla releaser 2017–2025, inte bara i två.
+  Oftast ligger katalogen 1–3 dagar efter publiceringen. I två fall ligger den före: 2025Q3 (en dag) och 2023Q1 Third
+  (katalog 2023-06-20, publicerad 2023-06-29). Regeln att datera med "Data published" står kvar.
+- BLS arkiv över nyhetsreleaser börjar med referensmånad 1999-05, inte 2002-05.
+
+Dessutom lagras KPI för el (NSA) från 1952-01, där den månatliga serien börjar och där SA-serien börjar. Före det
+finns bara enstaka månader. Oktober 2025 samlades aldrig in och blir en känd lucka i båda KPI-serierna.

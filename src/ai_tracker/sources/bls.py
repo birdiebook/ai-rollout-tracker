@@ -6,7 +6,7 @@ no api.bls.gov quota are used.
 
 Flat files (tab separated): series_id, year, period (M01-M12, M13 = annual average), value, footnote_codes.
 Each file holds only the current vintage of every series. Release dates: www.bls.gov/bls/news-release/<cpi|ppi>.htm
-lists every news release since 2002-05 as "<Month> <YYYY> Consumer Price Index" with the release date in the file
+lists every news release since reference month 1999-05 as "<Month> <YYYY> Consumer Price Index" with the release date in the file
 name (cpi_MMDDYYYY.htm). A reference month without its own release ("Not published because of 2025 lapse ...")
 is absent from that list.
 
@@ -50,6 +50,9 @@ SERIES = {
     "PCU518210518210": ("ppi", "pc/pc.data.56.ISPsSearchPortandDataProcess", "ppi"),
     "PCU22112222112242": ("ppi", "pc/pc.data.46.Utilities", "ppi"),
 }
+# Stored from this month: CPI electricity NSA has only scattered months before 1952 (December values from 1913);
+# 1952-01 is also where the SA series starts.
+MONTHLY_FROM = {"CUUR0000SEHF01": pd.Period("1952-01", freq="M")}
 SA_YEARS = 5  # CPI seasonally adjusted data are revised for the previous 5 years each February
 PPI_REVISION_MONTHS = 4  # PPIs can be revised monthly for 4 months after original publication
 MAX_RELEASE_LAG_DAYS = 120  # a release more than this after its reference month is a parsing error
@@ -186,4 +189,6 @@ def release_rows(series_id: str) -> pd.DataFrame:
     cal = calendar(program)
     file_date = max(d for d in (cal.max(), modified) if d is not None)
     df = parse_flat(text, [series_id])[series_id]
+    if series_id in MONTHLY_FROM:
+        df = df[df["period"] >= MONTHLY_FROM[series_id]].reset_index(drop=True)
     return date_rows(df, rule, cal, file_date)

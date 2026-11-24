@@ -58,18 +58,20 @@ def fetch(code: str, file: str = "NipaDataQ.txt") -> pd.Series:
 # since 2002 with every NIPA table as published that day: GDP_and_PI/<year>/<quarter>/<Vintage>_<Month-D-YYYY>/
 # Section<N>all_xls.xlsx. The directory list comes from the archive page's own JSON endpoint. Files are xlsx from
 # the 2017Q3 advance estimate (2017-10-27); earlier releases are .xls only and are not read (no xls reader in the
-# project). known_from = "Data published <date>" in the table header, not the directory name: the two differ for
-# 2018Q4 (directory 2019-03-01, published 2019-02-28) and 2025Q3 (directory 2025-12-22, published 2025-12-23).
-# The newest release is also read from apps.bea.gov/national/Release/XLSX/Survey/ in case the archive lags.
+# project). known_from = "Data published <date>" in the table header, not the directory name (the upload day): the
+# directory is mostly 1-3 days after publication, but before it for 2025Q3 (directory 2025-12-22, published
+# 2025-12-23) and 2023Q1 Third (directory 2023-06-20, published 2023-06-29).
+# The newest release is also read from apps.bea.gov/national/Release/XLS/Survey/ in case the archive lags.
+# A missing file is answered with HTTP 200 and an HTML page ("BEA: Data Tools"), so content is checked first.
 # Archived releases do not change, so a small extract per release is cached under <RAW_DIR>/bea/vintages/ and
 # each 4-6 MB workbook pair is downloaded once.
 
 ARCHIVE_API = "https://apps.bea.gov/histdata/core/data/Fea_DisplayChildrenC/"
 ARCHIVE_FILES = "https://apps.bea.gov/HistData/Files/Releases/"
-CURRENT_FILES = "https://apps.bea.gov/national/Release/XLSX/Survey/"
+CURRENT_FILES = "https://apps.bea.gov/national/Release/XLS/Survey/"  # holds xlsx despite the name
 NIPA_ARCHIVE_ID = 7  # "National Accounts (NIPA)" in the archive's tree (HistMainId)
 FIRST_XLSX = pd.Timestamp("2017-10-27")
-MAX_DIR_GAP_DAYS = 10  # published date vs directory date; a larger gap means a wrong or moved file
+MAX_DIR_GAP_DAYS = 14  # published vs directory date: up to 3 days in 2017-2026, 9 for 2023Q1 Third; more = wrong file
 # NIPA series code -> (section workbook, table prefix of the quarterly sheet(s) that hold it). Codes are BEA's own
 # and stable across vintages; line numbers and table names (4.2.5 -> 4.2.5A/B) are not.
 ARCHIVE_CODES = {
@@ -144,6 +146,8 @@ def parse_workbook(content: bytes, wanted: dict[str, str]) -> tuple[pd.Timestamp
     """
     import openpyxl
 
+    if not content.startswith(b"PK"):
+        raise ValueError("BEA: not an xlsx workbook (a missing file is answered with an HTML page)")
     wb = openpyxl.load_workbook(io.BytesIO(content), read_only=True, data_only=True)
     parts: dict[str, list[pd.Series]] = {c: [] for c in wanted}
     published = []

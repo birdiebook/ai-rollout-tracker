@@ -379,3 +379,16 @@ Johannes valde rekommendationerna:
   overifierat Mistral-pris. G2 har kvar en räknad kärnserie. Rättningsspåret X5 tar R-1–R-8. Viktigast är ett
   läckage i `arena.py`: omladdade tavlor (2026-07-07) var daterade till första commit, och det rör även G1:s
   `g1_arena_text_top`. B från 2024-09 prövas först efter rättningen och en ny granskning.
+
+## 2026-11-24 – Spår M1: BNP-bidrag, datorimport och priser ur BEA:s arkiv och BLS flatfiler
+
+- **BEA-vintages ur BEA:s eget releasearkiv** (`apps.bea.gov/histdata`), inte ur flatfilen eller ALFRED: 107 releaser
+  från 2017-10-27, daterade med "Data published" i tabellhuvudet. Katalognamnen är uppladdningsdagar och hade läckt i
+  två fall. Ingen nyckel behövs.
+- **`ai_invest_contrib_gross`** = BEA:s bidrag från informationsbehandlingsutrustning + programvara (tabell 1.5.2), ur
+  samma vintage. **Ingen nettovariant:** BEA publicerar inget BNP-bidrag för datorimport. Importen visas separat.
+- **BLS via flatfiler** med projektets generiska klientidentitet i User-Agent (samma som för SEC), eftersom BLS nekar
+  klienter utan kontaktuppgift. API:t behövs inte (dess kvot för den delade IP-adressen var slut). Releasedatum tas ur
+  BLS arkiv över nyhetsreleaser, alltså primärkällan. KPI SA och PPI dateras efter BLS egna revideringsregler.
+- **PPI för databehandling och hosting i G4**, eftersom PPI mäter priset som moln- och hostingbolagen får.
+- Inga kärnserier ändras. Detaljer: [kallor/makro_bea_bls.md](kallor/makro_bea_bls.md).

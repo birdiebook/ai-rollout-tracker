@@ -50,6 +50,11 @@ from ai_tracker.series.github_ai import KNOWN_GAPS as _GH_AI_GAPS  # noqa: E402
 
 KNOWN_GAPS.update(_GH_AI_GAPS)
 
+# BLS collected no CPI data for October 2025 (lapse in appropriations; track M1, docs/kallor/makro_bea_bls.md).
+from ai_tracker.series.bls import KNOWN_GAPS as _BLS_GAPS  # noqa: E402
+
+KNOWN_GAPS.update(_BLS_GAPS)
+
 # Stale series accepted until a date (ISO), and why: a known outage, never a permanent exemption
 # (that is Spec.max_age_days or Spec.closed). Example: {"us_imports_tw_m": ("2026-12-31", "shutdown, ...")}.
 KNOWN_STALE: dict[str, tuple[str, str]] = {

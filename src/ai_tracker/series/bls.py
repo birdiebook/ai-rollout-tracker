@@ -37,6 +37,13 @@ SERIES = [  # key, branch, BLS id, label, unit, question, note
      "Revideras månadsvis i fyra månader: preliminära värden dateras till filens datum, slutliga till release m+4."),
 ]
 
+# no_gaps exemptions (warehouse.KNOWN_GAPS): October 2025 is "-" with footnote X in the CPI files, "Data unavailable
+# due to the 2025 lapse in appropriations", and the news-release archive lists it as not published. It stays a gap.
+KNOWN_GAPS = {
+    "us_cpi_electricity_nsa_m": "CPI October 2025 never collected (2025 lapse in appropriations, BLS footnote X)",
+    "us_cpi_electricity_sa_m": "CPI October 2025 never collected (2025 lapse in appropriations, BLS footnote X)",
+}
+
 SPECS = [
     Spec(
         key=key,
