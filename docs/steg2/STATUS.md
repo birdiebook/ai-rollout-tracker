@@ -1,8 +1,29 @@
 # Status steg 2
 
-Uppdateras av orkestreraren vid varje milstolpe. Senast: 2026-11-24 09:00 UTC.
+Uppdateras av orkestreraren vid varje milstolpe. Senast: 2026-11-24 (körning 13).
 
 ## Läge
+
+### Körning 13 (2026-11-24)
+
+- **Status:** alla spår i körning 13 är byggda, granskade (R9–R16) och rättade (X6–X13), och integrerade på grenen
+  `auto14/integration13`. Riktning och beslut: [riktning.md](../riktning.md). Data för de nya serierna är hämtad med
+  den sammanslagna koden och inlagd i den delade basen.
+- **Index v2** (en röst per källfamilj) är officiell regel från ögonblicksbilden 2026-11-30. Rekonstruktionen v1 mot v2:
+  [resultat/tillstand.md](../resultat/tillstand.md), "Index v2 (källfamiljer)". Grenen måste vara på `main` före
+  2026-11-30 22:41 UTC, annars skrivs den första skarpa ögonblicksbilden med v1 (R9). Webbsessionen lägger till
+  tillståndet "för få källor".
+- **Licensklass** per serie (`ja`, `nej`, `okänd`): [datakallor/licensniva.md](../datakallor/licensniva.md).
+- **Pengarna:** avskrivningar och PP&E (P1, [kallor/sec_avskrivningar.md](../kallor/sec_avskrivningar.md)),
+  nyttjandeperioder (P2a), intäktskravet (P2b, [resultat/intaktskrav.md](../resultat/intaktskrav.md), omräknat efter
+  X11) och N7 som backtest ([resultat/n7.md](../resultat/n7.md), omkört efter X11).
+- **Förväntningar:** revideringsindex och överraskningsindex (F1, [resultat/f1_revideringar.md](../resultat/f1_revideringar.md)).
+  Serierna som läser den kurerade CSV:n har `publish=False` tills Johannes beslutar (R11-4).
+- **Makro:** BNP-bidrag, elpris och PPI (M1, [kallor/makro_bea_bls.md](../kallor/makro_bea_bls.md)). Import per land
+  (M2, [kallor/census_hs.md](../kallor/census_hs.md)): årsfilen finns, HS-serierna väntar på `CENSUS_API_KEY`.
+- **Läsanvisningar** för webben: [steg3/datakontrakt.md](../steg3/datakontrakt.md), "Läsanvisningar för körning 13".
+
+### Tidigare
 
 - **Steg 2:s våg 0–4 är klara.** Holdouten för C3 och C4 är öppnad och utvärderad: faktormodellen klarade inte regeln för
   TSMC och följer med som skugga. Regimmodellen ingår i månadsbilden från 2026-11-30. Flödesvyn och kvartalsrapporten

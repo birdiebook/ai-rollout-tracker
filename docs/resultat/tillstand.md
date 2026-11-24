@@ -209,3 +209,73 @@ Det skriver `outputs/state_backcast.csv` med `index` och `state` (v2), `index_v1
 `n_families` och familjernas röster. `--compare 6` skriver ut tabellen för de sista sex månaderna (2026-05 till
 2026-10) i Markdown: index, tillstånd, antal serier och antal familjer per gren med båda reglerna. Tabellen är en
 rekonstruktion och inget skarpt register, och den redovisas utan annan tolkning än vad som ändrades.
+
+**Rekonstruktion v1 mot v2 på riktiga data (2026-11-24, körning 13).** Körd med kommandot ovan på den delade basen
+efter datamergen i körning 13, med den sammanslagna koden. Basen har nu arXiv (G9), som saknades när orkestreraren
+gjorde den första jämförelsen. Det är en rekonstruktion (as-of-backcast), inte ett skarpt register. "Serier" och
+"Källor" är antalet räknade serier och räknade källfamiljer.
+
+| Gren | Månad | Index v1 | Tillstånd v1 | Serier | Index v2 | Tillstånd v2 | Källor |
+|---|---|---|---|---|---|---|---|
+| G1 | 2026-05 | 0,25 | för få serier | 2 | 0,25 | för få källor | 2 |
+| G1 | 2026-06 | 0,25 | för få serier | 2 | 0,25 | för få källor | 2 |
+| G1 | 2026-07 | 0,25 | för få serier | 2 | 0,25 | för få källor | 2 |
+| G1 | 2026-08 | 0,25 | för få serier | 2 | 0,25 | för få källor | 2 |
+| G1 | 2026-09 | 0,25 | för få serier | 2 | 0,25 | för få källor | 2 |
+| G1 | 2026-10 | 0,50 | för få serier | 2 | 0,50 | för få källor | 2 |
+| G2 | 2026-05 | – | för få serier | 0 | – | för få källor | 0 |
+| G2 | 2026-06 | – | för få serier | 0 | – | för få källor | 0 |
+| G2 | 2026-07 | – | för få serier | 0 | – | för få källor | 0 |
+| G2 | 2026-08 | – | för få serier | 0 | – | för få källor | 0 |
+| G2 | 2026-09 | – | för få serier | 0 | – | för få källor | 0 |
+| G2 | 2026-10 | – | för få serier | 0 | – | för få källor | 0 |
+| G3 | 2026-05 | 0,50 | stabil | 8 | 0,36 | stabil | 3 |
+| G3 | 2026-06 | 0,56 | stabil | 8 | 0,40 | stabil | 3 |
+| G3 | 2026-07 | 0,56 | stabil | 8 | 0,40 | stabil | 3 |
+| G3 | 2026-08 | 0,50 | stabil | 8 | 0,36 | stabil | 3 |
+| G3 | 2026-09 | 0,50 | stabil | 9 | 0,40 | stabil | 4 |
+| G3 | 2026-10 | 0,56 | stabil | 9 | 0,52 | stabil | 4 |
+| G4 | 2026-05 | 1,00 | accelererar | 6 | 1,00 | accelererar | 6 |
+| G4 | 2026-06 | 1,00 | accelererar | 6 | 1,00 | accelererar | 6 |
+| G4 | 2026-07 | 1,00 | accelererar | 6 | 1,00 | accelererar | 6 |
+| G4 | 2026-08 | 1,00 | accelererar | 6 | 1,00 | accelererar | 6 |
+| G4 | 2026-09 | 1,00 | accelererar | 6 | 1,00 | accelererar | 6 |
+| G4 | 2026-10 | 0,83 | accelererar | 6 | 0,83 | accelererar | 6 |
+| G5 | 2026-05 | 0,70 | accelererar | 5 | 0,70 | accelererar | 5 |
+| G5 | 2026-06 | 0,60 | stabil | 5 | 0,60 | stabil | 5 |
+| G5 | 2026-07 | 0,70 | accelererar | 5 | 0,70 | accelererar | 5 |
+| G5 | 2026-08 | 0,70 | accelererar | 5 | 0,70 | accelererar | 5 |
+| G5 | 2026-09 | 0,80 | accelererar | 5 | 0,80 | accelererar | 5 |
+| G5 | 2026-10 | 0,90 | accelererar | 5 | 0,90 | accelererar | 5 |
+| G6 | 2026-05 | 0,72 | accelererar | 9 | 0,75 | accelererar | 7 |
+| G6 | 2026-06 | 0,67 | stabil | 9 | 0,71 | accelererar | 7 |
+| G6 | 2026-07 | 0,72 | accelererar | 9 | 0,79 | accelererar | 7 |
+| G6 | 2026-08 | 0,67 | stabil | 9 | 0,75 | accelererar | 7 |
+| G6 | 2026-09 | 0,72 | accelererar | 9 | 0,82 | accelererar | 7 |
+| G6 | 2026-10 | 0,72 | accelererar | 9 | 0,79 | accelererar | 7 |
+| G7 | 2026-05 | 0,50 | stabil | 13 | 0,39 | stabil | 3 |
+| G7 | 2026-06 | 0,35 | stabil | 13 | 0,26 | bromsar in | 3 |
+| G7 | 2026-07 | 0,38 | stabil | 13 | 0,29 | bromsar in | 3 |
+| G7 | 2026-08 | 0,58 | stabil | 13 | 0,46 | stabil | 3 |
+| G7 | 2026-09 | 0,62 | stabil | 13 | 0,48 | stabil | 3 |
+| G7 | 2026-10 | 0,50 | stabil | 13 | 0,39 | stabil | 3 |
+| G8 | 2026-05 | 0,94 | accelererar | 9 | 0,94 | för få källor | 1 |
+| G8 | 2026-06 | 1,00 | accelererar | 9 | 1,00 | för få källor | 1 |
+| G8 | 2026-07 | 1,00 | accelererar | 9 | 1,00 | för få källor | 1 |
+| G8 | 2026-08 | 0,94 | accelererar | 9 | 0,94 | för få källor | 1 |
+| G8 | 2026-09 | 0,94 | accelererar | 9 | 0,94 | för få källor | 1 |
+| G8 | 2026-10 | 0,94 | accelererar | 9 | 0,94 | för få källor | 1 |
+| G9 | 2026-05 | 1,00 | accelererar | 3 | 1,00 | för få källor | 1 |
+| G9 | 2026-06 | 0,50 | stabil | 3 | 0,50 | för få källor | 1 |
+| G9 | 2026-07 | 0,83 | accelererar | 3 | 0,83 | för få källor | 1 |
+| G9 | 2026-08 | 0,17 | bromsar in | 3 | 0,17 | för få källor | 1 |
+| G9 | 2026-09 | 0,83 | accelererar | 3 | 0,83 | för få källor | 1 |
+| G9 | 2026-10 | 0,50 | stabil | 3 | 0,50 | för få källor | 1 |
+
+Vad som ändras med v2, i 16 av 54 grenmånader:
+- **G6:** 2026-06 och 2026-08 blir "accelererar" (v1 "stabil").
+- **G7:** 2026-06 och 2026-07 blir "bromsar in" (v1 "stabil").
+- **G8:** alla sex månader blir "för få källor" (en familj, v1 "accelererar").
+- **G9:** alla sex månader blir "för få källor". arXiv:s tre kategorier är en familj, och Epochs två familjer är
+  spärrade. Med v1 har G9 ett tillstånd varje månad.
+- G1, G2, G4 och G5 är oförändrade. I G3 är index v2 lägre än v1, men tillståndet är detsamma alla sex månader.

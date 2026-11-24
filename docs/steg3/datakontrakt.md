@@ -291,3 +291,59 @@ Bara tillägg. Inga fält är borttagna eller har bytt typ.
   i licenstabellen.
 - Fixturerna är regenererade. `us_ip_computers_m` är ny i den syntetiska världen, så att G6 har en familj med två
   serier.
+
+## Läsanvisningar för körning 13
+
+Underlag för webbsessionen, 2026-11-24. Per nytt mått: vad det visar, hur det läses och det viktigaste förbehållet.
+Inget av måtten nedan är kärnserie. Bara index v2 ändrar hur grenarnas tillstånd räknas.
+
+**Index v2 (`index`, `state`, `rule_version`, `n_families`, `families[]`, `index_v1`, `state_v1`).** Indexet ger en
+röst per källfamilj, inte per serie. En familj är serier från samma källa och med samma begrepp, till exempel nio
+länder ur Indeeds data. `index` och `state` är den officiella regeln från ögonblicksbilden 2026-11-30, och `index_v1`
+och `state_v1` står bredvid för jämförelse. Med färre än tre familjer visas indexet men inget tillstånd ("för få
+källor"), och med få familjer väger varje familj tungt, så indexet kan röra sig mer än med v1.
+
+**Förväntningar mot utfall (avsnittet `expectations` i ögonblicksbilden).** Revideringsindexet är andelen höjningar
+av bolagens egen guidance (oförändrad räknas som en halv), över fyra kvartal och med minst tre revideringar. Över 0,5
+betyder fler höjningar än sänkningar. Överraskningen är utfallet mot bolagets guidance i log ×100, och
+överraskningsindexet är medel av standardiserade överraskningar (z) över minst två bolag. Förbehåll: få händelser per
+kvartal (n står bredvid), ingen takt, och serierna som läser `curated/guidance_capex.csv` har `publish=False` tills
+ägaren beslutar (R11-4). Avsnittet finns i ögonblicksbilden men inte i paketet än.
+
+**Intäktskravet (`x_dep_rev`, `x_capcost_rev_r08`, `x_capcost_rev_r12`, `x_dep_capex`, `x_dep_rev_aws`).**
+Avskrivningar, och avskrivningar plus 8 eller 12 % på det bokförda nettot, som procent av intäkterna för MSFT, GOOGL,
+AMZN och META över fyra kvartal. `x_dep_capex` är avskrivningar som procent av capex, och AWS-kvoten gäller bara
+segmentet. En stigande kvot betyder att kapitalkostnaden växer snabbare än intäkterna, och en fallande `x_dep_capex`
+att capex växer snabbare än avskrivningarna. Förbehåll: alla anläggningstillgångar och alla intäkter, inte bara AI, r
+är ett antagande, och historiken börjar 2023Q4. Kvoterna står i gruppen "Avstämningar" och räknas aldrig i ett
+grenindex (`docs/resultat/intaktskrav.md`).
+
+**Avskrivningar och anläggningstillgångar (`dep_*`, `dep_ppe_*`, `ppe_net_*`, `ppe_gross_*`, `dep_hyp4`, `dep_aws`).**
+Avskrivningar per kvartal och bokfört värde av anläggningstillgångar per bolag, ur SEC och daterade med
+inlämningsdagen. Måtten visar var capex hamnar i resultaträkningen: dagens capex blir avskrivningar under flera år.
+Förbehåll: raderna har olika innehåll per bolag (Microsofts "other", Amazons leasing och innehåll, Metas immateriella
+tillgångar). Omräkningar är egna versioner, så den första och den senaste versionen av ett kvartal kan skilja sig.
+
+**Nyttjandeperioder (`useful_life_<klass>_<bolag>_lo` och `_hi`).** Hur många år bolagen skriver av servrar och
+nätverksutrustning, extraherat ur 10-K, 10-Q och 8-K med citat. Serierna är glesa stegvärden: ett värde finns bara där
+ett dokument anger det, så visa senast kända värde. Jämför över tid med det högsta värdet, eftersom det lägsta kan
+sjunka när ett dokument går från en punkt till ett intervall. Förbehåll: en längre period sänker avskrivningarna utan
+att kapaciteten ändras.
+
+**N7 (avskrivningar 1–8 kvartal framåt) är bara ett backtest.** Ingen variant klarade regeln, och drift (B1) är
+huvudmodell i alla horisontgrupper (`docs/resultat/n7.md`, omkört efter rättningen X11). Det finns ingen skarp N7,
+inga filer i `forecasts/` och inget N7 i paketet. Visa det som ett negativt resultat, inte som en prognos.
+
+**BNP-bidrag, elpris och PPI (M1).** `us_gdp_contrib_*` och `ai_invest_contrib_gross` är bidrag till USA:s reala
+BNP-tillväxt i procentenheter i årstakt (BEA tabell 1.5.2), med riktiga versioner ur BEA:s releasearkiv.
+`us_imp_computers_*` är import av datorer, och KPI för el (`us_cpi_electricity_*`) och PPI för databehandling och el
+(`us_ppi_*`) är BLS-index. Visa bidragen bredvid `us_gdp_real_growth`, men räkna ingen kvot, eftersom den blir
+instabil när tillväxten är nära noll. Förbehåll: kategorierna är bredare än AI, importen är inte avdragen i
+bruttobidraget, och KPI saknar oktober 2025.
+
+**Import per land (M2) och Census-notisen.** `us_imp_eu<kod>_<land>_a` är USA:s årliga import av datorer (21300),
+datordelar (21301) och halvledare (21320) per land 2016–2025, i MUSD. Visa fördelningen mellan länderna och
+förändringen mellan år. Varje år blir känt 10 juli året efter. Månadsserierna per HS-kod (`us_imp_hs*_m`) väntar på
+`CENSUS_API_KEY` och har inga rader än. När de har rader ska notisen "This product uses the Census Bureau Data API but
+is not endorsed or certified by the Census Bureau." stå med serien och i sidfoten. Paketet lägger den redan sist i
+`license.attribution`.

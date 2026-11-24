@@ -36,6 +36,9 @@ Förklara inte det.
 - Varje `Spec` har `license`. `publish=True`, alltså att visas på den publika sidan, kräver en kontrollerad licens.
 - Från rapporter och transkript publiceras bara extraherade siffror med källhänvisning, aldrig själva texten.
 - LLM-extraherade värden sparas med dokument, plats och ordagrant citat, och stickprovsgranskas innan de används.
+- Varje serie har en klass för kommersiell användning (`ja`, `nej`, `okänd`, `ai_tracker.licenses`), oberoende av
+  `publish`. Klassen bygger på dokumenterad licenstext och gissas aldrig, och `catalog.validate` kräver den. Nya
+  serier väljer öppna licenser (public domain, CC0, CC BY, MIT) när det finns ett val.
 - Inga hemligheter i koden (`.env`). Inga personliga uppgifter och inga innehav i repot.
 - API:er som kräver kontaktuppgift i User-Agent (SEC) får en generisk klientidentitet från `.env`.
 
@@ -68,6 +71,11 @@ Se `docs/plan.md`, avsnitt 8. Uppdatera här när en fas är klar.
 - **Steg 2** ✅ våg 0–4 (`docs/steg2/plan.md`, status `docs/steg2/STATUS.md`): cirka 400 serier, flödesmodell med
   avstämningar, N3–N6, intervall, faktormodell (skugga), regimmodell (i månadsbilden), prognoser 1–8 kvartal (skugga),
   flödesvy, kvartalsrapport. Holdouten för C3/C4 är öppnad och utvärderad (`docs/holdout_logg.md`)
+- **Körning 13** ✅ (`docs/riktning.md`): diffusionsindex v2 med källfamiljer, officiellt från ögonblicksbilden
+  2026-11-30 (v1 redovisas bredvid). Klass för kommersiell användning per serie (`ai_tracker.licenses`).
+  Avskrivningar och PP&E (P1), nyttjandeperioder (P2a), intäktskrav som avstämningar (P2b), N7 som backtest (ingen
+  variant klarar regeln, B1). Revideringar av guidance och överraskningsindex (F1). BNP-bidrag, elpris och PPI (M1).
+  Serverimport per land (M2): årsfilen finns, HS-serierna väntar på första hämtningen med `CENSUS_API_KEY`
 - Drift: `docs/drift.md` (veckohämtning, skarpa prognoser N2 dag 5 och N1 kvartal + 20 dagar, ögonblicksbild vid månadsslut)
 
 ## Tekniska konventioner
