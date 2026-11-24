@@ -8,7 +8,11 @@ document is searched for the hash ("moved", counted as located but reported).
 TSMC guidance (deterministic parse): the 6-K document is fetched again and the revenue range must appear in it as
 "NT$/US$ x billion ... y billion" near the parsed values.
 
-    python -m ai_tracker.guidance_check [--frac 0.2] [--seed 0] [--tsmc]
+Neighbour check (R11-1, `--neighbours`): every document of the curated CSV is fetched again, and the sentence after
+each sentence with a capex word (guidance_capex.candidates, "next") is listed when it holds a $ amount in billions
+and is not coded. A hit is for the agent to read; nothing is coded automatically.
+
+    python -m ai_tracker.guidance_check [--frac 0.2] [--seed 0] [--tsmc] [--neighbours]
 
 Prints one line per sampled value and the error rate. Nothing is written except http raw copies (data/raw).
 """
@@ -76,6 +80,32 @@ def fetch_text(url: str) -> str:
     return tsmc_sec.to_text(http.get(url, SOURCE).content.decode("utf-8", errors="replace"))
 
 
+def uncoded_next_sentences(sents: list[str], coded: set[int], coded_sha: set[str]) -> list[int]:
+    """Sentence numbers of 'next' candidates with a $ amount in billions that no CSV row codes (R11-1)."""
+    return [i for i, why in gc.candidates(sents).items()
+            if why == "next" and i not in coded and gc.sentence_hash(sents[i]) not in coded_sha
+            and gc.AMOUNT_RE.search(sents[i])]
+
+
+def neighbour_check(df: pd.DataFrame | None = None, fetch=None) -> pd.DataFrame:
+    """For every document in the CSV: uncoded 'next' sentences with an amount (status 'read'), or the fetch error."""
+    df = gc.load() if df is None else df
+    fetch = fetch or fetch_text
+    rows = []
+    for url, g in df.groupby("source_url", sort=True):
+        try:
+            sents = gc.sentences(fetch(url))
+        except Exception as exc:  # noqa: BLE001 - a failed fetch is reported, not hidden
+            rows.append((url, None, f"fetch_failed: {type(exc).__name__}", ""))
+            continue
+        coded = {int(m.group(1)) for loc in g["locator"] if (m := re.search(r"sentence #(\d+)", loc))}
+        for i in uncoded_next_sentences(sents, coded, set(g["sentence_sha256"])):
+            rows.append((url, i, "read", gc.sentence_hash(sents[i])))
+        if not any(r[0] == url for r in rows):
+            rows.append((url, None, "ok", ""))
+    return pd.DataFrame(rows, columns=["source_url", "sentence", "status", "sentence_sha256"])
+
+
 def run(frac: float = 0.2, seed: int = 0, tsmc: bool = True) -> dict[str, pd.DataFrame]:
     out = {}
     df = gc.load()
@@ -111,7 +141,15 @@ def main() -> None:
     ap.add_argument("--frac", type=float, default=0.2)
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--no-tsmc", action="store_true")
+    ap.add_argument("--neighbours", action="store_true", help="R11-1: uncoded sentences after capex sentences")
     a = ap.parse_args()
+    if a.neighbours:
+        res = neighbour_check()
+        for r in res.itertuples(index=False):
+            print(f"{r.status:10s} {r.source_url} {'' if r.sentence is None else '#' + str(int(r.sentence))}")
+        print(f"{res['source_url'].nunique()} documents, {int((res['status'] == 'read').sum())} sentences to read, "
+              f"{int(res['status'].str.startswith('fetch_failed').sum())} fetch failures")
+        return
     for name, res in run(a.frac, a.seed, not a.no_tsmc).items():
         for r in res.itertuples(index=False):
             print(f"{name:6s} {r.id:45s} {r.status}")

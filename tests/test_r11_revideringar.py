@@ -1,6 +1,7 @@
 """R11 review of F1, guidance revisions and surprise against guidance (docs/granskning/r11_revideringar.md).
 
-Strict xfails mark the confirmed defects (R11-1 to R11-6), so each test flips when a correction track fixes it.
+The tests for the confirmed defects (R11-1 to R11-5) were strict xfails; the fix track X8 fixed them and they now
+pass as ordinary tests (assertions unchanged).
 Passing tests pin properties the review relies on: as_of truncation on the real table, guidance known before the
 outcome, and a snapshot whose branch states do not depend on the expectations section. No network.
 """
@@ -52,11 +53,9 @@ def _csv_rows(rows: list[tuple[str, str, float]]) -> pd.DataFrame:
     return d
 
 
-# ------------------------------------------------------------------ confirmed defects (strict xfail)
+# ------------------------------------------------------------------ confirmed defects (fixed in X8)
 
 
-@pytest.mark.xfail(strict=True, reason="R11-1: the CSV lacks Microsoft's CY2026 figure from the 2026-07-29 call "
-                                       "(#228, about 175 bn on the narrower basis)")
 def test_csv_has_microsofts_cy2026_figure_from_the_july_2026_call():
     d = _csv()
     rows = d[(d["company"] == "msft") & (d["horizon"] == "CY") & (d["period"].astype(str) == "2026")
@@ -65,8 +64,6 @@ def test_csv_has_microsofts_cy2026_figure_from_the_july_2026_call():
     assert float(rows["value_lo"].iloc[0]) == 175000.0 and rows["sentence_sha256"].iloc[0] == MSFT_JULY_SHA
 
 
-@pytest.mark.xfail(strict=True, reason="R11-1: msft-29 (170 bn, 2026-10-28, '3P capacity delays') is a revision "
-                                       "down on the same basis as the July figure, not a new item")
 def test_microsofts_2026_cut_is_a_downward_revision_on_the_same_basis():
     ev = GR.events(GR.statements(None, _csv()))
     m = ev[(ev["company"] == "msft") & (ev["period"] == "CY:2026") & (ev["known_from"] == pd.Timestamp("2026-10-28"))]
@@ -74,8 +71,6 @@ def test_microsofts_2026_cut_is_a_downward_revision_on_the_same_basis():
     assert m["size"].iloc[0] == pytest.approx(100 * math.log(170 / 175), abs=0.01)
 
 
-@pytest.mark.xfail(strict=True, reason="R11-2: the closing version is emitted on the quarter's last day itself; "
-                                       "the register says once the day has passed")
 def test_closing_version_waits_until_the_quarters_last_day_has_passed():
     ev = _events([("2025-02-03", 1, 5.0), ("2025-02-20", 1, 2.0), ("2025-03-10", 0, 0.0)])
     start = pd.Period("2025Q1", "Q-DEC")
@@ -85,7 +80,6 @@ def test_closing_version_waits_until_the_quarters_last_day_has_passed():
     assert "2025Q2" not in set(on_the_day["period"])
 
 
-@pytest.mark.xfail(strict=True, reason="R11-3: the fetch cache key ignores the curated CSV")
 def test_fetch_recomputes_when_the_curated_csv_changes(monkeypatch):
     table = pd.DataFrame({"series": ["capex_googl"], "freq": ["Q"], "period": ["2024Q4"], "value": [1.0],
                           "known_from": [pd.Timestamp("2025-02-05")], "source": ["release"],
@@ -105,8 +99,6 @@ def test_fetch_recomputes_when_the_curated_csv_changes(monkeypatch):
     assert first["value"].iloc[-1] > 0 > second["value"].iloc[-1]
 
 
-@pytest.mark.xfail(strict=True, reason="R11-4: F1 series computed from the curated CSV are publish=True while "
-                                       "guid_capex_* (the same values) are publish=False")
 def test_series_from_the_curated_csv_respect_its_publish_gate():
     specs = catalog.by_key()
     gated = sorted(k for k, s in specs.items() if k.startswith("guid_capex_") and not s.publish)
@@ -114,8 +106,6 @@ def test_series_from_the_curated_csv_respect_its_publish_gate():
     assert not (gated and open_), f"publish=True {open_} while {len(gated)} guid_capex series are publish=False"
 
 
-@pytest.mark.xfail(strict=True, reason="R11-5: Meta's 2020 outlook (about 16 bn, 8-K 2020-07-30 and 2020-10-29) "
-                                       "is missing, inside F1's index period")
 def test_csv_has_metas_2020_outlook_from_the_index_period():
     d = _csv()
     m = d[(d["company"] == "meta") & (d["horizon"] == "CY") & (d["period"].astype(str) == "2020")]
@@ -150,7 +140,9 @@ def test_real_table_as_of_truncation_gives_identical_series():
     full = GR.compute(t, csv, "2026-11-24")
     for d in ("2021-06-30", "2023-09-30", "2025-03-31", "2026-07-30", "2026-10-31"):
         when = pd.Timestamp(d)
-        cut = GR.compute(t[t["known_from"] <= when], csv[csv["known_from"] <= when], when)
+        # computed the day after `when` (X8): after the R11-2 fix a closing version dated `when` (a quarter's last
+        # day) is emitted once the day has passed; everything used is still known on `when`
+        cut = GR.compute(t[t["known_from"] <= when], csv[csv["known_from"] <= when], when + pd.Timedelta(days=1))
         for key in GR.KEYS:
             a, b = GR._series(key, full), GR._series(key, cut)
             assert (b["known_from"] <= when).all() if len(b) else True

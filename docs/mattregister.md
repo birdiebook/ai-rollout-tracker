@@ -654,3 +654,53 @@ intäktsguidance och alla utfall har hämtats men inte lästs.
 - Andra ordalydelser kodas inte, till exempel "slightly above US$9.5 billion" (2016-10-13) och "near the mid point".
 - Serier `tsmc_guid_capex_lo/hi` (år, MUSD, vintages som övriga TSMC-guidance). Kontrollen av tolkningen gällde
   meningarnas form, inte revideringarna.
+
+### 2026-11-24 – F1: brottet flyttas, stängningsversionen och känsligheter (rättning efter granskning R11)
+
+Spår X8 rättar fynden i `docs/granskning/r11_revideringar.md`. Posten "F1: revideringar av guidance och överraskning
+mot guidance" ovan skrivs inte om. Här står vad som ändras, varför och effekten. Alla värden nedan var kända från
+granskningen innan posten skrevs. Posten är alltså en rättning, inte en förregistrering.
+
+**1. Definitionsbrottet flyttas från `msft-29` till `msft-r11f1` (R11-1).** Detta är en regeländring efter att värdena
+var synliga. Skälet är primärkällan, inte utfallet. I samtalet 2026-07-29 (FY2026 Q4) säger Microsoft att förväntningen
+för kalenderåret 2026 är oförändrad utom effekten av den nya nyttjandeperioden (mening #227), och att skiftet till
+operationell leasing justerar den till cirka 175 mdr (#228). CSV:n saknade den siffran. Raden `msft-r11f1` läggs till
+(SHA-256 `d8cfaeea…a9bb5a84`). Brottet ligger alltså mellan `msft-26` (190 mdr, gammal bas) och `msft-r11f1` (175 mdr,
+ny bas). Listan över brott är nu `msft-r11f1`. `msft-29` (170 mdr, 2026-10-28) är en revidering nedåt på samma bas.
+- Effekt: storleken för `msft-29` blir −2,9. Rullande 4 kvartal 2026Q4 går från 0,67 (n 12: 4/8/0) till 0,62
+  (n 13: 4/8/1). Kvartalet 2026Q4 får ett index, 0,50 (n 3). Övriga kvartal ändras inte av detta.
+- Känsligheter som redovisas bredvid: F1:s tidigare variant (brott på `msft-29`, utan julisiffran) 0,67, och "brottet
+  ignoreras" (utan julisiffran och utan brott, −11,1 mot 190) 0,62.
+- En rad som ett brott håller utanför jämförelsen redovisas i avsnittet `expectations` (`break_statements`) med sin
+  storlek mot det senaste uttalandet före brottet. För `msft-r11f1` är den −8,2 mot `msft-26`. Raden är ingen
+  revidering. Så kan ett brott aldrig dölja en ändring.
+
+**2. Stängningsversionen (R11-2), ingen regeländring.** Koden följer nu registrets text: versionen vid kvartalets sista
+dag skapas först när dagen har passerat. Den dateras fortfarande den sista dagen. En beräkning på kvartalets sista dag
+har därför inte den versionen. Den kommer dagen efter.
+
+**3. Två känsligheter, inga nya huvudmått.**
+- **Bara siffror (R11-6).** Samma index och samma regler, men bara över revideringar med en siffra (kedjorna med siffror
+  och lägsta gränser). Riktningarna är med i huvudmåttet, men 24 av 28 riktningshändelser i indexperioden är
+  oförändrade. Känsligheten visar hur mycket de drar mot 0,5. Den redovisas i avsnittet `expectations` och i
+  resultatet, tillsammans med antalet upp, oförändrade och ned för siffror och riktningar var för sig.
+- **TSMC i US$ (R11-7).** Från 2017Q3. U = kvartalsintäkten i US$ ur pressmeddelandet i samma 6-K (deterministisk
+  tolkning av meningen "In US dollars, <kvartal> quarter revenue was $x billion", serien `tsmc_rev_usd_q`). G =
+  US$-mittpunkten känd dagen före U. Valutadelen = s(NT$) − s(US$) = 100 × (ln faktisk kurs − ln antagen kurs).
+  Serien `f1_surprise_tsmc_usd`. Den ingår inte i överraskningsindexet. Huvudmåttet är kvar på B2:s bas (NT$).
+
+**4. Data (R11-5).** Metas utsikt för 2020 (cirka 16 mdr, 8-K 2020-07-30 och 2020-10-29) läggs till i CSV:n. Raderna
+ligger i indexperioden och räknas i revideringsindexet. Rullande 2021Q1 får ett värde (0,67, n 3) och 2021Q2 blir 0,60
+i stället för 0,625. Metas överraskning börjar som registrerat 2021 (kolumnen "Från" ovan). 2020 används inte där.
+
+**5. Publicering (R11-4).** F1-serier som läser CSV:n listar `guid_capex_*` som komponenter och har därför
+`publish=False` så länge de har det. Ägaren avgör. Måtten ändras inte.
+
+**6. TSMC:s capex-budget, förtydligande (R11-8).** Koden kräver att inget belopp och inget meningsslut står mellan
+subjektet och verbet. Det stod inte i posten ovan. Tolkningen ändras inte. Kända okodade utsagor: alla för 2003,
+2009-07-30 (höjningen dateras en dag sent, från 2009-07-31) och 2012-04-26 (en höjning med cirka +32 som saknas). Från
+2022 står bara januaribudgeten i 6-K, så TSMC:s capex-budget ger inga revideringar efter 2021 i våra källor.
+
+**7. Urval av kandidatmeningar för capex-guidance (R11-1).** Meningen efter varje mening med ett capex-ord är också en
+kandidat (`guidance_capex.candidates`). Kontrollen `python -m ai_tracker.guidance_check --neighbours` listar sådana
+meningar med ett belopp som inte är kodade.

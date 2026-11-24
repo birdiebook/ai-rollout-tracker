@@ -3,15 +3,18 @@
 
 Until about 2015 TSMC's quarterly release and presentation state the year's capex outlook ("2010 capital expenditure
 to be around US$ 4.8 billion", "TSMC further expects the capital expenditures for 2012 to be about US$6 billion",
-"2015 Capital Expenditures to be between US$ 10.5 billion and US$ 11 billion"). Later the outlook is given on the
-call only, which is not in EDGAR. Only one strict sentence form is coded:
+"2015 Capital Expenditures to be between US$ 10.5 billion and US$ 11 billion"). In 2016-2021 the release states the
+budget in January and when it changes; from 2022 only the January budget (later changes were given on the call only,
+which is not in EDGAR; review R11-8). Only one strict sentence form is coded:
 
     <year> [total] capital expenditure(s)|capex|capital budget ... | capital expenditure(s) [estimate] for <year> ...
     then a verb (to be, will be, expected to be, to remain), then about | around | approximately | between |
     in the range of | in the range between, then US$x [billion] (and|to) US$y billion, or US$x billion.
 
-Other wordings (near the mid point of a range, approach, above, likely to be in the previously forecast range) are not
-coded. The guided year must be named and must be the filing year or the next; an earlier year would be an outcome.
+No amount and no sentence end may stand between the subject and the verb (_GAP). Other wordings (near the mid point
+of a range, approach, above, likely to be in the previously forecast range) are not coded. Known uncoded statements
+(R11-8): all for 2003, 2009-07-30 (an amount between subject and verb: the raise is dated from 2009-07-31) and
+2012-04-26 (a raise to US$8-8.5 billion in another wording). The guided year must be named and must be the filing year or the next; an earlier year would be an outcome.
 Values in million US$. One record per (filing, document, year): within a document the last statement for the year
 counts. known_from = the filing date (tsmc_guidance's convention); repeats add no vintage (tsmc_guidance.vintages).
 The matched sentence is kept only as a SHA-256 (the text stays in data/raw, the repo is public).

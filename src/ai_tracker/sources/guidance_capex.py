@@ -71,6 +71,30 @@ def sentences(text: str) -> list[str]:
     return [x for x in _SENTENCE_SPLIT.split(text) if x.strip()]
 
 
+# Candidate sentences for the agent's reading (E1's rule, widened after R11-1). E1 selected sentences with a capex
+# word and a forward-looking word. Microsoft's FY2026 Q4 call put the CY2026 figure in the sentence after the capex
+# sentences (#228: the lease shift "adjusts our expectation to approximately $175 billion"), without a capex word,
+# so the sentence after every sentence with a capex word is also a candidate.
+CAPEX_WORD_RE = re.compile(r"(?i)\b(?:capital\s+expenditures?|capex|capital\s+investments?|capital\s+spending|"
+                           r"property\s+and\s+equipment|technical\s+infrastructure)\b")
+FORWARD_WORD_RE = re.compile(r"(?i)\b(?:expect\w*|anticipat\w*|outlook|guidance|plan\w*|will|forecast\w*|estimat\w*|"
+                             r"project\w*|intend\w*|remain\w*|continu\w*|grow\w*|increas\w*)\b")
+AMOUNT_RE = re.compile(r"(?i)\$\s?\d+(?:\.\d+)?\s*(?:-\s*\d+(?:\.\d+)?\s*)?(?:billion|bn)\b")
+
+
+def candidates(sents: list[str]) -> dict[int, str]:
+    """Sentence number -> why it is a candidate: 'capex' (a capex word and a forward-looking word) or 'next' (the
+    sentence after any sentence with a capex word; R11-1)."""
+    out: dict[int, str] = {}
+    for i, x in enumerate(sents):
+        if CAPEX_WORD_RE.search(x):
+            if FORWARD_WORD_RE.search(x):
+                out[i] = "capex"
+            if i + 1 < len(sents):
+                out.setdefault(i + 1, "next")
+    return out
+
+
 def _float(x: str) -> float | None:
     return float(x) if str(x).strip() not in ("", "nan", "None") else None
 

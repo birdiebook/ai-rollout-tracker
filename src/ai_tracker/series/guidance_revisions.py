@@ -10,7 +10,9 @@ Statements, items and chains
   TSMC's annual capex outlook (tsmc_capex_guidance, deterministic parse of the same 6-Ks): one statement per filing.
 - Within an item, three chains are kept apart and only statements of one chain are compared: numbers (point,
   range, approx: the midpoint), lower bounds (min) and directions per direction base.
-- A registered definition break (DEFINITION_BREAKS) starts a new item from that row on.
+- A registered definition break (DEFINITION_BREAKS) starts a new item from that row on. The break row is no
+  revision; break_statements() reports its size against the last statement before the break, so a break never hides
+  a change (R11-1).
 
 Revision event: a statement in a chain that already has an earlier statement, at least SAME_EVENT_DAYS after it
 (a later statement inside that window is the same event: no event, but it becomes the chain's reference). Size =
@@ -22,7 +24,8 @@ Revision index per calendar quarter of known_from, all companies pooled, from CO
 n_unchanged) / n over the quarter (window 1) or the quarter and the three before it (window 4, the main measure).
 n < MIN_EVENTS: no index (n is still reported). Median size over events with a size. A version is emitted at every
 event date in the quarter that changes the counts, and once at the quarter's last day if the quarter has no version
-yet and the day has passed (known_from = that date).
+yet and the day has passed (known_from = that date; computed from the day after, R11-2). Sensitivity (register,
+rättning efter R11): the same index over events with a number only (chains num and min, no directions).
 
 Surprise per company and guided period: s = 100 x (ln U - ln G). U = first vintage of the outcome (sums of first
 vintages, known from the latest component); G = midpoint of the last guidance known before U (as_of the day before
@@ -37,12 +40,19 @@ bounds) are not comparable with our outcomes and are left out; directions are ne
 z = s / SD (ddof 1) of the company's own earlier surprises whose outcome was known before this one, at least
 MIN_PAST of them; not demeaned. Surprise index per calendar quarter (annual capex counts in the year's Q4) = mean
 of the z known, at least MIN_COMPONENTS of them; a version per component that becomes known (known_from = latest).
+Sensitivity (R11-7): TSMC in US$ from 2017Q3, U = the quarter's US$ revenue in the quarterly release
+(tsmc_usd_revenue), G = the US$ midpoint known the day before; s(NT$) - s(US$) is the FX part, 100 x ln(realised
+rate / assumed rate). Not in the surprise index.
+
+Publication (R11-4): every series that reads the curated CSV lists the guid_capex_* series as components, so the
+catalog keeps it publish=False as long as they are.
 """
 
 from __future__ import annotations
 
+import hashlib
 import math
-from datetime import date
+from datetime import date, datetime, timezone
 from functools import lru_cache
 import numpy as np
 import pandas as pd
@@ -61,8 +71,12 @@ NVDA_FROM = pd.Period("2017Q2", "Q-DEC")  # Nvidia quarters reviewed by R5 (as B
 MIN_PAST = 4  # z needs >= 4 earlier surprises of the same company
 MIN_COMPONENTS = 2  # surprise index needs >= 2 companies
 # row id -> reason: a documented break in what the guided number measures; the row starts a new item
-DEFINITION_BREAKS = {"msft-29": "R5-F14: from the 2026-07-29 call more datacenter leases are operating, the basis "
-                                "of MSFT_CAPEX_INCL_FL is narrower than for msft-26"}
+# (register F1, moved by the amendment after R11: the break sits at the first figure on the new basis, msft-r11f1,
+# not at msft-29, which is a cut on the same basis)
+DEFINITION_BREAKS = {"msft-r11f1": "R5-F14, R11-1: from the 2026-07-29 call (#225-228) more datacenter leases are "
+                                   "operating, so MSFT_CAPEX_INCL_FL is narrower than for msft-26; the company put "
+                                   "CY2026 at about 175bn on the new basis, unchanged apart from that (#227)"}
+NUMERIC_CHAINS = ("num", "min")  # chains with a size; the numeric-only sensitivity uses these
 
 STATEMENT_COLUMNS = ["company", "measure", "item", "chain", "period", "definition", "kind", "value", "code",
                      "known_from", "ref"]
@@ -77,10 +91,14 @@ TSMC_GUIDANCE = {"TWD": ("tsmc_guid_rev_twd_lo", "tsmc_guid_rev_twd_hi"),
 TSMC_CAPEX = ("tsmc_guid_capex_lo", "tsmc_guid_capex_hi")
 NVDA_GUIDANCE = "nvda_guid_rev_mid"
 TSMC_TARGET = "tsmc_revenue_m"
+TSMC_USD_TARGET = "tsmc_rev_usd_q"  # R11-7: quarterly US$ revenue from the release (tsmc_usd_revenue)
+TSMC_USD_FROM = pd.Period("2017Q3", "Q-DEC")  # TSMC guides in US$ from 2017Q3
 NVDA_TARGET = "rev_nvda"
 # company -> (CSV definition of the guided number, outcome components summed over the calendar year)
 CAPEX_SURPRISE = {"meta": ("META_CAPEX_INCL_FL", ("capex_meta", "fin_lease_meta")),
                   "googl": ("GOOGL_CAPEX", ("capex_googl",))}
+# first guided year of the surprise (register F1, column "Från"); Meta's 2020 rows (R11-5) enter the revision index only
+CAPEX_SURPRISE_FROM = {"meta": 2021, "googl": 2025}
 NUMERIC_KINDS = ("point", "range", "approx")
 
 
@@ -230,6 +248,42 @@ def events(stmts: pd.DataFrame) -> pd.DataFrame:
     return ev.sort_values(["known_from", "company", "item", "chain"], ignore_index=True)
 
 
+def numeric_only(ev: pd.DataFrame) -> pd.DataFrame:
+    """Events with a number (chains num and min): the sensitivity without direction codes (R11-6)."""
+    if ev is None or ev.empty:
+        return _empty(EVENT_COLUMNS)
+    return ev[ev["chain"].isin(NUMERIC_CHAINS)].reset_index(drop=True)
+
+
+BREAK_COLUMNS = ["company", "measure", "period", "chain", "ref", "known_from", "value", "prev_ref",
+                 "prev_known_from", "prev_value", "size", "reason"]
+
+
+def break_statements(stmts: pd.DataFrame) -> pd.DataFrame:
+    """Statements that a registered break keeps out of the comparison, with their size against the last statement
+    of the same chain before the break (R11-1). Not revisions: shown so that a break cannot hide a change."""
+    if stmts is None or stmts.empty:
+        return _empty(BREAK_COLUMNS)
+    s = stmts.copy()
+    s["_order"] = range(len(s))
+    s = s.sort_values(["known_from", "_order"], kind="stable").reset_index(drop=True)
+    base = [f"{c}|{m}|{p}|{d.split('~')[0]}" for c, m, p, d in
+            s[["company", "measure", "period", "definition"]].itertuples(index=False)]
+    s["_base"] = base
+    out = []
+    for i in s.index[s["ref"].isin(list(DEFINITION_BREAKS))]:
+        r = s.loc[i]
+        before = s.iloc[:i]
+        before = before[(before["_base"] == r["_base"]) & (before["chain"] == r["chain"])
+                        & (before["item"] != r["item"])]
+        p = before.iloc[-1] if len(before) else None
+        size = _size(r["value"], p["value"]) if p is not None and not r["chain"].startswith("dir:") else np.nan
+        out.append((r["company"], r["measure"], r["period"], r["chain"], r["ref"], r["known_from"], r["value"],
+                    None if p is None else p["ref"], None if p is None else p["known_from"],
+                    np.nan if p is None else p["value"], size, DEFINITION_BREAKS[r["ref"]]))
+    return pd.DataFrame(out, columns=BREAK_COLUMNS) if out else _empty(BREAK_COLUMNS)
+
+
 def _stats(ev: pd.DataFrame) -> tuple:
     n = len(ev)
     up, flat, down = (int((ev["direction"] == k).sum()) for k in (1, 0, -1))
@@ -257,7 +311,7 @@ def revision_index(ev: pd.DataFrame, window: int, today, start: pd.Period | None
         win = e[(e["quarter"] >= q - (window - 1)) & (e["quarter"] <= q)] if len(e) else e
         dates = sorted(set(win.loc[win["quarter"] == q, "known_from"])) if len(win) else []
         end = q.end_time.normalize()
-        if end <= today:
+        if end < today:  # register: once the quarter's last day has passed (R11-2)
             dates.append(end)
         prev = None
         for d in dates:
@@ -350,6 +404,8 @@ def capex_surprises(table: pd.DataFrame | None, csv: pd.DataFrame | None) -> lis
         g_rows["known_from"] = pd.to_datetime(g_rows["known_from"])
         g_rows["_order"] = range(len(g_rows))
         for year in sorted(set(g_rows["period"].astype(str))):
+            if int(year) < CAPEX_SURPRISE_FROM[company]:
+                continue
             parts = [(c, f"{year}Q{k}") for c in comps for k in (1, 2, 3, 4)]
             if any(p not in firsts[c].index for c, p in parts):
                 continue
@@ -366,6 +422,43 @@ def capex_surprises(table: pd.DataFrame | None, csv: pd.DataFrame | None) -> lis
             out.append((company, "capex", year, "A", f"{year}Q4", u, kf, g, pd.Timestamp(last["known_from"]),
                         100.0 * math.log(u / g)))
     return out
+
+
+USD_SURPRISE_COLUMNS = ["period", "outcome", "outcome_known_from", "guidance", "guidance_known_from", "s", "s_ntd",
+                        "fx"]
+
+
+def tsmc_usd_surprises(table: pd.DataFrame | None, ntd: pd.DataFrame | None = None) -> pd.DataFrame:
+    """Sensitivity (R11-7): TSMC's US$ quarterly revenue (first vintage, tsmc_rev_usd_q) against the US$ midpoint
+    known the day before, from TSMC_USD_FROM. s_ntd = the main (NT$, B2 basis) surprise of the same quarter and
+    fx = s_ntd - s, which is 100 x (ln realised NT$/US$ rate - ln assumed rate)."""
+    from ai_tracker import observations  # lazy, see tsmc_surprises
+
+    lo_key, hi_key = TSMC_GUIDANCE["USD"]
+    by = _by_series(table, [TSMC_USD_TARGET, lo_key, hi_key])
+    first, lo, hi = _first(by.get(TSMC_USD_TARGET)), by.get(lo_key), by.get(hi_key)
+    if first.empty or lo is None or hi is None:
+        return _empty(USD_SURPRISE_COLUMNS)
+    main = {} if ntd is None or ntd.empty else ntd[ntd["company"] == "tsmc"].set_index("period")["s"].to_dict()
+    out = []
+    for p, r in first.iterrows():
+        q = pd.Period(p, "Q-DEC")
+        if q < TSMC_USD_FROM:
+            continue
+        kf = pd.Timestamp(r["known_from"])
+        cut = kf - pd.Timedelta(days=1)
+        a, b = lo[lo["known_from"] <= cut], hi[hi["known_from"] <= cut]
+        ga, gb = observations.as_of(lo_key, cut, a), observations.as_of(hi_key, cut, b)
+        if q not in ga.index or q not in gb.index:
+            continue
+        g, u = (float(ga[q]) + float(gb[q])) / 2, float(r["value"])
+        if not (g > 0 and u > 0):
+            continue
+        gkf = max(pd.Timestamp(x.loc[x["period"].astype(str) == str(q), "known_from"].max()) for x in (a, b))
+        s_usd = 100.0 * math.log(u / g)
+        s_ntd = main.get(str(q), np.nan)
+        out.append((str(q), u, kf, g, gkf, s_usd, s_ntd, s_ntd - s_usd))
+    return pd.DataFrame(out, columns=USD_SURPRISE_COLUMNS) if out else _empty(USD_SURPRISE_COLUMNS)
 
 
 def surprises(table: pd.DataFrame | None, csv: pd.DataFrame | None) -> pd.DataFrame:
@@ -421,10 +514,13 @@ def load_csv() -> pd.DataFrame | None:
 
 def compute(table: pd.DataFrame | None, csv: pd.DataFrame | None, today) -> dict:
     """Everything F1 publishes, from the observation table and the curated capex CSV (pure: no I/O)."""
-    ev = events(statements(table, csv))
+    stmts = statements(table, csv)
+    ev = events(stmts)
+    num = numeric_only(ev)
     s = surprises(table, csv)
-    return {"events": ev, "index": {w: revision_index(ev, w, today) for w in WINDOWS}, "surprises": s,
-            "surprise_index": surprise_index(s)}
+    return {"events": ev, "index": {w: revision_index(ev, w, today) for w in WINDOWS},
+            "index_numeric": {w: revision_index(num, w, today) for w in WINDOWS}, "breaks": break_statements(stmts),
+            "surprises": s, "surprise_index": surprise_index(s), "surprises_tsmc_usd": tsmc_usd_surprises(table, s)}
 
 
 def _release(df: pd.DataFrame, value: str, period: str = "period", known_from: str = "known_from") -> pd.DataFrame:
@@ -457,10 +553,23 @@ def _series(key: str, out: dict) -> pd.DataFrame:
         return _release(s[s["company"] == company], "s", known_from="outcome_known_from")
     if kind == "surprise_index":
         return _release(out["surprise_index"], rest[0])
+    if kind == "surprise_usd":
+        return _release(out["surprises_tsmc_usd"], "s", known_from="outcome_known_from")
     raise KeyError(key)
 
 
 _CACHE: dict = {}
+
+
+def _utc_today() -> date:
+    return datetime.now(timezone.utc).date()  # as the snapshot's utc_today (R11-10)
+
+
+def csv_stamp(csv: pd.DataFrame | None) -> str:
+    """SHA-256 of the curated CSV's loaded rows, for the fetch cache key (R11-3)."""
+    if csv is None or csv.empty:
+        return ""
+    return hashlib.sha256(csv.drop(columns=["known_from"], errors="ignore").to_csv(index=False).encode()).hexdigest()
 
 
 def _fetch(key: str):
@@ -469,19 +578,20 @@ def _fetch(key: str):
 
         t = observations.load() if table is None else table
         t = t[t["series"].isin(COMPONENTS)]
+        csv, today = load_csv(), _utc_today()
         stamp = (len(t), str(t["known_from"].max()) if len(t) else "", float(t["value"].sum()) if len(t) else 0.0,
-                 date.today())
+                 csv_stamp(csv), today)
         if _CACHE.get("stamp") != stamp:  # one computation for all F1 series in a refresh
             _CACHE.clear()
-            _CACHE.update(stamp=stamp, out=compute(t, load_csv(), date.today()))
+            _CACHE.update(stamp=stamp, out=compute(t, csv, today))
         return _series(key, _CACHE["out"])
 
     return fetch
 
 
 COMPONENTS = ("tsmc_guid_rev_twd_lo", "tsmc_guid_rev_twd_hi", "tsmc_guid_rev_usd_lo", "tsmc_guid_rev_usd_hi",
-              "tsmc_guid_fx", "tsmc_guid_capex_lo", "tsmc_guid_capex_hi", "nvda_guid_rev_mid", "tsmc_revenue_m", "rev_nvda", "capex_meta", "fin_lease_meta",
-              "capex_googl")
+              "tsmc_guid_fx", "tsmc_guid_capex_lo", "tsmc_guid_capex_hi", "nvda_guid_rev_mid", "tsmc_revenue_m",
+              TSMC_USD_TARGET, "rev_nvda", "capex_meta", "fin_lease_meta", "capex_googl")
 SOURCE = ("Härledd (F1) ur bolagens guidance: curated/guidance_capex.csv (granskad i R2), TSMC:s och Nvidias "
           "guidance i SEC-inlämningar, och utfall ur SEC EDGAR")
 LICENSE = "SEC EDGAR: public information (sec.gov/privacy); egna kodade värden, bara siffror med källhänvisning"
@@ -501,10 +611,12 @@ SERIES = {
                        "Som f1_rev_index_4q men bara kvartalets händelser; minst 3. Aktualitet: gräns 400 dagar."),
     "f1_rev_n_4q": (("index", 4, "n"), "G5", "Antal revideringar av guidance, rullande 4 kvartal", "antal", "Q", -92,
                     120, "Hur många revideringar bygger indexet på?",
-                    "Alla bolag och mått. En version vid kvartalets sista dag. Aktualitet: gräns 120 dagar."),
+                    "Alla bolag och mått. En version daterad kvartalets sista dag, när dagen har passerat. "
+                    "Aktualitet: gräns 120 dagar."),
     "f1_rev_n_q": (("index", 1, "n"), "G5", "Antal revideringar av guidance, kvartal", "antal", "Q", -92, 120,
                    "Hur många revideringar kom i kvartalet?",
-                   "Alla bolag och mått. En version vid kvartalets sista dag. Aktualitet: gräns 120 dagar."),
+                   "Alla bolag och mått. En version daterad kvartalets sista dag, när dagen har passerat. "
+                   "Aktualitet: gräns 120 dagar."),
     "f1_rev_median_4q": (("index", 4, "median_size"), "G5",
                          "Medianrevidering av guidance, rullande 4 kvartal (log ×100)", "log ×100", "Q", -92, 400,
                          "Hur stora är revideringarna?",
@@ -516,7 +628,15 @@ SERIES = {
     "f1_surprise_tsmc": (("surprise", "tsmc"), "G6", "TSMC: kvartalsintäkt mot egen guidance (log ×100)", "log ×100",
                          "Q", 0, 120, "Hur mycket över eller under sin egen guidance hamnade TSMC?",
                          "Summan av kvartalets månader (NT$, första version) mot B2:s mittpunkt (NT$, eller US$ × "
-                         "antagen kurs från 2017Q3). Innehåller valutans avvikelse. Aktualitet: gräns 120 dagar."),
+                         "antagen kurs från 2017Q3). Innehåller valutans avvikelse; känslighet i US$: "
+                         "f1_surprise_tsmc_usd. Aktualitet: gräns 120 dagar."),
+    "f1_surprise_tsmc_usd": (("surprise_usd",), "G6", "TSMC: kvartalsintäkt i US$ mot egen guidance i US$ (log ×100)",
+                             "log ×100", "Q", 0, 120,
+                             "Hur mycket över eller under sin guidance i US$ hamnade TSMC, utan valutan?",
+                             "Känslighet (R11-7), inte i överraskningsindexet: kvartalsintäkten i US$ ur "
+                             "pressmeddelandet (tsmc_rev_usd_q, första version) mot US$-mittpunkten känd dagen före, "
+                             "från 2017Q3. f1_surprise_tsmc − f1_surprise_tsmc_usd = valutadelen, 100 × (ln faktisk "
+                             "kurs − ln antagen kurs). Aktualitet: gräns 120 dagar."),
     "f1_surprise_nvda": (("surprise", "nvda"), "G6", "Nvidia: kvartalsintäkt mot egen guidance (log ×100)",
                          "log ×100", "Q", 0, 199, "Hur mycket över eller under sin egen guidance hamnade Nvidia?",
                          "rev_nvda (första version) mot nvda_guid_rev_mid, från 2017Q2. Aktualitet som Nvidia: gräns "
@@ -540,6 +660,10 @@ SERIES = {
                             "Antal z i kvartalets senaste version. Aktualitet: gräns 199 dagar."),
 }
 KEYS = list(SERIES)
+# Series that read the curated CSV (R11-4): they list the guid_capex_* series as components and follow their
+# publish flag, because they reveal the same values (G = U x exp(-s/100) for Meta and Alphabet).
+CSV_BASED = ("f1_rev_index_4q", "f1_rev_index_q", "f1_rev_n_4q", "f1_rev_n_q", "f1_rev_median_4q", "f1_rev_median_q",
+             "f1_surprise_meta_capex", "f1_surprise_googl_capex", "f1_surprise_index", "f1_surprise_index_n")
 # Series that are sparse by construction (warehouse no_gaps check): a period without enough events or components has
 # no value (register: n < 3 gives no index; the surprise index needs 2 companies).
 KNOWN_GAPS = {
@@ -552,11 +676,24 @@ KNOWN_GAPS = {
 }
 
 
+@lru_cache(maxsize=1)
+def csv_component_keys() -> tuple[str, ...]:
+    """Catalog keys of the guid_capex_* series built from the curated CSV (sources.guidance_capex.specs)."""
+    return tuple(s.key for s in guidance_capex.specs())
+
+
 def _spec(key: str) -> Spec:
     _kind, branch, label, unit, freq, lag, max_age, question, note = SERIES[key]
+    if key in CSV_BASED:
+        comps = COMPONENTS + csv_component_keys()
+        publish = False  # follows guid_capex_* (publish=False until the owner decides, R11-4)
+        note += (" Bygger på curated/guidance_capex.csv och följer därför guid_capex_*:s publish-flagga "
+                 "(R11-4).")
+    else:
+        comps, publish = COMPONENTS, True
     return Spec(key=key, branch=branch, label=label, unit=unit, freq=freq, source=SOURCE, fetch=_fetch(key),
-                lag_days=lag, license=LICENSE, revised=True, publish=True, question=question, note=_NOTE + note,
-                max_age_days=max_age, components=COMPONENTS)
+                lag_days=lag, license=LICENSE, revised=True, publish=publish, question=question, note=_NOTE + note,
+                max_age_days=max_age, components=comps)
 
 
 @lru_cache(maxsize=1)
@@ -584,11 +721,38 @@ def _tsmc_capex_specs() -> list[Spec]:
                  question="Hur mycket sa TSMC att det skulle investera under året?",
                  note="Deterministisk tolkning (sources/tsmc_capex_guidance.py, F1) av de 6-K som tsmc_guidance läser. "
                       "period = året som guidas, known_from = 6-K:ns inlämningsdatum; en ändring är en ny vintage. "
-                      "Från 2016 står budgeten i pressmeddelandet i januari och när den ändras; andra ordalydelser "
-                      "kodas inte. Se docs/resultat/f1_revideringar.md. Aktualitet: årets budget kommer i "
+                      "2016–2021 står budgeten i pressmeddelandet i januari och när den ändras; från 2022 bara "
+                      "januaribudgeten (R11-8), så ändringar efter 2021 saknas. Andra ordalydelser kodas inte. Se "
+                      "docs/resultat/f1_revideringar.md. Aktualitet: årets budget kommer i "
                       "januarirapporten, gräns 60 dagar efter årets slut.",
                  max_age_days=60)
             for f in ("lo", "hi")]
 
 
-SPECS = [_spec(k) for k in KEYS] + _tsmc_capex_specs()
+@lru_cache(maxsize=1)
+def _tsmc_usd_records() -> pd.DataFrame:
+    from ai_tracker.sources import tsmc_usd_revenue
+
+    return tsmc_usd_revenue.records()
+
+
+def _tsmc_usd() -> pd.DataFrame:
+    from ai_tracker.sources import tsmc_usd_revenue
+
+    return tsmc_usd_revenue.vintages(_tsmc_usd_records())
+
+
+def _tsmc_usd_spec() -> Spec:
+    from ai_tracker.series.tsmc import LICENSE as TSMC_LICENSE
+
+    return Spec(key=TSMC_USD_TARGET, branch="G6", unit="MUSD", freq="Q",
+                label="TSMC:s kvartalsintäkt i US$ (pressmeddelandet)",
+                source="SEC EDGAR, TSMC Form 6-K (kvartalsrapportens pressmeddelande)", fetch=_tsmc_usd,
+                lag_days=20, license=TSMC_LICENSE, revised=True, publish=True,
+                question="Hur stor var TSMC:s kvartalsintäkt i US$, den valuta TSMC guidar i?",
+                note="Deterministisk tolkning (sources/tsmc_usd_revenue.py, rättning efter R11-7) av meningen "
+                     "\"In US dollars, <kvartal> quarter revenue was $x billion\" i de 6-K som tsmc_guidance läser, "
+                     "från 2017-01 (2016Q4). known_from = 6-K:ns inlämningsdatum. Används för F1:s känslighet i US$.")
+
+
+SPECS = [_spec(k) for k in KEYS] + _tsmc_capex_specs() + [_tsmc_usd_spec()]

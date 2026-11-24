@@ -132,7 +132,8 @@ def test_registered_definition_break_starts_a_new_item(monkeypatch):
     monkeypatch.setitem(GR.DEFINITION_BREAKS, "m-2", "test break")
     ev = ev_of(csv_rows(rows))
     assert len(ev) == 1 and ev["prev_value"].iloc[0] == pytest.approx(170) and ev["direction"].iloc[0] == 1
-    assert "msft-29" in GR.DEFINITION_BREAKS  # the registered break (R5-F14)
+    # the registered break (R5-F14), moved after R11-1 to the first figure on the narrower basis
+    assert "msft-r11f1" in GR.DEFINITION_BREAKS and "msft-29" not in GR.DEFINITION_BREAKS
 
 
 def test_same_event_window_counts_once_and_updates_the_reference():
@@ -350,8 +351,10 @@ def _latest(df, cols, when):
 def test_as_of_truncation_gives_identical_values(when):
     table, csv = _world()
     full = GR.compute(table, csv, "2020-06-30")
+    # computed the day after `when` from what was known on `when`: a closing version dated `when` (a quarter's last
+    # day) is emitted once that day has passed (register, R11-2)
     cut = GR.compute(table[table["known_from"] <= pd.Timestamp(when)],
-                     csv[csv["known_from"] <= pd.Timestamp(when)], when)
+                     csv[csv["known_from"] <= pd.Timestamp(when)], pd.Timestamp(when) + pd.Timedelta(days=1))
     for w in GR.WINDOWS:
         a = _latest(full["index"][w], ["n", "n_up", "n_unchanged", "n_down", "index", "median_size"], when)
         b = _latest(cut["index"][w], ["n", "n_up", "n_unchanged", "n_down", "index", "median_size"], when)
@@ -440,11 +443,16 @@ def test_catalog_contract():
     specs = {s.key: s for s in GR.SPECS}
     assert catalog.validate(GR.SPECS) == []
     assert set(GR.KEYS) <= set(catalog.by_key())
+    gate = GR.csv_component_keys()
+    assert gate and all(k.startswith("guid_capex_") for k in gate)
     for key in GR.KEYS:
         s = specs[key]
-        assert s.publish and s.components == GR.COMPONENTS and s.max_age_days and s.note.startswith("Grupp")
-        assert s.branch in ("G5", "G6")
-    assert {"tsmc_guid_capex_lo", "tsmc_guid_capex_hi"} <= set(specs)
+        assert s.max_age_days and s.note.startswith("Grupp") and s.branch in ("G5", "G6")
+        if key in GR.CSV_BASED:  # reads the curated CSV: declares it and follows its publish gate (R11-4)
+            assert s.components == GR.COMPONENTS + gate and not s.publish
+        else:
+            assert s.publish and s.components == GR.COMPONENTS
+    assert {"tsmc_guid_capex_lo", "tsmc_guid_capex_hi", "tsmc_rev_usd_q"} <= set(specs)
 
 
 def test_group_is_never_in_a_branch_index():
@@ -461,7 +469,10 @@ def test_expectations_section_is_json_clean_and_outside_diffusion():
     text = json.dumps(S._clean(sec), ensure_ascii=False)
     assert "NaN" not in text
     main = sec["revisions"]["window_4q"]
-    assert main["latest"]["period"] == "2019Q4"
+    # 2019Q4 has no event: its closing version is dated 2019-12-31 but emitted once that day has passed (R11-2)
+    assert main["latest"]["period"] == "2019Q3"
+    after = E.section("2020-01-01", table, csv)["revisions"]["window_4q"]["latest"]
+    assert after["period"] == "2019Q4" and after["known_from"] == "2019-12-31"
     assert {c["company"] for c in sec["surprise"]["companies"]} >= {"tsmc", "nvda"}
     assert sec["events_recent"] and sec["events_per_company_year"]["meta"]
 
@@ -498,4 +509,4 @@ def test_curated_csv_loads_into_statements():
         pytest.skip("curated CSV missing")
     st = GR.capex_statements(guidance_capex.load())
     assert len(st) == len(guidance_capex.load()) and set(st["chain"]) >= {"num", "min"}
-    assert any(st["definition"].str.contains("~"))  # msft-29 starts a new item
+    assert any(st["definition"].str.contains("~"))  # msft-r11f1 starts a new item

@@ -85,7 +85,8 @@ def test_b2_capex_row_matches_source(capex, rid, lo, hi, year, filed, accepted, 
 
 def test_b2_rows_are_all_quantitative_meta_and_alphabet_cy_rows(capex):
     sel = capex[capex["company"].isin(["meta", "googl"]) & (capex["horizon"] == "CY") & (capex["kind"] != "direction")]
-    added_by_fix = sel[sel["accession"] == "0001652044-25-000056"]  # R2-F1, see below
+    # R2-F1 (see below) and R11-5 (Meta's 2020 outlook, fix track X8): rows added after this review
+    added_by_fix = sel[(sel["accession"] == "0001652044-25-000056") | sel["id"].isin(["meta-r11f5a", "meta-r11f5b"])]
     assert set(sel["id"]) - set(added_by_fix["id"]) == {r[0] for r in B2_ROWS}
 
 
@@ -151,12 +152,12 @@ def test_no_capex_row_dated_before_its_edgar_acceptance(capex):
     """known_from (= filed, the EDGAR filingDate) is never before the acceptance date in New York time.
 
     The accepted column was checked equal to EDGAR's acceptanceDateTime for all 72 rows with an accession
-    (73 after the R2-F1 row was added).
+    (73 after the R2-F1 row was added, 75 after the two R11-5 rows for Meta 2020).
     """
     d = capex[capex["accepted"] != ""]
     acc_ny = pd.to_datetime(d["accepted"], utc=True).dt.tz_convert("America/New_York").dt.tz_localize(None)
     assert (d["known_from"] >= acc_ny.dt.normalize()).all()
-    assert len(d) == 73
+    assert len(d) == 75
 
 
 # ------------------------------------------------------------------ 3. TSMC: sampled quarters, read by hand

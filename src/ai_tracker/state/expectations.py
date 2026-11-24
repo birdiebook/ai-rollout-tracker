@@ -6,7 +6,14 @@ company and as an index. Measured and shown, never counted in a branch's diffusi
 False), no pace: level and percentile against the measure's own history as known on the computation date.
 
 Everything is computed from inputs known on `when` only (observation rows and curated CSV rows with
-known_from <= when), so the section equals the catalog series' as_of(when) (tests/test_guidance_revisions.py).
+known_from <= when), so the section equals the catalog series' as_of(when) (tests/test_guidance_revisions.py), except
+for a closing version dated `when` itself: the register emits it once the quarter's last day has passed, so it is
+created the following day and is not in a section computed on that day (R11-2).
+
+Beside the main measures (rättning efter R11): the statements a registered definition break keeps out of the
+comparison, with their size against the last statement before the break (R11-1); the revision index over numeric
+events only and the composition of the main window by numbers and directions (R11-6); and TSMC's surprise in US$
+with the FX part (R11-7). These are sensitivities, not main measures.
 """
 
 from __future__ import annotations
@@ -83,6 +90,48 @@ def _events(ev: pd.DataFrame) -> tuple[list[dict], dict]:
     return recent, counts
 
 
+def _breaks(b: pd.DataFrame) -> list[dict]:
+    if b is None or b.empty:
+        return []
+    return [{"ref": r.ref, "company": r.company, "measure": r.measure, "period": r.period, "chain": r.chain,
+             "known_from": str(pd.Timestamp(r.known_from).date()), "value": _num(r.value), "prev_ref": r.prev_ref,
+             "prev_known_from": None if r.prev_known_from is None else str(pd.Timestamp(r.prev_known_from).date()),
+             "prev_value": _num(r.prev_value), "size": _num(r.size), "reason": r.reason}
+            for r in b.itertuples(index=False)]
+
+
+def _composition(ev: pd.DataFrame, versions: pd.DataFrame, window: int) -> dict:
+    """Counts of the latest window by event type (numbers: chains num and min; directions)."""
+    latest = _latest_per_period(versions)
+    if ev is None or ev.empty or latest is None or latest.empty:
+        return {}
+    r = latest.iloc[-1]
+    q = pd.Period(r["period"], "Q-DEC")
+    e = ev.copy()
+    kq = pd.to_datetime(e["known_from"]).dt.to_period("Q-DEC")
+    e = e[(kq >= q - (window - 1)) & (kq <= q) & (pd.to_datetime(e["known_from"]) <= pd.Timestamp(r["known_from"]))]
+    num = e["chain"].isin(GR.NUMERIC_CHAINS)
+    out = {"period": r["period"]}
+    for name, part in (("numbers", e[num]), ("directions", e[~num])):
+        out[name] = {"n": int(len(part)), "up": int((part["direction"] == 1).sum()),
+                     "unchanged": int((part["direction"] == 0).sum()), "down": int((part["direction"] == -1).sum())}
+    return out
+
+
+def _tsmc_usd(u: pd.DataFrame) -> dict:
+    if u is None or u.empty:
+        return {"latest": None}
+    r = u.sort_values("outcome_known_from").iloc[-1]
+    v = u.dropna(subset=["s_ntd"])
+    return {"latest": {"period": r["period"], "known_from": str(pd.Timestamp(r["outcome_known_from"]).date()),
+                       "outcome_musd": _num(r["outcome"]), "guidance_musd": _num(r["guidance"]),
+                       "surprise_usd": _num(r["s"]), "surprise_ntd": _num(r["s_ntd"]), "fx_part": _num(r["fx"])},
+            "n": int(len(v)), "sd_surprise_ntd": _num(v["s_ntd"].std()) if len(v) > 1 else None,
+            "sd_surprise_usd": _num(v["s"].std()) if len(v) > 1 else None,
+            "sd_fx_part": _num(v["fx"].std()) if len(v) > 1 else None,
+            "note": "Känslighet (R11-7): utfall och guidance i US$; fx_part = s(NT$) − s(US$). Inte i indexet."}
+
+
 def _companies(s: pd.DataFrame) -> list[dict]:
     out = []
     if s is None or s.empty:
@@ -122,10 +171,15 @@ def section(when, table: pd.DataFrame, csv: pd.DataFrame | None = None) -> dict:
                   "coverage_from": str(GR.COVERAGE_FROM), "min_past_surprises": GR.MIN_PAST,
                   "min_companies": GR.MIN_COMPONENTS, "definition_breaks": sorted(GR.DEFINITION_BREAKS)},
         "revisions": {f"window_{w}q": _index_entry(out["index"][w], "index", "Q") for w in GR.WINDOWS},
+        "revisions_numeric_only": {f"window_{w}q": _index_entry(out["index_numeric"][w], "index", "Q")
+                                   for w in GR.WINDOWS},
+        "composition_main_window": _composition(out["events"], out["index"][GR.MAIN_WINDOW], GR.MAIN_WINDOW),
+        "break_statements": _breaks(out["breaks"]),
         "events_recent": recent,
         "events_per_company_year": counts,
         "surprise": {"companies": _companies(out["surprises"]),
-                     "index": _index_entry(out["surprise_index"], "value", "Q")},
+                     "index": _index_entry(out["surprise_index"], "value", "Q"),
+                     "tsmc_usd_sensitivity": _tsmc_usd(out["surprises_tsmc_usd"])},
     }
 
 
