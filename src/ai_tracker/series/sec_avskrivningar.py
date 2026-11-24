@@ -26,6 +26,7 @@ from functools import lru_cache
 import pandas as pd
 
 from ai_tracker.catalog import Spec
+from ai_tracker.series.neoclouds import rounding_revisions_dropped
 from ai_tracker.series.sec import LICENSE, OCF, REVENUE
 from ai_tracker.series.sec_segments import SEG, DefinitionBreakError
 from ai_tracker.sources import sec, sec_custom, sec_instant, sec_segment
@@ -80,6 +81,7 @@ class Company:
     leases: str  # Swedish: are finance-lease right-of-use assets in PP&E?
     gross: bool = True  # gross and accumulated depreciation tagged every quarter
     custom_balances: tuple[Custom, ...] = ()  # extra (net, accumulated) sources from instances
+    thousands_to_millions: bool = False  # reported in thousands, later in millions: drop rounding-only versions
     balance_breaks: dict = field(default_factory=dict)  # "net"/"gross" -> declared restatements
 
 
@@ -156,7 +158,8 @@ COMPANIES: dict[str, Company] = {
                      description="'Depreciation' i noten om anläggningstillgångar (us-gaap:Depreciation). Taggas "
                                  "avrundat till 0,1 miljard USD och kan därför ligga över dep_crwv."),
         leases="'Property and equipment, net' har samma värde som taggen för anläggningstillgångar inklusive "
-               "nyttjanderätter under finansiell leasing, alltså ingår finansiell leasing."),
+               "nyttjanderätter under finansiell leasing, alltså ingår finansiell leasing.",
+        thousands_to_millions=True),
 }
 
 AWS_CONCEPTS = ("Depreciation", "DepreciationDepletionAndAmortization")
@@ -241,7 +244,7 @@ def flow_series(measure: str, company: str) -> pd.DataFrame:
     flow = getattr(COMPANIES[company], measure)
     sources = flow_sources(company, flow)
     checked(f"{measure}_{company}", [f for fs in sources for f in fs], flow.breaks)
-    return sec.contiguous_tail(sec.vintages(sources))
+    return sec.contiguous_tail(_rounded(company, sec.vintages(sources)))
 
 
 @lru_cache(maxsize=None)
@@ -252,7 +255,13 @@ def balance_series(part: str, company: str) -> pd.DataFrame:
     quarters = fiscal_quarters(company)
     checked(f"ppe_{part}_{company}", _as_facts([f for fs in sources for f in fs if f.end in quarters]),
             c.balance_breaks.get(part, ()))
-    return sec.contiguous_tail(sec_instant.vintages(sources, quarters))
+    return sec.contiguous_tail(_rounded(company, sec_instant.vintages(sources, quarters)))
+
+
+def _rounded(company: str, df: pd.DataFrame) -> pd.DataFrame:
+    """CoreWeave reported in thousands to its 2025 10-K and in millions after: a comparative that only rounds the
+    earlier value to whole millions is not a revision (neoclouds.rounding_revisions_dropped)."""
+    return rounding_revisions_dropped(df) if COMPANIES[company].thousands_to_millions else df
 
 
 @lru_cache(maxsize=None)

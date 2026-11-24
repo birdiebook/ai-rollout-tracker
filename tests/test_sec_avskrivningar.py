@@ -320,3 +320,12 @@ def test_aws_quarters_start_when_10q_segment_facts_start(monkeypatch):
                           "2025Q3": 6}
     # 2024 quarters are known only from the 2025 comparatives; Q4 2024 = FY (10-K) - 9M (10-Q 2025-10-31)
     assert first_known(df)["2024Q1"] == "2025-05-02" and first_known(df)["2024Q4"] == "2025-10-31"
+
+
+def test_coreweave_rounding_to_millions_is_not_a_revision(monkeypatch):
+    rows = [fact("2025-01-01", "2025-03-31", 300.2, "2025-05-15"), fact("2025-01-01", "2025-06-30", 859.481, "2025-08-13"),
+            fact("2025-01-01", "2025-06-30", 860, "2026-08-12")]  # same figure in millions a year later
+    use(monkeypatch, {m.CRWV: companyfacts(DepreciationDepletionAndAmortization=rows)})
+    df = m.flow_series("dep", "crwv")
+    assert df.groupby("period").size().to_dict() == {"2025Q1": 1, "2025Q2": 1}
+    assert latest(df)["2025Q2"] == 559.281

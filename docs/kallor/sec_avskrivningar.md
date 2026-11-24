@@ -40,7 +40,7 @@ Hämtning 2026-11-24. "Rev." är antalet kvartal med mer än en version.
 | `dep_orcl` | Depreciation + Amortization of intangible assets | 73 | 2008Q3–2026Q3 | 73 | 0 |
 | `dep_ppe_orcl` | Depreciation | 73 | 2008Q3–2026Q3 | 73 | 0 |
 | `ppe_net_orcl` | netto | 70 | 2009Q2–2026Q3 | 70 | 0 |
-| `dep_crwv` | Depreciation and amortization | 11 | 2024Q1–2026Q3 | 12 | 1 |
+| `dep_crwv` | Depreciation and amortization | 11 | 2024Q1–2026Q3 | 11 | 0 |
 | `dep_ppe_crwv` | Depreciation | 11 | 2024Q1–2026Q3 | 11 | 0 |
 | `ppe_net_crwv` / `ppe_gross_crwv` | netto / brutto | 8 / 8 | 2024Q4–2026Q3 | 8 / 8 | 0 |
 | `dep_hyp4` | summa MSFT+GOOGL+AMZN+META av `dep_*` | 15 | 2023Q1–2026Q3 | 19 | 4 |
@@ -48,7 +48,7 @@ Hämtning 2026-11-24. "Rev." är antalet kvartal med mer än en version.
 | `ppe_net_hyp4` | summa av `ppe_net_*` | 58 | 2012Q2–2026Q3 | 58 | 0 |
 | `dep_aws` | AWS-segmentets avskrivningar | 11 | 2024Q1–2026Q3 | 11 | 0 |
 
-26 serier och 1 062 rader. Datatesterna (`python -m ai_tracker.warehouse`) är gröna på spårets vy, och ingen av
+26 serier och 1 061 rader. Datatesterna (`python -m ai_tracker.warehouse`) är gröna på spårets vy, och ingen av
 serierna är för gammal.
 
 Finns inte: `ppe_gross_amzn`, `ppe_gross_orcl` och därmed `ppe_gross_hyp4`. Amazon och Oracle taggar bruttot och de
@@ -115,7 +115,8 @@ Omräkningar är versioner med regeln om konsekvent bas i `sec.py`. Omräkningar
   Helåret 2022 är oförändrat (41 921), så omräkningen fördelade om året mellan kvartalen.
 - **META, deklarerad 2014-04-25.** 2013Q1 räknades om med −3,3 %, och 2013Q2 med +3,6 % i 10-Q:n 2014-07-24
   (jämförelsetal ett år senare, efter samma omklassificering).
-- **CRWV:** en omräkning under 2 % (2025Q2, 559 till 560).
+- **CRWV:** rapporterade i tusental till 10-K för 2025 och i miljoner därefter. En senare version som bara avrundar
+  till hela miljoner är ingen omräkning och tas bort (som i `neoclouds`, till exempel 2025Q2 559,481 och 560).
 - Definitionsbrott utan omräkning (Amazon 2019, Alphabet 2023) hanteras genom att serien börjar vid den nya definitionen.
 
 ## Kontroll mot inlämningarna
