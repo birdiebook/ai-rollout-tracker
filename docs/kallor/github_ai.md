@@ -11,7 +11,8 @@ Ingen analys (takt, tillväxt, jämförelser) görs i spåret.
   Events API payloads": brownout-test 2025-09-08, skarpt 2025-10-07). Kontrollerat i GH Archives timfiler:
   timme `2025-10-08-16` har `commits`, från `2025-10-08-17` har PushEvent bara `repository_id`, `push_id`,
   `ref`, `head` och `before`. Därmed går mått (a)–(c) **inte** att föra vidare ur GH Archive. Serien ur GH Archive
-  är historisk och stängd (`closed=True`), och den löpande serien kommer från GitHubs commit-sökning (del B).
+  är historisk och stängd (`closed=True`). Den löpande fortsättningen var tänkt att komma från GitHubs commit-sökning
+  (del B), som visade sig vara blockerad av sökningens sekundära gräns.
 - **GH Archives täckning faller under 2026.** Antalet händelser per timme var cirka 160 000 under 2025 och cirka
   47 000 2026-11-22 kl. 12. Timmen 2026-11-01 kl. 12 har 4 720 händelser och ingen PushEvent. Det påverkar inte
   del A (som slutar 2025-10), men gör GH Archive olämpligt som nämnare för nya mått.
@@ -107,7 +108,12 @@ räknas inte här. Andelarna påverkas inte av hur många timmar som är med.
 - Stora repon och automatiserade konton kan dominera en enskild timme. (b) är mindre känsligt för det än (a).
 - 20-commitstaket per push gör att stora pushar underrepresenteras i båda leden.
 
-## Del B: GitHubs commit-sökning, löpande från 2024-01-01
+## Del B: GitHubs commit-sökning (registrerad, BLOCKED)
+
+> **Status 2026-11-24: BLOCKED, inte katalogiserad.** GitHubs sekundära gräns för sökning gör att serien inte går att
+> hämta varje vecka (se "Körningar"). Specifikationerna finns i `series/github_ai.py` som `SEARCH_SPECS`, men inte i
+> `SPECS`, så veckohämtningen rör dem inte och aktualitetskontrollen fäller inte driften. Ingen G3-serie ur GitHub är
+> alltså löpande efter 2025-10-05. Texten nedan är registreringen som den gällde.
 
 GH Archive kan inte föra måtten vidare, så den löpande serien kommer från GitHubs sök-API
 (`GET https://api.github.com/search/commits`), som indexerar commit-meddelanden på standardgrenen i publika repon.
@@ -177,6 +183,18 @@ nedladdningen sker i sessionen eller i Actions.
 | 2026-11-23 21:04 | `bq.yml` `gharchive_probe` (torrkörning, tak 0,001 GB) | uppskattat **15 675 664 020** (15,7 GB) för en dag (`githubarchive.day.20250901`, kolumnerna `type`, `repo.id`, `payload`), vägrad, 0 byte körda | kostnadsmätning |
 | 2026-11-23 21:10–22:09 | `python -m ai_tracker.sources.gharchive build --workers 8` i sessionen | 0 | 1 736 urvalstimmar + 25 ersättningstimmar hämtade (cirka 120 GB gzip via proxyn, cirka 20 MB/s), 59 min. 248 veckor, 247 med värde |
 | 2026-11-23 21:40–22:11 | `job.yml` `github_ai_gharchive` (Actions, oberoende omräkning) | 0 | 31 min. CSV:n i loggen är **identisk** med `curated/github_ai_gharchive.csv` (alla 248 rader, alla kolumner) |
+| 2026-11-23 20:58–21:40 | del B från sessionen (anonymt via proxyn, 2,2–6 s mellanrum) | 0 | cirka 66 svar på 40 minuter, sedan 403 "secondary rate limit" med hänvisning till GitHubs villkor om skrapning. Avbruten, svaren används inte |
+| 2026-11-23 21:40–22:56 | `job.yml` `github_search_counts`, full backfill (151 veckor), `GITHUB_TOKEN`, 2,5 s | 0 | **cirka 140 svar på 75 minuter**: 25 hela veckor (2024-01–2024-07), 126 veckor saknar minst ett svar |
+| 2026-11-23 23:01–23:46 | `job.yml` `github_search_counts`, kall start (12 veckor) | 0 | **4 svar på 45 minuter**, ingen hel vecka. Del B förklaras BLOCKED |
+
+**Del B, slutsats:** med det uppmätta flödet (2 svar per minut i bästa fall, nära noll i andra körningen) räcker inte
+ens de 40 frågor som en vanlig vecka kräver (8 veckor × 5 frågor) inom en rimlig körtid, och fortsatta försök strider
+mot andan i GitHubs varning om skrapning. Förslag till löpande ersättning (kräver beslut, inte gjort här):
+(1) GH Archive utan commit-meddelanden, t.ex. pull requests som öppnas av AI-agenternas bot-konton
+(`Copilot`, `devin-ai-integration[bot]`, `chatgpt-codex-connector[bot]`, `google-labs-jules[bot]` m.fl.) som andel
+av alla öppnade pull requests; här krävs bara `type`, `actor.login` och `payload.action`, men GH Archives täckning
+föll kraftigt under 2026 och måste mätas först. (2) Commit-sökning med en egen token (GitHub App eller PAT) och färre
+frågor (bara `any` och nämnaren, 4 veckor), om ägaren vill ta fram en sådan.
 
 **Varför inte BigQuery:** en dag kostar cirka 15,7 GB (2025-09, och dagar 2021–2024 är av samma storleksordning),
 eftersom tabellerna inte är partitionerade på timme och `payload` måste läsas helt. Ett urval på en dag per vecka

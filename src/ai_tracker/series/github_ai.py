@@ -1,8 +1,10 @@
 """G3: AI co-author trailers in public GitHub commits (step 2 track B2), docs/kallor/github_ai.md.
 
 Part A (g3_gh_*): GH Archive, seven registered sample hours per week, 2021-W01 to 2025-W40, closed (GitHub
-removed commit messages from the Events API on 2025-10-08). Part B (g3_ghs_*): GitHub commit search,
-weekly from 2024-01, live, revised. A and B are different measures and are never spliced.
+removed commit messages from the Events API on 2025-10-08). Part B (g3_ghs_*): GitHub commit search, the
+registered live continuation, is defined in SEARCH_SPECS but NOT catalogued: in Actions the search API answered
+about 140 queries in 75 minutes and then 4 in 45 minutes (secondary rate limit), so it cannot be fetched weekly
+(BLOCKED, docs/kallor/github_ai.md). Moving SEARCH_SPECS into SPECS re-enables it. A and B are never spliced.
 """
 
 from __future__ import annotations
@@ -58,7 +60,10 @@ SPECS = [
     _a(f"g3_gh_ai_coauthor_share_{g}_w", f"Andel publika commits med {lbl} som medförfattare (GH Archive)",
        "% av commits", partial(gharchive.share, f"ai_{g}"))
     for g, lbl in GROUP_LABEL.items()
-] + [
+]
+
+# Registered, not catalogued (BLOCKED by GitHub's secondary rate limit for search, see the module docstring).
+SEARCH_SPECS = [
     _b("g3_ghs_ai_coauthor_share_w", "Andel commits med AI-medförfattare (GitHub-sökning)", "% av commits",
        "any", "share"),
     _b("g3_ghs_commits_w", "Commits per vecka i GitHubs sökindex", "commits per vecka", "all", "level"),

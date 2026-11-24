@@ -202,14 +202,16 @@ def test_total_count_retries(monkeypatch):
 
 
 def test_catalog_entries():
-    keys = {s.key: s for s in github_ai.SPECS}
-    assert not catalog.validate(github_ai.SPECS)
-    assert all(s.branch == "G3" and s.freq == "W" and not s.publish for s in github_ai.SPECS)
+    specs = github_ai.SPECS + github_ai.SEARCH_SPECS
+    keys = {s.key: s for s in specs}
+    assert not catalog.validate(specs)
+    assert all(s.branch == "G3" and s.freq == "W" and not s.publish for s in specs)
     a = [s for k, s in keys.items() if k.startswith("g3_gh_")]
     b = [s for k, s in keys.items() if k.startswith("g3_ghs_")]
     assert len(a) == 12 and all(s.closed and not s.revised for s in a)
     assert len(b) == 6 and all(s.revised and not s.closed for s in b)
-    assert set(keys) <= set(catalog.by_key())
+    assert {s.key for s in github_ai.SPECS} <= set(catalog.by_key())
+    assert not {s.key for s in github_ai.SEARCH_SPECS} & set(catalog.by_key())  # BLOCKED: not catalogued
 
 
 def test_search_series_backfill_then_recent_weeks(tmp_path, monkeypatch):
@@ -225,7 +227,7 @@ def test_search_series_backfill_then_recent_weeks(tmp_path, monkeypatch):
         return df
 
     monkeypatch.setattr(github_search, "counts", fake_counts)
-    spec = catalog.by_key(github_ai.SPECS)["g3_ghs_ai_coauthor_share_w"]
+    spec = catalog.by_key(github_ai.SEARCH_SPECS)["g3_ghs_ai_coauthor_share_w"]
     for k in range(37):
         observations.upsert(spec, spec.fetch(), fetched_at=date(2026, 11, 23))
     assert asked[:2] == [12, 12] and asked[-2:] == [11, 8]  # 4 older weeks a run until 2024-01, then 8 a run
