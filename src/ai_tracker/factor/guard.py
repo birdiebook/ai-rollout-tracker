@@ -1,6 +1,7 @@
 """Holdout guard for the complex method families C3, C4 and D2 (docs/mattregister.md G-E, F-E1-F-E6).
 
-The holdout (forecast origins 2025-07-01 to the day before each target's first live origin) is CLOSED. Any factor
+The holdout (forecast origins 2025-07-01 to the day before each target's first live origin) was OPENED for C3 on
+2026-11-24 (docs/holdout_logg.md, owner approval in docs/beslutslogg.md). While a family is closed, any factor
 estimate, factor path, DF forecast or DF error with an origin (computation date) after DEV_END raises HoldoutClosed.
 Opening it is a commit that sets HOLDOUT_OPEN = True after the owner's approval, logged in docs/holdout_logg.md with
 date, git sha and what is evaluated (G-E). It is opened once per family (F-E3) and C4 must be locked first (F-E4).
@@ -16,7 +17,7 @@ import pandas as pd
 
 DEV_END = pd.Timestamp("2025-06-30")
 HOLDOUT_START = pd.Timestamp("2025-07-01")
-HOLDOUT_OPEN = False  # set only by the orchestrator after the owner's approval (G-E)
+HOLDOUT_OPEN = True  # opened 2026-11-24 for C3 after the owner's approval (G-E), docs/holdout_logg.md
 OPEN_FAMILIES: frozenset[str] = frozenset()  # other families opened the same way, e.g. {"D2"}
 
 

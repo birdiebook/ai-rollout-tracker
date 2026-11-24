@@ -166,8 +166,8 @@ def test_branch_page_has_series_measures_known_from_and_chart_data(recon_site):
 def test_nowcast_page_shows_champion_shadows_and_scorecard_without_inputs(recon_site):
     doc = load(recon_site, "prognoser")
     n2 = next(n for n in doc["nowcasts"] if n["id"] == "n2")
-    # B3 promoted in step 2 after review R7; B2 is a shadow
-    assert n2["champion"] == n2_mod.CHAMPION == "B3" and set(n2["shadows"]) == {"B0", "B1", "V1", "B2"}
+    # B3 promoted in step 2 after review R7; B2 is a shadow, and DF (C3) after the holdout (docs/holdout_logg.md)
+    assert n2["champion"] == n2_mod.CHAMPION == "B3" and set(n2["shadows"]) == {"B0", "B1", "V1", "B2", "DF"}
     assert n2["forecasts"][0]["value"] == 400.0 and "inputs" not in n2["forecasts"][0]
     assert n2["scorecard"][0]["status"] == "utfall" and n2["next_origin"] == "2026-12-05"
     n1 = next(n for n in doc["nowcasts"] if n["id"] == "n1")

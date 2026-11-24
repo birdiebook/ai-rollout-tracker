@@ -207,8 +207,8 @@ def test_poison_rows_after_date_change_nothing(table):
 # ------------------------------------------------------------------ holdout guard
 
 
-def test_holdout_guard_raises(table, tmp_path):
-    assert not guard.HOLDOUT_OPEN
+def test_holdout_guard_raises(table, tmp_path, monkeypatch):
+    monkeypatch.setattr(guard, "HOLDOUT_OPEN", False)  # the mechanism, as before the opening (holdout_logg.md)
     assert guard.DEV_END == factor_guard.DEV_END == TS("2025-06-30")
     with pytest.raises(guard.HoldoutClosed):
         rt.compute(table, "2025-07-31", cache_dir=tmp_path)
@@ -229,12 +229,14 @@ def test_holdout_guard_raises(table, tmp_path):
 def test_c4_flag_is_separate_from_c3(monkeypatch, table):
     # opening C3 alone does not open C4 (one opening per family, F-E3)
     monkeypatch.setattr(factor_guard, "HOLDOUT_OPEN", True)
+    monkeypatch.setattr(guard, "HOLDOUT_OPEN", False)
     with pytest.raises(guard.HoldoutClosed):
         rt.compute(table, "2025-07-31", cache=False)
 
 
 @pytest.mark.real_data
-def test_real_table_holdout_guard_raises_before_any_computation():
+def test_real_table_holdout_guard_raises_before_any_computation(monkeypatch):
+    monkeypatch.setattr(guard, "HOLDOUT_OPEN", False)
     from conftest import real_table_exists
 
     from ai_tracker import observations

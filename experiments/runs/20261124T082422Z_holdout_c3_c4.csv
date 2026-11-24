@@ -1,0 +1,7 @@
+utc,git_sha,target,variant,period,n,MAE,dm_p_vs_baseline
+2026-11-24T08:24:22Z,cba3162+dirty,N1,DF holdout (skugga),holdout 2025-07-01..2027-01-19,6,5.6116,
+2026-11-24T08:24:22Z,cba3162+dirty,N2,DF holdout (skugga),holdout 2025-07-01..2026-12-04,17,6.6547,0.8318
+2026-11-24T08:24:22Z,cba3162+dirty,N3,DF holdout (skugga),holdout 2025-07-01..2027-02-13,5,8.8629,
+2026-11-24T08:24:22Z,cba3162+dirty,N4,DF holdout (skugga),holdout 2025-07-01..2027-01-19,5,2.0937,
+2026-11-24T08:24:22Z,cba3162+dirty,C4 capex,MS holdout,holdout 2025-07-31..2026-10-31,16,,
+2026-11-24T08:24:22Z,cba3162+dirty,C4 demand,MS holdout,holdout 2025-07-31..2026-10-31,16,,

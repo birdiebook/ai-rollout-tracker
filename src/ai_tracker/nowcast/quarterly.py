@@ -541,7 +541,7 @@ def live_payload(table: pd.DataFrame, spec: Spec, origin, live_dir=None) -> dict
         note = f"champion {champion} not available ({rec.reasons.get(champion)}); fell back to B0"
         champion = "B0"
     extra = {"distribution": live_distribution(table, spec, origin, levels, live_dir)} if intervals.ENABLED else {}
-    return {
+    payload = {
         "nowcast": spec.label, "target": spec.target.key, "components": list(spec.target.components),
         "quarter": str(rec.quarter), "origin": origin.date().isoformat(), "registered_origin": True,
         "unit": spec.unit, "champion": champion, "value": levels[champion],
@@ -554,6 +554,11 @@ def live_payload(table: pd.DataFrame, spec: Spec, origin, live_dir=None) -> dict
         "inputs": rec.info.inputs(),
         **extra,
     }
+    from ai_tracker.nowcast import df  # C3 shadow for N3 and N4 (F-E6); late import: df imports this module
+
+    if spec.label in df.LIVE_SHADOW:
+        df.attach_live(payload, spec.label, table, origin, rec.quarter, levels)
+    return payload
 
 
 def write_live(table: pd.DataFrame, spec: Spec, origin, out_dir, today=None) -> Path:

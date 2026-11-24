@@ -710,7 +710,7 @@ def live_payload(table: pd.DataFrame, origin, live_dir=None) -> dict:
         champion = DEFAULT_CHAMPION
     registered = origin == origin_for(q)
     extra = {"distribution": live_distribution(table, origin, f.levels, live_dir)} if intervals.ENABLED else {}
-    return {
+    payload = {
         "nowcast": "N1", "target": TARGET, "quarter": str(q), "origin": origin.date().isoformat(),
         "registered_origin": registered, "unit": "MUSD",
         "champion": champion, "value": f.levels[champion],
@@ -721,6 +721,9 @@ def live_payload(table: pd.DataFrame, origin, live_dir=None) -> dict:
         "inputs": info.inputs(),
         **extra,
     }
+    from ai_tracker.nowcast import df  # C3 shadow (holdout n < 8, F-E6); late import: df imports this module
+
+    return df.attach_live(payload, "N1", table, origin, q, f.levels)
 
 
 def write_live(table: pd.DataFrame, origin, out_dir, today=None):

@@ -64,6 +64,7 @@ NOWCAST_INFO = {
             "V2": "som V1, med ridge",
             "B2": "bolagens guidance (Meta, Alphabet), annars B1",
             "B3": "B2 korrigerad för bolagens systematiska avvikelse mot sin guidance (spår C2)",
+            "DF": "B1 + OLS på faktormodellens förändring (C3, skugga)",
         },
     },
     "n2": {
@@ -77,6 +78,7 @@ NOWCAST_INFO = {
             "V1": "B1 + ridge på import från Taiwan",
             "B2": "TSMC:s kvartalsguidance utslagen per månad",
             "B3": "B2 korrigerad för systematisk avvikelse mot guidance (spår C2, huvudmodell efter granskning R7)",
+            "DF": "B2 + OLS på faktormodellens förändring (C3, skugga)",
         },
     },
     "n3": {
@@ -88,6 +90,7 @@ NOWCAST_INFO = {
             "B0": "slumpvandring: förra kvartalet",
             "B1": "drift: förra kvartalet × medel av de fyra senaste kvartalens tillväxt",
             "B2": "Nvidias intäktsguidance (mittpunkt) × senast kända datacenterandel (villkorad: granskning R5)",
+            "DF": "B1 + OLS på faktormodellens förändring (C3, skugga)",
         },
     },
     "n4": {
@@ -102,6 +105,7 @@ NOWCAST_INFO = {
             "B0": "slumpvandring: förra kvartalet",
             "B1": "drift: förra kvartalet × medel av de fyra senaste kvartalens tillväxt",
             "V1": "B1 + OLS på senast kända kvartalstillväxt i RPO-summan",
+            "DF": "B1 + OLS på faktormodellens förändring (C3, skugga)",
         },
     },
     "n5": {
@@ -129,8 +133,10 @@ NOWCAST_INFO = {
     },
 }
 NOWCAST_DERIVED = {n4.TARGET: n4.COMPONENTS}
-NOWCAST_MODULES = {"n1": (n1.TARGET, n1.VARIANTS, n1.CHAMPION), "n2": (n2.TARGET, n2.VARIANTS, n2_live.CHAMPION),
-                   "n3": (n3.TARGET, n3.VARIANTS, n3.CHAMPION), "n4": (n4.TARGET, n4.VARIANTS, n4.CHAMPION),
+NOWCAST_MODULES = {"n1": (n1.TARGET, n1.VARIANTS + ["DF"], n1.CHAMPION),
+                   "n2": (n2.TARGET, n2.VARIANTS + ["DF"], n2_live.CHAMPION),
+                   "n3": (n3.TARGET, n3.VARIANTS + ["DF"], n3.CHAMPION),
+                   "n4": (n4.TARGET, n4.VARIANTS + ["DF"], n4.CHAMPION),
                    "n5": (n5.key(n5.VERSIONS[-1]), n5.VARIANTS, n5.CHAMPION),
                    "n6": (n6.TARGET, n6.VARIANTS, n6.CHAMPION)}
 

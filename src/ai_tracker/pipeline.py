@@ -46,11 +46,12 @@ FORECASTS = config.REPO / "forecasts"
 SCORECARD = FORECASTS / "SCORECARD.md"
 BOT_NAME = "github-actions[bot]"
 BOT_EMAIL = "41898282+github-actions[bot]@users.noreply.github.com"
+SHADOW_DF = ["DF"]  # C3 (factor model) as a shadow in N1-N4's live files after the holdout (F-E6, holdout_logg.md)
 NOWCASTS = {  # forecasts/<dir>: label, target, variants in display order
-    "n1": ("N1", n1.TARGET, n1.VARIANTS),
-    "n2": ("N2", n2.TARGET, n2.VARIANTS),
-    "n3": ("N3", n3.TARGET, n3.VARIANTS),
-    "n4": ("N4", n4.TARGET, n4.VARIANTS),
+    "n1": ("N1", n1.TARGET, n1.VARIANTS + SHADOW_DF),
+    "n2": ("N2", n2.TARGET, n2.VARIANTS + SHADOW_DF),
+    "n3": ("N3", n3.TARGET, n3.VARIANTS + SHADOW_DF),
+    "n4": ("N4", n4.TARGET, n4.VARIANTS + SHADOW_DF),
     "n5": ("N5", n5.key(n5.VERSIONS[-1]), n5.VARIANTS),
     "n6": ("N6", n6.TARGET, n6.VARIANTS),
 }

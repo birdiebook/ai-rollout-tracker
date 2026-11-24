@@ -255,7 +255,7 @@ def test_live_writer_writes_once(table, tmp_path, monkeypatch):
     d = json.loads(path.read_text(encoding="utf-8"))
     assert d["quarter"] == "2018Q2" and d["origin"] == "2018-07-20" and d["registered_origin"]
     assert d["champion"] == n1.CHAMPION and d["value"] == d["variants"][n1.CHAMPION]
-    assert set(d["variants"]) == set(n1.VARIANTS) and d["git_sha"] and d["written_utc"].endswith("Z")
+    assert set(d["variants"]) == set(n1.VARIANTS) | {"DF"} and d["git_sha"] and d["written_utc"].endswith("Z")
     assert d["inputs"] and all(pd.Timestamp(i["known_from"]) <= ORIGIN for i in d["inputs"])
     assert {i["series"] for i in d["inputs"]} == {T, IMP, CON}
     before = path.read_bytes()

@@ -109,11 +109,13 @@ def factor_changes(target: Target, period: pd.Period, v: realtime.Vintage) -> di
     return {f"df_{b}": v.mean_over(b, cur) - v.mean_over(b, prev) for b in BLOCKS}
 
 
-def run(target: Target, table: pd.DataFrame, vintage_fn=None) -> pd.DataFrame:
-    """DF for every period of the main model's backtest frame (development rows only). `vintage_fn(table, origin)`
-    defaults to realtime.vintage (cached, guarded)."""
+def run(target: Target, table: pd.DataFrame, vintage_fn=None, dev: bool = True) -> pd.DataFrame:
+    """DF for every period of the main model's backtest frame. `dev=True` (the development run) reads only the rows
+    known by 2025-06-30; `dev=False` (holdout and live, only once the C3 holdout is open) reads the whole table, and
+    every origin still sees only rows known on it (factor vintages truncate, apply_df trains on known outcomes).
+    `vintage_fn(table, origin)` defaults to realtime.vintage (cached, guarded)."""
     vintage_fn = vintage_fn or realtime.vintage
-    t = guard.dev_table(table)
+    t = guard.dev_table(table) if dev else table
     base = target.frame(t)
     base = base[base[f"e_{target.main}"].notna()]
     for o in base["origin"]:
@@ -151,6 +153,72 @@ def apply_df(f: pd.DataFrame) -> pd.DataFrame:
         f.at[p, "e_DF"] = -f.at[p, "r"] + rhat  # e_main + r_hat
         f.at[p, "b0"], f.at[p, "b_capex"], f.at[p, "b_demand"] = (float(c) for c in coef)
     return f
+
+
+# ------------------------------------------------------------------ live shadow (F-E6: n < 8 on the holdout -> shadow)
+
+LIVE_SHADOW = ("N1", "N2", "N3", "N4")
+
+
+def live_shadow(key: str, table: pd.DataFrame, origin, period: pd.Period, main_level: float,
+                vintage_fn=None) -> dict:
+    """DF as a shadow in a live forecast file: main x exp(r_hat / 100) for `period` on `origin`.
+
+    Same model as apply_df: OLS of r on (1, df_capex, df_demand) over earlier periods whose first-vintage outcome is
+    known on the origin and whose own origin had both blocks (factor vintage of each row's own origin, F-B18), at least
+    MIN_TRAIN rows. Everything is read from the table truncated to known_from <= origin. Never raises for a missing
+    input: the reason is returned instead."""
+    vintage_fn = vintage_fn or realtime.vintage
+    origin = guard.check(origin, f"DF {key} live")
+    target = TARGETS[key]
+    out = {"value": None, "main": target.main, "main_value": None, "r_hat": None, "n_train": 0,
+           "coef": None, "df_capex": None, "df_demand": None, "spec_version": realtime.SPEC_VERSION, "reason": ""}
+    if main_level is None or not np.isfinite(main_level) or main_level <= 0:
+        out["reason"] = f"huvudmodellen {target.main} saknar prognos"
+        return out
+    out["main_value"] = float(main_level)
+    kf = pd.to_datetime(table["known_from"])
+    t = table[kf <= origin]
+    base = target.frame(t)
+    base = base[base[f"e_{target.main}"].notna() & (base.index < period)
+                & (pd.to_datetime(base["outcome_known_from"]) <= origin)]
+    v_now = vintage_fn(t, origin)
+    x = factor_changes(target, period, v_now)
+    out["df_capex"], out["df_demand"] = (None if not np.isfinite(x[f"df_{b}"]) else float(x[f"df_{b}"])
+                                         for b in BLOCKS)
+    if not all(np.isfinite(x[f"df_{b}"]) for b in BLOCKS):
+        out["reason"] = "faktorerna saknas på prognosdagen"
+        return out
+    vint = {o: vintage_fn(t, o) for o in sorted(set(base["origin"]))}
+    rows = []
+    for p, r in base.iterrows():
+        c = factor_changes(target, p, vint[r["origin"]])
+        rows.append({"r": -float(r[f"e_{target.main}"]), **c})
+    tr = pd.DataFrame(rows, columns=["r", "df_capex", "df_demand"]).dropna()
+    out["n_train"] = int(len(tr))
+    if len(tr) < MIN_TRAIN:
+        out["reason"] = f"{len(tr)} träningsrader < {MIN_TRAIN}"
+        return out
+    A = np.column_stack([np.ones(len(tr)), tr["df_capex"], tr["df_demand"]])
+    coef, *_ = np.linalg.lstsq(A, tr["r"].to_numpy(dtype=float), rcond=None)
+    rhat = float(coef[0] + coef[1] * x["df_capex"] + coef[2] * x["df_demand"])
+    out.update(value=float(main_level * math.exp(rhat / 100)), r_hat=rhat,
+               coef={"b0": float(coef[0]), "b_capex": float(coef[1]), "b_demand": float(coef[2])})
+    return out
+
+
+def attach_live(payload: dict, key: str, table: pd.DataFrame, origin, period: pd.Period, levels: dict) -> dict:
+    """Adds DF to a live payload as a shadow: payload["variants"]["DF"] and payload["df"] (inputs, reason). A failure
+    is recorded in payload["df"]["reason"] and never stops the live forecast."""
+    try:
+        d = live_shadow(key, table, origin, period, levels.get(TARGETS[key].main))
+    except guard.HoldoutClosed:
+        raise
+    except Exception as e:  # noqa: BLE001 - a shadow must not block the registered forecast
+        d = {"value": None, "reason": f"fel: {type(e).__name__}: {e}"}
+    payload.setdefault("variants", {})["DF"] = d.get("value")
+    payload["df"] = d
+    return payload
 
 
 # ------------------------------------------------------------------ evaluation
