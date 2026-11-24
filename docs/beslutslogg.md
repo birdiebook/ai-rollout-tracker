@@ -415,3 +415,15 @@ Johannes valde rekommendationerna:
 - **Utfall: ingen variant klarar regeln, och B1 är huvudmodell i alla horisontgrupper.** V1 överskattar systematiskt
   (förhållandet mellan avskrivningar och capex har sjunkit) och är sämre än B1 på kort sikt. V2 har lägre MAE än B1 på
   3–8 kvartal i båda perioderna, men långt från signifikant. Resultat: `docs/resultat/n7.md`.
+
+## 2026-11-24 – R16: granskning av N7 (spår P3)
+
+- Det negativa resultatet står. Ingen variant klarar regeln, och B1 förblir huvudmodell för N7 i alla horisontgrupper
+  (`docs/granskning/r16_n7.md`).
+- Ordningen register → kod → körning håller. En oberoende omräkning och en trunkering på verklig data (280 par) gav
+  samma prognoser, och indata stämmer med SEC. DM, HLN och Holm räknas om exakt.
+- V1:s överskattning är till största delen verklig: längre nyttjandeperioder (Microsofts avskrivningar sjönk FY2023
+  enligt bolagets 10-K) och capex med stor andel byggnader. För Meta finns en definitionsdel: amortering på immateriella
+  tillgångar, 38 % av raden 2015 och 2 % 2022. Microsofts "other" verkar åt andra hållet.
+- Rättning R-1 (should_fix): förklaringen av biasen i `docs/resultat/n7.md`. Övrigt är noter. Fyra registrerade
+  egenskaper som saknade test har fått tester.
