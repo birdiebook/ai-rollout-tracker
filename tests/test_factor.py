@@ -271,3 +271,8 @@ def test_df_evaluate_comparator_and_holm():
     e = df.evaluate(tgt, f)
     assert e["full"]["comparator"] == "B1" and e["full"]["n"] == 28
     assert e["full"]["holm_p"] == pytest.approx(min(1.0, 3 * e["full"]["dm_p"]))  # family {B2, B3, DF}, others p = 1
+
+
+def test_origin_before_sample_start_has_no_factor(table):
+    v = realtime.estimate(table, "2009-06-05")
+    assert not v.available("capex") and not v.available("demand") and v.path.empty

@@ -167,6 +167,8 @@ def panel(ctx: measures.Context, origin, block: str) -> Panel:
     origin = pd.Timestamp(origin)
     months = pd.period_range(SAMPLE_START, origin.to_period("M"), freq="M")
     cols, keys, kinds, info = [], [], [], []
+    if len(months) == 0:  # origin before the sample start: nothing to estimate
+        return Panel(block, months, np.empty((0, 0)), keys, kinds, info)
     for key in block_series(block, ctx.keys()):
         try:
             m, path = measures.measure_path(key, origin, ctx)
