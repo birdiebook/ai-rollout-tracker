@@ -4,6 +4,10 @@
 `docs/plan.md`, `docs/steg2/STATUS.md`, `docs/beslutslogg.md`, `docs/mattregister.md`, `docs/holdout_logg.md`,
 `docs/granskning/r8_g2_arena.md`, `docs/resultat/` och katalogen (488 serier). Inga andra filer är ändrade.
 
+## 0. Syfte (Johannes 2026-11-24)
+
+Projektet byggs för ägarens egen skull: att ha bästa möjliga koll på **hela AI-flödet, lager för lager**. Lagren är förmåga och kostnad, användning, intäkter, capex och finansiering, chips, minne och nät, el och kylning, datacenter och effekter. Målet är att följa utvecklingen och se tidigt när något ändrar takt i något lager. Spårningen är neutral. Kopplingen till egna placeringar är indirekt och görs utanför repot: repot är publikt, och det innehåller inga innehav (`CLAUDE.md`). Målgrupperna i avsnitt 5 är en ribba för kvaliteten, inte en plan för spridning.
+
 ## 1. Kort svar
 
 - **Projektet mäter AI:s investeringscykel bra:** pengar och chips i USA-noterade bolag (G4–G6), med riktiga
@@ -224,7 +228,15 @@ delat med kostnaden i agentspår och de mänskliga flaskhalsarna (nycklar, licen
 | M2 Census HS-import | 4 | 1 | Census-nyckel |
 | L1 licenskartläggning för G8 (RPS, Economic Index, Indeeds yrken, BLS CES) | 5 | 1 | – |
 
-Förslag 5–8 tas i körningen därefter, i rangordning, efter licenskartläggningen och X5.
+**Körning 14, omprioriterad efter syftet (avsnitt 0):**
+
+1. **Stackens saknade lager via SEC:** minne (Micron), nät (Arista), kraft och kylning (Vertiv, GE Vernova, Eaton: order och orderstock/RPO) och datacenterbolag (Equinix, Digital Realty). Det mesta går med befintlig XBRL-teknik (segment och RPO). Orderstock för kraft och kylning är en ledande indikator för den fysiska utbyggnaden.
+2. **Finansieringsskörhet** (förslag 8): spread vid emission, skuld, leasing utanför balansräkningen.
+3. **Förmåga och kostnad** (förslag 6). De styr efterfrågan och var marginalerna hamnar i stacken.
+4. **Kina via SEC** (förslag 7).
+5. **Test av själva tillståndsregeln** (förregistrerat).
+6. **G8 v2** (förslag 5, efter L1). Den har lägre prioritet för syftet.
+7. **Korea via ECOS**, när nyckeln finns.
 
 **Kalender som inte går att snabba på:** 2026-11-30 första ögonblicksbilden, 2026-12-05 första TSMC-prognosen med B3,
 2027-01-20 första capex-prognosen, och Anthropics första periodiska rapport till SEC, som ger de första reviderade

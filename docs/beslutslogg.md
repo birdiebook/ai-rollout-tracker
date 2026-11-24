@@ -404,3 +404,7 @@ Tillägg samma dag: sidan är Johannes främsta sätt att ta in informationen oc
 
 Beslutet om index v2 motiverades bland annat med att v2 gör tillstånden mer försiktiga åt båda hållen. Backcasten på riktiga data (rekonstruktion, 2026-05 till 2026-10) visar att det inte stämmer genomgående. G8 blir "för få källor", men G6 blir "accelererar" i två månader där v1 sa "stabil", och G7 blir "bromsar in" i två månader. Skälet är att varje familj väger tungt när familjerna är få. Huvudskälet för beslutet, att indexet ska räkna oberoende källor, gäller fortfarande. Rekommendationen är att behålla v2. Johannes informeras.
 
+## 2026-11-24 – Syftet förtydligat: hela AI-flödet, lager för lager
+
+Johannes förtydligade syftet. Projektet byggs för hans egen skull, för att ha bästa möjliga koll på hela AI-flödet lager för lager och se tidigt när något ändrar takt. Kopplingen till egna placeringar är indirekt och görs utanför repot. Repot är publikt och innehåller inga innehav. Följden är att körning 14 omprioriteras ([riktning.md](riktning.md), avsnitt 0 och 8). Först kommer stackens saknade lager (minne, nät, kraft och kylning, datacenterbolag), sedan finansiering, förmåga och kostnad, och Kina. G8 får lägre prioritet.
+
