@@ -145,6 +145,12 @@ eller riktningsordet står i den. Den bekräftar **inte** semantiken: att period
 tolkad. Det bygger på agentens läsning, och ett oberoende granskningsspår bör läsa om de 20 raderna i stickprovet
 (meningarna finns i `data/raw/guidance_capex_sentences/<id>.txt`) innan B2 används.
 
+**Tillägg efter R5 (R5-F14, spår X3, 2026-11-24):** `msft-29`, kalenderåret 2026 cirka 170 mdr USD (samtalet
+2026-10-28, mening #226, `filed` 2026-10-28). Det är en ny version av samma serie som `msft-26` (cirka 190 mdr, 2026-04-29).
+Noten markerar ett definitionsbrott: från samtalet 2026-07-29 (#225–227) blir fler framtida datacenterhyror
+operationella i stället för finansiella, och operationell leasing ingår inte i `MSFT_CAPEX_INCL_FL`. Basen för
+2026-10-28 är därför smalare än för `msft-26`. Microsoft används inte i N1:s B2 (R2), så N1 påverkas inte.
+
 ## Förslag: B2 för N1 (inte ett beslut)
 
 Utgångspunkter: N1:s mål är `capex_hyp4` (brutto, utan leasing). Guidance finns med siffror i alla 20 kvartal bara

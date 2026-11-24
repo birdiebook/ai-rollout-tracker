@@ -88,7 +88,7 @@ def test_specs_gaps_and_inactive(tmp_path, monkeypatch):
     by = {s.key: s for s in specs}
     assert "kpi_googl_gemini_app_mau" in gaps  # 2025-10 and 2026-02, months between missing
     assert by["kpi_meta_ai_mau"].closed and not by["kpi_googl_gemini_app_mau"].closed
-    assert all(not s.publish for s in specs)
+    assert all(s.publish for s in specs)  # R5 reviewed, X3 corrected
 
 
 def test_real_csv_loads_and_every_definition_has_a_series():

@@ -53,6 +53,8 @@ DEFINITIONS = dict(guidance_capex.DEFINITIONS) | {
     # capacity (power)
     "MSFT_AI_CAPACITY": "Microsoft: total AI capacity, as a multiple of the level at the start of the period",
     "MSFT_DC_FOOTPRINT": "Microsoft: total datacenter footprint (capacity), as a multiple of the current level",
+    "MSFT_OVERALL_CAPACITY": "Microsoft: overall capacity ('double our overall capacity'), as a multiple of the "
+                             "current level",
     "MSFT_POWER_ADDED_Q": "Microsoft: data-center capacity (power) added in the quarter (MW)",
     "AMZN_POWER_ADDED_12M": "Amazon/AWS: power capacity added in the 12 months to the date (MW)",
     "AMZN_POWER_TOTAL": "Amazon/AWS: total power capacity, as a multiple of the current level",
@@ -69,15 +71,30 @@ DEFINITIONS = dict(guidance_capex.DEFINITIONS) | {
     "MSFT_COMMERCIAL_RPO": "Microsoft: commercial remaining performance obligation (earnings call)",
     # commitments (not leases)
     "META_NONCANCEL_COMMIT": "Meta: non-cancelable contractual commitments excluding leases (commitments note), "
-                             "described as mostly servers, network infrastructure, data centers, third-party cloud "
-                             "capacity and Reality Labs hardware",
+                             "described as mostly servers, network infrastructure, data centers and Reality Labs "
+                             "hardware (content costs in 2024Q4-2025Q1); to 2025-06-30",
+    "META_NONCANCEL_COMMIT_CLOUD": "Meta: non-cancelable contractual commitments excluding leases (commitments note), "
+                                   "from 2025-09-30 described as mostly third-party cloud capacity arrangements "
+                                   "(listed first), then servers, network infrastructure, data centers and Reality "
+                                   "Labs hardware",
     "ORCL_UNCOND_OBLIG": "Oracle: unconditional purchase and certain other obligations (cloud capacity / data "
                          "center power arrangements)",
+    "ORCL_UNCOND_OBLIG_DC_CAPEX": "Oracle: unconditional purchase obligations (10-Q MD&A), primarily related to "
+                                  "capital expenditures for its data centers",
     "ORCL_UNCOND_OBLIG_1Y": "Oracle: unconditional purchase and certain other obligations with terms of one year or "
                             "greater (component supply and data center power)",
     "CRWV_LEASE_EQUIP_COMMIT": "CoreWeave: estimated cost to fulfil obligations to procure and install equipment at "
                                "leased data centers (range)",
     "CRWV_CONSTRUCTION_COMMIT": "CoreWeave: contractual commitments for future data center construction costs",
+}
+
+
+# Definitions that have ended (the company's wording changed or the statement was made once), with the reason: their
+# series are closed (no freshness check).
+CLOSED = {
+    "META_NONCANCEL_COMMIT": "Metas beskrivning ändrades 2025-09-30 (molnkapacitet först); fortsätter som "
+                             "META_NONCANCEL_COMMIT_CLOUD",
+    "ORCL_UNCOND_OBLIG_DC_CAPEX": "angivet en gång (10-Q februari 2024); senare dokument har ORCL_UNCOND_OBLIG",
 }
 
 
@@ -272,6 +289,7 @@ def specs(path: Path | None = None) -> list:
         # freshness: a plan for a year is restated irregularly (Meta gave a next-year range in 2022 and 2023 only),
         # so 3 years; a level reported every quarter (>= 4 periods) is due within 200 days, a sparse one within 400
         max_age = 1100 if not asof else (200 if g["period"].nunique() >= 4 else 400)
+        closed = first["definition"] in CLOSED
         hz = HORIZON_LABEL.get(first["horizon"], f"summa över {first['horizon'][4:-1]} år")
 
         def fetch(k=key):
@@ -284,11 +302,12 @@ def specs(path: Path | None = None) -> list:
             unit=first["unit"] if first["unit"] != "code" else "kod",
             source="Kurerad extraktion (curated/plans.csv): SEC EDGAR 8-K/10-Q/10-K/S-1/424B och microsoft.com",
             fetch=fetch, lag_days=min(min_lag, 0) if not asof else min_lag, license=LICENSE,
-            revised=True, publish=False,
+            revised=True, publish=True,
             question="Vad har bolaget sagt om framtida investeringar, kapacitet och orderstock (program D)?",
-            max_age_days=max_age,
+            max_age_days=None if closed else max_age, closed=closed,
             note=f"Definition: {first['definition']} ({DEFINITIONS[first['definition']]}). period = "
                  + ("kvartalet för balansdagen. " if asof else "året då horisonten slutar. ")
-                 + f"Agentextraherat, ej granskat (R5). Se docs/kallor/planer.md. Aktualitet: oregelbundna "
-                   f"uttalanden, gräns {max_age} dagar."))
+                 + "Agentextraherat, granskat av R5 och rättat (X3). Se docs/kallor/planer.md. "
+                 + (f"Avslutad: {CLOSED[first['definition']]}." if closed else
+                    f"Aktualitet: oregelbundna uttalanden, gräns {max_age} dagar.")))
     return out

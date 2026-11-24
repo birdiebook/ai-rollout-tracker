@@ -129,5 +129,17 @@ def test_curated_csv_is_valid_and_has_no_text():
 def test_lease_specs():
     specs = lseries.SPECS
     assert not catalog.validate(specs)
-    assert not any(s.publish for s in specs)  # until the R5 review
-    assert {s.key for s in specs} == {f"lease_uncommenced_{c}" for c in lc.COMPANIES}
+    assert all(s.publish for s in specs)  # R5 reviewed, X3 corrected
+    assert {s.key for s in specs} == {f"lease_uncommenced_{c}" for c in lc.COMPANIES} | {"lease_uncommenced_msft_cond"}
+    by = {s.key: s for s in specs}
+    assert by["lease_uncommenced_msft"].closed and not by["lease_uncommenced_msft_cond"].closed
+
+
+def test_msft_definition_break_splits_the_series():
+    old, new = lseries.frame("msft"), lseries.frame("msft", "new")
+    assert old["period"].iloc[-1] == "2026Q1" and new["period"].iloc[0] == "2026Q2"
+    assert not set(old["period"]) & set(new["period"])
+
+
+def test_orcl_series_starts_after_its_last_gap():
+    assert lseries.frame("orcl")["period"].iloc[0] == "2023Q4"  # R5-F7/F8: Aug 2023 states no amount

@@ -3,8 +3,8 @@ investments, data-center power capacity (targets and reported levels), backlog o
 infrastructure commitments.
 
 Agent-extracted from SEC filings and microsoft.com call pages, stored as numbers and references only in
-curated/plans.csv (ai_tracker.sources.plans; coding rules in docs/kallor/planer.md). Not reviewed yet (R5):
-publish=False. Plans are known before their period ends, so lag_days is negative for them; reported levels (ASOF)
+curated/plans.csv (ai_tracker.sources.plans; coding rules in docs/kallor/planer.md). Reviewed by R5 and corrected
+(X3, 2026-11-24): publish=True (numbers with source references only). Plans are known before their period ends, so lag_days is negative for them; reported levels (ASOF)
 are dated by the document that first states them.
 """
 

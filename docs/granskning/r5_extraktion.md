@@ -176,3 +176,44 @@ Varje rättning tar bort sin `xfail`-markering i `tests/test_r5_extraktion.py`.
 - Samtal på andra bolags IR-sidor (abc.xyz, ir.aboutamazon.com, investor.nvidia.com, investor.oracle.com med flera)
   har inte prövats igen, eftersom de är kända som nekade. Inga värdar nekades i R5.
 - Testsviten markerar fel med `xfail`. Den kontrollerar inte att de sparade meningarna i `data/raw` finns kvar.
+
+## 6. Status efter rättning (spår X3, 2026-11-24)
+
+Rättat på `auto7/x3-r5-rattning` enligt ägarens beslut 2026-11-23 ("R5:s tolkningsfrågor avgjorda"). Alla 26
+`xfail`-markeringar är borttagna, och testerna går igenom som vanliga tester. **0 xfail kvar.** Varje ny rad har
+URL (och accession för SEC), plats, SHA-256 av meningen (meningen bara i `data/raw`) och `known_from` = EDGAR:s
+filingDate eller, för Microsofts samtal, dagen för 8-K:n med resultatet. Alla nya meningar togs fram ur dokumenten
+igen, och deras SHA-256 är lika med R5:s. De nya och ändrade raderna kontrollerades också mot nyhämtade dokument
+(19 dokument, ärlig klient, 0 fel). Ingenting hämtades från anthropic.com, claude.com eller platform.claude.com.
+
+| Nr | Status | Rättning |
+|---|---|---|
+| R5-F1 | rättat | `nvda-cap-2025q3` borttagen; 2025Q3 är en lucka |
+| R5-F2a | rättat | `nvda-cap-2025q1` = −2 (H20), tolkning 7 som den står |
+| R5-F2b | rättat | `nvda-cap-2026q2` = 0, skälet i noten |
+| R5-F3 | rättat | `nvda-capf-2026q1` period 2026Q3 |
+| R5-F4 | rättat | `msft-cap-2025q1` = 0 |
+| R5-F5 | rättat | `msft-capf-2024q2` = +1 |
+| R5-F6 | rättat (kodat) | 8 rader med fem nya koder (`MSFT_SALES_COPILOT_ORGS`, `MSFT_COPILOT_SECURITY_PAID_CUSTOMERS`, `MSFT_FOUNDRY_CUST_ANTHROPIC_OPENAI`, `MSFT_FOUNDRY_CUST_MULTI_MODEL`, `MSFT_FOUNDRY_FABRIC_CUSTOMERS`). LinkedIn och MAI Code Flash står under "Inte kodat" i `ai_nyckeltal.md` |
+| R5-F7 | rättat | fyra Oracle-rader (operating, MD&A) |
+| R5-F8 | rättat | `finansiering.md` rättad; `lease_uncommenced_orcl` börjar 2023Q4. `lease_check` läser nu också meningen efter beloppet (Oracles MD&A) |
+| R5-F9 | rättat | not på båda raderna; `lease_uncommenced_msft` avslutad med 2026Q1, ny serie `lease_uncommenced_msft_cond` från 2026Q2 |
+| R5-F10 | rättat | `msft-p029`, xref `msft-16` |
+| R5-F11 | rättat | `META_NONCANCEL_COMMIT_CLOUD` från 2025Q3; den gamla koden är avslutad. Testet väntade 6 rader, men det finns 5 (`meta-p030`, `p032`–`p035`) och inget sjätte uttalande. Testet är ändrat till 5, och stickprovsraden `meta-p035` har den nya koden |
+| R5-F12 | rättat | `msft-p022` `point`; `msft-p025` kod `MSFT_OVERALL_CAPACITY` |
+| R5-F13 | rättat (kodat) | `orcl-p011`, 4 400 MUSD, kod `ORCL_UNCOND_OBLIG_DC_CAPEX` (avslutad, ett värde) |
+| R5-F14 | rättat | `msft-29` CY2026 approx 170 000, ny version av samma serie som `msft-26`, med not om definitionsbrottet (fler operationella hyror från 2026-07-29). Påverkar inte N1:s B2 |
+| ant-09 | rättat | noten säger nu att raden laddas som en egen punkt (frekvens D) |
+
+Ombyggda serier (`--rebuild`): `kpi_nvda_capacity_current/forward`, `kpi_msft_capacity_current/forward`, de fem
+nya `kpi_msft_*`, `lease_uncommenced_msft`, `_orcl` och `_msft_cond`, `plan_meta_noncancel_commit_asof_value`,
+`plan_meta_noncancel_commit_cloud_asof_value`, `plan_msft_capex_incl_fl_y_dir_growth_vs_prior`,
+`plan_msft_overall_capacity_span2y_value`, `plan_orcl_uncond_oblig_dc_capex_asof_value` och
+`guid_capex_msft_cy_lo/hi`.
+
+**Publicering:** B4 (`kpi_*`), A3 (`lease_uncommenced_*`) och D1 (`plan_*`) har `publish=True`. Nvidias serier har
+det redan. B6 (`lab_*`) och E1:s capex-guidance (`guid_capex_*`) har kvar `publish=False`.
+
+**Kvar, utan rättning:** R5:s anmärkningar om `msft-cap-2025q2` och `msft-cap-2024q3` (koden blir densamma), och
+förtydligandet av regeln för "some of that supply demand will match up" (inte kodat), står kvar som anmärkningar.
+Nyhetsrumsraderna i B6 är fortfarande inte oberoende verifierade.

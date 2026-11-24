@@ -5,7 +5,7 @@ ai_tracker.sources.ai_kpis. One series per definition code (a change of definiti
 irregular: companies state a KPI in some quarters and not in others, so gaps are expected (KNOWN_GAPS below, merged
 into warehouse.KNOWN_GAPS) and a missing statement is never a zero. See docs/kallor/ai_nyckeltal.md.
 
-publish=False until the independent review R5 has re-read the extraction.
+Reviewed by R5 and corrected (X3, 2026-11-24): publish=True (numbers with source references only, never text).
 """
 
 from __future__ import annotations
@@ -52,13 +52,13 @@ def _specs() -> tuple[list[Spec], dict[str, str]]:
                                               f"dokumentet i extraktionen {newest.date()}); öppnas igen om det kommer "
                                               f"tillbaka" if inactive else "")
         forward = code.endswith(("_FORWARD", "_EXPECTED"))
-        note = (f"Definition {code}: {d.text}. Agentextraherat ur bolagets dokument; granskas (R5) före användning. "
+        note = (f"Definition {code}: {d.text}. Agentextraherat ur bolagets dokument, granskat av R5 och rättat (X3). "
                 + (f"Avslutad: {reason}." if closed else
                    f"Aktualitet: oregelbunden rapportering, gräns {MAX_AGE} dagar."))
         specs.append(Spec(key=key, branch=BRANCH[d.lead], label=d.label, unit=d.unit, freq=d.freq,
                           source="Kurerad extraktion (curated/ai_kpis.csv): SEC EDGAR 8-K/10-Q/10-K och "
                                  "Microsofts samtal på microsoft.com",
-                          fetch=fetch, lag_days=FORWARD_LAG if forward else LAG[d.freq], license=LICENSE, revised=True, publish=False,
+                          fetch=fetch, lag_days=FORWARD_LAG if forward else LAG[d.freq], license=LICENSE, revised=True, publish=True,
                           question=QUESTION[d.lead], note=note, closed=closed,
                           max_age_days=None if closed else MAX_AGE))
         ords = sorted({ai_kpis._period(d.freq, p).ordinal for p in frame["period"]})

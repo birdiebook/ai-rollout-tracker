@@ -18,8 +18,8 @@ Kvartalslogik, versioner och kalendermappning för flöden är desamma som i `do
   User-Agent från `.env` (skrivs aldrig ut). Inga värdar nekades.
 - Licens, som i `sec.md` (sec.gov/privacy, kontrollerad 2026-11-23): *"Information presented on sec.gov is
   considered public information and may be copied or further distributed by users of the web site without the
-  SEC's permission."* XBRL-serierna har `publish=True`. Leasingserierna har `publish=False` tills granskningen
-  R5 är klar.
+  SEC's permission."* XBRL-serierna har `publish=True`. Leasingserierna har också `publish=True` efter granskningen
+  R5 och rättningen X3 (2026-11-24), med bara siffror och källhänvisning.
 - CIK, verifierade mot `entityName`: Microsoft 789019, Alphabet 1652044 (+ Google Inc. 1288776), Amazon 1018724,
   Meta 1326801, Oracle 1341439, CoreWeave 1769628.
 
@@ -39,7 +39,7 @@ inlämningarna (`sec.aggregate`).
 | `op_lease_liab` | balans | skuld för operationell leasing | 2017Q2 / 2019Q1 / 2019Q1 / 2018Q4 / 2025Q1 / 2025Q1; 2019Q1 |
 | `cash_sec` | balans | likvida medel + kortfristiga placeringar | 2009Q3 / 2009Q2 / 2009Q2 / 2012Q2 / 2018Q4 / 2025Q3; 2012Q2 |
 | `fin_lease_liab_meta_a` | balans, år | Metas skuld för finansiell leasing per 31 december | 2019–2025 |
-| `lease_uncommenced` | balans | tecknade leasingavtal som ännu inte börjat (text, se nedan) | 2018Q4 / 2019Q1 / 2020Q4 / 2019Q1 / 2025Q1 / 2025Q1 |
+| `lease_uncommenced` | balans | tecknade leasingavtal som ännu inte börjat (text, se nedan) | 2018Q4–2026Q1 (därefter `_msft_cond` från 2026Q2) / 2019Q1 / 2020Q4 / 2019Q1 / 2023Q4 / 2025Q1 |
 
 Senaste kvartal i hämtningen 2026-11-23: 2026Q3 för alla (Oracle: kvartalet juni–augusti 2026).
 1 970 rader, 44 revideringar (versioner utöver den första).
@@ -141,15 +141,25 @@ billion". Det finns ingen standardtagg, så siffran extraheras ur texten.
 - **Definitioner skiljer sig.** Alphabet, Meta och CoreWeave anger framtida odiskonterade betalningar (Alphabet
   utan köpoptioner, utom 2025Q3). Amazon: totalkolumnen i raden "Leases not yet commenced" i åtagandetabellen,
   från 2020Q4. Microsoft: "leases ... of $X" utan angiven bas. Oracle: "additional lease commitments", före
-  FY2025 bara operationell, och i 10-Q för nov 2022 och feb 2023 bara i MD&A.
-- **Täckning.** 190 rader: MSFT 58 (2018Q4–2026Q3), GOOGL 36 (2019Q1–), AMZN 24 (2020Q4–), META 51 (2019Q1–),
-  ORCL 14 (FY2020–), CRWV 7 (2025Q1–). Oracle anger inget belopp i flera 10-Q 2019–2024, så serien
-  `lease_uncommenced_orcl` börjar efter sista luckan (2025Q1). Alla rader finns kvar i CSV:n.
+  FY2025 bara operationell, och i 10-Q för nov 2022–nov 2024 bara i MD&A (från nov 2023 som "operating lease
+  commitments" under Contractual Obligations, med meningen om när de börjar direkt efter).
+- **Definitionsbrott, Microsoft.** Från 2026-06-30 säger Microsoft att en del av avtalen gäller först när vissa
+  avtalsvillkor är uppfyllda ("subject to certain contractual conditions being met"). Beloppet omfattar alltså mer än
+  tidigare. `lease_uncommenced_msft` slutar därför med 2026Q1 (`closed`), och en ny serie,
+  `lease_uncommenced_msft_cond`, börjar 2026Q2 (`series/lease_commitments.BREAKS`). Raderna har en not (R5-F9).
+- **Täckning.** 194 rader: MSFT 58 (2018Q4–2026Q3), GOOGL 36 (2019Q1–), AMZN 24 (2020Q4–), META 51 (2019Q1–),
+  ORCL 18 (FY2020–), CRWV 7 (2025Q1–). Oracle anger inget belopp i 13 av sina filingar 2019–2023; den sista luckan är
+  10-Q:n för 2023-08-31, som bara säger att inget väsentligt har ändrats. Serien `lease_uncommenced_orcl` börjar
+  därför efter den, 2023Q4 (nov 2023). De fyra 10-Q:erna nov 2023, feb 2024, aug 2024 och nov 2024 saknades i
+  första extraktionen och lades till efter R5 (R5-F7, F8). Alla rader finns kvar i CSV:n.
 - **Självkontroll.** `python -m ai_tracker.lease_check` hämtar om dokumenten för ett stickprov (20 %, minst
   en rad per bolag). Det kontrollerar att meningen på platsen har lagrad SHA-256, att beloppet står i meningen
   och att meningen, eller den före, handlar om leasing som inte har börjat. Körning 2026-11-23: 38 rader i
-  stickprovet, 0 fel, 0 flyttade. Dessutom står beloppet i den sparade meningen för alla 190 rader.
-- **Granskning R5** läser om källorna innan serierna används. Fram till dess gäller `publish=False`.
+  stickprovet, 0 fel, 0 flyttade. Dessutom står beloppet i den sparade meningen för alla 190 rader. Kontrollen
+  läser nu också meningen efter (Oracles MD&A från nov 2023). 2026-11-24: alla 194 rader ok mot de sparade
+  dokumenten, och de fyra nya mot nyhämtade.
+- **Granskning R5** (2026-11-23) godkände med rättningar. Rättningen X3 (2026-11-24) lade till Oracles fyra rader
+  och Microsofts definitionsbrott. Därefter `publish=True`.
 
 ## Kontroll mot rapporterade siffror
 
