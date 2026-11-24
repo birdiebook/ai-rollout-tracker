@@ -1,0 +1,44 @@
+{
+  "name": "ai-rollout-tracker-web",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "sync-bundle": "node scripts/sync-bundle.mjs",
+    "dev": "npm run sync-bundle && vite dev",
+    "build": "npm run sync-bundle && vite build",
+    "preview": "vite preview --port 4173 --strictPort",
+    "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings",
+    "test": "svelte-kit sync && vitest run",
+    "test:e2e": "playwright test",
+    "budget": "node scripts/budget.mjs",
+    "external-hosts": "node scripts/check-external-hosts.mjs"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.14.1",
+    "@playwright/test": "1.63.0",
+    "@sveltejs/adapter-static": "3.0.11",
+    "@sveltejs/kit": "2.70.4",
+    "@sveltejs/vite-plugin-svelte": "6.2.4",
+    "@testing-library/svelte": "5.4.2",
+    "@types/d3-array": "3.2.2",
+    "@types/d3-scale": "4.0.9",
+    "@types/d3-shape": "3.2.0",
+    "@types/node": "22.19.1",
+    "jsdom": "26.1.0",
+    "svelte": "5.59.1",
+    "svelte-check": "4.7.8",
+    "typescript": "5.9.3",
+    "vite": "7.3.8",
+    "vitest": "3.2.7"
+  },
+  "dependencies": {
+    "@observablehq/plot": "0.6.19",
+    "d3-array": "3.2.5",
+    "d3-scale": "4.0.3",
+    "d3-shape": "3.2.1"
+  }
+}
