@@ -3,6 +3,8 @@
 import { defineConfig, devices } from '@playwright/test';
 
 const base = (process.env.BASE_PATH ?? '/next').replace(/\/+$/, '');
+// PW_PORT lets parallel worktrees run their own preview server (default 4173, as npm run preview).
+const port = Number(process.env.PW_PORT ?? 4173);
 
 export default defineConfig({
   testDir: 'tests/e2e',
@@ -11,7 +13,7 @@ export default defineConfig({
   retries: 0,
   reporter: process.env.CI ? [['list'], ['html', { open: 'never' }]] : 'list',
   use: {
-    baseURL: `http://localhost:4173${base}/`,
+    baseURL: `http://localhost:${port}${base}/`,
     trace: 'retain-on-failure'
   },
   projects: [
@@ -19,8 +21,8 @@ export default defineConfig({
     { name: 'mobile', use: { ...devices['Desktop Chrome'], viewport: { width: 375, height: 812 }, deviceScaleFactor: 2, hasTouch: true } }
   ],
   webServer: {
-    command: 'npm run preview',
-    url: `http://localhost:4173${base}/`,
+    command: port === 4173 ? 'npm run preview' : `npx vite preview --port ${port} --strictPort`,
+    url: `http://localhost:${port}${base}/`,
     reuseExistingServer: !process.env.CI,
     timeout: 60_000
   }
