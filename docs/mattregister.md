@@ -491,3 +491,32 @@ D2 får köras på verklig data från och med denna post.
 
 Ärlig not: med cirka 23 kvartal i utvecklingen och 6 i holdouten är D2 främst beskrivande. En befordran är inte
 trolig, och resultatet redovisas ändå.
+
+### 2026-11-24 – G-A: nya kärnserier efter våg 1 (före första takträkningen)
+
+Urval efter AI-specifik relevans, minst två års historik vid registreringen (undantag: Cloudflare, som är den enda
+globala trafikkällan), ärlig `known_from` och ett mått per företeelse. Kontrollserier (react, express, requests,
+numpy), generella ML-paket (torch, transformers), serier med kort historik (MCP, Google-SDK:er efter namnbyten,
+CoreWeave, Nebius, Micron CMBU) och oregelbundna nyckeltal (`kpi_*`) ingår inte. Inga takter har beräknats för de nya
+serierna. Tabellen ersätter G3–G7 enligt parserregeln (en senare tabell ersätter grenens lista).
+
+| Gren | Kärnserier | Anmärkning |
+|---|---|---|
+| G3 | `btos_ai_use_<aktiv regim>`, `eu_ai_ent_eu27`, `eu_ai_ent_se`, `g3_npm_{openai,anthropic_sdk,langchain,vercel_ai}_w`, `g3_pypi_{openai,anthropic,langchain,llama_index}_wed`, `g3_wiki_{chatgpt,llm,genai}_en`, `g3_cf_bots_ai_crawler_share`, `g3_cf_ai_purpose_user_action` | PyPI som onsdagsurval (beslut 2026-11-23). Cloudflare från 2024 |
+| G4 | `rev_aws`, `rev_google_cloud`, `rev_msft_cloud`, `rev_nvda_datacenter`, `rev_orcl_cloud`, `rpo_hyp4` | RPO = kontrakterad efterfrågan (balans) |
+| G5 | `capex_hyp4`, `us_constr_datacenter`, `us_pfi_info_proc_eq_sw`, `capex_ocf_hyp4`, `capex_orcl` | |
+| G6 | `tsmc_revenue_m`, `us_ip_semis_m`, `us_ip_computers_m`, `us_imports_tw_m`, `us_imports_kr_m`, `rev_amd_datacenter`, `rev_avgo_semis`, `rev_mrvl_datacenter`, `asml_net_sales` | |
+| G7 | `us_elec_sales_com_{va,tx,ga,az,or,oh}_m`, `eia930_avg_{pjm_dom,erco,azps,soco,srp}_m`, `pjm_lf_peak_{dom,rto}_h5` | PJM-prognoserna är årsversioner (prognos för år +5) |
+
+### 2026-11-24 – B3: Nvidia i gruppmedlet för kvartalsintäkt (efter granskning R7)
+
+Granskningen R7 (`docs/granskning/r7_b3_n2.md`) fann att koden utelämnar Nvidia ur gruppmedlet för "kvartalsintäkt",
+trots att F-B3 anger att alla bolag med samma guidade storhet och minst en känd avvikelse ingår. Detta är en rättning
+till registrets text, inte en ny variant. R7:s rekommendation gäller:
+- Nvidias avvikelser (utfall `rev_nvda`, första version, mot mittpunkten i `nvda_guid_rev_mid`) ingår i gruppmedlet
+  för **alla tre** TSMC-positioner, med Nvidias enda position (k = 1) som värde.
+- Bara kvartal från 2017Q2, eftersom det är de som är granskade (R5).
+- Samma krav på att utfallet ska vara känt på prognosdagen som för TSMC.
+
+R7 redovisade att B3 passerar regeln under alla fyra rimliga läsningar (Holm-p 0,040–0,059). Körningen med denna
+läsning är den som gäller.

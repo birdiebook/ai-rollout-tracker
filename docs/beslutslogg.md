@@ -322,3 +322,12 @@ Johannes valde rekommendationerna:
   produkttalen kodas eller listas under "Inte kodat".
 
 Rättningarna F1–F14 görs i ett eget spår efter att kvoten har återställts.
+
+
+## 2026-11-24 – GitHub AI-medförfattare: stängd historik
+
+GitHub tog bort commit-meddelanden ur Events API den 2025-10-07, så GH Archive saknar dem efter 2025-10-08. Måttet
+(andel publika push-commits med AI-medförfattare) finns därför som stängd historik 2021–2025-W40, byggd ur timfilerna
+med ett förregistrerat urval av sju timmar per vecka. BigQuery användes inte (15,7 GB per dag). En levande ersättare
+via GitHubs commit-sökning är BLOCKED av hastighetsgränser. Förslag för senare: andel öppnade pull requests från
+AI-agenters botkonton i GH Archive, efter att 2026 års täckning har mätts.

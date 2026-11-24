@@ -1,6 +1,6 @@
 # Status steg 2
 
-Uppdateras av orkestreraren vid varje milstolpe. Senast: 2026-11-23 23:10 UTC.
+Uppdateras av orkestreraren vid varje milstolpe. Senast: 2026-11-24 00:50 UTC.
 
 ## Läge
 
@@ -12,6 +12,8 @@ Uppdateras av orkestreraren vid varje milstolpe. Senast: 2026-11-23 23:10 UTC.
   godkända med rättningar (F1–F14, 26 strikta xfail-tester). Rättningarna görs efter att kvoten återställts.
 - **Våg 2:** N3–N6 är mergade (B1 är huvudmodell för alla fyra). **B3 för TSMC passerade regeln** (MAE 5,81 mot B2 6,42,
   Holm-p 0,038). B2 är huvudmodell tills den oberoende granskningen R7 är klar, före 2026-12-05. B3 för capex passerade inte. R3-rättningarna är mergade.
+- **G-A registrerad** (2026-11-24): nya kärnserier i G3–G7. **G3 (användning) har nu ett tillstånd** med 13 räknade serier
+  (npm, PyPI, Wikipedia, Cloudflare). Kör nu: GitHub (B2), granskning R7 (B3 för TSMC), rättning X3 (R5-fynd).
 - **Tidigare:** Datasnapshoten är klar och väntar på `DATA_KEY`. Avstämningarna (A5) och D2 är
   förregistrerade.
 

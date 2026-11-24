@@ -10,6 +10,10 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[1]
 EMAIL = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+\.[A-Za-z.]{2,}")
 ALLOWED = {"noreply@anthropic.com"}  # tool attribution
+# AI tools' public co-author addresses (track B2, docs/kallor/github_ai.md): tool identities, not people
+ALLOWED |= {"Copilot@users.noreply.github.com", "+Copilot@users.noreply.github.com",
+            "175728472+Copilot@users.noreply.github.com", "198982749+Copilot@users.noreply.github.com",
+            "cursoragent@cursor.com", "codex@openai.com", "noreply@aider.chat", "amp@ampcode.com"}
 RESERVED_DOMAINS = {"example.com", "example.org", "example.net", "example.invalid"}  # RFC 2606 placeholders
 
 
