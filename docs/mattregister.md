@@ -831,6 +831,53 @@ skillnaden mellan kandidattaggar i överlappande perioder, MSFT-taggens täcknin
 och Alphabets balansposter i instanserna 2018–2020 (nivåer, för kontrollen netto = brutto − ackumulerat). Inga
 kvartalsserier eller takter har räknats.
 
+### 2026-11-24 – A5: intäktskrav (avskrivningar och kapitalkostnad mot intäkter)
+
+Spår P2b (förslag 3 i `riktning.md`, "Följ pengarna hela vägen"). Fem nya avstämningar i samma grupp som A5-posten
+2026-11-23. De mäter hur avskrivningar och kapitalkostnad växer i förhållande till intäkterna, och hur långt
+avskrivningarna ligger efter investeringarna. De beskriver och tar ingen ställning. Komponenterna är P1:s serier
+(posten ovan) och befintliga intäkts- och capexserier.
+
+| Nyckel | Definition (×100, procent) | Led |
+|---|---|---|
+| `x_dep_rev` | summan av `dep_hyp4` för de 4 senaste kvartalen / summan av `rev_msft` + `rev_googl` + `rev_amzn` + `rev_meta` för samma 4 kvartal | L3–L5 |
+| `x_capcost_rev_r08` | (summan av `dep_hyp4` för de 4 senaste kvartalen + 0,08 × `ppe_net_hyp4` vid periodens kvartalsslut) / samma 4-kvartalsintäkter | L3–L5 |
+| `x_capcost_rev_r12` | som `x_capcost_rev_r08` med 0,12 | L3–L5 |
+| `x_dep_capex` | summan av `dep_hyp4` / summan av `capex_hyp4`, de 4 senaste kvartalen | L5 |
+| `x_dep_rev_aws` | summan av `dep_aws` / summan av `rev_aws`, de 4 senaste kvartalen | L3–L5 |
+
+- **Nämnaren är bolagens totala intäkter**, eftersom Meta saknar molnintäkter. Totala intäkter är den nämnare som
+  täcker samma fyra bolag som täljaren. AWS-kvoten är den enda där både täljare och nämnare är ett molnsegment.
+- **dep_hyp4, inte dep_ppe_hyp4.** Beslutet bygger bara på taggtäckning enligt P1:s resultat: `dep_ppe_hyp4` finns per
+  kvartal först från 2024Q3 (Microsoft taggar `Depreciation` per kvartal från FY2025 och Amazon från 2024), alltså 9
+  kvartal, medan `dep_hyp4` har 15 (från 2023Q1). `dep_ppe` är alltså inte konsekvent taggad för alla fyra över den
+  period som `dep_hyp4` täcker. Förbehållen för `dep_hyp4` gäller: Microsofts rad innehåller "other" (kvartal till och
+  med 2024Q3 på den gamla basen), Amazons innehåller innehåll och operationella leasingtillgångar, och Metas innehåller
+  amortering på immateriella tillgångar.
+- **Avkastningskravet r** är ett antagande och ingen skattning. 0,08 och 0,12 är ett registrerat intervall för en
+  årlig avkastning före skatt på nettot av anläggningstillgångarna. Intervallet ändras inte efter att värdena har setts.
+  Kvoten är linjär i r, så ett värde mellan ändpunkterna är en interpolation. Intäktskravet omfattar bara kapitalet:
+  avskrivningar och avkastning på nettot. Drift, el, personal och skatt ingår inte.
+- **Stock och flöde:** `ppe_net_hyp4` är en balans vid kvartalets slut för periodens sista kvartal. Den summeras inte,
+  och en omräkning av en tidigare balans påverkar inte senare perioder. Avskrivningar, intäkter och capex är flöden
+  över fyra kvartal.
+- **Versioner** som A5: en version finns först när alla par (serie, kvartal) är kända på dagen, `known_from` = den
+  senaste komponenten, och `source` blir `backfill` om något indata är en backfill-rad. Samma kalendermappning som
+  komponenterna (mittpunktsregeln).
+- **Mått** som A5: takt = årsförändring i log(kvot) ×100, förändring i takt och percentiler som i avsnitt 1. Räknas
+  inte i grenarnas diffusionsindex, och regimmodellen använder dem inte. De redovisas i gruppen "Avstämningar" i
+  ögonblicksbilden, månadsbrevet och flödesvyn.
+- **Beskrivande tillägg i resultatdokumentet** (`docs/resultat/intaktskrav.md`), inga serier och inga mått:
+  (a) samma kvot som `x_dep_rev` med `dep_ppe_hyp4` i täljaren, för de perioder den finns, som känslighet för
+  definitionsskillnaderna; (b) per bolag (MSFT, GOOGL, AMZN, META, ORCL, CRWV) `dep_<co>` / `rev_<co>` och
+  (`dep_<co>` + r × `ppe_net_<co>`) / `rev_<co>` för r = 0,08 och 0,12, för den senaste perioden där alla komponenter
+  finns, med samma versionsregel.
+
+**Vad som setts före denna post:** P1:s resultat med antal kvartal och första och sista period per serie, och P1:s
+registerpost och källdokument. P1:s resultat nämner två enskilda belopp från handkontrollerna (Microsofts avskrivningsrad
+i Q4 FY2026 och Amazons avskrivningar på anläggningstillgångar 2025). Inga kvoter, takter eller nivåer av komponenterna
+har räknats eller setts i detta spår.
+
 ### 2026-11-24 – P1: omräkning genom summorna, delvis omräkning och ändringar efter första bygget (rättning efter granskning R14)
 
 Tillägg till posten "P1: avskrivningar och anläggningstillgångar som katalogserier". Den posten skrivs inte om.

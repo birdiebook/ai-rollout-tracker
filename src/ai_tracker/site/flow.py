@@ -53,7 +53,10 @@ LEADS: list[Lead] = [
 LEAD_INDEX = {lead.code: i for i, lead in enumerate(LEADS)}
 
 RECON_SHORT = {"x_capex_cloud": "Capex / moln", "x_rpo_cover": "RPO / capex", "x_nvda_capex": "Nvidia / capex",
-               "x_debt_capex": "Skuld / capex", "x_capex_ocf": "Capex / OCF"}
+               "x_debt_capex": "Skuld / capex", "x_capex_ocf": "Capex / OCF",
+               "x_dep_rev": "Avskrivningar / intäkter", "x_capcost_rev_r08": "Kapitalkostnad (8 %) / intäkter",
+               "x_capcost_rev_r12": "Kapitalkostnad (12 %) / intäkter", "x_dep_capex": "Avskrivningar / capex",
+               "x_dep_rev_aws": "AWS: avskrivningar / intäkter"}
 
 
 def lead_span(key: str) -> tuple[int, int] | None:

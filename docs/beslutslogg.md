@@ -478,6 +478,15 @@ Tillägg samma dag: sidan är Johannes främsta sätt att ta in informationen oc
 - Inget är registrerat och inga utfall är lästa. Designen, med MDE skattad på förperioden före öppning, registreras i
   byggspåret. Detaljer: [datakallor/g8_kandidater.md](datakallor/g8_kandidater.md).
 
+## 2026-11-24 – P2b: intäktskrav som avstämningar
+
+- Fem nya A5-avstämningar (`x_dep_rev`, `x_capcost_rev_r08`, `x_capcost_rev_r12`, `x_dep_capex`, `x_dep_rev_aws`),
+  registrerade före beräkningen. De räknas inte i något grenindex. Resultat: `docs/resultat/intaktskrav.md`.
+- **`dep_hyp4`, inte `dep_ppe_hyp4`,** valt på täckning (15 mot 9 kvartal). Den registrerade känsligheten visar att
+  valet spelar roll: takten 2026Q3 är +12,2 med `dep_hyp4` och +19,4 med `dep_ppe_hyp4`.
+- **Avkastningskravet** är ett registrerat intervall, 8–12 % på nettot av anläggningstillgångarna, och ingen skattning.
+- **Nämnaren** är totala intäkter, eftersom Meta saknar molnsegment. Bara AWS har en kvot på segmentnivå.
+
 ## 2026-11-24 – Rättelse om index v2:s effekt
 
 Beslutet om index v2 motiverades bland annat med att v2 gör tillstånden mer försiktiga åt båda hållen. Backcasten på riktiga data (rekonstruktion, 2026-05 till 2026-10) visar att det inte stämmer genomgående. G8 blir "för få källor", men G6 blir "accelererar" i två månader där v1 sa "stabil", och G7 blir "bromsar in" i två månader. Skälet är att varje familj väger tungt när familjerna är få. Huvudskälet för beslutet, att indexet ska räkna oberoende källor, gäller fortfarande. Rekommendationen är att behålla v2. Johannes informeras.
@@ -585,4 +594,5 @@ sex poolade revideringsindex blir `okänd` när F1 mergas (R10-1).
 - Källdokumentet citerar inte längre hela meningar, och noten för `_lo`-serierna säger att punkter och intervall blandas.
 - CoreWeaves ändring kodas inte om ur S-1 (known_from står kvar, konservativt). N-3 kodas inte, eftersom inget använder
   raden. N-4 (ändringar för en del av flottan syns inte i serierna) tas i granskningen av P3/N7.
+
 

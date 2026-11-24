@@ -69,3 +69,29 @@ mäts den med årsförändring i log, inte i procentenheter.
 - Månadsbrevet har rubriken "Avstämningar" med nivå, takt och förändring i takt per serie.
 - Hemsidan har en liten tabell i avsnittet "Avstämningar mellan leden" på metodsidan. Den fullständiga
   flödesvyn är spår E2.
+
+## Intäktskrav (spår P2b, 2026-11-24)
+
+Fem avstämningar till, registrerade i posten "2026-11-24 – A5: intäktskrav (avskrivningar och kapitalkostnad mot
+intäkter)" innan något räknades. Samma versionsregel, mått och grupp som ovan. Komponenterna kommer från P1
+(`docs/kallor/sec_avskrivningar.md`). Bygg efter komponenterna:
+`python -m ai_tracker.observations x_dep_rev x_capcost_rev_r08 x_capcost_rev_r12 x_dep_capex x_dep_rev_aws`.
+Resultat och förbehåll: `docs/resultat/intaktskrav.md`.
+
+| Nyckel | Definition (×100, fyra kvartal) | Led | Enhet | Historik (senaste version) | Versioner | Första `known_from` |
+|---|---|---|---|---|---|---|
+| `x_dep_rev` | `dep_hyp4` / (`rev_msft` + `rev_googl` + `rev_amzn` + `rev_meta`) | L3–L5 | procent av intäkterna | 2023Q4–2026Q3, 12 kvartal | 28 | 2024-10-30 |
+| `x_capcost_rev_r08` | (`dep_hyp4` + 0,08 × `ppe_net_hyp4` vid periodens slut) / samma intäkter | L3–L5 | procent av intäkterna | 2023Q4–2026Q3, 12 kvartal | 28 | 2024-10-30 |
+| `x_capcost_rev_r12` | som ovan med 0,12 | L3–L5 | procent av intäkterna | 2023Q4–2026Q3, 12 kvartal | 28 | 2024-10-30 |
+| `x_dep_capex` | `dep_hyp4` / `capex_hyp4` | L5 | procent av capex | 2023Q4–2026Q3, 12 kvartal | 35 | 2024-10-30 |
+| `x_dep_rev_aws` | `dep_aws` / `rev_aws` | L3–L5 | procent av intäkterna | 2024Q4–2026Q3, 8 kvartal | 8 | 2025-10-31 |
+
+- **Vägda termer:** `Term` har en fast vikt (`weight`), här avkastningskravet r på `ppe_net_hyp4`. Vikten gäller varje
+  par i termen. `ppe_net_hyp4` är en balans för periodens sista kvartal och summeras inte.
+- **Nämnaren** är de fyra bolagens totala intäkter, som fyra termer med summa över fyra kvartal. Det är samma regel som
+  `sec.aggregate`: en version finns först när alla fyra bolag är kända för alla fyra kvartal.
+- **Historiken** begränsas av `dep_hyp4` (från 2023Q1, Alphabets definition) och `dep_aws` (från 2024Q1). Alphabets
+  kvartal 2023 blev kända som jämförelsetal i 10-Q:erna 2024, de sista (2023Q3 och 2023Q4) 2024-10-30. Därför börjar
+  versionerna där.
+- **Microsofts definitionsbrott** (`dep_msft`, deklarerat 2026-01-28) slår igenom i kvoterna med `dep_hyp4`: i den
+  senaste versionen ligger kvartalen 2024Q1–2024Q3 på den gamla basen. Se resultatdokumentet.

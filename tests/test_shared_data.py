@@ -85,6 +85,21 @@ def test_track_row_wins_on_identical_key(dirs):
     assert hit["value"].tolist() == [99.0] and len(view) == 24
 
 
+def test_track_row_wins_when_the_base_has_intraday_known_from():
+    """astype(str) renders a datetime column without the time only if every value is midnight: a base that also holds
+    intraday known_from (daily series) must still match a track row on an identical key (no duplicate)."""
+    cols = ["series", "freq", "period", "value", "known_from", "source", "fetched_at"]
+    base = pd.DataFrame([["rev_x", "Q", "2025Q1", 1.0, pd.Timestamp("2025-05-01"), "release", pd.Timestamp("2026-11-23")],
+                         ["d_x", "D", "2025-05-01", 2.0, pd.Timestamp("2025-05-01 17:30"), "release",
+                          pd.Timestamp("2026-11-23")]], columns=cols)
+    track = pd.DataFrame([["rev_x", "Q", "2025Q1", 1.5, pd.Timestamp("2025-05-01"), "release",
+                           pd.Timestamp("2026-11-24")]], columns=cols)
+    out = observations.combine(base, track)
+    assert len(out) == 2 and out.loc[out["series"] == "rev_x", "value"].tolist() == [1.5]
+    log = observations.combine(base, track.assign(fetched_at=pd.Timestamp("2026-11-23")), key=observations.LOG_KEY)
+    assert sorted(log["series"]) == ["d_x", "rev_x"]
+
+
 def test_unset_means_one_table(dirs, monkeypatch):
     base, track = dirs
     monkeypatch.setattr(observations, "SHARED_DIR", None)

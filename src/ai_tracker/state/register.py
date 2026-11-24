@@ -134,7 +134,9 @@ DERIVED: dict[str, tuple[str, str, float, str, str, str]] = {
 # pace "y/y change in log(ratio) x100" (method log, also for x_capex_ocf, whose catalog unit is a percentage),
 # change in pace and percentiles as in section 1. Never counted in a branch's diffusion index: they are a separate
 # group in the snapshot, the monthly letter and the site.
-RECONCILIATIONS: list[str] = ["x_capex_cloud", "x_rpo_cover", "x_nvda_capex", "x_debt_capex", "x_capex_ocf"]
+RECONCILIATIONS: list[str] = ["x_capex_cloud", "x_rpo_cover", "x_nvda_capex", "x_debt_capex", "x_capex_ocf",
+                               # revenue requirement (register 2026-11-24 "A5: intäktskrav", track P2b)
+                               "x_dep_rev", "x_capcost_rev_r08", "x_capcost_rev_r12", "x_dep_capex", "x_dep_rev_aws"]
 RECONCILIATION_GROUP = "Avstämningar"
 METHOD_OVERRIDES.update({k: "log" for k in RECONCILIATIONS})
 
