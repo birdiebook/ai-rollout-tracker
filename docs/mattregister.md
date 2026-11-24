@@ -507,3 +507,16 @@ serierna. Tabellen ersätter G3–G7 enligt parserregeln (en senare tabell ersä
 | G5 | `capex_hyp4`, `us_constr_datacenter`, `us_pfi_info_proc_eq_sw`, `capex_ocf_hyp4`, `capex_orcl` | |
 | G6 | `tsmc_revenue_m`, `us_ip_semis_m`, `us_ip_computers_m`, `us_imports_tw_m`, `us_imports_kr_m`, `rev_amd_datacenter`, `rev_avgo_semis`, `rev_mrvl_datacenter`, `asml_net_sales` | |
 | G7 | `us_elec_sales_com_{va,tx,ga,az,or,oh}_m`, `eia930_avg_{pjm_dom,erco,azps,soco,srp}_m`, `pjm_lf_peak_{dom,rto}_h5` | PJM-prognoserna är årsversioner (prognos för år +5) |
+
+### 2026-11-24 – B3: Nvidia i gruppmedlet för kvartalsintäkt (efter granskning R7)
+
+Granskningen R7 (`docs/granskning/r7_b3_n2.md`) fann att koden utelämnar Nvidia ur gruppmedlet för "kvartalsintäkt",
+trots att F-B3 anger att alla bolag med samma guidade storhet och minst en känd avvikelse ingår. Detta är en rättning
+till registrets text, inte en ny variant. R7:s rekommendation gäller:
+- Nvidias avvikelser (utfall `rev_nvda`, första version, mot mittpunkten i `nvda_guid_rev_mid`) ingår i gruppmedlet
+  för **alla tre** TSMC-positioner, med Nvidias enda position (k = 1) som värde.
+- Bara kvartal från 2017Q2, eftersom det är de som är granskade (R5).
+- Samma krav på att utfallet ska vara känt på prognosdagen som för TSMC.
+
+R7 redovisade att B3 passerar regeln under alla fyra rimliga läsningar (Holm-p 0,040–0,059). Körningen med denna
+läsning är den som gäller.
