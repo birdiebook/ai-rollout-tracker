@@ -565,3 +565,92 @@ historik från datasetets massuppladdning 2026-04-02 är daterad därefter. Inga
 | Gren | Kärnserier | Anmärkning |
 |---|---|---|
 | G1 | `g1_epoch_bench_frontier_<valda>`, `g1_epoch_train_compute_frontier`, `g1_epoch_eci_frontier`, `g1_arena_text_top` | ECI spärrad (bakåtfylld). Arena från 2024-01 |
+
+### 2026-11-24 – F1: revideringar av guidance och överraskning mot guidance (förregistrering, före beräkning)
+
+Spår F1 (förslag 2 i `docs/riktning.md`). Två mått på hur bolagens egna planer ändras och hur utfallet hamnar mot dem.
+Inga revideringar, inga överraskningar och inga index har beräknats på verklig data före denna post.
+
+**Vad som var synligt före posten.** Enligt uppdraget lästes `curated/guidance_capex.csv`, så capex-guidancens värden
+var synliga. Fönstret för indexet valdes ur **antalet** uttalanden per kvartal i CSV:n (inte riktning eller storlek):
+0–5 per kvartal 2021Q1–2026Q4, färre än 3 i 14 av 24 kvartal. För TSMC:s capex-budget lästes de matchade meningarna
+och de omatchade kandidatmeningarna för att kontrollera tolkningen (avsnittet nedan). TSMC:s och Nvidias
+intäktsguidance och alla utfall har hämtats men inte lästs.
+
+**Objekt och uttalanden**
+
+| Del | Regel |
+|---|---|
+| Objekt | (bolag, mått, guidad period, definitionskod). Capex ur CSV:n: `company`, `horizon` + `period`, `definition`. TSMC: kvartalsintäkt i angiven valuta (`TSMC_REV_TWD` t.o.m. 2017Q2, `TSMC_REV_USD` från 2017Q3) och årets capex-budget (`TSMC_CAPEX_USD`). Nvidia: kvartalsintäkt (`nvda_guid_rev_mid`), kvartal från 2017Q2 (granskade i R5, som i B3). Marginaler och växelkurs ingår inte |
+| Kedjor | Inom ett objekt hålls siffror (point, range, approx; mittpunkten, för approx och point värdet), lägsta gränser (min) och riktningar per `direction_base` isär. Bara uttalanden i samma kedja jämförs |
+| Uttalande | Capex ur CSV:n: varje rad, med `known_from` = `filed`. En rad som upprepar förra värdet i ett senare dokument är alltså ett uttalande. TSMC och Nvidia: varje vintage i observationstabellen. Där ger en upprepning ingen vintage |
+| Definitionsbrott | En rad med ett dokumenterat brott mot föregående rad i samma objekt startar ett nytt objekt. Listan är låst här: `msft-29` (R5-F14, smalare bas för `MSFT_CAPEX_INCL_FL` från samtalet 2026-07-29). Den utökas bara med en ny post |
+
+**Revidering**
+
+- En **revidering** är ett uttalande i en kedja som redan har ett tidigare uttalande, minst 7 dagar efter det. Ett
+  uttalande inom 7 dagar räknas som samma händelse: ingen revidering, men det blir kedjans jämförelsevärde.
+- **Storlek** (siffror och lägsta gränser) = 100 × (ln nytt värde − ln förra värdet). **Uppåt** om storleken ≥ 1,
+  **nedåt** om den ≤ −1, annars **oförändrad** (dödband |storlek| < 1).
+- **Riktning** (kodade kvalitativa besked): koden jämförs med förra koden. Högre är uppåt, lägre nedåt, samma är
+  oförändrad. Ingen storlek.
+- **Ingen revidering:** det första uttalandet i en kedja. TSMC:s och Nvidias kvartalsguidance, som ges en gång per
+  kvartal, är alltså ett nytt objekt. Bara en senare vintage för samma kvartal (en uppdatering mitt i kvartalet, eller
+  2015Q4:s preliminära intervall som ersattes) är en revidering. Den första siffran efter bara riktningar är inte heller
+  en revidering, och inte heller en siffra med en ny definitionskod (till exempel Amazons 220 mdr som `AMZN_CASH_CAPEX`
+  efter 200 mdr som `AMZN_CAPEX_UNSPEC`).
+- **Varför upprepningar räknas för capex:** som i PMI ger ett oförändrat besked 0,5. Ett bolag som i en ny rapport står
+  fast vid sin plan har gjort ett val. CSV:n har en rad per rapporttillfälle. TSMC:s och Nvidias kvartalsguidance har
+  inget sådant tillfälle, och TSMC upprepar sedan 2016 inte capex-budgeten i 6-K.
+
+**Revideringsindex**
+
+- **D = (antal uppåt + 0,5 × antal oförändrade) / antal**, alla bolag och mått sammanslagna, efter kalenderkvartalet
+  för `known_from`. Två fönster: kvartalet, och kvartalet med de tre föregående (rullande 4 kvartal).
+- **Huvudmått: rullande 4 kvartal.** Skälet är antalet per kvartal ovan. Kvartalsindexet redovisas bredvid.
+- Med **n < 3** finns inget index, men n redovisas. Medianstorleken räknas över revideringar med storlek, och deras
+  antal redovisas.
+- **Period:** från 2020Q3, när den kurerade capex-filen börjar (dokument från 2020-07). TSMC:s revideringar före dess
+  finns i händelsetabellen och i antalet per bolag och år, men i ingen indexperiod.
+- **Versioner:** en ny version vid varje händelse i kvartalet som ändrar antalen eller medianen, och en vid kvartalets
+  sista dag om kvartalet ännu saknar version och dagen har passerat. `known_from` = det datumet.
+
+**Överraskning mot guidance**
+
+| Bolag | Utfall U (första versioner) | Guidance G | Från |
+|---|---|---|---|
+| TSMC, kvartalsintäkt | summan av kvartalets tre månader i `tsmc_revenue_m` (NT$), känd när den sista månaden är känd | N2:s B2-regel (`n2.quarter_guidance`): NT$-mittpunkten t.o.m. 2017Q2, US$-mittpunkten × antagen växelkurs från 2017Q3 | 2006Q2 |
+| Nvidia, kvartalsintäkt | `rev_nvda` | `nvda_guid_rev_mid` | 2017Q2 |
+| Meta, capex för kalenderåret | `capex_meta` + `fin_lease_meta`, årets fyra kvartal | mittpunkten för `META_CAPEX_INCL_FL` (range, approx, point) | 2021 |
+| Alphabet, capex för kalenderåret | `capex_googl`, årets fyra kvartal | mittpunkten för `GOOGL_CAPEX` | 2025 |
+
+- **G** = den senaste guidancen som var känd **före** utfallet (as_of dagen före U:s `known_from`).
+  **s = 100 × (ln U − ln G).**
+- **Inte med:** Amazon (guidance netto efter incitament eller utan angiven bas, `capex_amzn` är brutto), Microsoft
+  (inklusive nya finansiella leasingavtal vid start, och kvartalssiffrorna är lägsta gränser), TSMC:s capex-budget
+  (inget utfall i US$ i katalogen) och alla riktningar.
+- **z = s / SD av bolagets egna tidigare överraskningar** (ddof 1), där utfallet var känt före detta utfall. Det krävs
+  minst 4. Inget medelvärde dras av, så en systematisk avvikelse finns kvar i z. Percentilen mot egen historik visar
+  om den är ovanlig.
+- **Överraskningsindex per kalenderkvartal** = medel av de z som är kända. Det krävs minst 2 bolag. Årets capex räknas
+  i årets fjärde kvartal och Nvidia i sitt kalenderkvartal (mittpunktsregeln). En version per komponent som blir känd,
+  med `known_from` = den senaste komponentens (som A5). Antalet redovisas.
+- För TSMC från 2017Q3 innehåller s också avvikelsen från den antagna växelkursen. Det är B2:s bas, och det redovisas
+  så.
+
+**Gruppen "Förväntningar mot utfall"**
+
+- Måtten mäts och visas, men räknas **aldrig** i en grens diffusionsindex, och regimmodellen (G-D) använder dem inte.
+- **Ingen takt.** De mäter redan förändring. Nivå och percentil mot egen historik (versioner kända på beräkningsdagen,
+  minimihistorik som i avsnitt 1: 8 kvartal, 5 år). Ett eget avsnitt `expectations` i månadens ögonblicksbild.
+- Gren i katalogen: revideringsindex och capex-överraskningar G5, intäktsöverraskningar och överraskningsindex G6.
+  Grenen är bara en etikett här.
+
+**TSMC:s capex-budget (deterministisk tolkning, ingen LLM)**
+
+- Källa: samma 6-K som `tsmc_guidance` läser. En strikt meningsform: året och "capital expenditure(s)", "capex" eller
+  "capital budget", ett verb (to be, will be, expected to be, to remain), sedan about, around, approximately, between
+  eller in the range of/between, och ett belopp i US$. Året ska vara inlämningsåret eller nästa år.
+- Andra ordalydelser kodas inte, till exempel "slightly above US$9.5 billion" (2016-10-13) och "near the mid point".
+- Serier `tsmc_guid_capex_lo/hi` (år, MUSD, vintages som övriga TSMC-guidance). Kontrollen av tolkningen gällde
+  meningarnas form, inte revideringarna.
