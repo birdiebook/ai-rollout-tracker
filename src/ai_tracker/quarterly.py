@@ -562,6 +562,10 @@ def _regime_frames(inp: Inputs) -> tuple[pd.DataFrame, pd.DataFrame]:
     return pd.DataFrame(ms_rows), pd.DataFrame(b_rows)
 
 
+def _s(x) -> str | None:
+    return x if isinstance(x, str) and x else None
+
+
 def _p(x) -> float:
     try:
         return float(x)
@@ -576,10 +580,10 @@ def regime(inp: Inputs) -> tuple[list[str], str]:
     qmonths = [m.month for m in inp.months]
     in_q = [month for month, _ in inp.regime if month in qmonths]
     if not in_q:
-        lines += [f"Ögonblicksbilderna för kvartalet har inget regimavsnitt (C4). Regimmodellen ansluts till "
-                  f"ögonblicksbilden först när holdouten är öppnad (`docs/steg2/c4_spec.md`, avsnitt 1), och ett "
-                  f"rekonstruerat månadsläge har inget. Ingen sannolikhet för inbromsning och inget strukturbrott "
-                  f"redovisas för kvartalet, och inget räknas om här.", ""]
+        lines += ["Ögonblicksbilderna för kvartalet har inget regimavsnitt (C4). Regimmodellen ansluts till "
+                  "ögonblicksbilden först när holdouten är öppnad (`docs/steg2/c4_spec.md`, avsnitt 1), och ett "
+                  "rekonstruerat månadsläge har inget. Ingen sannolikhet för inbromsning och inget strukturbrott "
+                  "redovisas för kvartalet, och inget räknas om här.", ""]
         return lines, "Regim: inget regimavsnitt i kvartalets ögonblicksbilder."
     ms_f, b_f = _regime_frames(inp)
     lines += ["Markov-switching per faktorblock (C3:s utjämnade faktorbana) och BOCPD per räknad kärnserie, lagrade i "
@@ -594,7 +598,7 @@ def regime(inp: Inputs) -> tuple[list[str], str]:
             ms_f = rt.reported_states(ms_f.drop(columns=[c for c in ("state", "shift") if c in ms_f]))
         elif "shift" not in ms_f:
             ms_f = ms_f.sort_values(["block", "date"])
-            ms_f["shift"] = [s if p is not None and s != p else None
+            ms_f["shift"] = [s if _s(p) and _s(s) and s != p else None
                              for s, p in zip(ms_f["state"], ms_f.groupby("block")["state"].shift(1))]
         rows, shifts = [], []
         for block in sorted(ms_f["block"].unique(), key=lambda b: (list(BLOCK_LABEL).index(b) if b in BLOCK_LABEL
@@ -607,9 +611,9 @@ def regime(inp: Inputs) -> tuple[list[str], str]:
                     continue
                 r = g.loc[mo]
                 p = r["p_slow"]
-                cells.append(f"{n(p, 2) if math.isfinite(p) else '–'}; {r.get('state') or '–'}"
-                             + ("" if math.isfinite(p) else f" ({r.get('reason') or 'ingen sannolikhet'})"))
-                if r.get("shift"):
+                cells.append(f"{n(p, 2) if math.isfinite(p) else '–'}; {_s(r.get('state')) or '–'}"
+                             + ("" if math.isfinite(p) else f" ({_s(r.get('reason')) or 'ingen sannolikhet'})"))
+                if _s(r.get("shift")):
                     shifts.append(f"{BLOCK_LABEL.get(block, block)}: {r['shift']} från {mo}")
             rows.append([BLOCK_LABEL.get(block, block), *cells])
         lines += table(["Block", *[f"{mo}: P(inbromsning); rapporterat tillstånd" for mo in qmonths]], rows)
@@ -626,8 +630,8 @@ def regime(inp: Inputs) -> tuple[list[str], str]:
         hidden = len(q) - len(shown)
         lines.append(f"- Rapporterade strukturbrott i kvartalet: {n(len(q), 0)}" + (":" if len(shown) else "."))
         for r in shown.sort_values(["month", "branch", "series"]).to_dict("records"):
-            lines.append(f"  - {r['month']}: {r.get('branch', '–')} {name(r['series'], inp)} (`{r['series']}`), "
-                         f"senaste period {r.get('latest_period') or '–'}, P(körlängd ≤ 2) {n(r['p_recent'], 2)}.")
+            lines.append(f"  - {r['month']}: {_s(r.get('branch')) or '–'} {name(r['series'], inp)} (`{r['series']}`), "
+                         f"senaste period {_s(r.get('latest_period')) or '–'}, P(körlängd ≤ 2) {n(r['p_recent'], 2)}.")
         if hidden:
             lines.append(f"- Varav {n(hidden, 0)} i serier som inte visas av licensskäl.")
         news_parts.append(f"{L._plural(len(q), 'rapporterat brott', 'rapporterade brott')}")
@@ -707,7 +711,7 @@ def data_method(inp: Inputs) -> list[str]:
         new = sorted(k for k, f in first.items() if inp.start <= f <= inp.end + pd.Timedelta(days=1))
         shown = [k for k in new if publishable(k, inp)]
         withheld += len(new) - len(shown)
-        lines.append(f"- Nya serier (källor) i observationstabellen, första hämtning i kvartalet: "
+        lines.append("- Nya serier (källor) i observationstabellen, första hämtning i kvartalet: "
                      + (", ".join(f"{name(k, inp)} (`{k}`)" for k in shown) if shown else "inga") + ".")
     else:
         lines.append("- Nya serier i observationstabellen: redovisas inte i en rekonstruerad rapport, eftersom "
@@ -721,7 +725,8 @@ def data_method(inp: Inputs) -> list[str]:
     per = sorted(big.groupby("series").size().items(), key=lambda kv: (-kv[1], kv[0]))
     shown = [(k, c) for k, c in per if publishable(k, inp)]
     withheld += len(per) - len(shown)
-    lines.append(f"- Revideringar som blev kända i kvartalet: {n(len(rev), 0)} redan publicerade värden fick en ny "
+    lines.append(f"- Revideringar som blev kända i kvartalet: "
+                 f"{L._plural(len(rev), 'redan publicerat värde', 'redan publicerade värden')} fick en ny "
                  f"version med annat värde, varav {n(len(big), 0)} i {L._plural(len(per), 'serie', 'serier')} med "
                  f"minst {n(L.REVISION_MIN_PCT, 0)} % (andelar: {n(L.REVISION_MIN_PP, 1)} pe)"
                  + (": " + ", ".join(f"{name(k, inp)} (`{k}`) {n(c, 0)}" for k, c in shown[:REVISION_ROWS])
@@ -742,14 +747,14 @@ def data_method(inp: Inputs) -> list[str]:
                  + (": " + ", ".join(f"{s.branch} {s.label} (`{s.key}`)" for s in ss) + "." if ss else "."))
     lines.append(f"- Serier i katalogen utan data kända per {inp.end.date()}: {n(len(missing), 0)}.")
     rv = reviews(inp)
-    lines.append("- Granskningar daterade i kvartalet (`docs/granskning/`): " + ("" if rv else "inga."))
+    lines.append("- Granskningar daterade i kvartalet (`docs/granskning/`):" + ("" if rv else " inga."))
     lines += [f"  - {x}." for x in rv]
     reg = [f"{d.date()} – {title}" for d, title, _ in sections(inp.docs / "mattregister.md") if in_quarter(d, inp)]
-    lines.append("- Ändringar i måttregistret daterade i kvartalet (`docs/mattregister.md`): " + ("" if reg else "inga."))
+    lines.append("- Ändringar i måttregistret daterade i kvartalet (`docs/mattregister.md`):" + ("" if reg else " inga."))
     lines += [f"  - {x}." for x in reg]
     bl = blocked(inp)
     lines.append("- Blockerade källor enligt källdokumentationen (`docs/kallor/`, rader märkta BLOCKED, läget när "
-                 "rapporten genererades): " + ("" if bl else "inga."))
+                 "rapporten genererades):" + ("" if bl else " inga."))
     lines += [f"  - {x}." for x in bl]
     lines.append("")
     if withheld:
