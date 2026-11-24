@@ -246,6 +246,14 @@
       if (s.deadband != null) { spec.band = [-s.deadband, s.deadband]; spec.bandLabel = 'dödband ±0,25 SD (nu)'; }
       return spec;
     },
+    flowspark: function (fig) {  // flode.html: pace of a key series or a reconciliation, last ten years
+      var key = fig.getAttribute('data-key'), s = null;
+      (DATA.leads || []).forEach(function (l) { (l.series || []).forEach(function (x) { if (x.key === key) s = x; }); });
+      (DATA.reconciliations || []).forEach(function (x) { if (x.key === key) s = x; });
+      if (!s || !s.path || !s.path.pace.some(function (v) { return v != null; })) { fig.remove(); return null; }
+      var time = s.method === 'doubling' || s.method === 'halving';
+      return { spark: true, zero: !time, series: [{ label: 'takt', periods: s.path.periods, values: s.path.pace, color: 'var(--series-1)' }] };
+    },
     nowcast: function (fig) {
       var id = fig.getAttribute('data-id');
       var n = (DATA.nowcasts || []).filter(function (x) { return x.id === id; })[0];

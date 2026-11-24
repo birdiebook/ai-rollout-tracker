@@ -177,3 +177,69 @@ details summary { cursor: pointer; color: var(--link); }
 .letter section { margin-top: 1.25rem; }
 .letter blockquote { margin: 0 0 1rem; }
 .letter h3 { margin-top: 1.1rem; }
+
+/* flow page (flode.html) */
+.flowmap-wrap { background: var(--surface-1); border: 1px solid var(--border); border-radius: 10px; padding: 0.75rem; }
+.flowmap { display: block; width: 100%; height: auto; }
+.flowmap-note { margin: 0.6rem 0 0; }
+.flowmap-v { display: none; max-width: 440px; margin: 0 auto; }
+@media (max-width: 760px) { .flowmap-h { display: none; } .flowmap-v { display: block; } .flowmap-wrap { padding: 0.6rem 0.4rem; } }
+.flowmap .node { fill: var(--surface-0); stroke: var(--border); stroke-width: 1; }
+.flowmap a:hover .node, .flowmap a:focus .node { stroke: var(--text-secondary); }
+.flowmap .node-code { fill: var(--text-primary); font-weight: 700; font-size: 13px; }
+.flowmap .node-name { fill: var(--text-primary); font-size: 12px; }
+.flowmap .node-chips { fill: var(--text-secondary); font-size: 11px; }
+.flowmap .bar { fill: var(--neutral-mark); }
+.flowmap .bar.st-accel { fill: var(--series-1); }
+.flowmap .bar.st-brake { fill: var(--series-2); }
+.flowmap .bar.st-few { fill: var(--border); }
+.flowmap .flowline { stroke: var(--text-muted); stroke-width: 1.5; }
+.flowmap .arrowhead { fill: var(--text-muted); }
+.flowmap .arc { fill: none; stroke: var(--neutral-mark); stroke-width: 1.5; }
+.flowmap .arc.hidden { stroke-dasharray: 3 3; }
+.flowmap .arc-label { fill: var(--text-secondary); font-size: 11px; paint-order: stroke; stroke: var(--surface-1); stroke-width: 4px; stroke-linejoin: round; }
+.flowmap .pill { fill: var(--surface-1); stroke: var(--border); }
+.flowmap-v .node-name { font-size: 13.5px; }
+.flowmap-v .node-code { font-size: 13.5px; }
+.flowmap-v .node-chips, .flowmap-v .arc-label { font-size: 12px; }
+.flow { margin: 1rem 0 1.5rem; }
+.fl-lead { background: var(--surface-1); border: 1px solid var(--border); border-radius: 10px; padding: 0.9rem 1rem; scroll-margin-top: 1rem; }
+.fl-lead.st-accel { border-left: 4px solid var(--series-1); }
+.fl-lead.st-brake { border-left: 4px solid var(--series-2); }
+.fl-lead.st-stable { border-left: 4px solid var(--neutral-mark); }
+.fl-lead.st-few { border-left: 4px dashed var(--border); }
+.lead-head { display: flex; gap: 0.75rem; align-items: flex-start; }
+.lead-head h2 { margin: 0; font-size: 1.2rem; }
+.lead-code { font-weight: 700; color: var(--text-muted); font-size: 1.2rem; line-height: 1.25; min-width: 1.8em; }
+.lead-states { list-style: none; padding: 0; margin: 0.6rem 0; display: grid; gap: 0.35rem; }
+.lead-states li { display: flex; flex-wrap: wrap; align-items: center; gap: 0.3rem 0.6rem; }
+.index-sm { font-weight: 650; font-variant-numeric: tabular-nums; }
+.lead-part { margin-top: 0.75rem; }
+.lead-part h3 { font-size: 0.95rem; color: var(--text-secondary); margin: 0 0 0.4rem; }
+.fseries-grid, .frecons { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 10px; }
+.fseries, .frecon, .fnowcast { border: 1px solid var(--border); border-radius: 8px; padding: 0.6rem 0.7rem; background: var(--surface-0); min-width: 0; }
+.fseries h4, .fnowcast h4 { font-size: 0.95rem; margin: 0 0 0.2rem; }
+.fseries .key, .frecon .key { color: var(--text-muted); font-size: 0.8rem; margin-bottom: 0.3rem; }
+.fseries .stats, .frecon .stats { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); margin: 0.3rem 0; }
+.fseries .stat dd .muted { display: block; font-size: 0.75rem; }
+.fnowcast + .fnowcast { margin-top: 8px; }
+.fnowcast p { margin-bottom: 0.4rem; }
+figure.flowspark { height: auto; margin: 0.2rem 0; }
+figure.flowspark figcaption { font-size: 0.75rem; }
+figure.flowspark svg { display: block; width: 100%; height: 44px; }
+.link { display: flex; gap: 0.75rem; padding: 0 0 0 1.4rem; }
+.link-arrow { flex: none; width: 2px; background: var(--text-muted); position: relative; min-height: 28px; margin: 0 0 6px; }
+.link-arrow::after { content: ""; position: absolute; bottom: -6px; left: -5px; border: 6px solid transparent; border-top-color: var(--text-muted); border-bottom: 0; }
+.link-body { flex: 1; min-width: 0; padding: 0.6rem 0 0.9rem; }
+.link-body > p { margin-bottom: 0.4rem; }
+.frecon-head { margin: 0 0 0.2rem; }
+.span-tag { font-size: 0.75rem; border: 1px solid var(--border); border-radius: 999px; padding: 0 0.45rem; color: var(--text-secondary); white-space: nowrap; }
+.frecon .dir { font-weight: 700; }
+@media (max-width: 480px) { .fl-lead { padding: 0.75rem; } .link { padding-left: 0.9rem; } }
+
+/* calibration (prognoser.html) */
+.calib-wrap { display: grid; grid-template-columns: minmax(0, 320px) minmax(0, 1fr); gap: 12px; align-items: start; }
+@media (max-width: 760px) { .calib-wrap { grid-template-columns: minmax(0, 1fr); } }
+.calib-fig svg { display: block; width: 100%; max-width: 320px; height: auto; }
+svg.calib .cband { fill: var(--band); stroke: var(--series-1); stroke-opacity: 0.4; }
+svg.calib .cdot { fill: var(--series-2); stroke: var(--surface-1); stroke-width: 2; }

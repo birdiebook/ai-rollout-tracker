@@ -10,6 +10,7 @@ from __future__ import annotations
 import json
 import math
 import os
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -19,6 +20,8 @@ from ai_tracker import catalog, config, evaluation, observations, pipeline
 from ai_tracker.nowcast import intervals, n1, n3, n4, n5, n6
 from ai_tracker.nowcast import n2
 from ai_tracker.nowcast import n2 as n2_live
+from ai_tracker.site import flow as F
+from ai_tracker.site import probabilities as P
 from ai_tracker.state import branch as BR
 from ai_tracker.state import register as R
 from ai_tracker.state import snapshot as S
@@ -60,6 +63,7 @@ NOWCAST_INFO = {
             "V1": "B1 + bridge (OLS) på import från Taiwan och datacenterbyggande",
             "V2": "som V1, med ridge",
             "B2": "bolagens guidance (Meta, Alphabet), annars B1",
+            "B3": "B2 korrigerad för bolagens systematiska avvikelse mot sin guidance (spår C2)",
         },
     },
     "n2": {
@@ -72,6 +76,7 @@ NOWCAST_INFO = {
             "B1": "säsongsnaiv tillväxt",
             "V1": "B1 + ridge på import från Taiwan",
             "B2": "TSMC:s kvartalsguidance utslagen per månad",
+            "B3": "B2 korrigerad för systematisk avvikelse mot guidance (spår C2, huvudmodell efter granskning R7)",
         },
     },
     "n3": {
@@ -442,7 +447,7 @@ def next_origin(nowcast: str, today, root: Path, horizon_days: int = 200) -> tup
     return None
 
 
-def nowcasts(ctx: Context, forecasts_dir: Path, today) -> dict:
+def nowcasts(ctx: Context, forecasts_dir: Path, today, calibration: dict | None = None) -> dict:
     forecasts_dir = Path(forecasts_dir)
     try:
         scores = pipeline.score(forecasts_dir, ctx.table)
@@ -491,6 +496,7 @@ def nowcasts(ctx: Context, forecasts_dir: Path, today) -> dict:
             "coverage": coverage, "interval_levels": [intervals.level_key(L) for L in intervals.LEVELS]
             if intervals.ENABLED else [],
             "history": _target_history(target, ctx, today),
+            "backtest_calibration": (calibration or {}).get(sub),
         })
     return {"nowcasts": out}
 
@@ -577,15 +583,21 @@ def build_meta(rec: Record) -> dict:
 
 def assemble(ctx: Context | None = None, snapshots_dir: Path | None = None, forecasts_dir: Path | None = None,
              today=None, history_from: str = HISTORY_FROM, letters_dir: Path | None = None,
-             reports_dir: Path | None = None) -> dict:
-    """Every JSON document of the site: {"oversikt": ..., "gren/G1": ..., "prognoser": ..., "metod": ...,
-    "manadsbrev": ..., "kvartalsrapport": ..., "build": ...}."""
+             reports_dir: Path | None = None, calibration: dict | None = None) -> dict:
+    """Every JSON document of the site: {"oversikt": ..., "gren/G1": ..., "flode": ..., "prognoser": ...,
+    "metod": ..., "manadsbrev": ..., "kvartalsrapport": ..., "build": ...}. `calibration` (nowcast id -> backtest
+    calibration, see site.probabilities) is computed from the table when not given."""
     ctx = ctx or Context(observations.load())
     today = pd.Timestamp(today).normalize() if today is not None else utc_today()
     rec = Record(ctx, Path(snapshots_dir or S.SNAPSHOTS), today, history_from)
     branches = {code: branch_view(code, rec) for code in catalog.BRANCHES}
-    docs = {"oversikt": overview(rec, branches), "prognoser": nowcasts(ctx, Path(forecasts_dir or
-                                                                                  config.REPO / "forecasts"), today),
+    if calibration is None:
+        calibration = P.backtest_calibration(ctx.table) if intervals.ENABLED else {}
+    prog = nowcasts(ctx, Path(forecasts_dir or config.REPO / "forecasts"), today, calibration)
+    prog["regime"] = P.regime_view(rec.live, lambda k: publishable(k, ctx))
+    prog["record"] = rec.meta()
+    docs = {"oversikt": overview(rec, branches), "flode": F.flow_view(rec, branches, prog, calibration, sys.modules[__name__]),
+            "prognoser": prog,
             "metod": {**method(ctx), "reconciliations": reconciliation_view(rec)}, "manadsbrev": letters(Path(letters_dir or config.REPO / "docs" / "manadsbrev")),
             "kvartalsrapport": reports(Path(reports_dir or config.REPO / "docs" / "kvartalsrapport")),
             "build": build_meta(rec)}
