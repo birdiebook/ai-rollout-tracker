@@ -379,3 +379,15 @@ Johannes valde rekommendationerna:
   overifierat Mistral-pris. G2 har kvar en räknad kärnserie. Rättningsspåret X5 tar R-1–R-8. Viktigast är ett
   läckage i `arena.py`: omladdade tavlor (2026-07-07) var daterade till första commit, och det rör även G1:s
   `g1_arena_text_top`. B från 2024-09 prövas först efter rättningen och en ny granskning.
+
+## 2026-11-24 – P1: avskrivningar och anläggningstillgångar ur XBRL
+
+- 26 katalogserier i G5 (`dep_*`, `dep_ppe_*`, `ppe_net_*`, `ppe_gross_*`, tre hyp4-summor och `dep_aws`), inte
+  kärnserier. Taggvalen förregistrerades före beräkningen. Källa och kontroller: `docs/kallor/sec_avskrivningar.md`.
+- **En definition per serie.** När en rad byter innehåll utan omräkning börjar serien vid den nya definitionen (Amazon
+  2019, Alphabet 2023), i stället för att äldre perioder skarvas på. Omräkningar över 2 % deklareras per serie, och en
+  odeklarerad stoppar hämtningen.
+- **Brutto = netto + ackumulerade avskrivningar** ur samma inlämning, eftersom bruttotaggar ibland är delsummor. Amazon
+  och Oracle saknar brutto per kvartal, så `ppe_gross_hyp4` finns inte.
+- **`dep_msft` är ingen ren avskrivningsserie.** Microsofts rad innehåller "other", och omklassificeringen 2026 räknade
+  bara om kvartalen från 2024Q4. P2b och P3 bör använda `dep_ppe_*` där de räcker, och annars redovisa förbehållet.
