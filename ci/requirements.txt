@@ -3,6 +3,7 @@ numpy==2.5.3
 pandas==3.0.5
 requests==2.34.2
 pyarrow==26.0.1
+scipy==1.18.1
 duckdb==2.0.1
 openpyxl==3.1.5
 PyYAML==6.0.3
