@@ -59,8 +59,8 @@ def fetch(code: str, file: str = "NipaDataQ.txt") -> pd.Series:
 # Section<N>all_xls.xlsx. The directory list comes from the archive page's own JSON endpoint. Files are xlsx from
 # the 2017Q3 advance estimate (2017-10-27); earlier releases are .xls only and are not read (no xls reader in the
 # project). known_from = "Data published <date>" in the table header, not the directory name (the upload day): the
-# directory is mostly 1-3 days after publication, but before it for 2025Q3 (directory 2025-12-22, published
-# 2025-12-23) and 2023Q1 Third (directory 2023-06-20, published 2023-06-29).
+# directory is 0-4 days after publication in 105 of 107 releases, but before it for 2025Q3 (directory 2025-12-22,
+# published 2025-12-23) and 2023Q1 Third (directory 2023-06-20, published 2023-06-29).
 # The newest release is also read from apps.bea.gov/national/Release/XLS/Survey/ in case the archive lags.
 # A missing file is answered with HTTP 200 and an HTML page ("BEA: Data Tools"), so content is checked first.
 # Archived releases do not change, so a small extract per release is cached under <RAW_DIR>/bea/vintages/ and
@@ -71,7 +71,7 @@ ARCHIVE_FILES = "https://apps.bea.gov/HistData/Files/Releases/"
 CURRENT_FILES = "https://apps.bea.gov/national/Release/XLS/Survey/"  # holds xlsx despite the name
 NIPA_ARCHIVE_ID = 7  # "National Accounts (NIPA)" in the archive's tree (HistMainId)
 FIRST_XLSX = pd.Timestamp("2017-10-27")
-MAX_DIR_GAP_DAYS = 14  # published vs directory date: up to 3 days in 2017-2026, 9 for 2023Q1 Third; more = wrong file
+MAX_DIR_GAP_DAYS = 14  # published vs directory date: up to 4 days in 2017-2026, 9 for 2023Q1 Third; more = wrong file
 # NIPA series code -> (section workbook, table prefix of the quarterly sheet(s) that hold it). Codes are BEA's own
 # and stable across vintages; line numbers and table names (4.2.5 -> 4.2.5A/B) are not.
 ARCHIVE_CODES = {
@@ -289,7 +289,14 @@ def wide_frame(vintages: dict[pd.Timestamp, dict[str, pd.Series]], code: str) ->
 def archive_rows(codes: str | tuple[str, ...],
                  vintages: dict[pd.Timestamp, dict[str, pd.Series]] | None = None) -> pd.DataFrame:
     """Release-dated rows (period, value, known_from) for one code, or for the sum of several codes taken from
-    the same vintage (missing if any part is missing in that vintage)."""
+    the same vintage (missing if any part is missing in that vintage).
+
+    Only periods of the newest vintage are kept (R12 R-2). A comprehensive update can drop the oldest periods when it
+    rebases chained dollars (B852RX: 1999Q1- in 2009 $, 2002Q1- from 2018-07-27 in 2012 $, 2007Q1- from 2023-09-28 in
+    2017 $). Kept, a dropped period would stay in every later view with an old base year next to rebased periods.
+    The rows are marked complete (attrs), so observations.new_rows refuses a fetch that no longer has a stored period
+    and the series is rebuilt on purpose.
+    """
     from ai_tracker import observations  # lazy: observations -> catalog -> series modules import this module
 
     vintages = vintages if vintages is not None else all_vintages()
@@ -297,4 +304,9 @@ def archive_rows(codes: str | tuple[str, ...],
     wide = parts[0]
     for p in parts[1:]:
         wide = wide.add(p, fill_value=None)
-    return observations.vintage_rows(wide.round(6))
+    held = [d for d in wide.columns if wide[d].notna().any()]
+    if held:
+        wide = wide[wide[max(held)].notna()]
+    rows = observations.vintage_rows(wide.round(6))
+    rows.attrs[observations.COMPLETE] = True
+    return rows

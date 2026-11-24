@@ -4,7 +4,8 @@ Fixtures only, no network. Dates and values in the fixtures were read from prima
 release archive (apps.bea.gov/histdata) and news-release archive, BLS's news-release archive, the CPI news releases,
 the PPI news release 2002-02-15 and the PPI Detailed Reports (Table 11), and ALFRED vintages of CUSR0000SEHF01.
 
-Passing tests pin properties the review verified. Strict xfails mark confirmed defects and flip when they are fixed.
+Passing tests pin properties the review verified. The six strict xfails for R-1, R-2, R-4, R-5, R-6 and R-8 flipped
+when track X9 fixed the defects (branch auto14/x9-makro); their assertions are unchanged.
 """
 
 from __future__ import annotations
@@ -120,8 +121,6 @@ REBASED = {
 }
 
 
-@pytest.mark.xfail(strict=True, reason="R12 R-2: us_imp_computers_real keeps periods that a rebased release dropped, "
-                   "so the latest view mixes chained 2009, 2012 and 2017 dollars (2006Q4 in 2012 $, 2007Q1 in 2017 $)")
 def test_real_computer_imports_show_only_periods_of_the_newest_vintage(monkeypatch):
     monkeypatch.setattr(bea_nipa, "_VINTAGES", REBASED)
     rows = catalog.by_key()["us_imp_computers_real"].fetch()
@@ -213,9 +212,6 @@ def _bls_fetch(monkeypatch, page: str, flat: str, headers=None):
     monkeypatch.setattr(http, "get", fake_get)
 
 
-@pytest.mark.xfail(strict=True, reason="R12 R-1: PPI for data processing (SIC 7374, now NAICS 518210) was introduced "
-                   "with the January 2002 release (2002-02-15, 'newly introduced PPI'); the m+4 rule dates 2000-12.."
-                   "2001-08 from 2001-05-11, before the index was published")
 def test_ppi_data_processing_not_dated_before_the_index_was_introduced(monkeypatch):
     page = _archive("ppi", [("January 2002", "02152002"), ("April 2001", "05112001")])
     flat = ("series_id\tyear\tperiod\tvalue\tfootnote_codes\n"
@@ -226,8 +222,6 @@ def test_ppi_data_processing_not_dated_before_the_index_was_introduced(monkeypat
     assert rows["known_from"].min() >= T("2002-02-15")
 
 
-@pytest.mark.xfail(strict=True, reason="R12 R-5: the archive lists releases from reference month 1994-01, but file "
-                   "names before 1999-05 have six digits (cpi_051499.txt) and are skipped; such months get a later date")
 def test_news_archive_reads_six_digit_release_names():
     page = ('<ul><li><a href="/news.release/archives/cpi_06161999.htm">May 1999 Consumer Price Index</a></li>\n'
             '<li>April 1999 Consumer Price Index (<a aria-label="April 1999 Consumer Price Index TXT" '
@@ -236,8 +230,6 @@ def test_news_archive_reads_six_digit_release_names():
     assert cal.get(P("1999-04", "M")) == T("1999-05-14")
 
 
-@pytest.mark.xfail(strict=True, reason="R12 R-6: with no Last-Modified header, a month that is in the file but not yet "
-                   "in the archive list is dated to the previous release (latent leak)")
 def test_month_beyond_the_archive_list_is_never_dated_to_an_earlier_release(monkeypatch):
     page = _archive("cpi", [("September 2026", "10142026")])
     flat = ("series_id\tyear\tperiod\tvalue\tfootnote_codes\n"
@@ -264,15 +256,11 @@ def test_october_2025_alone_is_an_accepted_gap():
     assert warehouse.run_checks(warehouse.connect(t, [spec]))["no_gaps"].empty
 
 
-@pytest.mark.xfail(strict=True, reason="R12 R-4: KNOWN_GAPS exempts the whole CPI series, so a second, unexplained "
-                   "gap (here 2026-01) is hidden; the exemption should list the period 2025-10 only")
 def test_a_second_cpi_gap_is_still_reported():
     spec, t = _cpi_table(["2025-09", "2025-11", "2025-12", "2026-02"])
     assert len(warehouse.run_checks(warehouse.connect(t, [spec]))["no_gaps"]) == 1
 
 
-@pytest.mark.xfail(strict=True, reason="R12 R-8 (note): CONTACT_HOSTS is a bare suffix match, so a look-alike host "
-                   "such as notbls.gov would also get the contact identity")
 def test_contact_identity_only_for_the_named_domains(monkeypatch):
     monkeypatch.setenv("SEC_USER_AGENT", "ai-rollout-tracker contact@example.org")
     assert http.user_agent("download.bls.gov") == "ai-rollout-tracker contact@example.org"

@@ -8,7 +8,9 @@ Fetch contract. `Spec.fetch()` returns either
 - a pd.DataFrame with columns period, value, known_from: for release-dated sources where each value
   carries its real release date (e.g. SEC filings with their `filed` date). Then known_from comes
   from the source, not from `lag_days`. An optional `source` column labels rows (default "release";
-  "backfill" for rows dated by period end + lag because no dated document exists).
+  "backfill" for rows dated by period end + lag because no dated document exists). A frame with
+  attrs[observations.COMPLETE] = True holds every period the source has now: a fetch that lacks a stored
+  period is refused (the source dropped it, e.g. a rebased BEA table), so the series is rebuilt on purpose.
 
 Series live in ai_tracker/series/<source>.py (SPECS list), discovered automatically.
 `python -m ai_tracker.catalog` prints the catalog as Markdown.

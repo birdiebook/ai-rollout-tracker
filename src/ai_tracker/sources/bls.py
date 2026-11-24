@@ -6,13 +6,13 @@ no api.bls.gov quota are used.
 
 Flat files (tab separated): series_id, year, period (M01-M12, M13 = annual average), value, footnote_codes.
 Each file holds only the current vintage of every series. Release dates: www.bls.gov/bls/news-release/<cpi|ppi>.htm
-lists every news release since reference month 1999-05 as "<Month> <YYYY> Consumer Price Index" with the release date in the file
-name (cpi_MMDDYYYY.htm). A reference month without its own release ("Not published because of 2025 lapse ...")
-is absent from that list.
+lists every news release since reference month 1994-01 as "<Month> <YYYY> Consumer Price Index" with the release date in
+the file name: cpi_MMDDYYYY.htm, and cpi_MMDDYY.txt before reference month 1999-05. A reference month without its own
+release ("Not published because of 2025 lapse ...") is absent from that list.
 
-Dating (docs/mattregister.md, 2026-11-24 M1). The file is the vintage of its latest release:
-file date = max(newest release in the archive list, the file's Last-Modified). Values are dated back only as far as
-BLS's own revision rules allow:
+Dating (docs/mattregister.md, 2026-11-24 M1, corrected after R12). The file is the vintage of its latest release:
+file date = max(newest release in the archive list, the file's Last-Modified); with no Last-Modified and a month newer
+than the archive list, the fetch date. Values are dated back only as far as BLS's own revision rules allow:
 - cpi_nsa: CPI-U is final when released -> the reference month's release date ("release"). R-footnoted values
   (revised) get the file date.
 - cpi_sa: seasonal factors are revised each February (January CPI release) for the previous 5 years -> a value
@@ -21,6 +21,7 @@ BLS's own revision rules allow:
 - ppi: every PPI can be revised monthly for 4 months after original publication -> P (preliminary) values get the
   file date; final values the release date of reference month m+4.
 A month without its own release takes the next release; months before the archive take its first release.
+No value is dated before its series was first published (FIRST_PUBLISHED, e.g. PPI 518210 from 2002-02-15).
 Rule-dated rows are "backfill"; later changes become revisions dated by the fetch (observations.new_rows).
 
 Licence (www.bls.gov/opub/copyright-information.htm): "You are free to use our public domain material without
@@ -32,7 +33,7 @@ from __future__ import annotations
 import html as htmllib
 import io
 import re
-from datetime import datetime
+from datetime import date, datetime
 from email.utils import parsedate_to_datetime
 
 import pandas as pd
@@ -56,6 +57,13 @@ MONTHLY_FROM = {"CUUR0000SEHF01": pd.Period("1952-01", freq="M")}
 SA_YEARS = 5  # CPI seasonally adjusted data are revised for the previous 5 years each February
 PPI_REVISION_MONTHS = 4  # PPIs can be revised monthly for 4 months after original publication
 MAX_RELEASE_LAG_DAYS = 120  # a release more than this after its reference month is a parsing error
+# First publication of a series, where it is later than the dating rules give: known_from >= this date (R12 R-1).
+FIRST_PUBLISHED = {
+    # PPI release 2002-02-15 (January 2002): "7374 Data processing services*", "* denotes newly introduced PPI"; the
+    # technical note of the 2026-11-13 release lists "Data processing services 7374, January 2002". The file has values
+    # from 2000-12 (base 12/00=100), which the m+4 rule alone would date from 2001-05-11.
+    "PCU518210518210": pd.Timestamp("2002-02-15"),
+}
 
 
 # ------------------------------------------------------------------ parsers (pure)
@@ -95,11 +103,11 @@ def parse_news_archive(page_html: str, program: str) -> pd.Series:
     for item in re.findall(r"<li>(.*?)</li>", page_html, flags=re.S):
         text = re.sub(r"\s+", " ", htmllib.unescape(re.sub(r"<[^>]+>", " ", item))).strip()
         m = re.match(rf"([A-Z][a-z]+) (\d{{4}}) {name}\b", text)
-        link = re.search(rf"{program}_(\d{{8}})\.(?:htm|pdf|txt)", item)
+        link = re.search(rf"{program}_(\d{{8}}|\d{{6}})\.(?:htm|pdf|txt)", item)
         if not m or not link:
             continue  # navigation, or "Not published because of ..."
         month = pd.Period(datetime.strptime(f"{m.group(1)} {m.group(2)}", "%B %Y"), freq="M")
-        released = pd.Timestamp(datetime.strptime(link.group(1), "%m%d%Y"))
+        released = _release_name_date(link.group(1))
         lag = (released - month.end_time.normalize()).days
         if not 0 < lag <= MAX_RELEASE_LAG_DAYS:
             raise ValueError(f"BLS {program}: release {released.date()} for {month} is {lag} days after month end")
@@ -109,6 +117,15 @@ def parse_news_archive(page_html: str, program: str) -> pd.Series:
     if not out:
         raise ValueError(f"BLS {program}: no releases on the archive page")
     return pd.Series(out).sort_index()
+
+
+def _release_name_date(digits: str) -> pd.Timestamp:
+    """MMDDYYYY, or MMDDYY in the names before reference month 1999-05 (cpi_051499.txt; only years 94-99 occur)."""
+    if len(digits) == 6:
+        if not 94 <= int(digits[4:]) <= 99:
+            raise ValueError(f"BLS: six-digit release name {digits} outside 1994-1999")
+        digits = digits[:4] + "19" + digits[4:]
+    return pd.Timestamp(datetime.strptime(digits, "%m%d%Y"))
 
 
 def release_date(month: pd.Period, calendar: pd.Series) -> tuple[pd.Timestamp | None, bool]:
@@ -125,8 +142,12 @@ def release_date(month: pd.Period, calendar: pd.Series) -> tuple[pd.Timestamp | 
     return (later.min(), False) if len(later) else (None, False)
 
 
-def date_rows(df: pd.DataFrame, rule: str, calendar: pd.Series, file_date: pd.Timestamp) -> pd.DataFrame:
-    """Columns period, value, known_from, source for one series' current vintage (see module docstring)."""
+def date_rows(df: pd.DataFrame, rule: str, calendar: pd.Series, file_date: pd.Timestamp,
+              first_published: pd.Timestamp | None = None) -> pd.DataFrame:
+    """Columns period, value, known_from, source for one series' current vintage (see module docstring).
+
+    `first_published`: no value is dated before it (the series' first publication, FIRST_PUBLISHED).
+    """
     out = []
     for period, value, notes in df[["period", "value", "footnotes"]].itertuples(index=False):
         first, own = release_date(period, calendar)
@@ -152,6 +173,8 @@ def date_rows(df: pd.DataFrame, rule: str, calendar: pd.Series, file_date: pd.Ti
             src = "backfill"
         else:
             raise ValueError(f"unknown dating rule {rule!r}")
+        if first_published is not None and kf < first_published:
+            kf, src = first_published, "backfill"
         out.append((period, value, kf, src))
     return pd.DataFrame(out, columns=["period", "value", "known_from", "source"])
 
@@ -183,12 +206,22 @@ def _flat(file: str) -> tuple[str, pd.Timestamp | None]:
     return _CACHE[file]
 
 
+def vintage_date(calendar: pd.Series, modified: pd.Timestamp | None, newest: pd.Period,
+                 today: pd.Timestamp) -> pd.Timestamp:
+    """Date of the vintage in a flat file: max(newest listed release, Last-Modified). Without Last-Modified, a file
+    holding a month the archive list does not have yet is dated by the fetch (`today`), never by an earlier release."""
+    if modified is None and newest > calendar.index.max():
+        return max(calendar.max(), today)
+    return max(d for d in (calendar.max(), modified) if d is not None)
+
+
 def release_rows(series_id: str) -> pd.DataFrame:
     program, file, rule = SERIES[series_id]
     text, modified = _flat(file)
     cal = calendar(program)
-    file_date = max(d for d in (cal.max(), modified) if d is not None)
     df = parse_flat(text, [series_id])[series_id]
     if series_id in MONTHLY_FROM:
         df = df[df["period"] >= MONTHLY_FROM[series_id]].reset_index(drop=True)
-    return date_rows(df, rule, cal, file_date)
+    today = pd.Timestamp(date.today())
+    return date_rows(df, rule, cal, vintage_date(cal, modified, df["period"].max(), today),
+                     FIRST_PUBLISHED.get(series_id))

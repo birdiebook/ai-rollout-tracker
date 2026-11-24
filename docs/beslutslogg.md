@@ -392,3 +392,18 @@ Johannes valde rekommendationerna:
   BLS arkiv över nyhetsreleaser, alltså primärkällan. KPI SA och PPI dateras efter BLS egna revideringsregler.
 - **PPI för databehandling och hosting i G4**, eftersom PPI mäter priset som moln- och hostingbolagen får.
 - Inga kärnserier ändras. Detaljer: [kallor/makro_bea_bls.md](kallor/makro_bea_bls.md).
+
+## 2026-11-24 – Spår X9: rättningar i M1 efter granskning R12
+
+- **R-1 och R-2 är rättade**, och serierna är omräknade. PPI 518210 dateras aldrig före indexets införande
+  2002-02-15 (9 värden flyttas). BEA-serierna visar bara perioder som finns i den senaste vintage, så
+  `us_imp_computers_real` blandar inte längre basår och börjar 2007Q1. Om en ny release tar bort en lagrad period
+  stoppar hämtningen, och serien byggs om medvetet.
+- **Rättelse av premissen i M1-posten ovan:** "BEA publicerar inget BNP-bidrag för datorimport" var ofullständigt.
+  BEA publicerar `BB01RY` "Final sales of computers" (tabell 1.2.2 rad 17), ett nettobidrag för datorer efter handel,
+  men inte för programvara. Ingen serie läggs till. Ägaren avgör om `BB01RY` ska förregistreras.
+- **BLS-arkivet läses från 1994-01** (sexsiffriga filnamn). Värden före 1994 får arkivets första releasedag enligt
+  den registrerade regeln, alltså 5 år tidigare än förut. Den delen av historiken är inte verifierad (KPI SA före 1994,
+  PPI för kommersiell el före 1990). Ingen analys använder den.
+- Undantag för luckor gäller per period (`KNOWN_GAP_PERIODS`), och kontaktidentiteten skickas bara till sec.gov och
+  bls.gov med underdomäner. Detaljer: daterad post i [mattregister.md](mattregister.md).

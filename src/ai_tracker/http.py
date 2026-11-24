@@ -34,7 +34,8 @@ CONTACT_HOSTS = ("sec.gov", "bls.gov")  # refuse clients without a declared cont
 
 
 def user_agent(host: str) -> str:
-    if host.endswith(CONTACT_HOSTS):
+    host = host.lower().split(":")[0]  # netloc may carry a port
+    if any(host == d or host.endswith("." + d) for d in CONTACT_HOSTS):  # the domain or a subdomain, not notbls.gov
         # The project's generic client identity with a contact address, from .env / Actions secret; never in the repo
         return config.require("SEC_USER_AGENT")
     return DEFAULT_UA

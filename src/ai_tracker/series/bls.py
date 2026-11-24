@@ -32,17 +32,16 @@ SERIES = [  # key, branch, BLS id, label, unit, question, note
      "Stiger eller faller priset som moln- och hostingbolagen tar ut?",
      "Revideras månadsvis i fyra månader: preliminära värden dateras till filens datum, slutliga till release m+4."),
     ("us_ppi_elec_commercial_m", "G7", "PCU22112222112242",
-     "PPI eldistribution, kommersiella kunder", "index, ej säsongsrensat",
+     "PPI eldistribution, kommersiella kunder", "index dec 1990=100, ej säsongsrensat",
      "Hur snabbt stiger elpriset för kommersiella kunder, där de flesta datacenter finns?",
      "Revideras månadsvis i fyra månader: preliminära värden dateras till filens datum, slutliga till release m+4."),
 ]
 
-# no_gaps exemptions (warehouse.KNOWN_GAPS): October 2025 is "-" with footnote X in the CPI files, "Data unavailable
-# due to the 2025 lapse in appropriations", and the news-release archive lists it as not published. It stays a gap.
-KNOWN_GAPS = {
-    "us_cpi_electricity_nsa_m": "CPI October 2025 never collected (2025 lapse in appropriations, BLS footnote X)",
-    "us_cpi_electricity_sa_m": "CPI October 2025 never collected (2025 lapse in appropriations, BLS footnote X)",
-}
+# no_gaps exemptions per period (warehouse.KNOWN_GAP_PERIODS): October 2025 is "-" with footnote X in the CPI files,
+# "Data unavailable due to the 2025 lapse in appropriations", and the news-release archive lists it as not published.
+# It stays a gap. Only that month is exempt, so any other gap is still reported (R12 R-4).
+_OCT_2025 = {"2025-10": "CPI October 2025 never collected (2025 lapse in appropriations, BLS footnote X)"}
+KNOWN_GAP_PERIODS = {"us_cpi_electricity_nsa_m": _OCT_2025, "us_cpi_electricity_sa_m": _OCT_2025}
 
 SPECS = [
     Spec(

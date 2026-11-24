@@ -642,3 +642,41 @@ Tre faktauppgifter i posten "M1: AI-relaterat bidrag till BNP-tillväxt och pris
 
 Dessutom lagras KPI för el (NSA) från 1952-01, där den månatliga serien börjar och där SA-serien börjar. Före det
 finns bara enstaka månader. Oktober 2025 samlades aldrig in och blir en känd lucka i båda KPI-serierna.
+
+### 2026-11-24 – M1: rättningar efter granskning R12 (rättning efter docs/granskning/r12_makro.md)
+
+Granskningen R12 hittade två fel och några brister i M1. Rättningsspåret X9 (gren `auto14/x9-makro`) ändrar reglerna
+nedan. Posterna ovan står kvar som de skrevs. Inga takter eller tillstånd är räknade, och serierna är fortfarande
+beskrivande.
+
+- **Ingen datering före första publiceringen (R-1).** Ett BLS-värde får known_from = max(regeldatum, seriens första
+  publiceringsdag). PPI 518210 infördes med PPI-releasen 2002-02-15 ("7374 Data processing services*", "* denotes
+  newly introduced PPI"), men filen har värden från 2000-12. Effekt: 9 värden, 2000-12 – 2001-08, flyttas från
+  2001-05-11 – 2002-01-11 till 2002-02-15. Inga värden ändras.
+- **BEA-serierna visar bara perioder som finns i den senaste vintage (R-2).** En omfattande revision kan ta bort de
+  äldsta kvartalen när basåret för kedjade dollar byts. Med de gamla kvartalen kvar blandade `us_imp_computers_real`
+  2009, 2012 och 2017 års dollar i varje vy efter 2018-07-27. Effekt: `us_imp_computers_real` börjar 2007Q1, och 52
+  rader för 1999Q1 – 2006Q4 tas bort. De övriga 7 BEA-serierna har inga borttagna perioder och ändras inte. Om en ny
+  release tar bort en lagrad period stoppar hämtningen med ett fel, och serien byggs om medvetet (`--rebuild`).
+- **Premissen för "ingen nettovariant" var ofullständig (R-3).** BEA publicerar ett nettobidrag för datorer: tabell
+  1.2.2 rad 17, "Final sales of computers" (`BB01RY`), där importen dras ifrån. Det omfattar datorer och
+  kringutrustning, också hushållens, men inte programvara. Ett nettomått för hela `ai_invest_contrib_gross` finns
+  fortfarande inte. Ingen ny serie registreras här. Om `BB01RY` ska förregistreras är det ägarens beslut.
+- **BLS arkiv över nyhetsreleaser börjar med referensmånad 1994-01 (R-5).** Rättelsen ovan ("1999-05") var fel. Före
+  1999-05 har filnamnen sex siffror (`cpi_051499.txt`), och nu läses de också. Regeln "månader före arkivet får
+  arkivets första releasedag" står kvar. Effekt, inga värden ändras:
+  - KPI NSA 1994-01 – 1999-04 får sin releasedag i stället för 1999-06-16.
+  - PPI 1994-01 – 1999-04 får release m + 4 i stället för 1998-12-11 eller 1999-06-11.
+  - Värden före 1994 får arkivets första releasedag: KPI 1994-02-17 i stället för 1999-06-16, och PPI 1994-02-11 i
+    stället för 1998-12-11. KPI SA för 1989–1993 får januari-releasen år y + 5 (1994–1998).
+  - **Läckagerisk:** när BLS först publicerade den säsongsrensade elserien bakåt till 1952, och PPI för kommersiell el
+    före 1990 (bas 12/90, värden från 1958), är inte verifierat. De värdena dateras nu 5 år tidigare än förut. Ingen
+    analys använder dem.
+- **Filens datum utan Last-Modified (R-6).** Om svaret saknar `Last-Modified` och filen har en månad som arkivlistan
+  ännu inte har, är filens datum hämtdagen, inte föregående release. Ingen effekt i dag, eftersom `download.bls.gov`
+  skickar `Last-Modified`.
+- **Katalognamnet i BEA:s arkiv** ligger 0–4 dagar efter "Data published" i 105 av 107 releaser, inte 1–3 dagar som i
+  rättelsen ovan (R-7). Dateringsregeln ändras inte.
+
+Dessutom gäller undantaget för luckor i KPI-serierna nu bara oktober 2025 (`warehouse.KNOWN_GAP_PERIODS`, R-4). En
+andra lucka rapporteras.

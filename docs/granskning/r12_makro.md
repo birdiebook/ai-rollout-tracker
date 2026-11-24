@@ -263,3 +263,12 @@ Om ett nettomått ska finnas är `BB01RY` BEA:s eget och kräver ingen approxima
 
 `python -m pytest -q tests/test_r12_makro.py tests/test_makro_bea_bls.py`: 27 passerade, 6 xfail. Hela sviten: se
 spårets slutrapport.
+
+## Rättat i auto14/x9-makro
+
+Rättningsspåret X9 (2026-11-24) rättade R-1, R-2 och R-4 till R-8 i kod och dokument, och R-3 i dokumenten. De sex
+strikta xfail-testerna passerar nu som vanliga tester, med oförändrade påståenden. Omräknat: `us_ppi_data_processing_m`
+(9 värden får 2002-02-15) och `us_imp_computers_real` (2007Q1–, 52 rader borta). Med R-5 får KPI- och PPI-värden
+1994-01 – 1999-04 sin releasedag, och värden före 1994 får arkivets första releasedag (1994-02-17 och 1994-02-11).
+Den delen av historiken är fortfarande inte verifierad (N-1). `BB01RY` är inte registrerad, eftersom det är ett
+ägarbeslut. Se den daterade posten i `docs/mattregister.md`.

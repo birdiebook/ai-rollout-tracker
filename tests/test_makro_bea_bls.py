@@ -359,5 +359,7 @@ def test_cpi_nsa_stored_from_1952_and_october_2025_gap_is_registered(monkeypatch
                         else _Resp(text=flat))
     rows = bls.release_rows("CUUR0000SEHF01")
     assert [str(p) for p in rows["period"]] == ["1952-01"]
-    assert {"us_cpi_electricity_nsa_m", "us_cpi_electricity_sa_m"} <= set(warehouse.KNOWN_GAPS)
+    assert warehouse.KNOWN_GAP_PERIODS["us_cpi_electricity_nsa_m"].keys() == {"2025-10"}
+    assert warehouse.KNOWN_GAP_PERIODS["us_cpi_electricity_sa_m"].keys() == {"2025-10"}
+    assert not {"us_cpi_electricity_nsa_m", "us_cpi_electricity_sa_m"} & set(warehouse.KNOWN_GAPS)  # per period only
     assert "us_ppi_data_processing_m" not in warehouse.KNOWN_GAPS

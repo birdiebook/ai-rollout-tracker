@@ -29,6 +29,7 @@ En rad per spår, fylls på efter varje körning. Tumreglerna justeras när siff
 | 2026-11-24 | 11 | W4 + W2 skelett, designsystem, CI | webb (SvelteKit, tokens, primitiver, CI) | ~29 | ~93 | ~291 | 41 vitest, 78 Playwright, axe, budgetar, `pages-next.yml`, en deploy |
 | 2026-11-24 | 13 | M1 makrokanalen (BEA, BLS) | 2 källor, riktiga vintages ur releasearkiv, regeldatering | ~75 | ~95 | – | 12 serier (8 BEA kvartal, 4 BLS månad), 107 BEA-vintages, BLS-releasekalender 1999–, 21 tester |
 | 2026-11-24 | 13 | R12 granskning av M1 (datering, läckage) | granskning mot primärkällor (BEA, BLS, ALFRED) | ~55 | ~75 | – | 12 releaser omlästa, 107 mot BEA:s nyhetsarkiv, 6 PPI Detailed Reports, 2 must_fix (PPI 518210 före införandet, blandade basår), 12 tester (6 strikt xfail) |
+| 2026-11-24 | 13 | X9 rättning av M1 efter R12 | rättningsspår (kod, omräkning, daterad registerpost) | ~35 | ~55 | – | R-1–R-8 (R-3 bara dokument), 6 strikt xfail vända, 7 nya tester, 5 serier omräknade (`us_imp_computers_real` 2007Q1–, PPI 518210 från 2002-02-15, BLS-kalender från 1994-01) |
 
 ## Körning 1, sammanfattning (2026-11-23, orkestrerare)
 
