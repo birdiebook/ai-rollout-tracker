@@ -1,0 +1,93 @@
+{
+  "$comment": "Registered A5 definitions (docs/mattregister.md 2026-11-23 'A5: avstämningar mellan leden'), mirrored from src/ai_tracker/series/avstamning.py RECONS. tests/test_web_regime_constants.py fails if they drift. Proposed lift: export the terms in flow.json (W3).",
+  "reconciliations": [
+    {
+      "key": "x_capex_cloud",
+      "num": [
+        {
+          "series": "capex_hyp4",
+          "window": 1
+        }
+      ],
+      "den": [
+        {
+          "series": "rev_aws",
+          "window": 1
+        },
+        {
+          "series": "rev_google_cloud",
+          "window": 1
+        },
+        {
+          "series": "rev_msft_cloud",
+          "window": 1
+        }
+      ],
+      "scale": 1.0
+    },
+    {
+      "key": "x_rpo_cover",
+      "num": [
+        {
+          "series": "rpo_hyp4",
+          "window": 1
+        }
+      ],
+      "den": [
+        {
+          "series": "capex_hyp4",
+          "window": 4
+        }
+      ],
+      "scale": 1.0
+    },
+    {
+      "key": "x_nvda_capex",
+      "num": [
+        {
+          "series": "rev_nvda_datacenter",
+          "window": 1
+        }
+      ],
+      "den": [
+        {
+          "series": "capex_hyp4",
+          "window": 1
+        }
+      ],
+      "scale": 1.0
+    },
+    {
+      "key": "x_debt_capex",
+      "num": [
+        {
+          "series": "debt_issued_hyp4",
+          "window": 4
+        }
+      ],
+      "den": [
+        {
+          "series": "capex_hyp4",
+          "window": 4
+        }
+      ],
+      "scale": 1.0
+    },
+    {
+      "key": "x_capex_ocf",
+      "num": [
+        {
+          "series": "capex_hyp4",
+          "window": 1
+        }
+      ],
+      "den": [
+        {
+          "series": "ocf_hyp4",
+          "window": 1
+        }
+      ],
+      "scale": 100.0
+    }
+  ]
+}
