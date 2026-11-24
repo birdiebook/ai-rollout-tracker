@@ -180,7 +180,7 @@
         <Stripes dims={d} {months} kind={kinds} rows={stripeRows} />
       {/snippet}
       {#snippet legend()}
-        <Legend items={[0, 0.33, 0.5, 0.67, 1].map((v) => ({ label: fmt(v, 2), fill: divergingFill(v) })).concat([{ label: 'inget index', fill: 'transparent' }])} />
+        <Legend items={[0, 0.33, 0.5, 0.67, 1].map((v) => ({ label: fmt(v, 2), fill: divergingFill(v) })).concat([{ label: 'inget index', fill: 'transparent', border: 'var(--c-grid)' }])} />
       {/snippet}
     </ChartFrame>
     <svg width="220" height="34" role="img" aria-label="Enskilda celler: index 0, 0,5, 1 och saknat">

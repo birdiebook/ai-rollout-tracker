@@ -6,7 +6,9 @@
   const align = (v: unknown, a?: 'left' | 'right') => a ?? (typeof v === 'number' || /^[−+±\d]/.test(String(v ?? '')) ? 'right' : 'left');
 </script>
 
-<div class="scroll-x" {id}>
+<!-- focusable so keyboard users can scroll a wide table (axe scrollable-region-focusable) -->
+<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+<div class="scroll-x" {id} tabindex="0" role="region" aria-label={table.caption ?? 'Tabell'}>
   <table class="data">
     {#if table.caption}<caption>{table.caption}</caption>{/if}
     <thead>

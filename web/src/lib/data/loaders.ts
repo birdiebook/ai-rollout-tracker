@@ -63,7 +63,7 @@ export function createBundle(read: Reader) {
     return doc as T;
   }
   const safe = (id: string) => {
-    if (!/^[A-Za-z0-9_.-]+$/.test(id)) throw new BundleError(id, 'invalid id');
+    if (!/^[A-Za-z0-9_][A-Za-z0-9_.-]*$/.test(id)) throw new BundleError(id, 'invalid id');
     return id;
   };
 
@@ -72,10 +72,10 @@ export function createBundle(read: Reader) {
     overview: () => get<Overview>('overview.json', checks.overview),
     flow: () => get<Flow>('flow.json', checks.any),
     method: () => get<Method>('method.json', checks.any),
-    branch: (code: string) => get<Branch>(`branch/${safe(code)}.json`, checks.branch),
+    branch: async (code: string) => get<Branch>(`branch/${safe(code)}.json`, checks.branch),
     seriesIndex: () => get<SeriesIndex>('series/index.json', checks.seriesIndex),
-    series: (key: string) => get<Series>(`series/${safe(key)}.json`, checks.series),
-    nowcast: (id: string) => get<Nowcast>(`nowcast/${safe(id)}.json`, checks.nowcast),
+    series: async (key: string) => get<Series>(`series/${safe(key)}.json`, checks.series),
+    nowcast: async (id: string) => get<Nowcast>(`nowcast/${safe(id)}.json`, checks.nowcast),
     /** ids for prerendering the dynamic routes */
     async entries() {
       const [idx, ov] = await Promise.all([this.seriesIndex(), this.overview()]);

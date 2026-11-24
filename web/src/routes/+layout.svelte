@@ -46,7 +46,7 @@
 <footer class="wrap">
   <p>
     Byggd från site_bundle (schema {data.site.schemaVersion}){#if data.site.build.sha}, commit
-      <code>{data.site.build.sha.slice(0, 7)}</code>{/if}. {data.site.record.label}.
+      <code>{data.site.build.sha.slice(0, 7)}</code>{/if}. Underlag: {data.site.record.label}.
     Ny sida under uppbyggnad; den nuvarande finns kvar tills paritet är kontrollerad.
   </p>
 </footer>

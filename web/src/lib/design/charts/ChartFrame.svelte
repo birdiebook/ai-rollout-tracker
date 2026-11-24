@@ -58,7 +58,7 @@
   });
 </script>
 
-<figure class="chart" aria-labelledby="{id}-title">
+<figure class="chart" {id} aria-labelledby="{id}-title">
   <figcaption class="head">
     <svelte:element this={'h' + headingLevel} id="{id}-title" class="title">{title}</svelte:element>
     {#if status}<StatusBadge {status} />{/if}
