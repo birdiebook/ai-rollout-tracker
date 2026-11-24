@@ -15,9 +15,9 @@ Properties that hold (passing):
 - decide: N7 (the sum) decides a group once it has >= 8 origins in both periods; otherwise N7b.
 - Real data: forecasts from the table cut at the origin equal those from the full table.
 
-Confirmed defect (strict xfail, flips when fixed):
-- R16-S1: docs/resultat/n7.md explains V1's over-forecast with MSFT's "other" (which raises the 2024Q4-2025Q3
-  outcomes and gives an under-forecast) and leaves out Meta's amortization of intangible assets (38 % of Meta's D&A
+Confirmed defect, fixed in auto14/x13-n7 (was a strict xfail; now a normal test):
+- R16-S1: docs/resultat/n7.md explained V1's over-forecast with MSFT's "other" (which raises the 2024Q4-2025Q3
+  outcomes and gives an under-forecast) and left out Meta's amortization of intangible assets (38 % of Meta's D&A
   in 2015, 2 % in 2022, SEC 10-K). See R-1 in the review.
 """
 
@@ -325,9 +325,8 @@ def _bias_note() -> str:
     return text[start:end]
 
 
-@pytest.mark.xfail(strict=True, reason="R16-S1: the bias note names MSFT 'other' as a cause of the over-forecast "
-                                       "and leaves out Meta's amortization of intangible assets (R-1)")
 def test_n7_bias_note_names_the_verified_causes():
+    """R16-S1, fixed in auto14/x13-n7 (R-1)."""
     note = _bias_note()
     assert "immateriell" in note  # Meta: amortization of intangibles, 38 % of D&A 2015, 2 % 2022 (10-K)
     assert "nyttjandeperiod" in note

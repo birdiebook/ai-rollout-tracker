@@ -427,3 +427,11 @@ Johannes valde rekommendationerna:
   tillgångar, 38 % av raden 2015 och 2 % 2022. Microsofts "other" verkar åt andra hållet.
 - Rättning R-1 (should_fix): förklaringen av biasen i `docs/resultat/n7.md`. Övrigt är noter. Fyra registrerade
   egenskaper som saknade test har fått tester.
+
+## 2026-11-24 – X13: rättning efter R16 (N7, spår P3)
+
+- R-1: förklaringen av V1:s överskattning i `docs/resultat/n7.md` bygger nu på det som är belagt: längre
+  nyttjandeperioder (Microsofts 10-K FY2021 och FY2023), mixen i capex och Metas amortering på immateriella
+  tillgångar. Microsofts "other" ger en underskattning 2024Q4–2025Q3, inte en överskattning.
+- Noterna R-2–R-5 är rättade i samma fil. Registret och N7:s specifikation är oförändrade, och beslutet står: B1 är
+  huvudmodell i alla horisontgrupper.

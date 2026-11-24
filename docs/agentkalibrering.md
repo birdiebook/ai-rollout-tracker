@@ -31,6 +31,7 @@ En rad per spår, fylls på efter varje körning. Tumreglerna justeras när siff
 | 2026-11-24 | 13 | P2a nyttjandeperioder | extraktion (agentläsning, 416 SEC-dokument, citat) | ~45 | ~90 | – | 305 kodade rader (68 policy, 21 ändringar, 213 effekter, 3 stopp), 30 katalogserier, stickprov 0 fel av 305, 43 tester |
 | 2026-11-24 | 13 | P3 N7 avskrivningar 1–8 kvartal | modell + backtest (förregistrerad, poolad DM per horisontgrupp) | ~45 | ~55 | – | registerpost före kod, `n7.py` (V1, V2, grupperad DM, Holm 6), 26 tester, beslut B1 i alla grupper |
 | 2026-11-24 | 13 | R16 granskning av N7 (P3) | granskning (oberoende omräkning, SEC-källor, negativt resultat) | ~60 | ~85 | – | omräkning av 10 prognoser och 12 DM-test, trunkering 280 par, 17 värden + 3 dokument mot SEC, 31 tester + 11 på verklig data, 1 strikt xfail |
+| 2026-11-24 | 13 | X13 rättning efter R16 (N7) | rättning (resultattext, omräkning utan logg) | ~15 | ~30 | – | R-1 och R-2–R-5 i `n7.md`, strikt xfail blev vanligt test, FY2021-effekten kontrollerad i 10-K, 69/69 N7-tester på P3:s tabell |
 
 ## Körning 1, sammanfattning (2026-11-23, orkestrerare)
 
