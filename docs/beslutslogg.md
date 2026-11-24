@@ -726,3 +726,18 @@ sex poolade revideringsindex blir `okänd` när F1 mergas (R10-1).
 - **Urvalet** av kandidatmeningar vidgas till meningen efter en capex-mening. Kontrollen läste 81 dokument och hittade
   ingen ny capex-guidance.
 
+
+## 2026-11-24 – Körning 13 integrerad
+
+- Elva grenar är mergade i ordning på `auto14/integration13`: main (X5 och nya webbsidor), K1, K2, L1, P1, P2a, P2b,
+  P3, F1, M1 och M2. Beslutsloggen och kalibreringen har alla poster i tidsordning. I registret står varje spårs poster
+  i följd, så att hänvisningar som "posten ovan" fortfarande stämmer. Ingen post är borttagen eller omskriven.
+- **K2 efter mergen:** alla 633 serier har en klass, och ingen ny regel behövdes. F1:s känslighet i US$ läser ingen
+  rad i den kurerade filen (`CURATED_READS`). K2:s preliminära familjeläsning är borttagen nu när K1:s familjetabell
+  finns, och siffrorna blev desamma (R10-12).
+- **P2b är omräknat och N7 omkört** på avskrivningsdata efter X11. N7:s beslut ändras inte: ingen variant klarar
+  regeln, och B1 är huvudmodell i alla horisontgrupper.
+- **Data:** 112 serier lades till i den delade basen och 4 uppdaterades (`guid_capex_*` efter X8). Ingen ersattes.
+  HS-serierna (M2) väntar på `CENSUS_API_KEY`.
+- F1:s CSV-serier och `guid_capex_*` har kvar `publish=False` tills Johannes beslutar (R11-4). Det strikta
+  xfail-testet för "för få källor" står kvar, eftersom webbens `state.ts` på main saknar ordet.
