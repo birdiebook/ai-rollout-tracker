@@ -605,7 +605,7 @@ def data_news(inp: Inputs) -> tuple[list[str], list[str]]:
     sizes = [revision_size(k, o, v, ctx) for k, o, v in zip(rev["series"], rev["old"], rev["new"])]
     rev = rev.assign(size=[x for x, _ in sizes], unit=[u for _, u in sizes])
     rev = rev.assign(notable=[notable(x, u) for x, u in zip(rev["size"], rev["unit"])])
-    big = rev[rev["notable"]]
+    big = rev[rev["notable"].astype(bool)]  # astype: an empty object column would select columns, not rows
     per = []
     for key, g in big.groupby("series", sort=True):
         top = g.loc[g["size"].abs().idxmax()]
@@ -681,6 +681,35 @@ def data_news(inp: Inputs) -> tuple[list[str], list[str]]:
     return lines, news
 
 
+# ------------------------------------------------------------------ reconciliations (A5)
+
+
+RECONCILIATION_HEADING = "## Avstämningar"
+
+
+def reconciliation_section(inp: Inputs) -> list[str]:
+    """Level, pace and change in pace per A5 reconciliation series, from the snapshot (a group outside the branches).
+    Omitted when the snapshot has no such section (written before A5)."""
+    rec = inp.current.get("reconciliations")
+    if not rec:
+        return []
+    lines = [RECONCILIATION_HEADING, "",
+             "Härledda kvoter mellan leden (registrerade 2026-11-23, A5). Takt = årsförändring i log(kvot) ×100. "
+             "De räknas inte i grenarnas diffusionsindex.", ""]
+    rows = []
+    for m in rec.get("series", []):
+        key = m["series"]
+        if not publishable(key, inp):
+            continue
+        rows.append([f"{series_name(key, inp.ctx)} (`{key}`)", str(m.get("latest_period") or "–"),
+                     value_text(m.get("level")), pace_text(m), change_text(m), m.get("reason") or "–"])
+    if not rows:
+        return lines + ["Inga avstämningar som får visas har data på beräkningsdagen.", ""]
+    head = ["Avstämning", "Senaste period", "Nivå", "Takt (log×100 per år)", "Förändring i takt", "Anmärkning"]
+    out = ["| " + " | ".join(head) + " |", "|" + "|".join("---" for _ in head) + "|"]
+    return lines + out + ["| " + " | ".join(r) + " |" for r in rows] + [""]
+
+
 # ------------------------------------------------------------------ withheld and footer
 
 
@@ -697,6 +726,14 @@ def withheld_section(inp: Inputs) -> list[str]:
             w = D.withheld_entry(key, inp.ctx, counted=key in counted)
             items.append(f"- {code}: {w['label']} (`{key}`). Källa: {w['source'] or '–'}. Skäl: {w['why']}. "
                          + ("Räknas i grenens index." if w["counted"] else "Räknas inte i grenens index."))
+    for m in (inp.current.get("reconciliations") or {}).get("series", []):
+        key = m.get("series")
+        if not key or key in seen or publishable(key, inp):
+            continue
+        seen.add(key)
+        w = D.withheld_entry(key, inp.ctx, counted=False)
+        items.append(f"- {R.RECONCILIATION_GROUP}: {w['label']} (`{key}`). Källa: {w['source'] or '–'}. "
+                     f"Skäl: {w['why']}. Räknas inte i något grenindex.")
     lines = [WITHHELD_HEADING, ""]
     if not items:
         return lines + ["Alla kärnserier i ögonblicksbilden får visas.", ""]
@@ -746,6 +783,7 @@ def render(inp: Inputs) -> str:
     lines += ["## Grenarna", ""]
     for code in catalog.BRANCHES:
         lines += branch_section(code, inp)
+    lines += reconciliation_section(inp)
     lines += nc_lines + dn_lines + withheld_section(inp) + footer(inp)
     text = "\n".join(lines)
     while "\n\n\n" in text:

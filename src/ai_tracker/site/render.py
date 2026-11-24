@@ -403,6 +403,25 @@ def nowcast_page(doc: dict, build: dict) -> str:
 # ------------------------------------------------------------------ method
 
 
+def reconciliation_section(rec: dict) -> str:
+    """A5 reconciliations: a small table (the full flow view is track E2). Not part of any branch index."""
+    if not rec.get("available"):
+        return ""
+    rows = "".join(
+        f'<tr><td>{esc(s["label"])}<br><code>{esc(s["key"])}</code></td><td>{esc(s.get("latest_period") or "–")}</td>'
+        f'<td class="num">{num(s.get("level"), 3)}</td><td class="num">{num(s.get("pace"), 1, signed=True)}</td>'
+        f'<td class="num">{num(s.get("change_in_pace"), 1, signed=True)}</td>'
+        f'<td class="small">{esc(s.get("reason") or "")}</td></tr>' for s in rec["series"])
+    hidden = "".join(f'<li><code>{esc(w["key"])}</code>: {esc(w["why"])}</li>' for w in rec.get("withheld", []))
+    hidden = f'<p class="small">Visas inte av licensskäl:</p><ul class="small">{hidden}</ul>' if hidden else ""
+    return f"""<section id="avstamningar">
+<h2>Avstämningar mellan leden</h2>
+<p>Härledda kvoter som gör kedjan granskningsbar (registrerade i måttregistret 2026-11-23, A5). En version finns först när alla komponenter för perioden är kända, och den dateras med den senaste komponenten. Takt är årsförändringen i log(kvot) ×100, förändring i takt är takten nu minus två kvartal tidigare. Avstämningarna räknas inte i grenarnas diffusionsindex. Beräkningsdag {esc(rec.get("date"))}{kind_note(rec.get("kind"))}.</p>
+<div class="table-wrap"><table><thead><tr><th>Avstämning</th><th>Senaste period</th><th>Nivå</th><th>Takt</th><th>Förändring i takt</th><th>Anmärkning</th></tr></thead><tbody>{rows}</tbody></table></div>
+{hidden}
+</section>"""
+
+
 def method_page(doc: dict, build: dict) -> str:
     repo = esc(build["repo"])
     rows = "".join(
@@ -433,6 +452,7 @@ def method_page(doc: dict, build: dict) -> str:
 <p>{doc['n_published']} av {doc['n_series']} serier i katalogen får visas här. Bara serier vars licens är kontrollerad och tillåter vidarepublicering visas med värden. Från rapporter visas bara extraherade siffror med källhänvisning, aldrig text. Data committas inte till git, utan hämtas med skript.</p>
 <div class="table-wrap"><table><thead><tr><th>Källa</th><th>Grenar</th><th>Licens</th><th>Visas</th><th></th></tr></thead><tbody>{rows}</tbody></table></div>
 </section>
+{reconciliation_section(doc.get("reconciliations") or {})}
 <section id="withheld">
 <h2>Serier som inte visas</h2>
 <p>För dessa serier visas på grenarnas sidor bara grenens summering (index, tillstånd och antal), om serien är en kärnserie.</p>
