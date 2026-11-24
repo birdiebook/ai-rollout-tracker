@@ -48,8 +48,8 @@ imports). Se kontrollen nedan.
   släpptes 8:30 EDT samma dag (`ft900/final_2025.pdf`, "FOR RELEASE AT 8:30 AM EDT, TUESDAY, JUNE 9, 2026").
   Filens egen metadata säger "created 2026-05-22", alltså förberedd före releasen.
 - Årsrevisionerna kom 2017-06-02, 2018-06-06, 2019-06-06, 2020-06-04, 2021-06-08, 2022-06-07, 2023-06-07,
-  2024-06-06, 2025-06-05 och 2026-06-09 (`final_2016.pdf` … `final_2025.pdf`, 2016 belagt i [granskning R13](../granskning/r13_census_hs.md)).
-  `known_from` ligger 31–38 dagar efter var och en.
+  2024-06-06, 2025-06-05 och 2026-06-09 (`final_2016.pdf` … `final_2025.pdf`, 2016 belagt i
+  [granskning R13](../granskning/r13_census_hs.md)). `known_from` ligger 31–38 dagar efter var och en.
 - Att äldre versioner av filen kom vid samma release går inte att verifiera. `web.archive.org` nekas av proxyn.
   Regeln ligger därför cirka en månad efter de belagda datumen.
 
@@ -57,10 +57,10 @@ imports). Se kontrollen nedan.
 de äldre åren bär senare revisioner. Från nästa årsrevision blir ändrade värden revisioner med hämtdagen.
 Fönstret rullar: 2016 faller troligen bort 2027. De lagrade raderna ligger kvar.
 
-Revisionernas storlek, för 2024 mellan årsrevisionen 2025-06-05 och filen 2026 ([granskning R13](../granskning/r13_census_hs.md)): halvledare
-för hela världen −0,30 %, datorer +0,01 %, datortillbehör −0,03 %, Mexikos totala import −0,48 % och Malaysias
-−0,62 %. Per land och kod kan ändringarna vara större. Det går inte att mäta, eftersom äldre versioner av filen
-inte finns.
+Revisionernas storlek, för 2024 mellan årsrevisionen 2025-06-05 och filen 2026 ([granskning
+R13](../granskning/r13_census_hs.md)): halvledare för hela världen −0,30 %, datorer +0,01 %, datortillbehör −0,03 %,
+Mexikos totala import −0,48 % och Malaysias −0,62 %. Per land och kod kan ändringarna vara större. Det går inte att
+mäta, eftersom äldre versioner av filen inte finns.
 
 **Brott i end-use-klassificeringen mellan 2018 och 2019.** Census omklassificerade end-use-koder från och med
 januari 2022 och lade in ändringen för 2019–2021 vid årsrevisionen 2022-06-07 (`notices/20220308_enduse_changes.pdf`).
@@ -96,8 +96,8 @@ importörer, så 8471.50, 8471.80 och 8473.30 behövs alla.
 Om ett anrop får timeout, inte får kontakt eller får 429/5xx efter två nya försök, delas det upp i ett anrop per år
 med samma form (`time=from 2013-01 to 2013-12` … `time=from 2026-01`). Guiden beskriver syntaxen och varnar för att
 `time` ger fler timeouts i stora anrop. Ett anrop som misslyckas sparas i processens cache, så en körning frågar
-API:t högst en gång per svar (rättning efter [granskning R13](../granskning/r13_census_hs.md), R13-3). Timeout är 10 sekunder för anslutning och
-120 sekunder för läsning.
+API:t högst en gång per svar (rättning efter [granskning R13](../granskning/r13_census_hs.md), R13-3). Timeout är 10
+sekunder för anslutning och 120 sekunder för läsning.
 
 ```
 get=CTY_CODE,CTY_NAME,I_COMMODITY,GEN_VAL_MO&CTY_CODE=5830&…&CTY_CODE=5700&I_COMMODITY=8471&…&I_COMMODITY=8542&time=from 2013-01
@@ -115,24 +115,23 @@ release". Utvecklarsidan för International Trade: "updated monthly on the day o
 annually with the publication of April statistics". FT-900 kom 32–41 dagar efter månadens slut 2017–2026, så
 regeln ligger på eller efter releasen.
 
-**Läckage och brott:** API:t har bara senaste vintage, så första hämtningen är backfill. Årsrevisionen i juni
-ändrar historiken, och ändringarna blir revisioner med hämtdagen. HS-nomenklaturen ändrades 2017-01 (HS 2017) och
-2022-01 (HS 2022). I HS 2022 kom den nya positionen 8524 (platta bildskärmsmoduler), som kan ha flyttat varor från
-8473.30. Serierna skarvas inte. Brotten är noterade i registret. HS 2017 från januari 2017 är belagt av Census
-("introduced in March 2017 with January 2017 statistics", `ft900_2201.pdf`). Två saker är **inte verifierade**:
-dagen då HS 2022 började gälla i USA:s tulltaxa (möjligen 27 januari 2022, så att januari 2022 kan vara en blandad
-månad; `usitc.gov` och `federalregister.gov` nekas av proxyn) och om HS-datasetet börjar 2010 (utvecklarsidan)
-eller 2013 (guidens exempel börjar 2013-01, och datasetets metadata anger ingen period). Den registrerade
-starten 2013-01 gäller. Båda kontrolleras vid första hämtningen med nyckel
-eller från en värd som inte är blockerad.
+**Läckage och brott:** API:t har bara senaste vintage, så första hämtningen är backfill. Årsrevisionen i juni ändrar
+historiken, och ändringarna blir revisioner med hämtdagen. HS-nomenklaturen ändrades 2017-01 (HS 2017) och 2022-01 (HS
+2022). I HS 2022 kom den nya positionen 8524 (platta bildskärmsmoduler), som kan ha flyttat varor från 8473.30.
+Serierna skarvas inte. Brotten är noterade i registret. HS 2017 från januari 2017 är belagt av Census ("introduced in
+March 2017 with January 2017 statistics", `ft900_2201.pdf`). Två saker är **inte verifierade**: dagen då HS 2022
+började gälla i USA:s tulltaxa (möjligen 27 januari 2022, så att januari 2022 kan vara en blandad månad; `usitc.gov`
+och `federalregister.gov` nekas av proxyn) och om HS-datasetet börjar 2010 (utvecklarsidan) eller 2013 (guidens
+exempel börjar 2013-01, och datasetets metadata anger ingen period). Den registrerade starten 2013-01 gäller. Båda
+kontrolleras vid första hämtningen med nyckel eller från en värd som inte är blockerad.
 
-**Månader utan post:** en månad mellan seriens första och sista post som saknar post räknas som 0. Månader före
-den första eller efter den sista posten fylls inte. Guiden stöder antagandet: ett 204 betyder att det inte fanns
-någon handel, och en post med månadsvärdet 0 finns när värdet hittills under året inte är 0. Regeln var först
-"inom svarets period", men nollorna fylldes då över båda svarens gemensamma period. En månad som bara världssvaret
-hade blev en falsk nolla i alla landserier, till exempel om releasen sker mellan de två anropen ([granskning R13](../granskning/r13_census_hs.md),
-R13-1). Rättat 2026-11-24 med ett tillägg i registret. Det kontrolleras vid första hämtningen med nyckel hur många
-månader som saknar post.
+**Månader utan post:** en månad mellan seriens första och sista post som saknar post räknas som 0. Månader före den
+första eller efter den sista posten fylls inte. Guiden stöder antagandet: ett 204 betyder att det inte fanns någon
+handel, och en post med månadsvärdet 0 finns när värdet hittills under året inte är 0. Regeln var först "inom svarets
+period", men nollorna fylldes då över båda svarens gemensamma period. En månad som bara världssvaret hade blev en
+falsk nolla i alla landserier, till exempel om releasen sker mellan de två anropen ([granskning
+R13](../granskning/r13_census_hs.md), R13-1). Rättat 2026-11-24 med ett tillägg i registret. Det kontrolleras vid
+första hämtningen med nyckel hur många månader som saknar post.
 
 **Nyckeln** skickas bara i själva anropet. Råkopian sparas under URL:en utan nyckel, felmeddelanden innehåller aldrig
 URL:en med nyckel, och om API:t skulle eka nyckeln i ett felsvar ersätts den med `***`.
