@@ -402,3 +402,21 @@ Johannes valde rekommendationerna:
   går inte att räkna om.
 - Noten för `dep_hyp4` ska säga vilka definitioner som summeras (R-2). `dep_ppe_hyp4` är bättre i definition men har
   bara 9 kvartal.
+
+## 2026-11-24 – X11: rättning av P1 efter R14
+
+- **R-1 rättat.** Ett värde som en 10-Q räknar om bara genom summorna (hittills i år minus tre månader i samma
+  inlämning) blir en version daterad till inlämningen. Regeln gäller P1:s flödesserier, skapar inga nya perioder och
+  bortser från avrundning. `dep_msft` 2024Q3 får 6 716 från 2026-01-28, och 2025Q3 på den nya basen (8 147) är känd
+  från 2026-01-28 i stället för 2026-10-28. Inga andra serier ändras, och första versionen av varje kvartal är
+  oförändrad. Tillägg i registret samma dag.
+- **Rättelse av P1-posten ovan.** Omklassificeringen 2026 räknade om kvartalen från 2024Q3, inte från 2024Q4. 2024Q3
+  räknades om genom sexmånaderstalet. Bara kvartalen till och med 2024Q2 (FY2024 och tidigare) ligger kvar på den gamla
+  basen.
+- **Delvis omräkning:** nyckeln behålls, och noten anger sista kvartal på gammal bas (granskningens rekommendation).
+  Det var redan P1:s praxis och ändrar inga värden. Ägaren kan välja ny nyckel i stället.
+- **P2b och P3 ska köras om på den rättade grenen.** P2b: bygg om `x_dep_rev`, `x_capcost_rev_r08`,
+  `x_capcost_rev_r12` och `x_dep_capex` (`x_dep_rev_aws` ändras inte), och rätta påståendet i `intaktskrav.md` att
+  Microsoft inte räknade om kvartalen. P3: kör om `python -m ai_tracker.nowcast backtest n7` som en ny daterad körning.
+  Utfallen (första versionen) är oförändrade, men indata as_of ändras vid origo 2026-04-20, 2026-07-20 och 2026-10-20.
+  N7:s specifikation ändras inte.

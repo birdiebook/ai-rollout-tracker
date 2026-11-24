@@ -627,3 +627,52 @@ avskrivningsraderna i kassaflödesanalysen i ett urval 10-K (R-sidorna visar ock
 skillnaden mellan kandidattaggar i överlappande perioder, MSFT-taggens täckning och storleken på omräkningarna (relativt),
 och Alphabets balansposter i instanserna 2018–2020 (nivåer, för kontrollen netto = brutto − ackumulerat). Inga
 kvartalsserier eller takter har räknats.
+
+### 2026-11-24 – P1: omräkning genom summorna, delvis omräkning och ändringar efter första bygget (rättning efter granskning R14)
+
+Tillägg till posten "P1: avskrivningar och anläggningstillgångar som katalogserier". Den posten skrivs inte om.
+Granskning: `docs/granskning/r14_avskrivningar.md`. Rättningsspår X11 (`auto14/x11-avskrivningar`).
+
+**Skäl (R-1).** Microsoft räknade om 2024Q3 (Q1 FY2025) bara genom sexmånaderstalet i 10-Q:n 2026-01-28: 12 383 − 5 667
+= 6 716, mot 7 383 tidigare. I `sec.py` vinner ett direkt tremånadersvärde alltid över en differens, så `dep_msft`
+behöll 7 383 i alla versioner. Det följer inte postens egen regel att omräkningar är versioner.
+
+**Ny regel: omräkning genom summorna.** Gäller alla flödesserier i P1 (`dep_*`, `dep_ppe_*` och `dep_aws`), inte
+övriga SEC-serier.
+- När en 10-Q har både ett hittills-i-år-värde (start s, slut e) och ett tremånadersvärde som slutar e, ger skillnaden
+  hittills-i-år-värdet för perioden från s till förra kvartalets slut. Värdet blir en version daterad till inlämningen
+  (`sec_custom.implied_by_ytd`).
+- Det används bara om inlämningen inte själv redovisar perioden, om ett värde för perioden redan har lämnats in (regeln
+  skapar inga nya perioder), och om skillnaden mot det senast inlämnade värdet är större än avrundningen av de tre talen
+  (en halv redovisningsenhet vardera: 1,5 MUSD för tal i miljoner, 150 MUSD för tal i 0,1 miljard).
+- 10-K används inte, eftersom deras tremånadersvärden är den oreviderade kvartalsnoten.
+- Härledda värden prövas av stoppregeln som andra värden. En omräkning över 2 % som bara syns i summorna ska alltså
+  också deklareras.
+
+**Effekt.** Två värden ändras, båda i `dep_msft` och därmed `dep_hyp4`: 2024Q3 får versionen 6 716 den 2026-01-28, och
+2025Q3 på den nya basen (8 147) är känd från 2026-01-28 i stället för 2026-10-28. `dep_hyp4` 2024Q3 blir 28 170 (i
+stället för 28 837) från 2026-01-28. Tabellen får två rader till (1 063). Första versionen av varje kvartal är
+oförändrad. Inga andra serier ändras, och inga nya brott över 2 % uppstår. Med bara `sec.TOL` som gräns i stället för
+avrundningen hade regeln gett 11 rader till som bara är avrundning (`dep_ppe_meta` och `dep_ppe_hyp4`, 10 MUSD fram
+och tillbaka).
+
+**Delvis omräkning (R-5).** Postens två regler pekar åt olika håll när ett bolag räknar om en del av historiken. Det
+gäller:
+- En deklarerad omräkning behåller nyckeln. Kvartal som bolaget inte räknade om, varken direkt eller genom summorna,
+  ligger kvar på den gamla basen. Seriens not anger det sista kvartalet på den gamla basen i den senaste versionen.
+  För `dep_msft` är det 2024Q2: FY2024 räknades bara om som helår (22 287 till 20 958), och det går inte att fördela
+  på kvartal.
+- "En serie har en definition" gäller när raden byter innehåll och inga tidigare perioder räknas om (Amazon 2019,
+  Alphabet 2023). Då börjar serien vid den nya definitionen.
+
+**Summornas definitioner (R-2).** `dep_hyp4` summerar fyra definitioner: Microsofts rad med "other" (till och med 2024Q2
+på den gamla basen), Amazons rad med aktiverat innehåll och operationella leasingtillgångar, Metas rad med amortering på
+immateriella tillgångar, och för Alphabet bara avskrivningar på anläggningstillgångar. Katalognoten säger detta och
+hänvisar till `dep_ppe_hyp4` för jämförbar definition.
+
+**Ändringar efter första bygget (R-6).** Båda gjordes i P1 efter förregistreringen och står i koden och källdokumentet:
+- CoreWeave rapporterade i tusental till 10-K för 2025 och i miljoner därefter. En senare version som bara avrundar
+  till hela miljoner tas bort (`neoclouds.rounding_revisions_dropped`, alla fyra CRWV-serier). Filtret tar bort en rad:
+  `dep_crwv` 2025Q2, 560 den 2026-08-12 efter 559,481.
+- Alphabets taggar läses för perioder från 2021-01-01 (`first_start`), inte från 2023Q1 som posten säger. Värdena blir
+  desamma, eftersom 2021–2022 bara finns som helår med den nya taggen.

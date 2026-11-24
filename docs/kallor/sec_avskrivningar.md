@@ -3,8 +3,10 @@
 Spår P1, körning 13. Byggt 2026-11-24 och kontrollerat mot bolagens inlämningar. Kod:
 `src/ai_tracker/series/sec_avskrivningar.py` (katalogposter) och `src/ai_tracker/sources/sec_custom.py` (egna taggar ur
 instanser och summor ur samma inlämning). Kvartalslogik och versioner: `sources/sec.py` och `sources/sec_instant.py`.
-Tester: `tests/test_sec_avskrivningar.py` (syntetiska fixturer, inget nät). Taggvalen är förregistrerade i
-`docs/mattregister.md` (2026-11-24, P1), i en commit före den här beräkningen. Här finns ingen trendanalys.
+Tester: `tests/test_sec_avskrivningar.py` och `tests/test_r14_avskrivningar.py` (syntetiska fixturer och Microsofts
+rad som den lämnats in, inget nät). Taggvalen är förregistrerade i `docs/mattregister.md` (2026-11-24, P1), i en
+commit före den här beräkningen. Granskning: `docs/granskning/r14_avskrivningar.md`. Rättningsspåret X11 rättade
+`dep_msft` 2024Q3 och 2025Q3 och dokumentationen (se "Rättning efter R14"). Här finns ingen trendanalys.
 
 Syftet är att följa pengarna från capex in i resultaträkningen. Avskrivningarna är där capex 2024–2026 hamnar
 2026–2031, och nettot av anläggningstillgångarna är kapitalbasen för ett avkastningskrav. Serierna är underlag för
@@ -22,11 +24,11 @@ intäktskravet (P2b) och prognosmålet N7 (P3). De är katalogserier, inte kärn
 
 ## Serier (alla kvartal, MUSD, gren G5, release-daterade)
 
-Hämtning 2026-11-24. "Rev." är antalet kvartal med mer än en version.
+Hämtning 2026-11-24, ombyggd efter rättningen i X11. "Rev." är antalet kvartal med mer än en version.
 
 | Nyckel | Innehåll | Kvartal | Från–till | Rader | Rev. |
 |---|---|---|---|---|---|
-| `dep_msft` | Depreciation, amortization, and other (egen tagg) | 65 | 2010Q3–2026Q3 | 69 | 4 |
+| `dep_msft` | Depreciation, amortization, and other (egen tagg) | 65 | 2010Q3–2026Q3 | 70 | 5 |
 | `dep_ppe_msft` | Depreciation expense (not om anläggningstillgångar) | 9 | 2024Q3–2026Q3 | 9 | 0 |
 | `ppe_net_msft` / `ppe_gross_msft` | netto / brutto | 70 / 70 | 2009Q2–2026Q3 | 70 / 70 | 0 |
 | `dep_googl` = `dep_ppe_googl` | Depreciation of property and equipment | 15 | 2023Q1–2026Q3 | 15 | 0 |
@@ -43,12 +45,12 @@ Hämtning 2026-11-24. "Rev." är antalet kvartal med mer än en version.
 | `dep_crwv` | Depreciation and amortization | 11 | 2024Q1–2026Q3 | 11 | 0 |
 | `dep_ppe_crwv` | Depreciation | 11 | 2024Q1–2026Q3 | 11 | 0 |
 | `ppe_net_crwv` / `ppe_gross_crwv` | netto / brutto | 8 / 8 | 2024Q4–2026Q3 | 8 / 8 | 0 |
-| `dep_hyp4` | summa MSFT+GOOGL+AMZN+META av `dep_*` | 15 | 2023Q1–2026Q3 | 19 | 4 |
+| `dep_hyp4` | summa MSFT+GOOGL+AMZN+META av `dep_*` | 15 | 2023Q1–2026Q3 | 20 | 5 |
 | `dep_ppe_hyp4` | summa av `dep_ppe_*` | 9 | 2024Q3–2026Q3 | 9 | 0 |
 | `ppe_net_hyp4` | summa av `ppe_net_*` | 58 | 2012Q2–2026Q3 | 58 | 0 |
 | `dep_aws` | AWS-segmentets avskrivningar | 11 | 2024Q1–2026Q3 | 11 | 0 |
 
-26 serier och 1 061 rader. Datatesterna (`python -m ai_tracker.warehouse`) är gröna på spårets vy, och ingen av
+26 serier och 1 063 rader (1 061 före X11). Datatesterna (`python -m ai_tracker.warehouse`) är gröna på spårets vy, och ingen av
 serierna är för gammal.
 
 Finns inte: `ppe_gross_amzn`, `ppe_gross_orcl` och därmed `ppe_gross_hyp4`. Amazon och Oracle taggar bruttot och de
@@ -61,7 +63,7 @@ etiketten nedan är bolagets egen.
 
 | Bolag | `dep_<co>` | `dep_ppe_<co>` | Kommentar |
 |---|---|---|---|
-| MSFT | `msft:DepreciationAmortizationAndOther` ur instansen, i alla 10-Q och 10-K från 2011-07 | `Depreciation`, per kvartal i 10-Q från FY2025, helår sedan 2008 | Inlämningarna 2009-10 till 2011-04 använder en annan tagg. Kvartal från 2010Q3 kommer från jämförelsetal |
+| MSFT | `msft:DepreciationAmortizationAndOther` ur instansen, i alla 10-Q och 10-K från 2011-07 | `Depreciation`, helår sedan 2008. Per kvartal taggas den först i 10-Q:n 2025-10-29, med FY2025 som jämförelse, så kvartalen i FY2025 (2024Q3–2025Q2) blir kända genom jämförelsetal | Inlämningarna 2009-10 till 2011-04 använder en annan tagg. Kvartal från 2010Q3 kommer från jämförelsetal |
 | GOOGL | `Depreciation`, perioder från 2021 | samma | Raden heter "Depreciation of property and equipment" från 10-K för 2023, som räknade om 2021–2022 utan nedskrivningar. Tidigare egna taggar (`goog:DepreciationAndImpairmentOnDispositionOfPropertyAndEquipment` m.fl., 2014–2022) har en annan definition och skarvas inte. Amortering på immateriella ligger i "Other" |
 | AMZN | `DepreciationDepletionAndAmortization`, perioder från 2019 | `Depreciation` | Raden fick operationella leasingtillgångar 2019 (ASC 842, utan omräkning). Före 2017 låg raden i `DepreciationAndAmortization`, och i 10-K 2011–2017 användes `DepreciationDepletionAndAmortization` också för en annan siffra (helåren 2008–2014 avviker 2–32 % från kassaflödesraden). Serien börjar 2019 |
 | META | `DepreciationDepletionAndAmortization` | `Depreciation`, per kvartal från 2019 | samma rad och tagg hela perioden |
@@ -106,17 +108,30 @@ Omräkningar är versioner med regeln om konsekvent bas i `sec.py`. Omräkningar
 - **MSFT, deklarerad 2026-01-28.** Från 10-Q:n för Q2 FY2026 flyttade Microsoft belopp ur "Depreciation, amortization,
   and other" till "Net recognized losses (gains) on investments and derivatives". 10-K för FY2026 räknade om helår
   FY2025 (34 153 till 29 433) och FY2024 (22 287 till 20 958), och investeringsraden för FY2025 gick från 609 till 5 329.
-  Kvartalen 2024Q4–2025Q3 räknades om med 11–38 % i senare 10-Q och 10-K, som nya versioner. **I den senaste versionen
-  ligger kvartalen till och med 2024Q3 kvar på den gamla basen**, eftersom Microsoft inte räknade om dem. Beloppen
-  passar med förluster på investeringar (troligen kapitalandelar), men vilka poster som flyttades är inte verifierat i
-  texten. `dep_msft` är alltså ingen ren avskrivningsserie, särskilt inte FY2024–FY2026. Använd `dep_ppe_msft` där det
-  går.
+  Kvartalen 2024Q3–2025Q3 räknades om med 9–38 % i senare 10-Q och 10-K, som nya versioner. 2024Q3 (Q1 FY2025)
+  räknades om bara genom sexmånaderstalet: 10-Q:n 2026-01-28 visar 6M 12 383 och Q2 5 667, så Q1 på den nya basen är
+  6 716 (mot 7 383). Nio- och tolvmånaderstalen ger samma värde. *Rättat i X11:* serien hade 7 383 i alla versioner,
+  eftersom ett direkt tremånadersvärde alltid vann i `sec.py` (granskning R14, R-1). Påståendet här att Microsoft inte
+  räknade om 2024Q3 var fel. **I den senaste versionen ligger kvartalen till och med 2024Q2 (FY2024 och tidigare) kvar
+  på den gamla basen.** För FY2024 räknades bara helåret om (−6,0 %), och den omräkningen går inte att fördela på
+  kvartal. Beloppen passar med förluster på investeringar (troligen kapitalandelar), men vilka poster som flyttades är
+  inte verifierat i texten. `dep_msft` är alltså ingen ren avskrivningsserie, särskilt inte FY2024–FY2026. Använd
+  `dep_ppe_msft` där det går.
+- **Omräkning genom summorna (X11).** När en 10-Q har både ett hittills-i-år-värde och ett tremånadersvärde ger
+  skillnaden hittills-i-år-värdet vid förra kvartalets slut. Om det skiljer sig från det som redan lämnats in, mer än
+  avrundningen av de tre talen, blir det en ny version daterad till inlämningen (`sec_custom.implied_by_ytd`). Regeln
+  skapar inga nya perioder, och stoppregeln prövar även de härledda värdena. Den gäller alla flödesserier i P1. Den
+  ändrar bara två värden: `dep_msft` 2024Q3 (6 716) och 2025Q3 (8 147, som nu är känt från 2026-01-28 i stället för
+  2026-10-28). Inga andra serier ändras, och inga nya brott över 2 % uppstår.
 - **AMZN, deklarerad 2023-04-28.** 10-Q:n räknade om 2022Q1 med +2,4 %, och senare inlämningar räknade om 2022Q2–Q4.
-  Helåret 2022 är oförändrat (41 921), så omräkningen fördelade om året mellan kvartalen.
+  Helåret 2022 är oförändrat (41 921), så omräkningen fördelade om året mellan kvartalen. Mellan 2023-10-27 och
+  2024-02-01 låg 2022Q1–Q3 på den nya fördelningen, medan Q4 var helåret minus det gamla 9M-talet (`sec.py`:s
+  konservativa regel). Summan av kvartalen 2022 var då 42 381 i stället för 41 921. Det rättades 2024-02-02.
 - **META, deklarerad 2014-04-25.** 2013Q1 räknades om med −3,3 %, och 2013Q2 med +3,6 % i 10-Q:n 2014-07-24
   (jämförelsetal ett år senare, efter samma omklassificering).
 - **CRWV:** rapporterade i tusental till 10-K för 2025 och i miljoner därefter. En senare version som bara avrundar
-  till hela miljoner är ingen omräkning och tas bort (som i `neoclouds`, till exempel 2025Q2 559,481 och 560).
+  till hela miljoner är ingen omräkning och tas bort (som i `neoclouds`, till exempel 2025Q2 559,481 och 560). Filtret
+  lades till efter första bygget, och det tar bort exakt en rad (`dep_crwv` 2025Q2, 560 den 2026-08-12).
 - Definitionsbrott utan omräkning (Amazon 2019, Alphabet 2023) hanteras genom att serien börjar vid den nya definitionen.
 
 ## Kontroll mot inlämningarna
@@ -144,8 +159,10 @@ Amazons `Depreciation` i 10-Q är summan av segmenten. I 10-K för 2025 är den 
 - known_from är inlämningsdatumet för 10-Q eller 10-K. Varje inlämning är en version.
 - MSFT (räkenskapsår till juni), GOOGL, AMZN, META och CRWV: räkenskapskvartalen är kalenderkvartal.
 - ORCL: räkenskapsår till 31 maj. Kvartal sep–nov räknas som Q4 (mittpunktsregeln) och lämnas in cirka 10 december,
-  före kalenderkvartalets slut. Därför `lag_days = -31` och aktualitetsgränsen 119 dagar, som `rev_orcl`.
-  Balansen 30 november hamnar i samma kvartal som flödet.
+  före kalenderkvartalets slut. Därför `lag_days = -31` och aktualitetsgränsen 119 dagar (−3 + 92 + 30), som
+  `rev_orcl`. I P1:s data kommer första versionen senast 1 dag efter kalenderkvartalets slut (2010Q2, 10-K
+  2010-07-01) och sedan 2012 senast 3 dagar före (2017Q2). Undantag är de första kvartalen 2008–2009, som bara finns
+  som jämförelsetal. Balansen 30 november hamnar i samma kvartal som flödet.
 - Alphabets kvartal 2023 blir kända först med jämförelsetalen i 10-Q 2024 (till exempel 2023Q4 den 2024-10-30),
   eftersom 10-Q under 2023 använde den gamla taggen och definitionen. Det är sent men konservativt.
 - Amazons och AWS kvartal 2024 blir kända med jämförelsetalen 2025 av samma skäl.
@@ -160,14 +177,35 @@ Amazons `Depreciation` i 10-Q är summan av segmenten. I 10-K för 2025 är den 
   extraheras i spår P2.
 - **Definitionerna skiljer sig mellan bolagen.** `dep_msft` innehåller "other", `dep_amzn` innehåller aktiverat innehåll
   och operationell leasing, `dep_orcl` och `dep_meta` innehåller amortering på immateriella tillgångar, och `dep_googl`
-  är bara avskrivningar på anläggningstillgångar. `dep_hyp4` är alltså en summa av olika definitioner. För jämförbarhet
-  finns `dep_ppe_*` och `dep_ppe_hyp4`, men bara från 2024Q3.
-- **Avrundning.** Microsoft och CoreWeave taggar avskrivningen i noten avrundad till 0,1 miljard USD. `dep_ppe_crwv` kan
-  därför ligga över `dep_crwv` (2026Q3: 1 900 mot 1 889), och Q4 = helår − 9M får ett avrundningsfel på upp till cirka
-  100 MUSD.
+  är bara avskrivningar på anläggningstillgångar. `dep_hyp4` är alltså en summa av olika definitioner, och
+  Microsofts del ligger på den gamla basen till och med 2024Q2. Katalognoten för `dep_hyp4` säger detta (R14, R-2).
+  För jämförbarhet finns `dep_ppe_*` och `dep_ppe_hyp4`, men bara från 2024Q3.
+- **Avrundning.** Microsoft och CoreWeave taggar avskrivningen i noten avrundad till 0,1 miljard USD, och Meta
+  taggar `Depreciation` avrundad till 0,01 miljard USD (till exempel 3 330 och 18 000). `dep_ppe_crwv` kan därför ligga
+  över `dep_crwv` (2026Q3: 1 900 mot 1 889), och Q4 = helår − 9M får ett avrundningsfel på upp till cirka 100 MUSD
+  (Meta cirka 10 MUSD). Regeln för omräkning genom summorna tar hänsyn till avrundningen, så den ger inga versioner
+  som bara är avrundning.
 - **Korta serier.** `dep_ppe_hyp4` har 9 kvartal och `dep_hyp4` 15. Långa serier per bolag: `dep_orcl` och `dep_ppe_orcl`
   (73), `dep_msft` (65, med basbrottet ovan) och `dep_meta` (61).
 - **Möjliga tillägg, inte byggda:** stängda nycklar för de äldre definitionerna (Alphabet 2014–2022 med nedskrivningar,
   Amazon 2008–2018 före ASC 842), helårsserier för avskrivning på anläggningstillgångar (MSFT och AMZN sedan 2008 och
   2014), och AWS-segmentets nettotillgångar. De senare visas i Amazons segmentnot i 10-Q (313 009 per 2026-09-30) men
   taggas med en extra dimension, och de läses inte här.
+
+## Rättning efter R14 (X11, 2026-11-24)
+
+Granskningen R14 godkände P1 med anmärkningar. Rättningsspåret X11 (`auto14/x11-avskrivningar`) rättade:
+
+| Fynd | Rättning | Effekt |
+|---|---|---|
+| R-1 (F-3a) | Omräkning genom summorna (`sec_custom.implied_by_ytd`) i alla flödesserier i P1 | `dep_msft` 2024Q3: ny version 6 716 den 2026-01-28. 2025Q3: 8 147 från 2026-01-28 i stället för 2026-10-28. `dep_hyp4` 2024Q3: 28 170 i stället för 28 837 (2026-01-28), och 2025Q3 35 517 från 2026-01-28. Två rader till (1 063). Inga andra serier ändras, och första versionen av varje kvartal är oförändrad |
+| R-2 (A-8a) | Noten för `dep_hyp4` säger vilka definitioner som summeras, och noten för `dep_ppe_hyp4` att innehållet är detsamma | ingen ändring av värden |
+| R-3 | Påståendet att Microsoft inte räknade om 2024Q3 är rättat här och i beslutsloggen | – |
+| R-4 (A-6a) | P1:s CoreWeave-test, som passerade utan filtret, är borttaget. Granskningens test prövar filtret | – |
+| R-5, R-6 | Regeln för delvis omräkning, CoreWeave-filtret och Alphabets `first_start` står i registret (tillägg 2026-11-24). Oracles aktualitet, Metas avrundning och Microsofts kvartalstaggning står ovan | – |
+
+Effekt i den senaste versionen: fyrkvartalsfönstret FY2025 (2024Q3–2025Q2) för `dep_msft` är 29 434, mot helåret
+29 433 (avrundning), i stället för 30 101. Årstakten 2025Q3 är +21,3 % för `dep_msft` (+10,3 % före) och +26,1 % för
+`dep_hyp4` (+23,2 % före). Talen visar bara storleken på rättningen. Fyrkvartalsfönster som slutar till och med 2024Q2
+ligger på den gamla basen, och fönster från 2025Q2 på den nya. Fönster som slutar 2024Q3–2025Q1 blandar baser, eftersom
+FY2024:s kvartal inte kan räknas om. Före rättningen blandade även fönstret 2025Q2 baser.

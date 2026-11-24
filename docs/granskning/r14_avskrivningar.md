@@ -290,3 +290,7 @@ R-sidorna 2024-04-25 till 2026-10-28.
 Hela sviten: 1 568 passerade, 2 misslyckade (de kända miljöfelen `test_freshness_as_of_last_fetch`, Arena-pris
 utan data, och `test_committed_fixtures_are_the_current_synthetic_bundle`, som misslyckas även utan denna
 gransknings ändringar), 1 överhoppad, 3 xfail.
+
+Rättat i `auto14/x11-avskrivningar` (rättningsspår X11, 2026-11-24): R-1, R-2, R-3 (utom P2b:s `intaktskrav.md`, som
+ligger på P2b:s gren), R-4, R-5 och R-6. De två strikta xfail-testen är vanliga tester. Effekt och regel:
+`docs/kallor/sec_avskrivningar.md` ("Rättning efter R14") och tillägget 2026-11-24 i `docs/mattregister.md`.

@@ -29,6 +29,7 @@ En rad per spår, fylls på efter varje körning. Tumreglerna justeras när siff
 | 2026-11-24 | 11 | W4 + W2 skelett, designsystem, CI | webb (SvelteKit, tokens, primitiver, CI) | ~29 | ~93 | ~291 | 41 vitest, 78 Playwright, axe, budgetar, `pages-next.yml`, en deploy |
 | 2026-11-24 | 13 | P1 avskrivningar och anläggningstillgångar | källa + katalog (XBRL, egna taggar ur instanser, förregistrerat) | ~95 | ~75 | – | 26 serier, 1 061 rader, 3 deklarerade omräkningar, 9 handkontroller med accession, 15 tester |
 | 2026-11-24 | 13 | R14 granskning av P1 | granskning mot primärkälla (R-sidor i 30 inlämningar, ombygge) | ~75 | ~85 | – | 15 handkontroller, 1 must_fix (MSFT 2024Q3 på gammal bas), 3 should_fix, 9 tester varav 2 strikt xfail |
+| 2026-11-24 | 13 | X11 rättning av P1 efter R14 | rättning (regel i kod, ombygge från rå-cache, register och dokument) | ~45 | ~60 | – | omräkning genom summorna, 2 värden i `dep_msft` ändrade, 26 serier ombyggda (1 063 rader), 2 strikta xfail nu vanliga tester, 5 nya tester |
 
 ## Körning 1, sammanfattning (2026-11-23, orkestrerare)
 
