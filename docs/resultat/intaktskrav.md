@@ -9,6 +9,33 @@ efter komponenterna.
 
 Dokumentet beskriver. Det säger inget om huruvida investeringarna betalar sig, och kvoterna har ingen etikett.
 
+**Omräknat efter rättningen X11 (2026-11-24).** P2b byggdes på P1 före X11. Siffrorna nedan är räknade om med den
+sammanslagna koden i körning 13, på basen efter datamergen, per 2026-11-24. Avsnittet "Omräkning efter X11" säger vad
+som ändrades.
+
+## Omräkning efter X11
+
+- **Skäl.** Microsoft räknade om 2024Q3 och 2025Q3 genom sexmånaderstalet i 10-Q:n 2026-01-28 (granskning R14, R-1).
+  Efter X11 är det en egen version från 2026-01-28. I `dep_hyp4` blev 2024Q3 28 170 MUSD i stället för 28 837 (från
+  2026-01-28), och 2025Q3 blev 35 517 redan från 2026-01-28 i stället för från 2026-10-28.
+- **Första versionen av varje period är oförändrad.** Det som ändras är de senare versionerna för perioderna
+  2024Q3–2025Q4, och antalet versioner: 25 i stället för 28 för `x_dep_rev` och kapitalkostnaden, och 32 i stället för
+  35 för `x_dep_capex`. AWS-kvoten ändras inte.
+- **Senaste versionen ändras för 2024Q3–2025Q2:**
+
+| Period | `known_from` | `x_dep_rev` | `x_capcost_rev_r08` | `x_capcost_rev_r12` | `x_dep_capex` |
+|---|---|---|---|---|---|
+| 2024Q3 | 2026-01-28 | 7,69 → 7,64 | 11,57 → 11,52 | 13,50 → 13,46 | 52,96 → 52,63 |
+| 2024Q4 | 2026-01-28 | 7,71 → 7,66 | 11,74 → 11,69 | 13,75 → 13,71 | 47,76 → 47,47 |
+| 2025Q1 | 2026-04-29 | 7,93 → 7,88 | 12,20 → 12,16 | 14,34 → 14,29 | 44,91 → 44,65 |
+| 2025Q2 | 2026-07-29 | 8,19 → 8,15 | 12,74 → 12,69 | 15,01 → 14,96 | 42,24 → 42,01 |
+
+- **2025Q3 och 2025Q4** har samma värde i senaste versionen som förut, men det är känt från 2026-07-29 i stället för
+  2026-10-28. Före X11 kom Microsofts omräkning av 2025Q3 först med 10-Q:n för 2026Q3.
+- **Måtten per 2026-11-24:** nivån och takten 2026Q3 är oförändrade. Förändringen i takt och överraskningen ändras,
+  eftersom takten 2026Q1 jämför med 2025Q1, som nu är lägre: `x_dep_rev` +0,0 (förut +0,6), `x_capcost_rev_r08` +1,8
+  (+2,2), `x_capcost_rev_r12` +2,2 (+2,5) och `x_dep_capex` −8,0 (−7,4). Percentilerna för takten är desamma.
+
 ## Ordning och vad som setts
 
 - Registerposten committades först (`ae0724b`, med ett tillägg om vad som setts i `082f971`). Koden och testerna kom i
@@ -55,10 +82,10 @@ Senaste version känd 2026-11-24. "Versioner" räknar alla rader i serien.
 
 | Nyckel | Period | Nivå | `known_from` | Perioder | Första period | Första `known_from` | Versioner |
 |---|---|---|---|---|---|---|---|
-| `x_dep_rev` | 2026Q3 | 9,39 | 2026-10-30 | 12 | 2023Q4 | 2024-10-30 | 28 |
-| `x_capcost_rev_r08` | 2026Q3 | 15,78 | 2026-10-30 | 12 | 2023Q4 | 2024-10-30 | 28 |
-| `x_capcost_rev_r12` | 2026Q3 | 18,97 | 2026-10-30 | 12 | 2023Q4 | 2024-10-30 | 28 |
-| `x_dep_capex` | 2026Q3 | 28,34 | 2026-10-30 | 12 | 2023Q4 | 2024-10-30 | 35 |
+| `x_dep_rev` | 2026Q3 | 9,39 | 2026-10-30 | 12 | 2023Q4 | 2024-10-30 | 25 |
+| `x_capcost_rev_r08` | 2026Q3 | 15,78 | 2026-10-30 | 12 | 2023Q4 | 2024-10-30 | 25 |
+| `x_capcost_rev_r12` | 2026Q3 | 18,97 | 2026-10-30 | 12 | 2023Q4 | 2024-10-30 | 25 |
+| `x_dep_capex` | 2026Q3 | 28,34 | 2026-10-30 | 12 | 2023Q4 | 2024-10-30 | 32 |
 | `x_dep_rev_aws` | 2026Q3 | 19,30 | 2026-10-30 | 8 | 2024Q4 | 2025-10-31 | 8 |
 
 Komponenterna för 2026Q3, i MUSD: avskrivningar 174 399 (fyra kvartal), intäkter 1 856 604 (fyra kvartal),
@@ -72,10 +99,10 @@ kvartal från 2024, och 2024Q3 och 2024Q4 blev kända 2025-10-31.
 
 | Nyckel | Nivå | Takt | Förändring i takt | Percentil, takt | n takt / n förändring | Överraskning (B1-drift) |
 |---|---|---|---|---|---|---|
-| `x_dep_rev` | 9,39 | +12,2 | +0,6 | 94 | 8 / 6 | +0,9 |
-| `x_capcost_rev_r08` | 15,78 | +18,3 | +2,2 | 94 | 8 / 6 | +1,5 |
-| `x_capcost_rev_r12` | 18,97 | +19,9 | +2,5 | 94 | 8 / 6 | +1,6 |
-| `x_dep_capex` | 28,34 | −32,8 | −7,4 | 6 | 8 / 6 | −3,9 |
+| `x_dep_rev` | 9,39 | +12,2 | +0,0 | 94 | 8 / 6 | +0,7 |
+| `x_capcost_rev_r08` | 15,78 | +18,3 | +1,8 | 94 | 8 / 6 | +1,4 |
+| `x_capcost_rev_r12` | 18,97 | +19,9 | +2,2 | 94 | 8 / 6 | +1,5 |
+| `x_dep_capex` | 28,34 | −32,8 | −8,0 | 6 | 8 / 6 | −4,0 |
 | `x_dep_rev_aws` | 19,30 | +22,8 | −6,1 | – | 4 / 2 | −2,7 |
 
 Takten är i log ×100 per år. Ingen serie har percentil för förändringen i takt (färre än 8 värden), och AWS-kvoten
@@ -88,10 +115,10 @@ Nivåerna i den senaste versionen:
 | 2023Q4 | 7,16 | 10,68 | 12,44 | 60,51 | – |
 | 2024Q1 | 7,28 | 10,84 | 12,62 | 59,49 | – |
 | 2024Q2 | 7,43 | 11,11 | 12,95 | 55,70 | – |
-| 2024Q3 | 7,69 | 11,57 | 13,50 | 52,96 | – |
-| 2024Q4 | 7,71 | 11,74 | 13,75 | 47,76 | 12,38 |
-| 2025Q1 | 7,93 | 12,20 | 14,34 | 44,91 | 13,30 |
-| 2025Q2 | 8,19 | 12,74 | 15,01 | 42,24 | 14,30 |
+| 2024Q3 | 7,64 | 11,52 | 13,46 | 52,63 | – |
+| 2024Q4 | 7,66 | 11,69 | 13,71 | 47,47 | 12,38 |
+| 2025Q1 | 7,88 | 12,16 | 14,29 | 44,65 | 13,30 |
+| 2025Q2 | 8,15 | 12,69 | 14,96 | 42,01 | 14,30 |
 | 2025Q3 | 8,32 | 13,13 | 15,54 | 39,35 | 15,37 |
 | 2025Q4 | 8,60 | 13,73 | 16,29 | 37,20 | 16,66 |
 | 2026Q1 | 8,90 | 14,34 | 17,07 | 34,83 | 17,76 |
@@ -109,7 +136,7 @@ och samma versionsregel. Serien finns från 2025Q2 (första version 2026-04-29),
 
 | Period | `x_dep_rev` | Med `dep_ppe_hyp4` |
 |---|---|---|
-| 2025Q2 | 8,19 | 6,13 |
+| 2025Q2 | 8,15 | 6,13 |
 | 2025Q3 | 8,32 | 6,38 |
 | 2025Q4 | 8,60 | 6,65 |
 | 2026Q1 | 8,90 | 7,00 |
@@ -149,14 +176,17 @@ CoreWeaves netto finns från 2024Q4.
 - **r är ett antagande.** 8 % och 12 % är ett registrerat intervall, ingen skattning av bolagens kapitalkostnad. Kvoten
   är linjär i r, och takten beror på r: ju högre r, desto mer väger nettot, som växer snabbare.
 - **Microsofts definitionsbrott.** Microsofts rad räknades om 2026-01-28 och framåt: "other" krympte, och omräkningen
-  gällde kvartal från 2024Q4. Kvartalen 2024Q1–2024Q3 ligger kvar på den gamla basen. I `dep_hyp4` sänkte omräkningen
-  2024Q4 med 3,7 % (31 123 till 29 963 MUSD) och 2025Q3 med 12,2 % (40 431 till 35 517 MUSD). I den senaste versionen
-  har perioderna 2023Q4–2024Q3 bara gammal bas, 2024Q4–2025Q2 en blandning och perioderna från 2025Q3 bara ny bas.
+  gällde kvartal från 2024Q3. 2024Q3 räknades om genom sexmånaderstalet (6 716 mot 7 383 MUSD, R14 R-3). Bara
+  kvartalen till och med 2024Q2 (Microsofts FY2024) ligger kvar på den gamla basen. I `dep_hyp4` sänkte omräkningen
+  2024Q3 med 2,3 % (28 837 till 28 170 MUSD), 2024Q4 med 3,7 % (31 123 till 29 963 MUSD) och 2025Q3 med 12,2 %
+  (40 431 till 35 517 MUSD), alla från 2026-01-28. I den senaste versionen har perioderna 2023Q4–2024Q2 bara gammal
+  bas, 2024Q3–2025Q1 en blandning och perioderna från 2025Q2 bara ny bas.
   - Nivån och takten 2026Q3 jämför bara perioder på ny bas och påverkas inte.
-  - Förändringen i takt använder takten 2026Q1, som jämför med 2025Q1, en period med två kvartal på gammal bas. Om den
-    gamla basen ligger högre (som 2024Q4) är takten 2026Q1 för låg och förändringen i takt för hög.
-  - Percentilerna jämför med takter från 2024Q4–2026Q2 i samma (senaste) version, och alla påverkas.
-  Effekten räknas inte om, eftersom Microsoft inte har räknat om de kvartalen.
+  - Förändringen i takt använder takten 2026Q1, som jämför med 2025Q1, en period med ett kvartal på gammal bas
+    (2024Q2). Om den gamla basen ligger högre (som 2024Q4) är takten 2026Q1 för låg och förändringen i takt för hög.
+  - Percentilerna jämför med takter från 2024Q4–2026Q2 i samma (senaste) version, och alla utom 2026Q2 påverkas.
+  Effekten räknas inte om, eftersom kvartalen till och med 2024Q2 inte går att ställa på den nya basen: Microsoft
+  räknade inte om FY2024.
 - **Olika definitioner i summan:** Amazons rad innehåller operationella leasingtillgångar och aktiverat innehåll,
   Metas amortering på immateriella tillgångar och Microsofts "other". Tillägg (a) visar att valet flyttar takten med
   cirka 7 enheter.

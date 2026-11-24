@@ -80,10 +80,10 @@ Resultat och förbehåll: `docs/resultat/intaktskrav.md`.
 
 | Nyckel | Definition (×100, fyra kvartal) | Led | Enhet | Historik (senaste version) | Versioner | Första `known_from` |
 |---|---|---|---|---|---|---|
-| `x_dep_rev` | `dep_hyp4` / (`rev_msft` + `rev_googl` + `rev_amzn` + `rev_meta`) | L3–L5 | procent av intäkterna | 2023Q4–2026Q3, 12 kvartal | 28 | 2024-10-30 |
-| `x_capcost_rev_r08` | (`dep_hyp4` + 0,08 × `ppe_net_hyp4` vid periodens slut) / samma intäkter | L3–L5 | procent av intäkterna | 2023Q4–2026Q3, 12 kvartal | 28 | 2024-10-30 |
-| `x_capcost_rev_r12` | som ovan med 0,12 | L3–L5 | procent av intäkterna | 2023Q4–2026Q3, 12 kvartal | 28 | 2024-10-30 |
-| `x_dep_capex` | `dep_hyp4` / `capex_hyp4` | L5 | procent av capex | 2023Q4–2026Q3, 12 kvartal | 35 | 2024-10-30 |
+| `x_dep_rev` | `dep_hyp4` / (`rev_msft` + `rev_googl` + `rev_amzn` + `rev_meta`) | L3–L5 | procent av intäkterna | 2023Q4–2026Q3, 12 kvartal | 25 | 2024-10-30 |
+| `x_capcost_rev_r08` | (`dep_hyp4` + 0,08 × `ppe_net_hyp4` vid periodens slut) / samma intäkter | L3–L5 | procent av intäkterna | 2023Q4–2026Q3, 12 kvartal | 25 | 2024-10-30 |
+| `x_capcost_rev_r12` | som ovan med 0,12 | L3–L5 | procent av intäkterna | 2023Q4–2026Q3, 12 kvartal | 25 | 2024-10-30 |
+| `x_dep_capex` | `dep_hyp4` / `capex_hyp4` | L5 | procent av capex | 2023Q4–2026Q3, 12 kvartal | 32 | 2024-10-30 |
 | `x_dep_rev_aws` | `dep_aws` / `rev_aws` | L3–L5 | procent av intäkterna | 2024Q4–2026Q3, 8 kvartal | 8 | 2025-10-31 |
 
 - **Vägda termer:** `Term` har en fast vikt (`weight`), här avkastningskravet r på `ppe_net_hyp4`. Vikten gäller varje
@@ -94,4 +94,5 @@ Resultat och förbehåll: `docs/resultat/intaktskrav.md`.
   kvartal 2023 blev kända som jämförelsetal i 10-Q:erna 2024, de sista (2023Q3 och 2023Q4) 2024-10-30. Därför börjar
   versionerna där.
 - **Microsofts definitionsbrott** (`dep_msft`, deklarerat 2026-01-28) slår igenom i kvoterna med `dep_hyp4`: i den
-  senaste versionen ligger kvartalen 2024Q1–2024Q3 på den gamla basen. Se resultatdokumentet.
+  senaste versionen ligger kvartalen 2024Q1–2024Q2 på den gamla basen. 2024Q3 räknades om genom sexmånaderstalet
+  (rättning X11, R14 R-3). Versionerna är räknade efter X11. Se resultatdokumentet.

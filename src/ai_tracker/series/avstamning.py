@@ -114,7 +114,7 @@ def _sv(x: float) -> str:
 
 
 REQ_NOTE = ("Avskrivningar enligt kassaflödesanalysen (dep_hyp4, MSFT+GOOGL+AMZN+META) med bolagens olika "
-            "definitioner: Microsofts rad innehåller 'other' (kvartal till och med 2024Q3 på den gamla basen), Amazons "
+            "definitioner: Microsofts rad innehåller 'other' (kvartal till och med 2024Q2 på den gamla basen, R14 R-3), Amazons "
             "aktiverat innehåll och operationella leasingtillgångar och Metas amortering på immateriella tillgångar. Alla "
             "anläggningstillgångar, inte bara AI-servrar; finansiell leasing ingår i nettot. Totala intäkter, även "
             "verksamhet utan AI.")

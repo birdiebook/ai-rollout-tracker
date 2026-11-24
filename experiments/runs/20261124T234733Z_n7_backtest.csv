@@ -1,0 +1,49 @@
+utc,git_sha,target,variant,period,n,MAE,dm_p_vs_baseline
+2026-11-24T23:47:33Z,a3c6915+dirty,dep_hyp4,V1 h1–2,full,0,,
+2026-11-24T23:47:33Z,a3c6915+dirty,dep_hyp4,V2 h1–2,full,0,,
+2026-11-24T23:47:33Z,a3c6915+dirty,dep_hyp4,V1 h3–4,full,0,,
+2026-11-24T23:47:33Z,a3c6915+dirty,dep_hyp4,V2 h3–4,full,0,,
+2026-11-24T23:47:33Z,a3c6915+dirty,dep_hyp4,V1 h5–8,full,0,,
+2026-11-24T23:47:33Z,a3c6915+dirty,dep_hyp4,V2 h5–8,full,0,,
+2026-11-24T23:47:33Z,a3c6915+dirty,dep_hyp4,V1 h1–2,2023-,0,,
+2026-11-24T23:47:33Z,a3c6915+dirty,dep_hyp4,V2 h1–2,2023-,0,,
+2026-11-24T23:47:33Z,a3c6915+dirty,dep_hyp4,V1 h3–4,2023-,0,,
+2026-11-24T23:47:33Z,a3c6915+dirty,dep_hyp4,V2 h3–4,2023-,0,,
+2026-11-24T23:47:33Z,a3c6915+dirty,dep_hyp4,V1 h5–8,2023-,0,,
+2026-11-24T23:47:33Z,a3c6915+dirty,dep_hyp4,V2 h5–8,2023-,0,,
+2026-11-24T23:47:33Z,a3c6915+dirty,dep_<company> pooled (N7b),B0 h1–2 (V1 rows),full 2014-10-20..2026-10-20 T=49,180,11.2777,
+2026-11-24T23:47:33Z,a3c6915+dirty,dep_<company> pooled (N7b),B1 h1–2 (V1 rows),full 2014-10-20..2026-10-20 T=49,180,9.014,
+2026-11-24T23:47:33Z,a3c6915+dirty,dep_<company> pooled (N7b),V1 h1–2 (V1 rows),full 2014-10-20..2026-10-20 T=49,180,14.5179,0.0174
+2026-11-24T23:47:33Z,a3c6915+dirty,dep_<company> pooled (N7b),B0 h1–2 (V2 rows),full 2020-10-20..2026-10-20 T=25,84,14.1584,
+2026-11-24T23:47:33Z,a3c6915+dirty,dep_<company> pooled (N7b),B1 h1–2 (V2 rows),full 2020-10-20..2026-10-20 T=25,84,11.2526,
+2026-11-24T23:47:33Z,a3c6915+dirty,dep_<company> pooled (N7b),V2 h1–2 (V2 rows),full 2020-10-20..2026-10-20 T=25,84,16.944,0.0903
+2026-11-24T23:47:33Z,a3c6915+dirty,dep_<company> pooled (N7b),B0 h3–4 (V1 rows),full 2014-10-20..2026-04-20 T=47,165,20.3697,
+2026-11-24T23:47:33Z,a3c6915+dirty,dep_<company> pooled (N7b),B1 h3–4 (V1 rows),full 2014-10-20..2026-04-20 T=47,165,16.3461,
+2026-11-24T23:47:33Z,a3c6915+dirty,dep_<company> pooled (N7b),V1 h3–4 (V1 rows),full 2014-10-20..2026-04-20 T=47,165,19.3727,0.4277
+2026-11-24T23:47:33Z,a3c6915+dirty,dep_<company> pooled (N7b),B0 h3–4 (V2 rows),full 2020-10-20..2026-04-20 T=23,72,25.8031,
+2026-11-24T23:47:33Z,a3c6915+dirty,dep_<company> pooled (N7b),B1 h3–4 (V2 rows),full 2020-10-20..2026-04-20 T=23,72,21.3842,
+2026-11-24T23:47:33Z,a3c6915+dirty,dep_<company> pooled (N7b),V2 h3–4 (V2 rows),full 2020-10-20..2026-04-20 T=23,72,19.1022,0.6397
+2026-11-24T23:47:33Z,a3c6915+dirty,dep_<company> pooled (N7b),B0 h5–8 (V1 rows),full 2014-10-20..2025-10-20 T=45,294,32.8584,
+2026-11-24T23:47:33Z,a3c6915+dirty,dep_<company> pooled (N7b),B1 h5–8 (V1 rows),full 2014-10-20..2025-10-20 T=45,294,24.0623,
+2026-11-24T23:47:33Z,a3c6915+dirty,dep_<company> pooled (N7b),V1 h5–8 (V1 rows),full 2014-10-20..2025-10-20 T=45,294,28.8806,0.5785
+2026-11-24T23:47:33Z,a3c6915+dirty,dep_<company> pooled (N7b),B0 h5–8 (V2 rows),full 2020-10-20..2025-10-20 T=21,120,42.587,
+2026-11-24T23:47:33Z,a3c6915+dirty,dep_<company> pooled (N7b),B1 h5–8 (V2 rows),full 2020-10-20..2025-10-20 T=21,120,30.232,
+2026-11-24T23:47:33Z,a3c6915+dirty,dep_<company> pooled (N7b),V2 h5–8 (V2 rows),full 2020-10-20..2025-10-20 T=21,120,25.3592,0.616
+2026-11-24T23:47:33Z,a3c6915+dirty,dep_<company> pooled (N7b),B0 h1–2 (V1 rows),2023- 2023-04-20..2026-10-20 T=15,68,13.7996,
+2026-11-24T23:47:33Z,a3c6915+dirty,dep_<company> pooled (N7b),B1 h1–2 (V1 rows),2023- 2023-04-20..2026-10-20 T=15,68,9.0683,
+2026-11-24T23:47:33Z,a3c6915+dirty,dep_<company> pooled (N7b),V1 h1–2 (V1 rows),2023- 2023-04-20..2026-10-20 T=15,68,9.4661,0.8817
+2026-11-24T23:47:33Z,a3c6915+dirty,dep_<company> pooled (N7b),B0 h1–2 (V2 rows),2023- 2023-04-20..2026-10-20 T=15,56,14.6732,
+2026-11-24T23:47:33Z,a3c6915+dirty,dep_<company> pooled (N7b),B1 h1–2 (V2 rows),2023- 2023-04-20..2026-10-20 T=15,56,9.6129,
+2026-11-24T23:47:33Z,a3c6915+dirty,dep_<company> pooled (N7b),V2 h1–2 (V2 rows),2023- 2023-04-20..2026-10-20 T=15,56,10.7701,0.7178
+2026-11-24T23:47:33Z,a3c6915+dirty,dep_<company> pooled (N7b),B0 h3–4 (V1 rows),2023- 2023-04-20..2026-04-20 T=13,53,29.5353,
+2026-11-24T23:47:33Z,a3c6915+dirty,dep_<company> pooled (N7b),B1 h3–4 (V1 rows),2023- 2023-04-20..2026-04-20 T=13,53,17.498,
+2026-11-24T23:47:33Z,a3c6915+dirty,dep_<company> pooled (N7b),V1 h3–4 (V1 rows),2023- 2023-04-20..2026-04-20 T=13,53,10.3599,0.0547
+2026-11-24T23:47:33Z,a3c6915+dirty,dep_<company> pooled (N7b),B0 h3–4 (V2 rows),2023- 2023-04-20..2026-04-20 T=13,44,31.3824,
+2026-11-24T23:47:33Z,a3c6915+dirty,dep_<company> pooled (N7b),B1 h3–4 (V2 rows),2023- 2023-04-20..2026-04-20 T=13,44,19.8432,
+2026-11-24T23:47:33Z,a3c6915+dirty,dep_<company> pooled (N7b),V2 h3–4 (V2 rows),2023- 2023-04-20..2026-04-20 T=13,44,10.7263,0.0746
+2026-11-24T23:47:33Z,a3c6915+dirty,dep_<company> pooled (N7b),B0 h5–8 (V1 rows),2023- 2023-04-20..2025-10-20 T=11,70,51.0668,
+2026-11-24T23:47:33Z,a3c6915+dirty,dep_<company> pooled (N7b),B1 h5–8 (V1 rows),2023- 2023-04-20..2025-10-20 T=11,70,25.8759,
+2026-11-24T23:47:33Z,a3c6915+dirty,dep_<company> pooled (N7b),V1 h5–8 (V1 rows),2023- 2023-04-20..2025-10-20 T=11,70,21.1392,0.8276
+2026-11-24T23:47:33Z,a3c6915+dirty,dep_<company> pooled (N7b),B0 h5–8 (V2 rows),2023- 2023-04-20..2025-10-20 T=11,64,53.0855,
+2026-11-24T23:47:33Z,a3c6915+dirty,dep_<company> pooled (N7b),B1 h5–8 (V2 rows),2023- 2023-04-20..2025-10-20 T=11,64,27.7145,
+2026-11-24T23:47:33Z,a3c6915+dirty,dep_<company> pooled (N7b),V2 h5–8 (V2 rows),2023- 2023-04-20..2025-10-20 T=11,64,18.5473,0.6516
