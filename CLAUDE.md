@@ -65,7 +65,9 @@ Se `docs/plan.md`, avsnitt 8. Uppdatera här när en fas är klar.
 - **Fas 5** ✅ tillstånd per gren (`python -m ai_tracker.state`), månatlig ögonblicksbild från 2026-11-30
 - **Fas 6** ✅ hemsida på GitHub Pages (`python -m ai_tracker.site build`, `pages.yml`; ägaren aktiverar
   Pages en gång, se `docs/drift.md`). Månadsbrev ✅ (`python -m ai_tracker.letter`, committas med ögonblicksbilden)
-- **Steg 2** pågår: flödesmodell, sannolikheter och regim (`docs/steg2/plan.md`)
+- **Steg 2** ✅ våg 0–4 (`docs/steg2/plan.md`, status `docs/steg2/STATUS.md`): cirka 400 serier, flödesmodell med
+  avstämningar, N3–N6, intervall, faktormodell (skugga), regimmodell (i månadsbilden), prognoser 1–8 kvartal (skugga),
+  flödesvy, kvartalsrapport. Holdouten för C3/C4 är öppnad och utvärderad (`docs/holdout_logg.md`)
 - Drift: `docs/drift.md` (veckohämtning, skarpa prognoser N2 dag 5 och N1 kvartal + 20 dagar, ögonblicksbild vid månadsslut)
 
 ## Tekniska konventioner

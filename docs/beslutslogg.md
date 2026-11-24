@@ -349,3 +349,17 @@ gränsen 0,10 är mindre än i C2:s körning (0,038), och vinsten är i praktike
 Johannes godkände rekommendationen att öppna holdouten för faktormodellen (C3) och regimmodellen (C4) i en körning.
 Båda specifikationerna var låsta (`5431f41`, `735dc64`) innan. D2:s holdout öppnas inte för test, eftersom n < 8
 prognosdagar ger skugga direkt (registret 2026-11-24). Öppningen loggas i `docs/holdout_logg.md`.
+
+
+## 2026-11-24 – Holdouten för C3 och C4: resultat
+
+Holdouten öppnades en gång (logg i `docs/holdout_logg.md`, sha före öppning `089f70a`).
+- **Faktormodellen (DF):** klarade inte regeln för N2 (MAE 6,65 mot B2 6,45, Holm-p 0,83), och slår inte heller
+  huvudmodellen B3 (5,37). N1, N3 och N4 har n < 8 på holdouten och testas inte. DF följer med som skugga i de skarpa
+  filerna för N1–N4. Huvudmodellerna är oförändrade: N1 B1, N2 B3, N3–N6 B1.
+- **Regimmodellen (C4):** capex-blocket var i expansion hela holdouten. Efterfrågeblocket rapporterade inbromsning
+  juli–november 2025 och skifte tillbaka i december 2025. Två strukturbrott, båda i G4 (RPO 2025Q3, Google Cloud 2026Q1).
+  Inget samband med prognosfelen. P(inbromsning) och brotten ingår i månadsbilden från 2026-11-30, som en egen sektion
+  utanför grenarnas tillstånd. `shift` lagras som namnet på det nya tillståndet, så att hemsidan och kvartalsrapporten
+  kan läsa det.
+- Resultaten är delvis kända i förväg (publicerade baslinjefel och bakåtfyllda serier, F-E5): `docs/resultat/holdout_c3_c4.md`.

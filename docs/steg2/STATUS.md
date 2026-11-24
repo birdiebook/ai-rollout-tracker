@@ -1,8 +1,12 @@
 # Status steg 2
 
-Uppdateras av orkestreraren vid varje milstolpe. Senast: 2026-11-24 08:00 UTC.
+Uppdateras av orkestreraren vid varje milstolpe. Senast: 2026-11-24 09:00 UTC.
 
 ## Läge
+
+- **Steg 2:s våg 0–4 är klara.** Holdouten för C3 och C4 är öppnad och utvärderad: faktormodellen klarade inte regeln för
+  TSMC och följer med som skugga. Regimmodellen ingår i månadsbilden från 2026-11-30. Flödesvyn och kvartalsrapporten
+  är byggda.
 
 - **Våg 0** klar: delad data, förregistrering C0 (granskad, R6), sannolikhetsprognoser (påslagna), månadsbrev.
 - **Våg 1** nästan klar: allt utom PyPI/npm och GitHub är mergat, inklusive Cloudflare Radar och Wikipedia.
@@ -31,8 +35,6 @@ Kvar för nya sessioner: `DATA_KEY` (punkt 2 nedan).
 
 ## Väntar på Johannes
 
-1. **Holdouten** för faktormodellen (C3) och regimmodellen (C4) öppnas först efter ditt godkännande. Den kan bara
-   öppnas en gång.
 2. **`DATA_KEY`** (datasnapshoten är byggd):
    - skapa en nyckel med `python -c "import secrets; print(secrets.token_urlsafe(32))"` och spara den i en lösenordshanterare;
    - lägg in den som GitHub-secret `DATA_KEY` och som miljövariabel `DATA_KEY` i miljön ai-rollout-tracker;
