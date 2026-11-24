@@ -55,6 +55,11 @@ from ai_tracker.series.useful_lives import KNOWN_GAPS as _USEFUL_LIFE_GAPS  # no
 
 KNOWN_GAPS.update(_USEFUL_LIFE_GAPS)
 
+# F1 revision and surprise indexes need a minimum count per period (register 2026-11-24, F1).
+from ai_tracker.series.guidance_revisions import KNOWN_GAPS as _F1_GAPS  # noqa: E402
+
+KNOWN_GAPS.update(_F1_GAPS)
+
 # Stale series accepted until a date (ISO), and why: a known outage, never a permanent exemption
 # (that is Spec.max_age_days or Spec.closed). Example: {"us_imports_tw_m": ("2026-12-31", "shutdown, ...")}.
 KNOWN_STALE: dict[str, tuple[str, str]] = {

@@ -390,6 +390,7 @@ Johannes valde rekommendationerna:
 
 
 
+
 ## 2026-11-24 – Riktning efter steg 2: pengarna, makron och förväntningarna först
 
 Johannes valde rekommendationerna i [riktning.md](riktning.md):
@@ -456,6 +457,20 @@ delmängden är G4–G6 hela, medan G7 och G9 får färre än tre källfamiljer.
 - **`dep_msft` är ingen ren avskrivningsserie.** Microsofts rad innehåller "other", och omklassificeringen 2026 räknade
   bara om kvartalen från 2024Q4. P2b och P3 bör använda `dep_ppe_*` där de räcker, och annars redovisa förbehållet.
 
+## 2026-11-24 – F1: revideringar av guidance och överraskning mot guidance
+
+- **Revideringsindex** som i PMI: (uppåt + 0,5 × oförändrade) / antal, alla bolag sammanslagna, med rullande 4 kvartal
+  som huvudmått eftersom ett kvartal sällan har 3 revideringar. Ett capex-besked som upprepas i en ny rapport räknas som
+  oförändrat. Indexet börjar 2020Q3, när den kurerade capex-filen börjar.
+- **Överraskning** mot den senaste guidancen före utfallet, på B2:s bas (TSMC i NT$, Nvidia, Meta och Alphabet), och ett
+  index av z utan avdraget medelvärde. Amazon och Microsoft ingår inte, eftersom deras definitioner inte går att jämföra.
+- **Egen grupp "Förväntningar mot utfall"** i ögonblicksbilden (`expectations`). Den räknas aldrig i grenarnas index och
+  har ingen takt.
+- **TSMC:s capex-budget** tolkas deterministiskt ur 6-K (2004–2026), utan LLM.
+- **Microsofts sänkning för 2026** (`msft-29`) räknas inte som revidering, på grund av definitionsbrottet R5-F14. Utan
+  regeln hade det rullande indexet för 2026Q4 varit 0,62 i stället för 0,67. Båda redovisas i
+  `docs/resultat/f1_revideringar.md`.
+
 ## 2026-11-24 – Fokus: för Johannes och vänner
 
 Projektet byggs främst för Johannes och några vänner, inte för många användare. De fyra målgrupperna i [riktning.md](riktning.md) är en ribba för kvaliteten på förståelsen, inte en plan för spridning. Arbete som bara gäller spridning prioriteras inte: engelsk version, separata vyer per målgrupp, nedladdningar och kommersiell användning. Licensklassningen (K2) behålls, eftersom repot och sidan är publika och klassningen är billig.
@@ -516,6 +531,17 @@ bygger på samma Space-filer som gör Arenas texttavlor `okänd`. R10-3: reglern
 poolade revideringsindex blir `ja`, fast de räknar Microsofts guidance från microsoft.com. Det rättas innan F1
 mergas. Alla rättningar är små. Tillsammans ändrar de bara Arenas två prisserier, till `okänd`, och inga
 kärnposter. Sju Microsoft-serier med bara SEC-rader är för restriktivt klassade (R10-6), men det är inte bråttom.
+
+## 2026-11-24 – R11: granskning av F1 (revideringar och överraskning)
+
+- **GODKÄND MED ANMÄRKNINGAR** (`docs/granskning/r11_revideringar.md`). Datering och kod håller, och as_of-trunkering
+  på verklig data ger identiska värden på 14 datum.
+- **Huvudvärdet ändras (R11-1).** CSV:n saknar Microsofts siffra från samtalet 2026-07-29 (cirka 175 mdr på den
+  smalare basen). Brottet R5-F14 ligger mellan `msft-26` och den raden, så `msft-29` (170 mdr) är en revidering nedåt
+  på samma bas. Rullande 2026Q4 blir 0,62, inte 0,67. "Ingen revidering nedåt sedan 2024" gäller inte.
+- Rättningsspåret tar R11-1 och R11-2 före merge (stängningsversionen ska vänta tills kvartalets sista dag har
+  passerat) och R11-3 – R11-10 i samma spår. Ägaren avgör om `guid_capex_meta/googl` ska publiceras, eftersom F1:s
+  serier i dag kringgår deras `publish=False` (R11-4).
 
 ## 2026-11-24 – R14: granskning av P1 (avskrivningar)
 
@@ -626,4 +652,21 @@ sex poolade revideringsindex blir `okänd` när F1 mergas (R10-1).
 - CoreWeaves ändring kodas inte om ur S-1 (known_from står kvar, konservativt). N-3 kodas inte, eftersom inget använder
   raden. N-4 (ändringar för en del av flottan syns inte i serierna) tas i granskningen av P3/N7.
 
+## 2026-11-24 – X8: rättning av F1 efter R11
+
+- **Microsofts julisiffra läggs till och brottet flyttas (R11-1).** Raden `msft-r11f1` (cirka 175 mdr, samtalet
+  2026-07-29, #228) läggs till, och en ny registerpost flyttar brottet R5-F14 dit. Skälet är primärkällan: bolaget sa
+  att planen var oförändrad utom definitionen. `msft-29` (170 mdr) blir en sänkning på samma bas (−2,9). Rullande
+  2026Q4 blir **0,62** (n 13: 4/8/1) och kvartalet 0,50 (n 3). F1:s tidigare 0,67 och "brottet ignoreras" (0,62)
+  redovisas som känslighet. Raden som ett brott håller utanför visas med sin storlek (−8,2) i ögonblicksbilden.
+- **Metas utsikt för 2020 läggs till (R11-5).** Revideringsindexet ändras för 2020Q4–2021Q3. Metas överraskning börjar
+  som registrerat 2021. N1:s B2 och B3 för Meta får 2020: N1b:s MAE för B2 går från 14,43 till 14,34, och N1:s B3 från
+  5,44 till 5,43. Inget beslut ändras.
+- **Stängningsversionen** skapas när kvartalets sista dag har passerat, som registret säger (R11-2).
+- **Känsligheter, inga nya huvudmått.** Indexet med bara siffror (1,00 för 2024Q4–2026Q1, 0,75 för 2026Q4) och TSMC:s
+  överraskning i US$ (valutadelens SD 1,3 mot 2,0 för s i NT$). Båda står i avsnittet `expectations`.
+- **Publicering (R11-4).** F1-serierna som läser CSV:n har `publish=False` tills ägaren beslutar om
+  `guid_capex_meta/googl`.
+- **Urvalet** av kandidatmeningar vidgas till meningen efter en capex-mening. Kontrollen läste 81 dokument och hittade
+  ingen ny capex-guidance.
 

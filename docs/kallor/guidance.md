@@ -188,3 +188,57 @@ Granskningen (`docs/granskning/r2_guidance.md`) hittade en rad som saknades. Alp
 (8-K EX-99.1, accession 0001652044-25-000056) höjer capex för 2025 till cirka 85 mdr USD. Raden är nu tillagd
 (`googl-r2f1`), så filen har 102 rader. Det tidigare påståendet att höjningen i juli 2025 inte finns i EDGAR är fel:
 den finns i 8-K:n. Alphabets B2 för 2025Q3 bygger nu på 85 mdr.
+
+## TSMC:s capex-budget för året (spår F1, 2026-11-24)
+
+Kod: `src/ai_tracker/sources/tsmc_capex_guidance.py`, serier `tsmc_guid_capex_lo/hi` (år, MUSD) i
+`src/ai_tracker/series/guidance_revisions.py`. Deterministisk tolkning av samma 6-K som `tsmc_guidance` läser, ingen
+LLM. Regeln står i måttregistret (posten 2026-11-24 om F1).
+
+- **Form:** året och "capital expenditure(s)", "capex" eller "capital budget", ett verb (to be, will be, expected to
+  be, to remain) och about, around, approximately, between eller in the range of/between, med ett belopp i US$.
+  Året ska vara inlämningsåret eller nästa år. För varje meningsträff sparas SHA-256 och teckenposition, och texten
+  ligger bara i `data/raw`.
+- **Täckning:** 56 träffar i 6-K 2004–2026. Till och med 2015 upprepas utsikten i flera rapporter per år. Under
+  2016–2021 står budgeten i pressmeddelandet i januari och när den ändras (2016-07, 2017-10, 2018-04, 2019-10,
+  2020-07 och 2021-04). **Från 2022 står bara januaribudgeten i 6-K** (R11-8; pressmeddelandet 2022-10-13 har ingen
+  capex-utsikt). Ändringar som bara sades i samtalet finns inte i EDGAR, och `investor.tsmc.com` nekas av proxyn.
+  TSMC:s capex-budget ger därför inga revideringar efter 2021. Det betyder att källan saknas, inte att planen var
+  oförändrad. Serien är en undre gräns för TSMC:s ändringar.
+- **Inget belopp och inget meningsslut mellan subjekt och verb** (koden, `_GAP`; förtydligat i registret efter R11).
+- **Inte kodat:** "slightly above US$9.5 billion" (2016-10-13), "near the mid point", "approach" och "above". Kända
+  okodade utsagor (R11): alla för 2003 (serien börjar 2004), 2009-07-30 (ett belopp mellan subjekt och verb, så
+  höjningen till 2,3 mdr dateras en dag sent, från 2009-07-31) och 2012-04-26 (höjning till 8–8,5 mdr, cirka +32,
+  i en annan ordalydelse, saknas).
+- **Licens:** som `tsmc_revenue_m` (SEC, offentlig). `publish=True`.
+
+## Rättning efter granskning R11 (spår X8, 2026-11-24)
+
+Granskningen `docs/granskning/r11_revideringar.md` hittade två luckor i `curated/guidance_capex.csv`. Raderna är nu
+tillagda, och filen har 106 rader. Meningarna är kontrollerade mot källan (hash och siffra, `guidance_check`) och
+sparade i `data/raw/guidance_capex_sentences/`.
+- **`msft-r11f1`** (R11-1): Microsoft, kalenderåret 2026, cirka 175 mdr, samtalet 2026-07-29 (FY2026 Q4), mening #228.
+  Meningen säger att skiftet från finansiell till operationell leasing justerar förväntningen till cirka 175 mdr.
+  Meningen före (#227) säger att förväntningen annars är oförändrad. Meningen nämner inte capex, och därför missade
+  urvalet den. Definitionsbrottet R5-F14 ligger nu på den här raden (registret, rättningen efter R11). `msft-29`
+  (170 mdr) är en sänkning på samma bas.
+- **`meta-r11f5a` och `meta-r11f5b`** (R11-5): Meta, 2020, cirka 16 mdr, 8-K 2020-07-30 (mening #22, "at the high end
+  of our prior $14-16 billion range") och 2020-10-29 (#25, oförändrat). Båda ligger i E1:s dokumentfönster (från
+  2020-07).
+- **Effekt på N1.** `guid_capex_meta_cy` får en vintage för 2020 (2020-07-30). B2 för Meta använder den i N1b för
+  2020Q3 och 2020Q4, och B3:s förskjutning för Meta får ett år till. N1 (capex_hyp4 från 2021Q4): B2 oförändrad, B3:s
+  MAE 5,44 → 5,43. N1b: B2 14,43 → 14,34 och B3 14,57 → 14,46 (hela perioden). Inget beslut ändras: B1 är kvar som
+  huvudmodell, och B3:s Holm-p är 1,0 för N1.
+- **Urvalet vidgas** (R11-1): meningen efter varje mening med ett capex-ord är också en kandidat
+  (`guidance_capex.candidates`). `python -m ai_tracker.guidance_check --neighbours` hämtar alla dokument i CSV:n och
+  listar sådana meningar med ett belopp i mdr som inte är kodade. Körningen 2026-11-24: 81 dokument, 163 meningar
+  lästa, ingen ny capex-guidance. Microsofts 23 träffar är utfall (kontant köp av anläggningstillgångar,
+  kassaflöde, återköp), en analytikerfråga och en förklaring av komponentpriser för nästa kvartal.
+
+## TSMC:s kvartalsintäkt i US$ (spår X8, 2026-11-24)
+
+Kod: `src/ai_tracker/sources/tsmc_usd_revenue.py`, serien `tsmc_rev_usd_q` (kvartal, MUSD, `publish=True`, licens
+som `tsmc_revenue_m`). Deterministisk tolkning av meningen "In US dollars, <first|second|third|fourth> quarter revenue
+was $x billion" i pressmeddelandet. Kvartalet är det senaste med det ordningstalet som slutade före inlämningsdagen.
+`known_from` = 6-K:ns inlämningsdag. Formen finns i alla 40 kvartalsrapporter från 2017-01 (2016Q4–2026Q3).
+Tidigare 6-K läses inte. Används för F1:s känslighet i US$ (`f1_surprise_tsmc_usd`, R11-7).

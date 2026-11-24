@@ -125,6 +125,9 @@ def write(when, table: pd.DataFrame | None = None, out_dir: Path | None = None, 
         raise FileExistsError(f"{path} exists; snapshots are never rewritten")
     table = observations.load() if table is None else table
     data = build(when, table)
+    from ai_tracker.state import expectations  # F1 (register 2026-11-24): own section, never in a branch index
+
+    data[expectations.SECTION] = _clean(expectations.safe_section(when, table))
     if regime is None:
         from ai_tracker.regime.live import FIRST_LIVE
 
