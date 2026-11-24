@@ -57,8 +57,9 @@ def main(argv: list[str] | None = None) -> int:
     if a.cmd == "show":
         ctx = Context(observations.load())
         for code, br in snapshot.compute(a.date, ctx).items():
-            print(f"{code}  index {_fmt(br['index'])}  {br['state']:28s} n={br['n_series']} "
-                  f"(+{br['n_up']} 0:{br['n_neutral']} -{br['n_down']})")
+            v1 = br["v1"]
+            print(f"{code}  index {_fmt(br['index'])}  {br['state']:28s} källor={br['n_families']} n={br['n_series']} "
+                  f"(+{br['n_up']} 0:{br['n_neutral']} -{br['n_down']})  v1 {_fmt(v1['index'])} {v1['state']}")
         rec = reconciliations(pd.Timestamp(a.date).normalize(), ctx)
         print(f"{rec['group']} (inte i något grenindex)")
         for m in rec["series"]:

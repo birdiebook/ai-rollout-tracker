@@ -6,6 +6,8 @@ registration (e.g. the G1 and G9 core series) is a data change in this file, not
 - CORE_SERIES mirrors the register's core-series table(s) (section 5) cell by cell, with the register's own
   shorthand: brace lists (`x_{a,b}_m`), the BTOS placeholder `<aktiv regim>` and the G1 placeholder `<valda>`. tests/test_state.py parses the
   register file and asserts that it equals CORE_SERIES, so the two cannot drift apart.
+- FAMILIES mirrors the register's source-family table (2026-11-24, diffusion index v2: one vote per source family),
+  with the same parity test.
 - METHOD_OVERRIDES / AGG_OVERRIDES pin a measure method or aggregation where the default inferred from the
   catalog (unit, branch) is not the registered one.
 - BACKFILL_GATED lists series whose backfilled history may only describe, not count, until there are
@@ -38,6 +40,44 @@ CORE_SERIES: dict[str, list[str]] = {
     "G8": ["ai_postings_share_{us,gb,de,fr,ca,au,ie,it,nl}_d"],
     "G9": ["g9_arxiv_cs_ai", "g9_arxiv_cs_lg", "g9_arxiv_cs_cl", "g9_epoch_open_weights_share", "g9_epoch_notable_models"],
 }
+
+# ------------------------------------------------------------------ source families (register 2026-11-24, index v2)
+# Mirrors the register's family table(s) ("| Gren | Källfamilj | Kärnserier |"): per branch, family id -> the core
+# entries of that family, written exactly as in CORE_SERIES (a brace entry is one entry and always one family).
+# tests/test_state.py parses the register and asserts equality, and that every core entry is in exactly one family.
+# A family id with `<valda>` gives one family per selected benchmark (the placeholder replaced by the benchmark).
+FAMILIES: dict[str, dict[str, list[str]]] = {
+    "G1": {"g1_epoch_bench_<valda>": ["g1_epoch_bench_frontier_<valda>"],
+           "g1_epoch_train_compute": ["g1_epoch_train_compute_frontier"],
+           "g1_epoch_eci": ["g1_epoch_eci_frontier"],
+           "g1_arena_text": ["g1_arena_text_top"]},
+    "G2": {"g2_price_at_capability": ["g2_price_at_capability_gpqa"]},
+    "G3": {"btos_ai_use": ["btos_ai_use_<aktiv regim>"],
+           "eu_ai_ent": ["eu_ai_ent_eu27", "eu_ai_ent_se"],
+           "g3_npm": ["g3_npm_{openai,anthropic_sdk,langchain,vercel_ai}_w"],
+           "g3_pypi": ["g3_pypi_{openai,anthropic,langchain,llama_index}_wed"],
+           "g3_wiki": ["g3_wiki_{chatgpt,llm,genai}_en"],
+           "g3_cf_ai_crawler": ["g3_cf_bots_ai_crawler_share"],
+           "g3_cf_ai_purpose": ["g3_cf_ai_purpose_user_action"]},
+    "G4": {k: [k] for k in ("rev_aws", "rev_google_cloud", "rev_msft_cloud", "rev_nvda_datacenter", "rev_orcl_cloud",
+                            "rpo_hyp4")},
+    "G5": {k: [k] for k in ("capex_hyp4", "us_constr_datacenter", "us_pfi_info_proc_eq_sw", "capex_ocf_hyp4",
+                            "capex_orcl")},
+    "G6": {"tsmc_revenue_m": ["tsmc_revenue_m"],
+           "us_ip_g17": ["us_ip_semis_m", "us_ip_computers_m"],
+           "us_imports_ft900": ["us_imports_tw_m", "us_imports_kr_m"],
+           **{k: [k] for k in ("rev_amd_datacenter", "rev_avgo_semis", "rev_mrvl_datacenter", "asml_net_sales")}},
+    "G7": {"us_elec_sales_com": ["us_elec_sales_com_{va,tx,ga,az,or,oh}_m"],
+           "eia930_avg": ["eia930_avg_{pjm_dom,erco,azps,soco,srp}_m"],
+           "pjm_lf_peak": ["pjm_lf_peak_{dom,rto}_h5"]},
+    "G8": {"ai_postings_share": ["ai_postings_share_{us,gb,de,fr,ca,au,ie,it,nl}_d"]},
+    "G9": {"g9_arxiv": ["g9_arxiv_cs_ai", "g9_arxiv_cs_lg", "g9_arxiv_cs_cl"],
+           "g9_epoch_open_weights": ["g9_epoch_open_weights_share"],
+           "g9_epoch_notable_models": ["g9_epoch_notable_models"]},
+}
+INDEX_RULE = "v2"  # the official diffusion index from the snapshot 2026-11-30; v1 is computed and shown alongside
+MIN_FAMILIES = 3  # v2: fewer counted families -> index shown, no state
+STATE_FEW_FAMILIES = "för få källor"
 
 # "<aktiv regim>": the regime series are <prefix>v<n>; the active one is resolved per computation date.
 REGIME_PLACEHOLDER = "<aktiv regim>"
@@ -122,6 +162,45 @@ def expand(name: str) -> list[str]:
 def core_entries(branch: str, core: dict[str, list[str]] | None = None) -> list[str]:
     """Expanded register entries for a branch (placeholders still unresolved)."""
     return [k for name in (CORE_SERIES if core is None else core).get(branch, []) for k in expand(name)]
+
+
+def entry_families(branch: str, core: dict[str, list[str]] | None = None,
+                   families: dict[str, dict[str, list[str]]] | None = None) -> dict[str, str]:
+    """Expanded core entry -> family id for a branch (register 2026-11-24). A register entry that no family lists is
+    a family of its own, named after the entry (only test contexts with their own core lists; the parity tests keep
+    the real tables complete). A brace entry is always one family."""
+    fams = (FAMILIES if families is None else families).get(branch, {})
+    owner = {e: fam for fam, entries in fams.items() for e in entries}
+    return {k: owner.get(name, name) for name in (CORE_SERIES if core is None else core).get(branch, [])
+            for k in expand(name)}
+
+
+def parse_families(path: Path | None = None) -> dict[str, dict[str, list[str]]]:
+    """Families per branch as written in every '| Gren | Källfamilj | Kärnserier |' table of the register.
+
+    Same rule as parse_register: tables in file order, and a later table that names a branch again replaces that
+    branch's families. The family id is the backticked token of the 'Källfamilj' cell, its entries the backticked
+    tokens of the 'Kärnserier' cell."""
+    text = Path(path or REGISTER_PATH).read_text(encoding="utf-8")
+    out: dict[str, dict[str, list[str]]] = {}
+    table: dict[str, dict[str, list[str]]] | None = None
+    for line in [*text.splitlines(), ""]:
+        cells = [c.strip() for c in line.strip().strip("|").split("|")] if line.strip().startswith("|") else None
+        if cells is None:
+            if table:
+                out.update(table)
+            table = None
+            continue
+        if cells[:3] == ["Gren", "Källfamilj", "Kärnserier"]:
+            table = {}
+            continue
+        if table is None or set(cells[0]) <= set("-: "):
+            continue
+        if re.fullmatch(r"G\d", cells[0]):
+            fam = re.findall(r"`([^`]+)`", cells[1])
+            if len(fam) == 1:
+                table.setdefault(cells[0], {})[fam[0]] = re.findall(r"`([^`]+)`", cells[2])
+    return out
 
 
 def parse_register(path: Path | None = None) -> dict[str, list[str]]:

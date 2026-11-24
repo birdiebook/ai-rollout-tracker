@@ -1,4 +1,13 @@
-"""Branch aggregation (register section 2): direction per series, diffusion index and state."""
+"""Branch aggregation (register section 2): direction per series, diffusion index and state.
+
+Two index rules (register 2026-11-24, "Diffusionsindex v2"):
+- v2, the official rule from the snapshot 2026-11-30: one vote per source family. A family's vote is the mean of
+  (d + 1) / 2 over its counted series; the index is the mean of the votes of families with at least one counted
+  series; fewer than MIN_FAMILIES counted families -> STATE_FEW_FAMILIES (index still shown).
+- v1, the rule of section 2: one vote per series, fewer than MIN_SERIES series -> STATE_FEW. Computed and published
+  alongside under the name v1.
+Which series count, and their directions, are the same for both rules.
+"""
 
 from __future__ import annotations
 
@@ -97,15 +106,21 @@ def resolve(entry: str, when, ctx: Context) -> tuple[str | None, str]:
     return best[2], f"aktiv regim {best[2]}"
 
 
-def state_of(index: float | None, n: int) -> str:
-    """Registered state rule. The index is compared unrounded (2/3 = 0.667 is below 0.67: stable)."""
-    if n < R.MIN_SERIES or index is None:
-        return R.STATE_FEW
+def state_of(index: float | None, n: int, minimum: int | None = None, few: str | None = None) -> str:
+    """Registered state rule. The index is compared unrounded (2/3 = 0.667 is below 0.67: stable).
+    Default: v1 (n = counted series, fewer than MIN_SERIES -> STATE_FEW); `state_v2` passes the family minimum."""
+    if n < (R.MIN_SERIES if minimum is None else minimum) or index is None:
+        return R.STATE_FEW if few is None else few
     if index >= R.ACCELERATING:
         return R.STATE_ACCEL
     if index <= R.BRAKING:
         return R.STATE_BRAKE
     return R.STATE_STABLE
+
+
+def state_v2(index: float | None, n_families: int) -> str:
+    """v2 state: the same thresholds, fewer than MIN_FAMILIES counted families -> STATE_FEW_FAMILIES."""
+    return state_of(index, n_families, R.MIN_FAMILIES, R.STATE_FEW_FAMILIES)
 
 
 def diffusion(directions: list[int]) -> float | None:
@@ -114,23 +129,52 @@ def diffusion(directions: list[int]) -> float | None:
     return (sum(d == 1 for d in directions) + 0.5 * sum(d == 0 for d in directions)) / len(directions)
 
 
+def vote(directions: list[int]) -> float | None:
+    """A family's vote (v2): the mean of (d + 1) / 2 over its counted series (1, 0.5 or 0 for one series)."""
+    if not directions:
+        return None
+    return sum((d + 1) / 2 for d in directions) / len(directions)
+
+
+def diffusion_v2(family_directions: dict[str, list[int]]) -> float | None:
+    """index_v2: the mean of the family votes over families with at least one counted series."""
+    votes = [v for v in (vote(d) for d in family_directions.values()) if v is not None]
+    return sum(votes) / len(votes) if votes else None
+
+
+def family_of(fam: str, entry: str, key: str | None) -> str:
+    """The family of a resolved series. A family id with `<valda>` takes the selected benchmark of the key."""
+    if R.SELECTED_PLACEHOLDER not in fam or key is None or R.SELECTED_PLACEHOLDER not in entry:
+        return fam
+    head, tail = entry.split(R.SELECTED_PLACEHOLDER, 1)
+    slug = key[len(head): len(key) - len(tail) if tail else None]
+    return fam.replace(R.SELECTED_PLACEHOLDER, slug)
+
+
 def branch(code: str, when, ctx: Context) -> dict:
     entries = R.core_entries(code, ctx.core)
+    fam_of = R.entry_families(code, ctx.core, ctx.families)
     used, not_counted = [], []
+    family_order: list[str] = []
     for entry in entries:
         for key, note in resolve_all(entry, when, ctx):
+            fam = family_of(fam_of[entry], entry, key)
+            if fam not in family_order:
+                family_order.append(fam)
             if key is None:
-                not_counted.append({"entry": entry, "series": None, "reason": note})
+                not_counted.append({"entry": entry, "series": None, "family": fam, "reason": note})
                 continue
             if key not in ctx.specs and key not in ctx.derived:
-                not_counted.append({"entry": entry, "series": key, "reason": f"{note}: serien saknas i katalogen"})
+                not_counted.append({"entry": entry, "series": key, "family": fam,
+                                    "reason": f"{note}: serien saknas i katalogen"})
                 continue
             if key in R.RECONCILIATIONS:  # register A5: never in a branch index
-                not_counted.append({"entry": entry, "series": key,
+                not_counted.append({"entry": entry, "series": key, "family": fam,
                                     "reason": "avstämning (A5): räknas inte i grenarnas diffusionsindex"})
                 continue
             m = measure(key, when, ctx)
             m["entry"] = entry
+            m["family"] = fam
             if note:
                 m["resolved"] = note
             stale = stale_reason(key, when, ctx)
@@ -141,16 +185,25 @@ def branch(code: str, when, ctx: Context) -> dict:
                 m["valid"], m["reason"] = False, guard
             (used if m["valid"] else not_counted).append(m)
     dirs = [m["direction"] for m in used]
-    index = diffusion(dirs)
+    counts = {"n_series": len(used), "n_up": sum(d == 1 for d in dirs), "n_neutral": sum(d == 0 for d in dirs),
+              "n_down": sum(d == -1 for d in dirs)}
+    index_v1 = diffusion(dirs)
+    by_family = {f: [m["direction"] for m in used if m["family"] == f] for f in family_order}
+    families = [{"family": f, "series": [m["series"] for m in used if m["family"] == f], "vote": vote(d)}
+                for f, d in by_family.items()]
+    n_families = sum(1 for d in by_family.values() if d)
+    index = diffusion_v2(by_family)
+    none = "inga registrerade kärnserier"
     return {
         "branch": code,
         "registered_entries": entries,
-        "n_series": len(used),
-        "n_up": sum(d == 1 for d in dirs),
-        "n_neutral": sum(d == 0 for d in dirs),
-        "n_down": sum(d == -1 for d in dirs),
+        "rule_version": R.INDEX_RULE,
+        **counts,
+        "n_families": n_families,
         "index": index,
-        "state": state_of(index, len(used)) if entries else "inga registrerade kärnserier",
+        "state": state_v2(index, n_families) if entries else none,
+        "families": families,
+        "v1": {"index": index_v1, "state": state_of(index_v1, len(used)) if entries else none, **counts},
         "series_used": used,
         "series_not_counted": not_counted,
     }

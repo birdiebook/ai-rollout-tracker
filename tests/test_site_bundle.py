@@ -146,6 +146,32 @@ def test_no_withheld_key_or_value_anywhere_in_the_bundle(docs, world):
     assert docs["regime.json"]["n_breaks_withheld"] == 1 and [b["series"] for b in docs["regime.json"]["breaks"]] == ["rev_google_cloud"]
 
 
+def test_branch_documents_carry_index_v2_and_v1(docs):
+    """Index v2 (register 2026-11-24): one vote per source family is the official index and state; v1 alongside;
+    a family with withheld series is counted but neither named nor voted."""
+    g6 = docs["branch/G6.json"]
+    assert g6["rule_version"] == "v2" and g6["n_series"] == 4 and g6["n_families"] == 3
+    fam = {f["family"]: f for f in g6["families"]}
+    assert set(fam) == {"tsmc_revenue_m", "us_ip_g17", "us_imports_ft900"}
+    assert fam["us_ip_g17"]["series"] == ["us_ip_semis_m", "us_ip_computers_m"] and fam["us_ip_g17"]["n_series"] == 2
+    assert g6["index"] == pytest.approx(sum(f["vote"] for f in fam.values()) / 3, abs=1e-4)
+    assert g6["index_v1"] is not None and g6["state_v1"] in E.STATES
+    g9 = docs["branch/G9.json"]
+    assert g9["n_families"] == 2 and g9["n_families_withheld"] == 1 and g9["state"] == "för få källor"
+    assert [f["family"] for f in g9["families"]] == ["g9_epoch_notable_models"]
+    g8 = docs["branch/G8.json"]
+    assert g8["n_families"] == 1 and g8["state"] == "för få källor" and g8["state_v1"] == "för få serier"
+    ov = docs["overview.json"]
+    assert "för få källor" in ov["headline"]["counts"] and all("n_families" in t for t in ov["branches"])
+    row = next(r for r in ov["stripes"]["rows"] if r["code"] == "G6")
+    assert len(row["n_families"]) == len(row["index_v1"]) == len(row["state_v1"]) == len(ov["stripes"]["months"])
+    method = docs["method.json"]
+    assert method["rules"]["index_rule"] == "v2" and method["rules"]["min_families"] == 3
+    assert "för få källor" in method["states"]
+    g9m = next(b for b in method["branches"] if b["code"] == "G9")["families"]
+    assert {"family": "g9_arxiv", "entries": [], "n_withheld": 2} in g9m
+
+
 def test_scan_finds_every_kind_of_leak(docs, world):
     key = SY.WITHHELD[0]
     planted = [

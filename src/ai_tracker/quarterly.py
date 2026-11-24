@@ -314,7 +314,7 @@ def summary(inp: Inputs, nowcast_news: str, regime_news: str) -> list[str]:
     groups: dict[str, list[str]] = {}
     for code in catalog.BRANCHES:
         groups.setdefault(bstate(last, code).get("state") or R.STATE_FEW, []).append(code)
-    order = [R.STATE_ACCEL, R.STATE_STABLE, R.STATE_BRAKE, R.STATE_FEW]
+    order = [R.STATE_ACCEL, R.STATE_STABLE, R.STATE_BRAKE, R.STATE_FEW_FAMILIES, R.STATE_FEW]
     parts = [f"{st} {', '.join(groups[st])}" for st in order if st in groups]
     parts += [f"{st} {', '.join(v)}" for st, v in groups.items() if st not in order]
     lines.append(f"- Läget vid kvartalets slut, {mlabel(last)}: " + "; ".join(parts) + ".")
@@ -783,9 +783,14 @@ def footer(inp: Inputs) -> list[str]:
         "ett år tidigare.",
         f"- En serie **accelererar** när förändringen i takt är större än dödbandet, {n(dead, 2)} standardavvikelser "
         f"av seriens egen historik, **bromsar in** när den är mindre än minus dödbandet och är **stabil** däremellan. "
-        f"**Diffusionsindex** = (antal som accelererar + 0,5 × antal stabila) / antal räknade serier. Grenen "
-        f"accelererar vid index ≥ {n(acc, 2)}, bromsar in vid index ≤ {n(brk, 2)}, och med färre än {mins} räknade "
-        f"serier anges inget tillstånd (`docs/mattregister.md`, avsnitt 2).",
+        + (f"**Diffusionsindex** (regel v2) = medelvärdet av källfamiljernas röster, där en familj röstar med "
+           f"medelvärdet av (riktning + 1)/2 över sina räknade serier. Grenen accelererar vid index ≥ {n(acc, 2)}, "
+           f"bromsar in vid index ≤ {n(brk, 2)}, och med färre än {rules.get('min_families', R.MIN_FAMILIES)} "
+           f"räknade källor anges inget tillstånd (`docs/mattregister.md`, 2026-11-24)."
+           if rules.get("index_rule") == "v2" else
+           f"**Diffusionsindex** = (antal som accelererar + 0,5 × antal stabila) / antal räknade serier. Grenen "
+           f"accelererar vid index ≥ {n(acc, 2)}, bromsar in vid index ≤ {n(brk, 2)}, och med färre än {mins} "
+           f"räknade serier anges inget tillstånd (`docs/mattregister.md`, avsnitt 2)."),
         "- Grenar med tre till fem serier flyttas mycket av en enda serie, så ett tillstånd kan växla från månad till "
         "månad. Om tillståndsregeln har något prognosvärde är inte prövat.",
         "- Orden accelererar, stabil, bromsar in, expansion och inbromsning beskriver takten. De är inga omdömen, och en "

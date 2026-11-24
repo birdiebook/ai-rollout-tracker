@@ -41,10 +41,11 @@ def quarterly_rows(key, values, start="2010Q1", **kw):
     return rows(key, "Q", pd.period_range(start, periods=len(values), freq="Q"), values, **kw)
 
 
-def ctx_for(table, specs, core=None, tmp_path=None, derived=None):
+def ctx_for(table, specs, core=None, tmp_path=None, derived=None, families=None):
     return M.Context(pd.concat(table, ignore_index=True) if isinstance(table, list) else table,
                      specs={s.key: s for s in specs}, core=core or {}, derived=derived or {},
-                     forecasts=tmp_path or M.config.REPO / "no-forecasts-here")
+                     forecasts=tmp_path or M.config.REPO / "no-forecasts-here",
+                     families=R.FAMILIES if families is None else families)
 
 
 # ------------------------------------------------------------------ register mirror
@@ -63,6 +64,34 @@ def test_register_parser_takes_later_tables_and_ignores_other_tables(tmp_path):
                  "| Gren | Kärnserier | Anm |\n|---|---|---|\n| G1 | `bench_<aktiv regim>` | `not_this` |\n",
                  encoding="utf-8")
     assert R.parse_register(f) == {"G2": ["a", "b_{x,y}"], "G1": ["bench_<aktiv regim>"]}
+
+
+def test_families_mirror_the_register_file():
+    """Register 2026-11-24 (index v2): the family table in code equals the register's table."""
+    assert R.parse_families() == R.FAMILIES
+    assert set(R.FAMILIES) == set(catalog.BRANCHES)
+
+
+def test_every_core_entry_is_in_exactly_one_family():
+    for code in catalog.BRANCHES:
+        listed = [e for entries in R.FAMILIES[code].values() for e in entries]
+        assert sorted(listed) == sorted(R.CORE_SERIES[code]), code  # each register entry once, braces unsplit
+        assert len(set(listed)) == len(listed), code
+        fam = R.entry_families(code)
+        assert set(fam) == set(R.core_entries(code)) and set(fam.values()) == set(R.FAMILIES[code]), code
+    assert len(set(R.entry_families("G8").values())) == 1  # nine Indeed countries: one family
+    assert len(set(R.entry_families("G7").values())) == 3 and len(R.FAMILIES["G6"]) == 7
+
+
+def test_family_table_is_not_read_as_a_core_series_table(tmp_path):
+    f = tmp_path / "r.md"
+    f.write_text("| Gren | Kärnserier | Anm |\n|---|---|---|\n| G2 | `a`, `b_{x,y}` | |\n\n"
+                 "| Gren | Källfamilj | Kärnserier | Källa |\n|---|---|---|---|\n| G2 | `fam` | `a`, `b_{x,y}` | x |\n"
+                 "| G3 | `c` | `c` | |\n\ntext\n\n"
+                 "| Gren | Källfamilj | Kärnserier | Källa |\n|---|---|---|---|\n| G2 | `fa` | `a` | |\n"
+                 "| G2 | `fb` | `b_{x,y}` | |\n", encoding="utf-8")
+    assert R.parse_register(f) == {"G2": ["a", "b_{x,y}"]}
+    assert R.parse_families(f) == {"G2": {"fa": ["a"], "fb": ["b_{x,y}"]}, "G3": {"c": ["c"]}}
 
 
 def test_expand_braces():
@@ -283,16 +312,73 @@ def test_branch_counts_directions_and_needs_three_series():
     out = B.branch("G6", "2030-01-01", c)
     assert (out["n_up"], out["n_down"], out["n_series"]) == (3, 1, 4)
     assert out["index"] == 0.75 and out["state"] == R.STATE_ACCEL
+    assert out["v1"] == {"index": 0.75, "state": R.STATE_ACCEL, "n_series": 4, "n_up": 3, "n_neutral": 0, "n_down": 1}
     two = B.branch("G4", "2030-01-01", c)
-    assert two["index"] == 1.0 and two["state"] == R.STATE_FEW
+    assert two["index"] == 1.0 and two["v1"]["state"] == R.STATE_FEW
+    assert two["state"] == R.STATE_FEW_FAMILIES and two["n_families"] == 2  # v2 (official): fewer than 3 families
     assert B.branch("G1", "2030-01-01", c)["state"] == "inga registrerade kärnserier"
+    assert B.branch("G1", "2030-01-01", c)["v1"]["state"] == "inga registrerade kärnserier"
+
+
+def _fixed(monkeypatch, directions: dict):
+    """branch() with fixed directions per series (None = no valid measure)."""
+    def fake(key, when, ctx):
+        d = directions[key]
+        return {"series": key, "valid": d is not None, "direction": d, "reason": "" if d is not None else "ingen takt"}
+
+    monkeypatch.setattr(B, "measure", fake)
+    monkeypatch.setattr(B, "stale_reason", lambda key, when, ctx: "")
+
+
+def test_v2_nine_series_in_one_family_has_too_few_sources(monkeypatch):
+    keys = [f"p_{c}_d" for c in "abcdefghi"]
+    _fixed(monkeypatch, {k: 1 for k in keys})
+    core = {"G8": ["p_{a,b,c,d,e,f,g,h,i}_d"]}
+    for families in ({}, {"G8": {"indeed": ["p_{a,b,c,d,e,f,g,h,i}_d"]}}):  # unlisted brace entry = one family too
+        c = ctx_for(observations._empty(), [spec(k) for k in keys], core=core, families=families)
+        out = B.branch("G8", "2026-11-30", c)
+        assert out["n_series"] == 9 and out["n_families"] == 1 and out["rule_version"] == "v2"
+        assert out["index"] == 1.0 and out["state"] == R.STATE_FEW_FAMILIES == "för få källor"
+        assert out["v1"]["index"] == 1.0 and out["v1"]["state"] == R.STATE_ACCEL
+        assert len(out["families"]) == 1 and out["families"][0]["series"] == keys
+
+
+def test_v2_index_with_mixed_families_is_exact(monkeypatch):
+    dirs = {"a": 1, "b": -1, "c": -1, "d": 1, "e": 0, "f": 1, "g": None}
+    _fixed(monkeypatch, dirs)
+    core = {"G6": list(dirs)}
+    fams = {"G6": {"F1": ["a", "b", "c"], "F2": ["d"], "F3": ["e", "f"], "F4": ["g"]}}
+    out = B.branch("G6", "2026-11-30", ctx_for(observations._empty(), [spec(k) for k in dirs], core=core,
+                                               families=fams))
+    votes = {f["family"]: f["vote"] for f in out["families"]}
+    assert votes["F1"] == pytest.approx(1 / 3) and votes["F2"] == 1.0 and votes["F3"] == 0.75 and votes["F4"] is None
+    assert out["n_families"] == 3 and out["n_series"] == 6
+    assert out["index"] == pytest.approx((1 / 3 + 1 + 0.75) / 3) and out["state"] == R.STATE_ACCEL
+    assert out["v1"]["index"] == pytest.approx(3.5 / 6) and out["v1"]["state"] == R.STATE_STABLE
+    assert {m["series"]: m["family"] for m in out["series_used"]}["e"] == "F3"
+    assert [m["family"] for m in out["series_not_counted"]] == ["F4"]
+    # thresholds unchanged and compared unrounded: (1 + 0.5 + 0.5) / 3 = 2/3 < 0.67 -> stable
+    assert B.state_v2(2 / 3, 3) == R.STATE_STABLE and B.state_v2(0.33, 3) == R.STATE_BRAKE
+    assert B.state_v2(1.0, 2) == R.STATE_FEW_FAMILIES and B.state_v2(None, 0) == R.STATE_FEW_FAMILIES
+
+
+@pytest.mark.parametrize("seed", range(5))
+def test_v2_equals_v1_when_every_family_is_one_series(monkeypatch, seed):
+    rng = np.random.default_rng(seed)
+    dirs = {f"s{i}": int(rng.integers(-1, 2)) for i in range(int(rng.integers(3, 12)))}
+    _fixed(monkeypatch, dirs)
+    c = ctx_for(observations._empty(), [spec(k) for k in dirs], core={"G6": list(dirs)}, families={})
+    out = B.branch("G6", "2026-11-30", c)
+    assert out["n_families"] == out["n_series"] == len(dirs)
+    assert out["index"] == pytest.approx(out["v1"]["index"]) and out["state"] == out["v1"]["state"]
+    assert B.vote([1, 0, -1]) == pytest.approx(B.diffusion([1, 0, -1]))
 
 
 def test_series_without_valid_measure_are_listed_not_counted():
     c = ctx_for([_trend("a", 1), monthly_rows("short", np.arange(1, 10, dtype=float))],
                 [spec("a"), spec("short")], core={"G6": ["a", "short", "missing_regime_<aktiv regim>"]})
     out = B.branch("G6", "2030-01-01", c)
-    assert out["n_series"] == 1 and out["state"] == R.STATE_FEW
+    assert out["n_series"] == 1 and out["v1"]["state"] == R.STATE_FEW and out["state"] == R.STATE_FEW_FAMILIES
     reasons = {m.get("series") or m["entry"]: m["reason"] for m in out["series_not_counted"]}
     assert "ingen takt" in reasons["short"] and "ingen regim" in reasons["missing_regime_<aktiv regim>"]
 
@@ -425,6 +511,10 @@ def test_selected_placeholder_resolves_to_the_selection_on_the_date():
     b2 = B.branch("G1", "2025-06-30", c)
     assert {m["series"] for m in b2["series_used"] + b2["series_not_counted"]} == {
         "g1_epoch_bench_frontier_z", "g1_epoch_bench_frontier_y"}
+    assert [f["family"] for f in b["families"]] == ["g1_epoch_bench_x", "g1_epoch_bench_y"]  # one per benchmark
+    assert {f["family"] for f in b2["families"]} == {"g1_epoch_bench_z", "g1_epoch_bench_y"}
+    assert B.family_of("g1_epoch_bench_<valda>", "g1_epoch_bench_frontier_<valda>",
+                       "g1_epoch_bench_frontier_frontiermath_erdos") == "g1_epoch_bench_frontiermath_erdos"
     c.selection = lambda when: []
     assert B.branch("G1", "2025-06-30", c)["series_not_counted"][0]["series"] is None
     c.selection = lambda when: ["missing"]
@@ -566,6 +656,12 @@ def test_snapshot_contains_measures_and_is_json_clean(tmp_path, monkeypatch):
     used = {m["series"]: m for m in g6["series_used"]}
     assert {"latest_period", "known_from", "pace", "change_in_pace", "direction", "deadband"} <= set(used["a"])
     assert d["branches"]["G1"]["state"] == "inga registrerade kärnserier"
+    assert d["rules"]["index_rule"] == "v2" and d["rules"]["min_families"] == 3 and d["rules"]["min_series"] == 3
+    assert d["rules"]["families"]["G8"] == R.FAMILIES["G8"] and set(d["rules"]["families"]) == set(catalog.BRANCHES)
+    assert g6["rule_version"] == "v2" and g6["n_families"] == 4 and set(g6["v1"]) == {
+        "index", "state", "n_series", "n_up", "n_neutral", "n_down"}
+    assert [f["family"] for f in g6["families"]] == ["a", "b", "c", "d"] and g6["index"] == pytest.approx(
+        g6["v1"]["index"])
 
 
 def test_due_only_on_month_end_without_file(tmp_path):
@@ -585,6 +681,9 @@ def test_backcast_is_labelled_reconstructed(tmp_path, monkeypatch):
     df = S.backcast("2025-01", "2025-03", table, out)
     assert out.is_file() and len(df) == 3 * len(core)
     assert (df["label"] == S.BACKCAST_LABEL).all() and "rekonstruerad" in S.BACKCAST_LABEL
+    assert {"index", "state", "n_families", "index_v1", "state_v1", "families"} <= set(df.columns)
+    g6 = df[df["branch"] == "G6"]
+    assert (g6["index"] - g6["index_v1"]).abs().max() < 1e-12  # singleton families
 
 
 # ------------------------------------------------------------------ publish snapshots

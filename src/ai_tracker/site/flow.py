@@ -157,7 +157,9 @@ def flow_view(rec, branch_views: dict, nowcast_doc: dict, calibration: dict, D) 
         for code in lead.branches:
             v = branch_views.get(code, {})
             states.append({"code": code, "name": v.get("name"), "state": v.get("state"), "index": v.get("index"),
-                           "n_series": v.get("n_series"), "n_up": v.get("n_up"), "n_neutral": v.get("n_neutral"),
+                           "n_series": v.get("n_series"), "n_families": v.get("n_families"),
+                           "rule_version": v.get("rule_version"),
+                           "n_up": v.get("n_up"), "n_neutral": v.get("n_neutral"),
                            "n_down": v.get("n_down"), "n_withheld_counted": v.get("n_withheld_counted"),
                            "has_core": v.get("has_core"), "delta_index": v.get("delta_index"),
                            "state_changed": v.get("state_changed")})

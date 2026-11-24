@@ -23,6 +23,8 @@ from ai_tracker.state.measures import Context
 SNAPSHOTS = config.REPO / "snapshots"
 BACKCAST = config.REPO / "outputs" / "state_backcast.csv"
 BACKCAST_LABEL = "rekonstruerad (as-of-backcast, inte ett skarpt register)"
+INDEX_RULE_NOTE = ("index och state följer v2 (en röst per källfamilj, minst min_families räknade familjer, "
+                   "registret 2026-11-24). v1 (en röst per serie, minst min_series serier) står under v1 i varje gren.")
 
 
 def utc_today() -> pd.Timestamp:
@@ -74,6 +76,8 @@ def build(when, table: pd.DataFrame | None = None, ctx: Context | None = None) -
         "register_sha256": register_sha256(),
         "table_max_fetched_at": str(pd.Timestamp(t["fetched_at"].max()).date()) if len(t) else None,
         "rules": {"deadband_sd": R.DEADBAND, "accelerating_at_least": R.ACCELERATING, "braking_at_most": R.BRAKING,
+                  "index_rule": R.INDEX_RULE, "index_rule_note": INDEX_RULE_NOTE, "min_families": R.MIN_FAMILIES,
+                  "families": {code: ctx.families.get(code, {}) for code in catalog.BRANCHES},
                   "min_series": R.MIN_SERIES, "min_history": R.MIN_HISTORY, "pace_lag": R.PACE_LAG,
                   "change_lag": R.CHANGE_LAG, "doubling_window_months": R.DOUBLING_WINDOW,
                   "backfill_gated": sorted(R.BACKFILL_GATED), "backfill_flagged": sorted(R.BACKFILL_FLAGGED),
@@ -144,6 +148,7 @@ def due(today=None, out_dir: Path | None = None) -> bool:
 
 def backcast(start: str, end: str, table: pd.DataFrame | None = None, out: Path | None = None) -> pd.DataFrame:
     """As-of state at every month end from `start` to `end` (YYYY-MM), one row per month and branch.
+    index/state are the official rule (v2, register 2026-11-24); index_v1/state_v1 the rule of section 2.
 
     Reconstructed from today's table: each month sees only rows with known_from <= its month end, but rows
     dated by publication lag (source="backfill") carry today's vintage. Not a live record.
@@ -155,8 +160,10 @@ def backcast(start: str, end: str, table: pd.DataFrame | None = None, out: Path 
         for code, b in compute(when, ctx).items():
             rows.append({
                 "month": str(month), "date": str(when.date()), "branch": code, "index": b["index"],
-                "state": b["state"], "n_series": b["n_series"], "n_up": b["n_up"], "n_neutral": b["n_neutral"],
-                "n_down": b["n_down"],
+                "state": b["state"], "n_families": b["n_families"], "index_v1": b["v1"]["index"],
+                "state_v1": b["v1"]["state"], "n_series": b["n_series"], "n_up": b["n_up"],
+                "n_neutral": b["n_neutral"], "n_down": b["n_down"],
+                "families": ";".join(f"{f['family']}:{f['vote']:.3f}" for f in b["families"] if f["vote"] is not None),
                 "series": ";".join(f"{m['series']}:{m['direction']:+d}" for m in b["series_used"]),
                 "label": BACKCAST_LABEL,
             })
