@@ -102,7 +102,7 @@ def cut_context(ctx: Context, date: pd.Timestamp, max_fetched: str | None) -> Co
         keep &= t["fetched_at"] <= pd.Timestamp(max_fetched) + pd.Timedelta(days=1) - pd.Timedelta(microseconds=1)
     return Context(t[keep].reset_index(drop=True), specs=ctx.specs, forecasts=ctx.forecasts, core=ctx.core,
                    derived=ctx.derived, selection=ctx.selection,
-                   reconciliations=ctx.reconciliations, families=ctx.families)
+                   reconciliations=ctx.reconciliations, families=ctx.families, btos_schedule=ctx.btos_schedule)
 
 
 def reconstruct(when: pd.Timestamp, ctx: Context) -> dict:
@@ -215,10 +215,16 @@ def sources_text(b: dict, detail: str = "") -> str:
     return f"{_plural(f, 'källa', 'källor')} ({_plural(k, 'serie', 'serier')}{': ' + detail if detail else ''})"
 
 
+FEW_STATES = (R.STATE_FEW, R.STATE_FEW_FAMILIES)
+
+
 def v1_note(b: dict) -> str:
-    """One neutral sentence when the v1 rule (one vote per series) gives another state than the official v2."""
+    """One neutral sentence when the v1 rule (one vote per series) gives another state than the official v2. Not
+    when neither rule gives a state ('för få serier' against 'för få källor', review R9 N5)."""
     v1 = b.get("v1") or {}
     if not is_v2(b) or not v1 or v1.get("state") == b.get("state"):
+        return ""
+    if v1.get("state") in FEW_STATES and b.get("state") in FEW_STATES:
         return ""
     return (f"Med regel v1, en röst per serie, är tillståndet {v1.get('state')} "
             f"(index {n(v1.get('index'), 2) if v1.get('index') is not None else '–'}).")
@@ -239,9 +245,12 @@ def family_votes_text(b: dict, inp: "Inputs") -> str:
             hidden += 1
     if not shown and not hidden:
         return ""
-    text = "Röst per källa, medel av (riktning + 1)/2: " + ("; ".join(shown) if shown else "–")
+    hidden_text = f"{_plural(hidden, 'källa', 'källor')} med serier som inte visas av licensskäl räknas utan att namnges"
+    if not shown:  # every voting family is hidden: only that sentence (review R9, N5)
+        return hidden_text[0].upper() + hidden_text[1:] + "."
+    text = "Röst per källa, medel av (riktning + 1)/2: " + "; ".join(shown)
     if hidden:
-        text += f"; {_plural(hidden, 'källa', 'källor')} med serier som inte visas av licensskäl räknas utan att namnges"
+        text += f"; {hidden_text}"
     return text + "."
 
 
@@ -492,9 +501,10 @@ def branch_section(code: str, inp: Inputs) -> list[str]:
 # ------------------------------------------------------------------ nowcasts
 
 
-def _next_origin(sub: str, after: pd.Timestamp, horizon: int = 200) -> tuple[str, str] | None:
+def _next_origin(sub: str, after: pd.Timestamp, horizon: int = 200,
+                 schedule_file: Path | None = None) -> tuple[str, str] | None:
     for i in range(1, horizon):
-        dd = pipeline.due_for(sub, after + pd.Timedelta(days=i))
+        dd = pipeline.due_for(sub, after + pd.Timedelta(days=i), schedule_file)
         if dd is not None:
             return str(dd.origin.date()), dd.period
     return None
@@ -525,7 +535,7 @@ def nowcasts(inp: Inputs) -> tuple[list[str], list[str]]:
         new = [x for x in files if x[0] >= start]
         n_new += len(new)
         lines.append("")
-        nxt = _next_origin(sub, end)
+        nxt = _next_origin(sub, end, schedule_file=inp.ctx.btos_schedule)
         nxt_text = f" Nästa skarpa prognos: {nxt[1]}, prognosdag {nxt[0]}." if nxt else ""
         if not files:
             lines += [f"Inga skarpa prognoser med prognosdag till och med {end.date()}.{nxt_text}", ""]
@@ -808,7 +818,8 @@ def footer(inp: Inputs) -> list[str]:
             f"familjens räknade serier, där riktningen är +1, 0 eller −1. En källfamilj är serier ur samma källa som "
             f"mäter samma sak och bara skiljer sig i land, delstat, paket eller liknande. Indexet är medelvärdet av "
             f"rösterna. Grenen accelererar vid index ≥ {n(acc, 2)}, bromsar in vid index ≤ {n(brk, 2)} och är stabil "
-            f"däremellan. Med färre än {rules.get('min_families', R.MIN_FAMILIES)} räknade källor anges inget "
+            f"däremellan. Indexet jämförs oavrundat, så ett index som visas som {n(acc, 2)} kan vara 2/3 och då "
+            f"stabilt. Med färre än {rules.get('min_families', R.MIN_FAMILIES)} räknade källor anges inget "
             f"tillstånd. Regel v1, en röst per serie och minst {mins} serier, nämns när den ger ett annat tillstånd. "
             f"Reglerna är förregistrerade i `docs/mattregister.md`.")
     else:

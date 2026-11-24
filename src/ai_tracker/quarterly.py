@@ -786,13 +786,15 @@ def footer(inp: Inputs) -> list[str]:
         + (f"**Diffusionsindex** (regel v2) = medelvärdet av källfamiljernas röster, där en familj röstar med "
            f"medelvärdet av (riktning + 1)/2 över sina räknade serier. Grenen accelererar vid index ≥ {n(acc, 2)}, "
            f"bromsar in vid index ≤ {n(brk, 2)}, och med färre än {rules.get('min_families', R.MIN_FAMILIES)} "
-           f"räknade källor anges inget tillstånd (`docs/mattregister.md`, 2026-11-24)."
+           f"räknade källor anges inget tillstånd (`docs/mattregister.md`, 2026-11-24). Indexet jämförs oavrundat, "
+           f"så ett index som visas som {n(acc, 2)} kan vara 2/3 och då stabilt."
            if rules.get("index_rule") == "v2" else
            f"**Diffusionsindex** = (antal som accelererar + 0,5 × antal stabila) / antal räknade serier. Grenen "
            f"accelererar vid index ≥ {n(acc, 2)}, bromsar in vid index ≤ {n(brk, 2)}, och med färre än {mins} "
            f"räknade serier anges inget tillstånd (`docs/mattregister.md`, avsnitt 2)."),
-        "- Grenar med tre till fem serier flyttas mycket av en enda serie, så ett tillstånd kan växla från månad till "
-        "månad. Om tillståndsregeln har något prognosvärde är inte prövat.",
+        (f"- Grenar med tre till fem {'källor' if rules.get('index_rule') == 'v2' else 'serier'} flyttas mycket av en "
+         f"enda {'källa' if rules.get('index_rule') == 'v2' else 'serie'}, så ett tillstånd kan växla från månad till "
+         "månad. Om tillståndsregeln har något prognosvärde är inte prövat."),
         "- Orden accelererar, stabil, bromsar in, expansion och inbromsning beskriver takten. De är inga omdömen, och en "
         "inbromsning redovisas på samma sätt som en acceleration.",
         "- **Prognoser:** fel mot första publicerade värde. Få utfall gör att skillnader mellan varianter och mot "

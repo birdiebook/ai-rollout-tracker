@@ -285,8 +285,6 @@ def test_mixed_families_at_the_thresholds(monkeypatch, case):
     assert out["index"] == pytest.approx(float(x), abs=1e-12) and out["n_families"] == len(family_dirs)
 
 
-@pytest.mark.xfail(strict=True, reason="R9-N1: index v2 is a float mean of float votes; at an exact threshold the "
-                                       "float can fall on the wrong side (register: compared unrounded)")
 def test_exact_threshold_is_compared_exactly_with_a_large_family(monkeypatch):
     family_dirs = {"A": [1], "B": [1], "C": fam(0, 1, 49)}  # votes 1, 1, 1/100 -> index exactly 67/100
     dirs = {f"{f}{i}": d for f, ds in family_dirs.items() for i, d in enumerate(ds)}
@@ -539,9 +537,6 @@ def _schedule(path: Path) -> Path:
     return path
 
 
-@pytest.mark.xfail(strict=True, reason="R9-S2 (pre-existing): the synthetic bundle reads the BTOS schedule log of "
-                                       "the environment (sources.census_btos.SCHEDULE_LOG, the shared raw dir), so "
-                                       "`site_bundle fixtures` and the fixture test depend on the checkout")
 def test_synthetic_bundle_does_not_read_the_environments_btos_schedule(tmp_path, monkeypatch):
     monkeypatch.setattr(census_btos, "SCHEDULE_LOG", _schedule(tmp_path / "schedule_log.parquet"))
     ctx = SY.context(tmp_path)
@@ -559,7 +554,5 @@ def test_web_state_vocabulary_has_the_v2_state():
         config.REPO / "web" / "src" / "lib" / "data" / "types.ts").read_text(encoding="utf-8")
 
 
-@pytest.mark.xfail(strict=True, reason="R9-N8 (pre-existing): asml_net_sales reuses the shared 6-K licence text, which "
-                                       "names TSMC as the filer (series/tsmc.py LICENSE via halvledare.SIXK_LICENSE)")
 def test_asml_licence_text_names_asml_not_tsmc():
     assert "TSMC" not in REAL["asml_net_sales"].license

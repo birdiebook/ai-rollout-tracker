@@ -133,9 +133,12 @@ def table() -> pd.DataFrame:
 
 
 def context(root: Path) -> Context:
+    """The synthetic world under `root`. Its BTOS schedule is a file under `root` that is never written, so N5 is
+    never due and the bundle does not depend on the checkout's raw cache (review R9, S2)."""
     return Context(table(), specs=specs(), derived={}, core={k: list(v) for k, v in CORE.items()},
                    forecasts=root / "forecasts", selection=lambda when: [], reconciliations=list(RECONCILIATIONS),
-                   families={k: {f: list(e) for f, e in v.items()} for k, v in FAMILIES.items()})
+                   families={k: {f: list(e) for f, e in v.items()} for k, v in FAMILIES.items()},
+                   btos_schedule=root / "census_btos" / "schedule_log.parquet")
 
 
 def write_inputs(root: Path, ctx: Context) -> dict:

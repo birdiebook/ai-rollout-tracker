@@ -56,6 +56,10 @@ class Context:
     derived: dict = field(default_factory=lambda: R.DERIVED)
     selection: Callable[[pd.Timestamp], list[str]] = field(default_factory=lambda: _default_selection)
     reconciliations: list[str] = field(default_factory=lambda: list(R.RECONCILIATIONS))
+    # N5's BTOS publication schedule (the next forecast day on the site and in the letter). None: the schedule
+    # logged by the weekly fetch (sources.census_btos.SCHEDULE_LOG). A synthetic world passes its own (absent)
+    # file, so its bundle never reads the environment's raw cache (review R9, S2).
+    btos_schedule: Path | None = None
     by_series: dict[str, pd.DataFrame] = field(init=False)
 
     def __post_init__(self):

@@ -11,6 +11,7 @@ import math
 
 from ai_tracker import catalog
 from ai_tracker.site import markdown as MD
+from ai_tracker.state import register as R
 
 SITE_TITLE = "AI-utrullningen"
 STATE_ICON = {"accelererar": "↑", "stabil": "→", "bromsar in": "↓", "för få källor": "·", "för få serier": "·"}
@@ -62,6 +63,8 @@ def counts(v: dict) -> str:
 def v1_text(v: dict) -> str:
     """One neutral line when rule v1 (one vote per series) gives another state than the official v2."""
     if v.get("rule_version") != "v2" or v.get("state_v1") in (None, v.get("state")):
+        return ""
+    if {v.get("state_v1"), v.get("state")} <= {R.STATE_FEW, R.STATE_FEW_FAMILIES}:  # neither rule gives a state (R9 N5)
         return ""
     return (f'<p class="small muted">Med regel v1, en röst per serie: {esc(v.get("state_v1"))} '
             f'(index {num(v.get("index_v1"))}).</p>')

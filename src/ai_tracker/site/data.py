@@ -471,10 +471,12 @@ def _target_history(key: str, ctx: Context, when) -> dict | None:
     return {"periods": [str(p) for p in s.index], "values": [_num(v, 6) for v in s.to_numpy()]}
 
 
-def next_origin(nowcast: str, today, root: Path, horizon_days: int = 200) -> tuple[str, str] | None:
+def next_origin(nowcast: str, today, root: Path, horizon_days: int = 200,
+                schedule_file: Path | None = None) -> tuple[str, str] | None:
+    """The next forecast day without a file under `root`. `schedule_file`: N5's BTOS schedule (Context.btos_schedule)."""
     day = pd.Timestamp(today).normalize()
     for i in range(horizon_days):
-        d = pipeline.due_for(nowcast, day + pd.Timedelta(days=i))
+        d = pipeline.due_for(nowcast, day + pd.Timedelta(days=i), schedule_file)
         if d is not None and not d.path(root).exists():
             return str(d.origin.date()), d.period
     return None
@@ -513,7 +515,7 @@ def nowcasts(ctx: Context, forecasts_dir: Path, today, calibration: dict | None 
                             "bias": _num(sum(e) / len(e), 4) if e else None})
         coverage = _coverage(scored, variants) if intervals.ENABLED else []
         spec = ctx.specs.get(target)
-        nxt = next_origin(sub, today, forecasts_dir)
+        nxt = next_origin(sub, today, forecasts_dir, schedule_file=ctx.btos_schedule)
         out.append({
             "id": sub, "label": sub.upper(), "title": info["title"], "target": target,
             "target_label": spec.label if spec else info.get("target_label", target),

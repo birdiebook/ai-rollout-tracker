@@ -7,11 +7,18 @@ from functools import lru_cache
 from ai_tracker.catalog import Spec
 from ai_tracker.sources import tsmc_sec
 
-LICENSE = ("SEC: \"Information presented on sec.gov is considered public information and may be copied or "
-           "further distributed by users of the web site without the SEC's permission. Please consider "
-           "appropriate citation to the SEC as the source.\" (sec.gov/privacy, Website Dissemination). "
-           "Statutory filing by TSMC; only extracted figures with source citation are published. "
-           "TSMC IR terms not readable (403)")
+SEC_DISSEMINATION = ("SEC: \"Information presented on sec.gov is considered public information and may be copied "
+                     "or further distributed by users of the web site without the SEC's permission. Please consider "
+                     "appropriate citation to the SEC as the source.\" (sec.gov/privacy, Website Dissemination). ")
+
+
+def sixk_license(filer: str, extra: str = "") -> str:
+    """Licence text for figures extracted from a foreign issuer's 6-K on EDGAR, naming the filer (TSMC, ASML)."""
+    return (f"{SEC_DISSEMINATION}Statutory filing by {filer}; only extracted figures with source citation are "
+            f"published." + (f" {extra}" if extra else ""))
+
+
+LICENSE = sixk_license("TSMC", "TSMC IR terms not readable (403)")
 
 
 @lru_cache(maxsize=1)
