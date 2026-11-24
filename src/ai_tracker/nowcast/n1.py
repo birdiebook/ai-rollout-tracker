@@ -272,17 +272,20 @@ def b2_company(info: engine.InfoSet, series: str, quarter: pd.Period) -> tuple[f
     return guided_company(info, series, quarter)[:3]
 
 
-def guided_company(info: engine.InfoSet, series: str, quarter: pd.Period, m: float = 0.0
+def guided_company(info: engine.InfoSet, series: str, quarter: pd.Period, m: float = 0.0, ahead: bool = False
                    ) -> tuple[float, str, float, float]:
     """(level, source, the company's own B1, midpoint G used or NaN) of B2 for one company series and quarter, with
-    the full-year midpoint x exp(m): m = 0 is B2, m = m_{c,k} is B3 (b3.py; "same formulas as B2")."""
+    the full-year midpoint x exp(m): m = 0 is B2, m = m_{c,k} is B3 (b3.py; "same formulas as B2").
+    `ahead=True` (D2's horizons, nowcast/horizon.py): `quarter` may lie more than one quarter after the company's last
+    known quarter; the rule is unchanged (B1 path from the last known quarter, shares over the year's unknown
+    quarters)."""
     nan = float("nan")
     y = info.get(series)
     y = y[y.index <= quarter]
     if quarter in y.index:  # this company has already filed the quarter: it is known, not forecast
         info.mark(series, [quarter])
         return float(y[quarter]), "known at origin", float(y[quarter]), nan
-    if quarter - 1 not in y.index:
+    if not ahead and quarter - 1 not in y.index:
         raise NotAvailable(f"{series} {quarter - 1} not known at {info.origin.date()}")
     year = _year_quarters(quarter)
     known = [p for p in year if p in y.index]
