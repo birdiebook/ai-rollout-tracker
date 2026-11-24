@@ -217,3 +217,12 @@ Hela sviten en gång i arbetskatalogen (med den delade basen och rå-cachen): 1 
 - `test_data_quality.py::test_freshness_as_of_last_fetch` (riktiga data): `g2_price_at_arena_capability` och
   `g2_price_at_arena_capability_4o` (G2A, underkända i R8) har inga rader i den installerade basen. Det gäller
   datasnapshoten, inte koden här.
+
+## Rättat i auto14/x6-index-v2
+
+- S2: rättat. `Context.btos_schedule`, den syntetiska världen pekar på en egen fil som aldrig skrivs, och
+  `tests/conftest.py` isolerar `census_btos.SCHEDULE_LOG`. Fixturerna byggs om identiskt med den delade rå-cachen.
+- S3: registeranteckningen är tillagd (2026-11-24, ingen regeländring). `docs/riktning.md` avsnitt 9 är
+  orkestrerarens fil och är inte ändrad.
+- S1: inte rättad. `web/` ägs av en annan session. Testet är kvar som strikt xfail.
+- N1, N8: rättade, deras strikta xfail är nu vanliga tester. N2, N5, N6 och N7: rättade. N3, N4 och N9: inte ändrade.

@@ -677,3 +677,24 @@ värden har räknats. Tabellen ersätter G2:s familjer enligt parserregeln.
 | Gren | Källfamilj | Kärnserier | Källa och begrepp |
 |---|---|---|---|
 | G2 | `g2_price_at_capability_gpqa` | `g2_price_at_capability_gpqa` | LiteLLM och Epoch, pris vid fast förmåga (GPQA Diamond) |
+
+### 2026-11-24 – Diffusionsindex v2: väntad effekt och namnregel rättas (anteckning efter R9, ingen regeländring)
+
+Granskning R9 fann två meningar i de två posterna ovan som inte stämmer. Regeln, familjetabellen, gränserna och
+min_families ändras inte.
+
+- **Väntad effekt.** Posten om en röst per källfamilj säger att påståendena blir försiktigare åt båda hållen. Det var
+  en väntan efter konstruktion. Orkestrerarens rekonstruktion på riktiga data (2026-05 till 2026-10) gjordes efter
+  registerposten och koden, och den visar att meningen inte håller genomgående. G8 får "för få källor" som väntat.
+  Men G6 blir "accelererar" och G7 "bromsar in" i månader där v1 sa "stabil". När familjerna är få väger varje familj
+  tungt, så indexet kan röra sig mer än med v1. Orkestreraren har rättat samma sak i beslutsloggen och i
+  `docs/riktning.md`, avsnitt 6. R9 har inte gjort om jämförelsen.
+- **Skälet för v2 gäller.** Indexet ska räkna oberoende källor. Regeln ändras inte på grund av dessa värden, och
+  ingen ändring görs i någon riktning.
+- **Namnregeln.** Posten om namnbytet i G2 säger att det nya namnet följer serien "som de andra familjerna med en
+  serie". Det stämmer inte för alla. Sju familjer med en serie bär inte seriens namn: `g1_epoch_train_compute`,
+  `g1_epoch_eci`, `g1_arena_text`, `btos_ai_use`, `g3_cf_ai_crawler`, `g3_cf_ai_purpose` och
+  `g9_epoch_open_weights`. Det gäller bara namnen, inga värden.
+- **Oavrundat betyder exakt.** Koden räknar nu familjernas röster och index v2 som bråktal och jämför dem exakt med
+  0,67 och 0,33. Ett flyttalsmedel kunde annars hamna en hårsmån fel vid en gräns. Med de registrerade
+  familjestorlekarna kan ingen kombination träffa en gräns exakt, så inget tillstånd ändras.

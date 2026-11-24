@@ -404,3 +404,16 @@ Johannes valde rekommendationerna:
 - **Före eller vid mergen:** webbsessionen lägger till "för få källor" (S1). Fixturtestet fallerar i kataloger med den
   delade rå-cachen, och det fanns före K1 (S2). Registret får en daterad anteckning om att "försiktigare åt båda
   hållen" inte håller, utan regeländring (S3).
+
+## 2026-11-24 – X6: rättningar efter R9 (index v2)
+
+- **S2:** den syntetiska världen har ett eget BTOS-schema (en fil som aldrig skrivs), via `Context.btos_schedule`.
+  Fixturerna blir då desamma i varje utcheckning, också med den delade rå-cachen. Enhetstesterna pekar dessutom
+  `census_btos.SCHEDULE_LOG` till en tom temp-katalog, på samma sätt som den delade basen.
+- **S3:** registret har fått en daterad anteckning om att "försiktigare åt båda hållen" inte håller. Regeln ändras
+  inte. `docs/riktning.md` avsnitt 9 är orkestrerarens fil och rättas inte här. Johannes bekräftar att beslut 2 står.
+- **S1** är inte rättad här. Webben (`web/`) ägs av en annan session, som lägger till "för få källor".
+- **Noter:** index v2 avgörs exakt med bråktal (N1). ASML har en egen licenstext (N8). Brevet och gamla sidan hoppar
+  över v1-raden när ingen regel ger tillstånd, och röstraden när alla röstande källor är dolda (N5). Kvartalsrapporten
+  säger "källor" under v2 (N6), och båda fotnoterna säger att indexet jämförs oavrundat (N7). Namnregeln i G2 är
+  rättad i registeranteckningen (N2). N9 väntar, eftersom ingen registrerad familj berörs i dag.
