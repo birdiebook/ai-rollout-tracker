@@ -19,7 +19,7 @@ beslutspunkt 3 (`ja`, `nej`, `okänd`): den bygger på läst licenstext och giss
 
 ## Vad jag tittade på (läckage)
 
-Inga värden efter 2022 för någon G8-kandidat har lästs. Det som syntes:
+Inga utfall på arbetsmarknaden efter 2022 har lästs. Det som syntes:
 - **CES, CPS, JOLTS, OEWS, produktivitet:** serielistor, kodtabeller, fotnoter, första och sista period, antal
   månader och fotnotskoder för de sex senaste månaderna. Inga värden skrevs ut. I CES-vintagefilen syntes
   januari 1990-värdet för 518 och 513 i första kolumnen när strukturen lästes.
