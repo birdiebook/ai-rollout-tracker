@@ -51,6 +51,16 @@ starten. Försöket 21:19 tar en dag där det första fallerade (till exempel at
   med huvudmodellen från filen och övriga varianter som skuggor. Ett utfall som var känt vid prognosdagen räknas
   aldrig. Prognosfilerna läses och ändras aldrig. Scorecarden uppdateras på varje prognosdag, så ett nytt utfall
   syns i den vid nästa prognosdag (N2 varje månad).
+- **Faktormodellen (C3) som skugga:** från holdoutens öppning 2026-11-24 (`docs/holdout_logg.md`) innehåller de
+  skarpa filerna för N1–N4 `variants.DF` och blocket `df` (huvudmodellen DF bygger på, r̂, koefficienter, antal
+  träningsrader, faktorförändringar eller orsaken till att DF saknas). Ett fel i DF stoppar aldrig prognosen.
+  Den första körningen utan cache skattar faktorerna på alla tidigare prognosdagar (cirka 2 sekunder per dag,
+  några minuter för N2), sedan ligger de i `data/cache/factor/` i Actions-cachen.
+- **Regim (C4) i ögonblicksbilden:** från 2026-11-30 har ögonblicksbilden sektionen `regime` (`ms` per block, `bocpd` per serie) med P(inbromsning)
+  och rapporterat tillstånd per faktorblock och brottsflaggor per räknad kärnserie. Den är inte en del av grenarnas
+  tillstånd. Reglerna för skifte och brott kedjas på förra månadens sektion. Den första (2026-11-30) startar från den
+  rekonstruerade följden 2012-01–2026-10 (cirka 6 minuter utan cache). Ett fel i C4 skrivs i sektionen och stoppar
+  inte ögonblicksbilden.
 
 ## Månadsbrev
 

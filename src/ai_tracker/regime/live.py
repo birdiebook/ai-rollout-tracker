@@ -20,12 +20,13 @@ import pandas as pd
 from ai_tracker.regime import bocpd, guard
 from ai_tracker.regime import realtime as rt
 
-SECTION = "regim_c4"
+SECTION = "regime"  # schema shared with site/probabilities.py and quarterly.py (_regime_frames)
+SPEC_LOCK = "735dc64"  # commit of docs/steg2/c4_spec.md
 FIRST_LIVE = pd.Timestamp("2026-11-30")  # the first snapshot after the holdout was opened (docs/holdout_logg.md)
 NOTE = ("C4, beskrivande (F-D6). Påverkar inte grenarnas tillstånd eller diffusionsindex (F-D5, F-D8). "
         "Inbromsning = regimen med lägre faktortakt, inte nödvändigtvis fallande takt (c4_spec avsnitt 7).")
 MS_FIELDS = ("mu_slow", "mu_exp", "sd_slow", "sd_exp", "p_stay_slow", "p_stay_exp", "loglik", "n_iter", "converged",
-             "n_months", "first_month", "n_series", "reason")
+             "first_month", "n_series")
 
 
 def _f(x):
@@ -74,8 +75,8 @@ def seed(table: pd.DataFrame, date) -> dict:
 def carried(previous: dict) -> dict:
     """The carried values from the previous snapshot's section."""
     return {"date": previous["date"], "chain": f"föregående ögonblicksbild {previous['date']}",
-            "blocks": {b: {"p_slow": v.get("p_inbromsning"), "state": v.get("state")}
-                       for b, v in previous.get("blocks", {}).items()},
+            "blocks": {b: {"p_slow": v.get("p_slow"), "state": v.get("state")}
+                       for b, v in previous.get("ms", {}).items()},
             "break_memory": dict(previous.get("break_memory", {}))}
 
 
@@ -92,19 +93,18 @@ def section(table: pd.DataFrame, date, previous: dict | None = None, seed_fn=Non
         pb = prev["blocks"].get(block, {})
         p = r.get("p_slow", float("nan"))
         st = next_state(pb.get("state"), pb.get("p_slow") if consecutive else None, p, consecutive)
-        blocks[block] = {"p_inbromsning": _f(p), "state": st,
-                         "shift": st if (pb.get("state") is not None and st != pb.get("state")) else None,
-                         "previous_p": pb.get("p_slow"), "previous_state": pb.get("state"),
-                         **{k: _f(r.get(k)) for k in MS_FIELDS}}
+        blocks[block] = {**{k: _f(r.get(k)) for k in MS_FIELDS}, "p_slow": _f(p), "state": st,
+                         "shift": bool(pb.get("state") is not None and st != pb.get("state")),
+                         "n_months": int(r.get("n_months") or 0), "reason": r.get("reason") or "",
+                         "previous_p": pb.get("p_slow"), "previous_state": pb.get("state")}
     memory = dict(prev["break_memory"])
-    series, flagged = [], []
+    series = []
     for row in rec["bocpd"]:
         b = is_break(row, memory)
         if b:
             memory[row["series"]] = {"period": row["latest_period"], "freq": row["freq"]}
-            flagged.append({k: _f(row.get(k)) for k in ("branch", "series", "freq", "latest_period", "p_recent")})
         series.append({**{k: _f(row.get(k)) for k in ("branch", "series", "freq", "latest_period", "p_recent",
-                                                       "n_periods", "reason")}, "break": b})
-    return {"model": "C4", "spec_version": rt.SPEC_VERSION, "spec": "docs/steg2/c4_spec.md", "note": NOTE,
-            "date": str(date.date()), "chain": prev["chain"], "blocks": blocks, "breaks": flagged,
-            "series": series, "break_memory": memory}
+                                                       "n_periods", "reason")}, "break": bool(b)})
+    return {"spec_version": SPEC_LOCK, "code_version": rt.SPEC_VERSION, "model": "C4", "spec": "docs/steg2/c4_spec.md",
+            "note": NOTE, "date": str(date.date()), "chain": prev["chain"], "ms": blocks, "bocpd": series,
+            "break_memory": memory}

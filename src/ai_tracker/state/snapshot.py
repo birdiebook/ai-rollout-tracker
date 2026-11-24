@@ -97,12 +97,13 @@ def regime_section(when, table: pd.DataFrame, out_dir: Path | None = None) -> di
     previous = None
     if prev_path.is_file():
         previous = json.loads(prev_path.read_text(encoding="utf-8")).get(regime_live.SECTION)
-        if previous is not None and "blocks" not in previous:  # an earlier failed section: start a new chain
+        if previous is not None and not previous.get("ms"):  # an earlier failed section: start a new chain
             previous = None
     try:
         return regime_live.section(table, when, previous)
     except Exception as e:  # noqa: BLE001 - the branch states are the record; C4 is descriptive (F-D6)
-        return {"model": "C4", "error": f"{type(e).__name__}: {e}"}
+        return {"spec_version": regime_live.SPEC_LOCK, "model": "C4", "ms": None, "bocpd": None,
+                "error": f"{type(e).__name__}: {e}"}
 
 
 def write(when, table: pd.DataFrame | None = None, out_dir: Path | None = None, today=None,

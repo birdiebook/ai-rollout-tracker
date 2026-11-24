@@ -213,17 +213,20 @@ def c4_open(monkeypatch):
 def test_section_chains_on_previous_snapshot(monkeypatch, c4_open):
     monkeypatch.setattr(rt, "compute", lambda table, d: _rec(
         0.9, 0.1, [{"branch": "G7", "series": "s", "freq": "M", "latest_period": "2026-11", "p_recent": 0.9}]))
-    prev = {"date": "2026-11-30", "chain": "x", "blocks": {"capex": {"p_inbromsning": 0.85, "state": "expansion"},
-                                                           "demand": {"p_inbromsning": 0.5, "state": "inbromsning"}},
+    prev = {"date": "2026-11-30", "chain": "x", "ms": {"capex": {"p_slow": 0.85, "state": "expansion"},
+                                                       "demand": {"p_slow": 0.5, "state": "inbromsning"}},
             "break_memory": {"s": {"period": "2026-09", "freq": "M"}}}
     s = regime_live.section(pd.DataFrame(), "2026-12-31", prev)
-    assert s["blocks"]["capex"]["state"] == "inbromsning" and s["blocks"]["capex"]["shift"] == "inbromsning"
-    assert s["blocks"]["demand"]["state"] == "inbromsning" and s["blocks"]["demand"]["shift"] is None
-    assert s["breaks"] == []  # 2026-11 is within 3 months of the break at 2026-09
+    assert s["spec_version"] == "735dc64" and set(s["ms"]) == {"capex", "demand"}
+    assert s["ms"]["capex"]["state"] == "inbromsning" and s["ms"]["capex"]["shift"] is True
+    assert s["ms"]["demand"]["state"] == "inbromsning" and s["ms"]["demand"]["shift"] is False
+    assert {"p_slow", "state", "shift", "n_months", "reason"} <= set(s["ms"]["capex"])
+    assert [b["break"] for b in s["bocpd"]] == [False]  # 2026-11 is within 3 months of the break at 2026-09
+    assert {"branch", "series", "freq", "latest_period", "p_recent", "break"} <= set(s["bocpd"][0])
     assert s["chain"].startswith("föregående ögonblicksbild")
     # a month gap breaks the pair: the state is kept
     s2 = regime_live.section(pd.DataFrame(), "2027-01-31", prev)
-    assert s2["blocks"]["capex"]["state"] == "expansion"
+    assert s2["ms"]["capex"]["state"] == "expansion"
 
 
 def test_first_section_uses_the_seed(monkeypatch, c4_open):
@@ -232,9 +235,9 @@ def test_first_section_uses_the_seed(monkeypatch, c4_open):
     seed = lambda table, d: {"date": "2026-10-31", "chain": "rekonstruerad", "break_memory": {},  # noqa: E731
                              "blocks": {"capex": {"p_slow": 0.15, "state": "inbromsning"}}}
     s = regime_live.section(pd.DataFrame(), "2026-11-30", None, seed_fn=seed)
-    assert s["blocks"]["capex"]["state"] == "expansion" and s["blocks"]["capex"]["shift"] == "expansion"
-    assert s["blocks"]["demand"]["state"] is None and s["blocks"]["demand"]["p_inbromsning"] is None
-    assert [b["series"] for b in s["breaks"]] == ["s"] and s["break_memory"]["s"]["period"] == "2026-10"
+    assert s["ms"]["capex"]["state"] == "expansion" and s["ms"]["capex"]["shift"] is True
+    assert s["ms"]["demand"]["state"] is None and s["ms"]["demand"]["p_slow"] is None
+    assert [b["series"] for b in s["bocpd"] if b["break"]] == ["s"] and s["break_memory"]["s"]["period"] == "2026-10"
 
 
 def test_snapshot_has_regime_section_from_first_live(tmp_path, monkeypatch):
@@ -244,7 +247,7 @@ def test_snapshot_has_regime_section_from_first_live(tmp_path, monkeypatch):
 
     def fake(table, when, previous):
         calls.append((str(pd.Timestamp(when).date()), previous))
-        return {"model": "C4", "blocks": {"capex": {"p_inbromsning": 0.3}}, "date": str(pd.Timestamp(when).date())}
+        return {"model": "C4", "ms": {"capex": {"p_slow": 0.3}}, "bocpd": [], "date": str(pd.Timestamp(when).date())}
 
     monkeypatch.setattr(regime_live, "section", fake)
     t = pd.DataFrame({"series": ["a"], "freq": ["M"], "period": ["2026-01"], "value": [1.0],
@@ -253,7 +256,8 @@ def test_snapshot_has_regime_section_from_first_live(tmp_path, monkeypatch):
     assert regime_live.SECTION not in json.loads(p.read_text(encoding="utf-8")) and not calls
     p = S.write("2026-11-30", t, tmp_path, today="2026-12-31")
     d = json.loads(p.read_text(encoding="utf-8"))
-    assert d[regime_live.SECTION]["blocks"]["capex"]["p_inbromsning"] == 0.3 and calls[-1] == ("2026-11-30", None)
+    assert regime_live.SECTION == "regime"
+    assert d["regime"]["ms"]["capex"]["p_slow"] == 0.3 and calls[-1] == ("2026-11-30", None)
     S.write("2026-12-31", t, tmp_path, today="2026-12-31")
     assert calls[-1][1]["date"] == "2026-11-30"  # chained on the previous snapshot's section
     assert set(d["branches"]) == {"G6"}  # the branch states are untouched
@@ -270,4 +274,4 @@ def test_snapshot_regime_failure_is_recorded(tmp_path, monkeypatch):
     t = pd.DataFrame({"series": ["a"], "freq": ["M"], "period": ["2026-01"], "value": [1.0],
                       "known_from": [TS("2026-02-01")], "source": ["x"], "fetched_at": [TS("2026-02-01")]})
     d = json.loads(S.write("2026-11-30", t, tmp_path, today="2026-12-31").read_text(encoding="utf-8"))
-    assert "factor failed" in d[regime_live.SECTION]["error"]
+    assert "factor failed" in d["regime"]["error"] and d["regime"]["ms"] is None

@@ -48,3 +48,11 @@ bakåtfyllda serierna (`us_constr_datacenter`, importserierna, BEA, EIA före ar
 vintage. En torrkörning av utvärderingskoden gjordes före öppningen bara på utvecklingsfönstret (tabellen trunkerad
 till 2025-06-30, låtsad holdout 2024-01–2025-06). Den återgav utvecklingssiffrorna i `docs/resultat/c3_utveckling.md`
 och `c4_utveckling.md` och läste ingenting efter 2025-06-30.
+
+## Tillägg efter körningen (2026-11-24)
+
+- Sektionens nyckel i ögonblicksbilden är `regime`, inte `regim_c4` som posten ovan säger, med det schema som sidan
+  och kvartalsrapporten läser (`ms` per block, `bocpd` per serie). Bara namn och form ändras. Inget i utvärderingen
+  eller specifikationerna påverkas.
+- Resultat: `docs/resultat/holdout_c3_c4.md`, körlogg `experiments/runs/20261124T082422Z_holdout_c3_c4.csv`. DF
+  klarade inte regeln för N2 och är skugga för N1–N4. C4 är beskrivande.
