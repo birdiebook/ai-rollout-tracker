@@ -6,8 +6,8 @@ acceptanceDateTime); see docs/granskning/r5_extraktion.md. B6's newsroom rows co
 paused automated fetching from anthropic.com on 2026-11-23) and are pinned from B6's stored sentences only. Only
 numbers, ids and SHA-256 references are kept here, never source text.
 
-Tests marked xfail(strict=True) demonstrate a real error or a missing row; they turn into failures once the CSV is
-corrected, so the fix must also remove the mark. No network.
+Tests marked xfail(strict=True) demonstrated a real error or a missing row; the corrections (track X3, 2026-11-24)
+removed every mark, so the section "errors found by R5" now pins the corrected rows. No network.
 """
 
 from __future__ import annotations
@@ -20,10 +20,6 @@ from ai_tracker import config, observations
 from conftest import real_table_exists
 
 CURATED = config.REPO / "curated"
-
-
-def bug(reason: str):
-    return pytest.mark.xfail(strict=True, reason=reason)
 
 
 def _csv(name: str) -> pd.DataFrame:
@@ -184,7 +180,8 @@ PLANS_SAMPLE = [
     ("meta-p019", "META_NONCANCEL_COMMIT", "reported", 19820.0, 19820.0, None, "2024-06-30", "2024-08-01"),
     ("meta-p020", "META_CAPEX_INCL_FL", "direction", None, None, 2, "2025-12-31", "2024-08-01"),
     ("meta-p028", "META_NONCANCEL_COMMIT", "reported", 27950.0, 27950.0, None, "2025-06-30", "2025-07-31"),
-    ("meta-p035", "META_NONCANCEL_COMMIT", "reported", 454520.0, 454520.0, None, "2026-09-30", "2026-10-22"),
+    # meta-p035: definition code changed by the R5-F11 fix (X3)
+    ("meta-p035", "META_NONCANCEL_COMMIT_CLOUD", "reported", 454520.0, 454520.0, None, "2026-09-30", "2026-10-22"),
     ("msft-p007", "MSFT_COMMERCIAL_RPO", "reported", 212000.0, 212000.0, None, "2023-09-30", "2023-10-24"),
     ("msft-p009", "MSFT_COMMERCIAL_RPO", "reported", 235000.0, 235000.0, None, "2024-03-31", "2024-04-25"),
     ("msft-p010", "MSFT_CAPEX_INCL_FL", "direction", None, None, 1, "2025-06-30", "2024-04-25"),
@@ -321,11 +318,10 @@ def test_nvda_outlook_matches_hand_reading(nvda_obs, period, mid, band, filed):
     assert lo == pytest.approx(mid * (1 - band / 100)) and hi == pytest.approx(mid * (1 + band / 100))
 
 
-# ------------------------------------------------------------------ errors found by R5 (xfail until fixed)
+# ------------------------------------------------------------------ errors found by R5 (corrected by X3, 2026-11-24)
 
 # R5-F1: Jensen Huang's "cloud GPUs are sold out" (8-K EX-99.1 2025-11-19, sentence #4) is about the clouds'
 # rented GPU capacity, i.e. partners, which interpretation 7 excludes. No own-supply statement in that document.
-@bug("R5-F1: nvda-cap-2025q3 codes partner (cloud) capacity, contrary to interpretation 7")
 def test_nvda_partner_capacity_not_coded(kpis):
     assert "nvda-cap-2025q3" not in set(kpis["id"])
 
@@ -336,7 +332,6 @@ def test_nvda_partner_capacity_not_coded(kpis):
 H20_SHA = "0f78d53731f6076e1dd70be50e31ddcc58b83cecb65cfd98cf85a2a58a3781d0"
 
 
-@bug("R5-F2a: H20 excess-inventory charge (2025Q1) not coded although interpretation 7 codes the FY23 Ampere case -2")
 def test_nvda_h20_excess_supply_coded(kpis):
     hit = kpis[(kpis["definition"] == "NVDA_CAPACITY_CURRENT") & (kpis["period"] == "2025Q1")]
     assert len(hit) == 1 and int(hit["code"].iloc[0]) == -2 and hit["sentence_sha256"].iloc[0] == H20_SHA
@@ -344,20 +339,17 @@ def test_nvda_h20_excess_supply_coded(kpis):
 
 # H200: 10-Q 0001045810-26-000075 (2026-08-26) sentence #323 (excess H200 inventory, demand diminished) is in the
 # same document as the coded +1 (sentence #280): opposite signs give 0 under the locked rules.
-@bug("R5-F2b: nvda-cap-2026q2 should be 0 (H200 excess supply and supply constraints in the same 10-Q)")
 def test_nvda_2026q2_mixed_signs_give_zero(kpis):
     assert int(_row(kpis, "nvda-cap-2026q2")["code"]) == 0
 
 
 # R5-F3: "secured inventory and capacity to meet demand beyond the next several quarters" (EX-99.2 2026-02-25,
 # #30) states a horizon; interpretation 4 codes "several quarters" as at least two quarters: Q2-Q3 FY27 = 2026Q3.
-@bug("R5-F3: nvda-capf-2026q1 has a stated horizon (next several quarters), period should be 2026Q3")
 def test_nvda_forward_horizon(kpis):
     assert _row(kpis, "nvda-capf-2026q1")["period"] == "2026Q3"
 
 
 # R5-F4: FY25 Q3 call (2025-04-30) #364: "matched supply and demand" for the reported quarter (2025Q1) = 0.
-@bug("R5-F4: missing MSFT current capacity code for 2025Q1 (0, call 2025-04-30 sentence #364)")
 def test_msft_2025q1_current_capacity_coded(kpis):
     hit = kpis[(kpis["definition"] == "MSFT_CAPACITY_CURRENT") & (kpis["period"] == "2025Q1")]
     assert len(hit) == 1 and int(hit["code"].iloc[0]) == 0 and hit["filed"].iloc[0] == "2025-04-30"
@@ -365,7 +357,6 @@ def test_msft_2025q1_current_capacity_coded(kpis):
 
 # R5-F5: FY24 Q3 call (2024-04-25) #221: Q4 FY24 Azure guidance includes "some impact from the AI capacity
 # availability" = +1 forward for 2024Q2 (as msft-capf-2024q4b for the same kind of guidance statement).
-@bug("R5-F5: missing MSFT forward capacity code for 2024Q2 (+1, call 2024-04-25 sentence #221)")
 def test_msft_2024q2_forward_capacity_coded(kpis):
     hit = kpis[(kpis["definition"] == "MSFT_CAPACITY_FORWARD") & (kpis["period"] == "2024Q2")]
     assert len(hit) == 1 and int(hit["code"].iloc[0]) == 1 and hit["filed"].iloc[0] == "2024-04-25"
@@ -386,7 +377,6 @@ MISSING_KPI_SENTENCES = [
 ]
 
 
-@bug("R5-F6: Microsoft AI-product counts in the calls are missing from ai_kpis.csv")
 @pytest.mark.parametrize("label,sha", MISSING_KPI_SENTENCES)
 def test_missing_kpi_sentence_coded(kpis, label, sha):
     assert sha in set(kpis["sentence_sha256"]), label
@@ -407,7 +397,6 @@ ORCL_MISSING = [
 ]
 
 
-@bug("R5-F7: Oracle operating lease commitments in four 10-Q MD&As are missing")
 @pytest.mark.parametrize("period,value,accession,k,sha", ORCL_MISSING)
 def test_orcl_lease_rows_present(leases, period, value, accession, k, sha):
     hit = leases[(leases["company"] == "orcl") & (leases["period"] == period)]
@@ -419,7 +408,6 @@ def test_orcl_lease_rows_present(leases, period, value, accession, k, sha):
 
 # R5-F9: from 2026-06-30 Microsoft's amount includes "arrangements subject to certain contractual conditions";
 # the definition widened and the row does not say so.
-@bug("R5-F9: Microsoft's conditional lease arrangements (2026Q2-) are not flagged")
 @pytest.mark.parametrize("row_id", ["msft-2026-06-30-total", "msft-2026-09-30-total"])
 def test_msft_conditional_leases_flagged(leases, row_id):
     assert "condition" in str(_row(leases, row_id)["note"]).lower()
@@ -427,7 +415,6 @@ def test_msft_conditional_leases_flagged(leases, row_id):
 
 # R5-F10: FY25 Q2 call (2025-01-29) #240: FY26 capex growth "lower than FY25" (FY26 named in #239) is a plan for
 # the next fiscal year (E1's msft-16) but has no row in plans.csv.
-@bug("R5-F10: missing D1 row for Microsoft FY26 (growth_vs_prior -1, call 2025-01-29)")
 def test_msft_fy26_first_statement_in_plans(plans):
     hit = plans[plans["sentence_sha256"] == "6d795323401c07a042aed4a8e50e85ca26d849fc74a3b0d2506b5059a8487242"]
     assert len(hit) == 1
@@ -438,27 +425,24 @@ def test_msft_fy26_first_statement_in_plans(plans):
 
 # R5-F11: Meta's commitments include third-party cloud capacity from 2025-09-30 (new wording, total x3 in one
 # quarter); D1's own rule gives a new definition code for new wording.
-@bug("R5-F11: META_NONCANCEL_COMMIT spans the change to third-party cloud capacity (2025Q3)")
 def test_meta_commit_split_at_cloud_capacity(plans):
     late = plans[(plans["company"] == "meta") & (plans["measure"] == "COMMIT") & (plans["period_end"] >= "2025-09-30")]
-    assert len(late) == 6 and not (late["definition"] == "META_NONCANCEL_COMMIT").any()
+    # X3: the CSV has five such rows (meta-p030, p032-p035); the review's 6 was a miscount (no sixth statement exists)
+    assert len(late) == 5 and not (late["definition"] == "META_NONCANCEL_COMMIT").any()
 
 
 # R5-F12: msft-p022 says "double" without a qualifier (kind point), msft-p025 says "overall capacity" rather than
 # "datacenter footprint" (new wording, new code under D1's rule).
-@bug("R5-F12a: msft-p022 kind should be point (no qualifier in the sentence)")
 def test_msft_p022_kind(plans):
     assert _row(plans, "msft-p022")["kind"] == "point"
 
 
-@bug("R5-F12b: msft-p025 ('overall capacity') is coded as MSFT_DC_FOOTPRINT")
 def test_msft_p025_definition(plans):
     assert _row(plans, "msft-p025")["definition"] != "MSFT_DC_FOOTPRINT"
 
 
 # R5-F13: Oracle 10-Q for Feb 2024 (0000950170-24-029904): unconditional purchase obligations $4.4 billion,
 # "primarily related to capital expenditures for our data centers" (sentences #429 and #431).
-@bug("R5-F13: missing Oracle COMMIT row for 2024-02-29 (4,400 MUSD)")
 def test_orcl_commit_feb_2024(plans):
     hit = plans[(plans["company"] == "orcl") & (plans["measure"] == "COMMIT") & (plans["period_end"] == "2024-02-29")]
     assert len(hit) == 1 and float(hit["value_lo"].iloc[0]) == 4400
@@ -466,7 +450,6 @@ def test_orcl_commit_feb_2024(plans):
 
 # R5-F14 (E1, flagged by D1 and confirmed): FY27 Q1 call 2026-10-28 #226 lowers CY2026 capex to approximately
 # $170 billion; guidance_capex.csv still has only msft-26 (approx 190,000).
-@bug("R5-F14: guidance_capex.csv lacks Microsoft CY2026 approx 170,000 (call 2026-10-28)")
 def test_msft_cy2026_cut_in_guidance(capex):
     hit = capex[capex["sentence_sha256"] == "c12864f550b4881de122eda842f6023fff77e59a899407c12fd939ffc7f79788"]
     assert len(hit) == 1

@@ -1,6 +1,7 @@
 # Källa: bolagens AI-nyckeltal (steg 2, spår B4)
 
-Byggt och kontrollerat 2026-11-23. Bara extraktion: inga takter, inga jämförelser mellan guidance och utfall.
+Byggt och kontrollerat 2026-11-23, rättat efter granskningen R5 2026-11-24 (spår X3, se "Rättning efter R5"). Bara
+extraktion: inga takter, inga jämförelser mellan guidance och utfall.
 Avsnittet "Kodningsregler" skrevs och committades (00b98a8) **innan** någon kandidatmening kodades. Tolkningar som
 behövdes under kodningen står separat i "Tolkningar under kodningen" och är inte inskrivna i efterhand i reglerna.
 
@@ -117,7 +118,9 @@ Följande fall täcktes inte uttryckligen av reglerna ovan. Valet står här så
    tecken mot uttalanden om Azures infrastruktur i samma samtal. Koden blir +1.
 4. **Framåtblickande koder**: en rad per angiven horisont, så ett dokument kan ge flera perioder (MSFT 2025-01-29:
    +1 för 2025Q1 och 0 för 2025Q2, "roughly in line" i slutet av FY25). Utan angiven horisont: kvartalet då dokumentet
-   lämnades in. "Several quarters in fiscal 2026" kodas till och med FY26 Q2 (minst två kvartal).
+   lämnades in. "Several quarters in fiscal 2026" kodas till och med FY26 Q2 (minst två kvartal). "Beyond the next
+   several quarters" (Nvidia 2026-02-25) är också en angiven horisont: minst två kvartal efter det pågående, alltså
+   Q2–Q3 FY27 = 2026Q3 (R5-F3).
 5. **"Fully subscribed"** (Trainium2) läses som "sold out", alltså +2. "Largely sold out" och "nearly all ...
    committed" är förbehållna och får +1.
 6. **Effektivitet är inte balans.** "Monetize underutilized capacity" i CPU-flottan (MSFT 2026-10-28) handlar om
@@ -125,6 +128,10 @@ Följande fall täcktes inte uttryckligen av reglerna ovan. Valet står här så
 7. **Nvidia FY23** (2023-02-22): lagernedskrivningar för "excess supply" av Ampere för Gaming **och Data Center** mot
    efterfrågan kodas −2, eftersom datacenter nämns uttryckligen. Utbudsbrist för Gaming (2025–2026) kodas inte.
    Partnernas kapacitetsbrist (Nvidias 10-Q 2026-08-26 om AI-molnpartner) kodas inte, eftersom den inte är bolagets egen.
+   **Tillämpad som den står** (ägarens beslut 2026-11-23, R5-F2): H20-nedskrivningen på 4,5 mdr USD för "excess
+   inventory … as the demand for H20 diminished" (Q1 FY26) kodas −2 för 2025Q1, och H200-nedskrivningen i 10-Q:n
+   2026-08-26 ger olika tecken mot "supply constraints" i samma dokument, alltså 0 för 2026Q2. "Cloud GPUs are sold out"
+   (2025-11-19) gäller molnens uthyrda kapacitet, alltså partner, och kodas inte (2025Q3 är en lucka, R5-F1).
 8. **Ordalydelse och definition.** Alphabets tokens per minut beskrivs på tre sätt ("first party models ... via direct
    API", "first party model APIs", "Gemini models ... API tokens"). De behandlas som samma mått (API-trafik till egna
    modeller). Microsofts Copilot-familj (2025-07: "family of Copilot apps", 2025-10: "first party family of
@@ -133,8 +140,12 @@ Följande fall täcktes inte uttryckligen av reglerna ovan. Valet står här så
 9. **Inaktiva serier.** Ett nyckeltal som inte har nämnts på 270 dagar före det senaste dokumentet i extraktionen
    (ungefär tre kvartalsrapporter) markeras som avslutat (`closed`), med datumet i noten. Det öppnas igen när en senare
    extraktion hittar det.
+10. **Balans och guidance** (R5-F4, F5, enligt granskarens läsning, ägarens beslut 2026-11-23): att utbud och
+    efterfrågan var matchade ("matched supply and demand") under det redovisade kvartalet (MSFT 2025-04-30) är
+    uttryckligen i balans, 0. Azure-guidance för nästa kvartal "with some impact from the AI capacity availability" (MSFT 2024-04-25) är en
+    väntad begränsning, +1 framåt, på samma sätt som `msft-capf-2024q4b`.
 
-## Kodat (169 rader, 51 serier)
+## Kodat (179 rader, 56 serier)
 
 383 dokument (2023-01-01–2026-11-17): 288 8-K-dokument med Item 2.02/7.01/8.01, 79 10-Q/10-K och 16 samtal på
 microsoft.com (FY23 Q2–FY27 Q1). Kandidaturvalet gav 9 372 meningar (6 447 unika): 2 678/560 för Microsoft
@@ -145,9 +156,9 @@ bara upprepar ett redan kodat värde kodas som upprepning eller hoppas över.
 
 | Led | Rader | Innehåll |
 |---|---|---|
-| L2 användning | 63 | tokens (Alphabet API per minut, Microsoft per kvartal, månad och räkenskapsår, Foundry-kunder över en biljon tokens), användare (Gemini-appen, AI Overviews, Meta AI, Copilot-familjen, AI-funktioner, GitHub Copilot, M365 Copilot-platser, Rufus, Alexa for Shopping), kunder och organisationer (Azure OpenAI, Azure AI, Foundry, Agent Service, Copilot Studio, Power Platform, Bedrock), utvecklare |
+| L2 användning | 71 | tokens (Alphabet API per minut, Microsoft per kvartal, månad och räkenskapsår, Foundry-kunder över en biljon tokens), användare (Gemini-appen, AI Overviews, Meta AI, Copilot-familjen, AI-funktioner, GitHub Copilot, M365 Copilot-platser, Rufus, Alexa for Shopping), kunder och organisationer (Azure OpenAI, Azure AI, Foundry, Agent Service, Copilot Studio, Power Platform, Bedrock, Sales Copilot, Copilot for Security, Foundry med flera modeller, Foundry och Fabric), utvecklare |
 | L3 intäkter | 73 | Microsofts AI-verksamhet i årstakt (och en väntad), LinkedIn AI, AWS AI-verksamhet, Amazons chip i årstakt (två definitioner), Google Clouds backlog, Azures tillväxt i % och i konstant valuta (tre definitioner), AI-tjänsternas bidrag till Azure i procentenheter (två definitioner) |
-| Kapacitet | 33 | Microsoft (10 nu, 8 framåt), Nvidia (5 + 5), Amazon (3 + 1), Alphabet (1). Meta: inga kodbara uttalanden i 8-K |
+| Kapacitet | 35 | Microsoft (11 nu, 9 framåt), Nvidia (5 + 5), Amazon (3 + 1), Alphabet (1). Meta: inga kodbara uttalanden i 8-K |
 
 **Azure (deterministiskt):** Microsofts pressmeddelanden har en tabell "Constant Currency Reconciliation" med raden
 "Azure and other cloud services (revenue) X% Y% Z%" (rapporterad, valutaeffekt, konstant valuta). Raden läses med ett
@@ -165,13 +176,19 @@ avslutade.
 - Multiplar och tillväxt utan nivå ("doubled", "up 4X", "17x token volume", "40% growth in paid MAU").
 - Microsofts Azure-guidance för nästa kvartal i konstant valuta (ges i varje samtal). Den är framåtblickande och
   inte efterfrågad här, men den är kodbar på samma sätt och vore en kandidat till B2 för N4.
+- LinkedIn: medlemmar som använder AI-jobbsök dagligen (mer än 10 miljoner) och kunder med "agentic hiring" (25 000),
+  samtalet 2026-10-28 (#56). LinkedIns användare kodas inte (se ovan), och kunderna är ett engångstal för en
+  rekryteringsfunktion utan återkommande definition. MAI Code Flash (3 miljoner användare i GitHub Copilot förra
+  månaden, #74): användning av en enskild modell inne i en annan produkt, inte ett nyckeltal för produkten.
+  Båda är bedömningsfall som R5 bad att bara lista (R5-F6).
 - Alphabets tokens per månad (480 biljoner, 980 biljoner, 1,3 kvadriljoner) och Gemini-appens MAU före 2025-10,
   Metas MAU för Meta AI utom 2025-04 och Amazons samtal: de finns bara i samtalen på bolagens egna sidor, som proxyn
   nekar (se nedan).
 
 ## Serier
 
-Nyckel = `kpi_` + definitionskoden i gemener. Alla har `publish=False` tills granskningen R5 är gjord. Gren: G3
+Nyckel = `kpi_` + definitionskoden i gemener. Alla har `publish=True` efter granskningen R5 och rättningen X3
+(bara siffror med källhänvisning publiceras, aldrig text). Gren: G3
 (L2), G4 (L3), G7 (kapacitet). Luckor är väntade och listas i `series/ai_kpis.KNOWN_GAPS`, som läggs till i
 `warehouse.KNOWN_GAPS`. Enheter: miljoner användare (även platser), antal, MUSD, %, procentenheter, biljoner tokens
 och miljarder tokens per minut. Frekvens M = månaden värdet avser, Q = kalenderkvartalet för det redovisade
@@ -201,6 +218,28 @@ Den bekräftar **inte** semantiken (period, definition, om ett uttalande gäller
 om de 34 raderna i stickprovet och hittade inga fel, men det är ingen oberoende granskning. R5 bör läsa om
 stickprovet och alla 33 kapacitetsrader (meningarna finns i `data/raw/ai_kpis_sentences/<id>.txt`, och kodningen som
 skrev CSV:n finns i `data/raw/ai_kpis_sentences/spec.py` och `build_kpis.py`).
+
+## Rättning efter R5 (spår X3, 2026-11-24)
+
+Alla fel i `docs/granskning/r5_extraktion.md` som gäller B4 är rättade enligt ägarens beslut 2026-11-23. Varje ny
+rad har URL (och accession för SEC), plats, SHA-256 av meningen (meningen bara i `data/raw/ai_kpis_sentences/`) och
+`filed` = EDGAR:s filingDate eller, för samtalen, dagen för 8-K:n med resultatet.
+
+| Fel | Rättning |
+|---|---|
+| R5-F1 | `nvda-cap-2025q3` borttagen (partnernas kapacitet). 2025Q3 är en lucka |
+| R5-F2a | `nvda-cap-2025q1` = −2 (H20, 8-K EX-99.1 0001045810-25-000115, mening #2, filed 2025-05-28) |
+| R5-F2b | `nvda-cap-2026q2` = 0 (olika tecken, #280 och #323 i samma 10-Q) |
+| R5-F3 | `nvda-capf-2026q1` period 2026Q3 |
+| R5-F4 | `msft-cap-2025q1` = 0 (samtalet 2025-04-30, #364) |
+| R5-F5 | `msft-capf-2024q2` = +1 (samtalet 2024-04-25, #221) |
+| R5-F6 | Kodat med fem nya definitionskoder: `MSFT_SALES_COPILOT_ORGS` (2), `MSFT_COPILOT_SECURITY_PAID_CUSTOMERS` (1), `MSFT_FOUNDRY_CUST_ANTHROPIC_OPENAI` (1), `MSFT_FOUNDRY_CUST_MULTI_MODEL` (1) och `MSFT_FOUNDRY_FABRIC_CUSTOMERS` (3). Alla är `min` ("more than"/"over"), period = samtalets månad. "Både Anthropic och OpenAI" och "mer än en modell" är olika mått och har därför olika koder. LinkedIn och MAI Code Flash står under "Inte kodat" |
+
+Valet för R5-F6: alla åtta har en entydig och återkommande eller avgränsad definition i bolagets ordalydelse, så de
+kodas hellre än listas. Tre av serierna har bara ett värde och blir avslutade enligt tolkning 9.
+`ai_kpis_check` kände inte igen orden för tre kapacitetskoder ("matched supply and demand", "capacity availability"
+och 0 vid olika tecken). Ordlistan är utökad, och alla 179 rader stämmer nu mot de sparade dokumenten. De nya och
+ändrade raderna kontrollerades också mot nyhämtade dokument (0 fel).
 
 ## Licens
 

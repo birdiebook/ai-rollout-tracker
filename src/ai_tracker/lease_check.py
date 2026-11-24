@@ -5,8 +5,8 @@ again (a fresh request, not the cached raw copy), split into sentences as at ext
 - the sentence at the locator (sentence #k) must have the stored SHA-256; if not, the whole document is searched
   for the hash ("moved": located, but reported);
 - the stored amount must appear in that sentence, written in billions or millions;
-- the sentence, or the one before it (CoreWeave and a page break at Meta put the amount in the next sentence),
-  must mention leases that have not commenced.
+- the sentence, or the one before or after it (CoreWeave and a page break at Meta put the amount in the next
+  sentence, Oracle's MD&A from November 2023 in the sentence before), must mention leases that have not commenced.
 
     python -m ai_tracker.lease_check [--frac 0.2] [--seed 0]
 
@@ -38,7 +38,9 @@ def check_row(row: pd.Series, text: str) -> str:
         if not hits:
             return "sentence_not_found"
         k, at, status = hits[0], sents[hits[0]], "moved"
-    context = (sents[k - 1] + " " if k else "") + at  # the amount can follow the sentence that names the leases
+    # the amount can follow the sentence that names the leases (CoreWeave, Meta's page break), or precede it (Oracle's
+    # 10-Q MD&A from November 2023: "... operating lease commitments to $X" and then "... expected to commence ...")
+    context = (sents[k - 1] + " " if k else "") + at + (" " + sents[k + 1] if k + 1 < len(sents) else "")
     if not (lc.CANDIDATE_RE.search(context) and lc.LEASE_RE.search(context)):
         return "not_a_commitment_sentence"
     if not re.search(lc.number_pattern(float(row["value"])), at):

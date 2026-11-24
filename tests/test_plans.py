@@ -157,7 +157,7 @@ def test_series_keys_periods_and_vintages(tmp_path):
     assert by["plan_crwv_backlog_asof_value"].freq == "Q" and by["plan_crwv_backlog_asof_value"].lag_days >= 0
     assert by["plan_msft_dc_footprint_span2y_value"].lag_days <= -(pd.Timestamp("2032-12-31")
                                                                     - pd.Timestamp("2030-10-29")).days
-    assert all(not s.publish for s in specs)
+    assert all(s.publish for s in specs)  # R5 reviewed, X3 corrected
 
 
 # ------------------------------------------------------------------ sampling check

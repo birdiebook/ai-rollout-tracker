@@ -2,8 +2,9 @@
 
 Byggt och kontrollerat 2026-11-23. Avsnittet "Kodningsregler" skrevs och committades (3a46c63) **innan** någon
 kandidatmening kodades. Senare tillägg är daterade och motiverade i avsnittet "Ändringar i reglerna". Bara
-extraktion: inga takter, inga jämförelser mot utfall. Extraktionen ska granskas oberoende (R5) innan serierna
-används, och därför har alla serier `publish=False`.
+extraktion: inga takter, inga jämförelser mot utfall. Extraktionen granskades oberoende (R5, 2026-11-23) och
+rättades (X3, 2026-11-24, se "Rättning efter R5"). Därefter har alla serier `publish=True` (bara siffror med
+källhänvisning).
 
 Kod: `src/ai_tracker/sources/plans_corpus.py` (korpus och kandidaturval), `src/ai_tracker/sources/plans.py` (läsare,
 validering och serier), `src/ai_tracker/series/plans.py` (katalogposter), `src/ai_tracker/plans_check.py`
@@ -150,10 +151,10 @@ kunde fortfarande ha kodats, men ingen hade ett kodbart värde i stickprovet som
 | Bolag | Mått | Rader | Innehåll |
 |---|---|---|---|
 | Meta | CAPEX | 15 | Nästa års intervall (2023, 2024) och riktning (2024–2026), från 8-K och 10-Q |
-| Meta | COMMIT | 20 | Icke uppsägningsbara åtaganden utan leasing, varje kvartal 2021Q4–2026Q3 |
+| Meta | COMMIT | 20 | Icke uppsägningsbara åtaganden utan leasing, varje kvartal 2021Q4–2026Q3: `META_NONCANCEL_COMMIT` till 2025Q2, `META_NONCANCEL_COMMIT_CLOUD` från 2025Q3 |
 | Microsoft | BACKLOG | 19 | Kommersiellt RPO från samtalen, 2022Q1–2026Q3 (FY22 Q2-sidan saknas) |
-| Microsoft | CAPEX | 3 | FY25 och FY26: riktning, och FY26-tillväxten lägre än FY25 |
-| Microsoft | CAPACITY | 6 | AI-kapacitet +80 % FY26, fördubblat datacenterfotavtryck på två år (sagt 2025-10, upprepat 2026-04 och 2026-07), 1 GW tillagt per kvartal 2026Q1 och Q2 |
+| Microsoft | CAPEX | 4 | FY25 och FY26: riktning, och FY26-tillväxten lägre än FY25 (först sagt 2025-01-29) |
+| Microsoft | CAPACITY | 6 | AI-kapacitet +80 % FY26, fördubblat datacenterfotavtryck på två år (sagt 2025-10, upprepat 2026-04), fördubblad samlad kapacitet på två år (2026-07, egen kod), 1 GW tillagt per kvartal 2026Q1 och Q2 |
 | Amazon | CAPEX | 2 | 2026 ökar, 2027 ökar kraftigt (10-Q) |
 | Amazon | INFRA | 5 | AWS-investeringar per land: Indonesien, Kanada (laddas), Mississippi, Saudiarabien, Mexiko (utan slutår, `OPEN`) |
 | Amazon | CAPACITY | 3 | Effekt tillagd på 12 månader (3,8 GW till 2025-09, 3,9 GW 2025), total effekt fördubblad till slutet av 2027 |
@@ -161,13 +162,15 @@ kunde fortfarande ha kodats, men ingen hade ett kodbart värde i stickprovet som
 | Alphabet | BACKLOG | 5 | Google Clouds backlog 2025Q3 och 2026Q1–Q3 |
 | Oracle | CAPEX | 4 | FY26 50 mdr USD, FY27 ökar (två dokument), FY29 minskar efter toppen FY27–FY28 |
 | Oracle | CAPACITY | 2 | Fördubblad datacenterkapacitet 2025, 850 MW levererat i FY27 Q1 |
-| Oracle | COMMIT | 4 | Ovillkorade inköpsåtaganden 2025-11 till 2026-08 (ny definition 2026-08) |
+| Oracle | COMMIT | 5 | Ovillkorade inköpsåtaganden 2024-02 (MD&A, datacenter-capex, egen kod) och 2025-11 till 2026-08 (ny definition 2026-08) |
 | CoreWeave | BACKLOG | 10 | Revenue backlog 2023Q4, 2024Q4 och 2025Q1–2026Q3 |
 | CoreWeave | CAPACITY | 21 | Aktiv effekt 2022Q4–2026Q3, kontrakterad effekt 2024Q4–2026Q3, mål: mer än 1,85 GW aktiv effekt vid årsskiftet 2026, mer än 8 GW till 2030, mer än 5 GW AI-fabriker till 2030 |
 | CoreWeave | CAPEX | 1 | 2026: 37–39 mdr USD |
 | CoreWeave | COMMIT | 5 | Utrustning i hyrda datacenter (intervall, 2025Q4–2026Q3), byggåtaganden 2,1 mdr USD 2026Q3 |
 
-Sammanlagt 36 serier (`plan_<definition>[_<land>]_<horisont>_<fält>`), alla G5, `revised=True`, `publish=False`:
+Sammanlagt 39 serier (`plan_<definition>[_<land>]_<horisont>_<fält>`), alla G5, `revised=True`, `publish=True`.
+Två är avslutade (`plans.CLOSED`): `plan_meta_noncancel_commit_asof_value` (fortsätter som `..._cloud_...`) och
+`plan_orcl_uncond_oblig_dc_capex_asof_value` (ett värde):
 
 - **Planer** (frekvens A, perioden = året då horisonten slutar, räkenskapsår = året då det slutar): `..._y_lo/hi/value`,
   `..._y_dir_yoy`, `..._y_dir_growth_vs_prior`, `..._by_...` (mål senast ett datum), `..._span<N>y_...`
@@ -202,9 +205,9 @@ Sammanlagt 36 serier (`plan_<definition>[_<land>]_<horisont>_<fält>`), alla G5,
   dollar growth in 2026" har i D1 två koder (yoy +2 och growth_vs_prior 0), och "dollar growth notably larger in 2026
   than 2025" kodas i D1 som growth_vs_prior +2 (E1: yoy +2). Microsofts `prior_fy` i E1 heter `yoy` i D1. Använd
   antingen E1- eller D1-serien för samma bolag och år i en modell, inte båda.
-- **Möjlig lucka i E1:** Microsofts samtal 2026-10-28 (mening #226) sänker kalenderåret 2026 till "approximately
-  $170 billion" (från cirka 190 mdr USD, `msft-26`). Raden finns inte i `guidance_capex.csv`. Den hör till E1:s domän
-  (innevarande år) och är inte kodad här.
+- **Lucka i E1, rättad:** Microsofts samtal 2026-10-28 (mening #226) sänker kalenderåret 2026 till cirka 170 mdr
+  USD (från cirka 190 mdr USD, `msft-26`). Den hör till E1:s domän (innevarande år) och finns nu som `msft-29` i
+  `guidance_capex.csv` (R5-F14, X3).
 - **A1 (RPO).** Bolagens totala RPO och löptidsprofilen (`rpo_<bolag>`, `_12m`/`_24m`, `_after*`) finns i A1 och
   dupliceras inte. D1 tar bara orderstock som A1 inte har: CoreWeaves backlog (RPO plus avtal som ännu inte är RPO),
   Google Clouds del och Microsofts kommersiella del.
@@ -230,7 +233,7 @@ som definitionen kräver.
 
 - SEC EDGAR: *"Information presented on sec.gov is considered public information and may be copied or further
   distributed by users of the web site without the SEC's permission."* (sec.gov/privacy). microsoft.com: bara
-  extraherade siffror med källhänvisning, aldrig text. `publish=False` tills R5 har granskat.
+  extraherade siffror med källhänvisning, aldrig text. `publish=True` efter R5 och X3.
 - SEC via `ai_tracker.http` med deklarerad User-Agent från `.env` (`SEC_USER_AGENT`), 5 anrop/s. Cirka 750 anrop i
   första körningen (submissions, index och dokument), därefter återanvänds råkopiorna.
 - **Nekade av proxyn** (ett försök vardera, inget kringgått): `investor.oracle.com`, `investors.coreweave.com`,
@@ -273,6 +276,19 @@ samma läsare som kodade och därför ingen oberoende kontroll. **R5 bör läsa 
 4. Metas åtagandetotal som infrastrukturmått: sammansättningen ändras (innehåll 2024Q4–2025Q1, molnkapacitet från
    2025Q3).
 5. Oracles definitionsbyte 2026-08 ("terms of one year or greater").
+
+## Rättning efter R5 (spår X3, 2026-11-24)
+
+| Fel | Rättning |
+|---|---|
+| R5-F10 | `msft-p029`: FY26 capex-tillväxt lägre än FY25 (direction −1, `growth_vs_prior`), samtalet 2025-01-29 mening #240, xref `msft-16`. `msft-p016` (2025-04-30) blir en upprepning utan ny version |
+| R5-F11 | Ny kod `META_NONCANCEL_COMMIT_CLOUD` från 2025-09-30 (`meta-p030`, `p032`–`p035`). Tillägget "comprising both short-term and long-term arrangements" (2026Q1) beskriver löptiden, inte sammansättningen, och 2026Q3 lägger till energiavtal för datacenter sist i uppräkningen. Molnkapaciteten står kvar först, så inget av dem ger en ny kod. R5:s test väntade sex rader, men det finns fem (inget sjätte uttalande), och testet är rättat |
+| R5-F12 | `msft-p022` har typen `point`. `msft-p025` ("overall capacity") har en egen kod, `MSFT_OVERALL_CAPACITY`, med samma tvåårsperiod från 2025-10-29 |
+| R5-F13 | `orcl-p011`: 4 400 MUSD per 2024-02-29, kod `ORCL_UNCOND_OBLIG_DC_CAPEX` (10-Q 0000950170-24-029904, MD&A, mening #429; #431 knyter åtagandena till capex för datacenter) |
+
+Varje ny rad har URL, plats, SHA-256 (meningen bara i `data/raw/plans_sentences/`) och `filed` = EDGAR:s filingDate
+eller samtalsdagen. `plans_check` gav 0 fel på alla 129 rader mot de sparade dokumenten och på de nya och ändrade
+raderna mot nyhämtade dokument.
 
 ## Kända problem
 

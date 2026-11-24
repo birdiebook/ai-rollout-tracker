@@ -28,8 +28,8 @@ SOURCE = "ai_kpis_check"
 
 CAPACITY_WORDS = {
     2: r"significantly|extreme|sold out|fully subscribed|well ahead",
-    1: r"constrain|exceed|ahead of|higher than|short|unserved|sold out|subscribed|committed",
-    0: r"in line|balance",
+    1: r"constrain|exceed|ahead of|higher than|short|unserved|sold out|subscribed|committed|capacity availability",
+    0: r"in line|balance|matched supply and demand",
     -1: r"secured|sufficient|enough|to meet demand|eased|no longer",
     -2: r"excess|exceeded our demand|underutili",
 }
@@ -71,7 +71,10 @@ def number_patterns(value: float, unit: str) -> list[str]:
 
 def sentence_ok(row: pd.Series, sentence: str) -> bool:
     if row["kind"] == "code":
-        return re.search(CAPACITY_WORDS[int(row["code"])], sentence, re.I) is not None
+        # 0 from opposite signs in one document (locked rule): the stored sentence is one of the signed ones
+        words = ("|".join(CAPACITY_WORDS.values()) if int(row["code"]) == 0 and "opposite signs" in str(row["note"])
+                 else CAPACITY_WORDS[int(row["code"])])
+        return re.search(words, sentence, re.I) is not None
     vals = [row["value_lo"]] + ([row["value_hi"]] if row["kind"] == "range" else [])
     return all(any(re.search(p, sentence, re.I) for p in number_patterns(v, row["unit"])) for v in vals)
 
