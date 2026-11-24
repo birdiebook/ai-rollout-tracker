@@ -379,3 +379,8 @@ Johannes valde rekommendationerna:
   overifierat Mistral-pris. G2 har kvar en räknad kärnserie. Rättningsspåret X5 tar R-1–R-8. Viktigast är ett
   läckage i `arena.py`: omladdade tavlor (2026-07-07) var daterade till första commit, och det rör även G1:s
   `g1_arena_text_top`. B från 2024-09 prövas först efter rättningen och en ny granskning.
+- **X5 klar (2026-11-24):** Arena-läckaget är rättat. Tavlor versioneras per commit, och den verkliga ändringen var
+  2026-07-29. Ingen G1-historik eller G1-tillstånd ändrades. Prisrättningar för Gemini är daterade och belagda. B från
+  2024-09 klarar ändå inte villkoret, eftersom takten bärs av ett enda prissteg. **Varken A eller B registreras.** De finns kvar
+  som beskrivande serier. G2 har fortsatt en räknad kärnserie. Öppet: ska avvecklingsregeln också gälla
+  `g2_price_at_capability*`? Den rekommenderas som daterad registerändring efter en körning som visar effekten.
