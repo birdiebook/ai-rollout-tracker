@@ -392,3 +392,14 @@ Johannes valde rekommendationerna:
   serier men finns i CSV:n och i `useful_lives.changes()`.
 - `publish=True` enligt registret. Kontrollen mot nyhämtade dokument gav 0 fel av 305. Den oberoende granskningen
   avgör om det står kvar.
+
+## 2026-11-24 – R15: P2a:s nyttjandeperioder godkända med anmärkningar
+
+- Granskningen R15 (`docs/granskning/r15_nyttjandeperioder.md`) läste alla 305 rader i nyhämtade SEC-dokument: 0 fel
+  (stickprovet 0 av 65, 95 % KI 0–5,5 %). Alla 21 ändringar 2018–2026 finns, dateringen stämmer med EDGAR och
+  `in_effect(as_of)` använder inget som var okänt på prognosdagen. N7 kan använda serierna som de är.
+- `publish=True` står kvar.
+- Fyra anmärkningar ska rättas i dokumentationen: självkontrollen ändrades efter första körningen utan att det
+  redovisas, avvikelsen från kandidatregeln (82 av 305 rader) ska in i måttregistret, källdokumentet citerar hela
+  meningar och noten för `_lo`-serierna ska säga att punkter och intervall blandas. CoreWeaves ändring stod redan i
+  S-1 2025-03-03, så known_from är ungefär ett år sent (konservativt).
