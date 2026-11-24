@@ -1,88 +1,93 @@
-<!-- PLACEHOLDER (W4). Owner in wave 1: W5 (start page: chain L1→L9, three question cards, stripes, headline). -->
+<!-- Start page /next/ (W5): "AI-flödet denna månad" (docs/steg3/hemsida_vision.md 3.1). Headline sentence from the
+     data, the chain L1→L9 as the spine, three question cards, the state stripes and the ways on. Components and the
+     view model live in $lib/start/; data comes only through the typed loaders (+page.server.ts). -->
 <script lang="ts">
-  import { resolve } from '$app/paths';
-  import { ChartFrame, Glyph, Legend, StatusBadge, Stripes, divergingFill, fmt, periodLabel } from '$lib/design';
+  import { dateLabel, fmt, periodLabel } from '$lib/design';
+  import Calibration from '$lib/start/Calibration.svelte';
+  import CalendarChart from '$lib/start/CalendarChart.svelte';
+  import Chain from '$lib/start/Chain.svelte';
+  import Changed from '$lib/start/Changed.svelte';
+  import Explore from '$lib/start/Explore.svelte';
+  import ForecastDots from '$lib/start/ForecastDots.svelte';
+  import Hero from '$lib/start/Hero.svelte';
+  import NowDots from '$lib/start/NowDots.svelte';
+  import QuestionCard from '$lib/start/QuestionCard.svelte';
+  import StateStripes from '$lib/start/StateStripes.svelte';
+  import { moveCounts, upcoming } from '$lib/start/model';
 
   let { data } = $props();
-  const ov = $derived(data.overview);
-  const status = $derived(ov.record.status === 'live' ? 'live' : 'recon');
-  const stripeTable = $derived({
-    caption: 'Diffusionsindex per gren, senaste sex månaderna',
-    columns: [{ key: 'b', label: 'Gren' }, ...ov.stripes.months.slice(-6).map((m) => ({ key: m, label: periodLabel(m) }))],
-    rows: ov.stripes.rows.map((r) => ({
-      b: `${r.code} ${r.name}`,
-      ...Object.fromEntries(ov.stripes.months.slice(-6).map((m, i) => [m, fmt(r.index[r.index.length - 6 + i], 2)]))
-    }))
-  });
+  const s = $derived(data.start);
+  const moves = $derived(moveCounts(s.branches));
+  const next = $derived(upcoming(s.calendar)[0] ?? null);
+  const shifts = $derived(s.regime.blocks.filter((b) => b.shift));
 </script>
 
-<svelte:head><title>AI-utrullningen – läget {periodLabel(ov.headline.month, true)}</title></svelte:head>
+<svelte:head>
+  <title>AI-utrullningen – läget {periodLabel(s.record.month, true)}</title>
+  <meta name="description" content={s.headline.sentence} />
+</svelte:head>
 
-<p class="kicker">{periodLabel(ov.headline.month, true)} <StatusBadge {status} /></p>
-<h1>{ov.headline.sentence}</h1>
-<p class="lede">{ov.headline.change_sentence}</p>
+<Hero start={s} />
 
-<section aria-labelledby="branches-h">
-  <h2 id="branches-h">Grenarna</h2>
-  <ul class="tiles">
-    {#each ov.branches as b (b.code)}
-      <li class="panel">
-        <a href={resolve('/gren/[id]', { id: b.code })}><b>{b.code}</b> {b.name}</a>
-        <span class="row"><Glyph state={b.state} /> <span class="num note">index {fmt(b.index, 2)}</span></span>
-      </li>
-    {/each}
-  </ul>
+<Chain start={s} />
+
+<section class="grid3 questions" aria-label="Tre frågor">
+  <QuestionCard n={1} id="q-now" question="Var står vi nu?">
+    {#snippet answer()}
+      {#if moves.n && s.headline.prevMonth}
+        Sedan {periodLabel(s.headline.prevMonth, true)} har {moves.up} {moves.up === 1 ? 'gren' : 'grenar'} fått högre index,
+        {moves.down} lägre och {moves.same} samma.
+      {:else}
+        Grenarnas läge mellan alla serier som minskar takten (0) och alla som ökar den (1).
+      {/if}
+    {/snippet}
+    <NowDots start={s} />
+  </QuestionCard>
+
+  <QuestionCard n={2} id="q-ahead" question="Vart är vi på väg?">
+    {#snippet answer()}
+      {#if s.forecast}
+        Senaste skarpa prognos: {s.forecast.label} {fmt(s.forecast.value, s.forecast.decimals)} {s.forecast.unit} för
+        {periodLabel(s.forecast.period)}{#if next}. Nästa lämnas {dateLabel(next.date)}{/if}.
+      {:else if next}
+        Ingen skarp prognos är lämnad ännu. Den första, {next.items.map((c) => c.label).join(' och ')}, lämnas
+        {dateLabel(next.date)}, före utfallet.
+      {:else}
+        Ingen skarp prognos är planerad.
+      {/if}
+    {/snippet}
+    <CalendarChart start={s} />
+    {#if s.forecast}<ForecastDots forecast={s.forecast} />{/if}
+    {#if s.calibration}<Calibration c={s.calibration} />{/if}
+  </QuestionCard>
+
+  <QuestionCard n={3} id="q-changed" question="Har något fundamentalt ändrats?">
+    {#snippet answer()}
+      {#if s.regime.available}
+        {shifts.length === 0
+          ? `Inget av ${s.regime.blocks.length} block har ett registrerat regimskifte.`
+          : `${shifts.length} av ${s.regime.blocks.length} block har ett registrerat regimskifte: ${shifts.map((b) => `${b.label} (${b.shift})`).join(', ')}.`}
+      {:else}
+        Regimmodellen väntar på den första skarpa ögonblicksbilden. Avstämningarna visar redan var takten ligger.
+      {/if}
+    {/snippet}
+    <Changed start={s} />
+  </QuestionCard>
 </section>
 
-<section class="panel">
-  <ChartFrame
-    id="stripes"
-    title="Hur tillstånden har skiftat"
-    description="Diffusionsindex per gren och månad, {periodLabel(ov.stripes.months[0])}–{periodLabel(ov.stripes.months.at(-1) ?? '')}. Blått: fler serier ökar takten, orange: fler minskar den."
-    height={ov.stripes.rows.length * 24 + 24}
-    margin={{ top: 0, right: 0, bottom: 24, left: 0 }}
-    table={stripeTable}
-    {status}
-  >
-    {#snippet children(d)}
-      <Stripes dims={d} months={ov.stripes.months} kind={ov.stripes.kind} rows={ov.stripes.rows} />
-    {/snippet}
-    {#snippet legend()}
-      <Legend
-        items={[
-          { label: '0 · alla minskar takten', fill: divergingFill(0) },
-          { label: '0,5 · balans', fill: divergingFill(0.5) },
-          { label: '1 · alla ökar takten', fill: divergingFill(1) },
-          { label: 'inget index', border: 'var(--c-grid)' }
-        ]}
-      />
-    {/snippet}
-  </ChartFrame>
+<section aria-labelledby="stripes-h">
+  <h2 id="stripes-h">Hur tillstånden har skiftat</h2>
+  <p class="note intro">Varje ruta är en gren en månad. Färgen säger riktning, inte om det är bra eller dåligt.</p>
+  <div class="panel"><StateStripes start={s} /></div>
 </section>
+
+<Explore start={s} />
 
 <style>
-  .tiles {
-    list-style: none;
-    padding: 0;
-    margin: 8px 0 0;
-    display: grid;
-    gap: 10px;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  .questions {
+    align-items: start;
   }
-  .tiles li {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    padding: 12px 14px;
-  }
-  .tiles a {
-    text-decoration: none;
-    font-size: 14px;
-  }
-  .row {
-    display: flex;
-    gap: 10px;
-    align-items: baseline;
-    font-size: 14px;
+  .intro {
+    margin: 0 0 10px;
   }
 </style>
