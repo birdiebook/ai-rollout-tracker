@@ -586,3 +586,27 @@ Låst före kodningen. Inga dokument var hämtade och inga värden lästa när p
   katalogserier. De finns i `curated/useful_lives.csv` och i `useful_lives.changes()`.
 - **Publicering:** `publish=True`, eftersom det är siffror ur offentliga SEC-dokument med källhänvisning. Extraktionen
   stickprovskontrolleras (`useful_lives_check`) och granskas sedan oberoende. Underkänns den sätts `publish=False`.
+
+### 2026-11-24 – P2a: kompletterande kandidatsökning, stoppens plats och självkontrollen (rättning efter R15)
+
+Rättning efter granskningen R15 (`docs/granskning/r15_nyttjandeperioder.md`, F-1 och F-2), spår X12. Posten
+2026-11-24 om P2a och kodningsreglerna i `docs/kallor/nyttjandeperioder.md` står kvar oförändrade. Här loggas tre
+avvikelser som gjordes under kodningen, när värdena redan var sedda, men som inte registrerades.
+- **Kandidatregeln (F-2).** Den låsta kandidatregeln var för smal. Agenten läste också de fem meningarna efter varje
+  kandidat som beskriver en ändring och alla andra meningar med en nyttjandeperiod och ett antal år (tolkning 1 i
+  källdokumentet). 82 av 305 rader kommer från meningar utanför kandidaturvalet: 76 effekter (Microsoft 38, Oracle 24,
+  Meta 9, Amazon 4, Alphabet 1), Oracles 5 policyrader 2018–2022 och CoreWeaves ändring. Motivering: effektmeningar
+  nämner sällan klassen med ett antal år, och två klassnamn (Oracle 2018–2022, CoreWeave) föll utanför `CLASS_RE`.
+  Avvikelsen gör bara läsmängden större. Den ändrar ingen kodningsregel och gynnar inget utfall, och R15:s bredare
+  sökning hittade inga fler rader.
+- **Läsmängden är nu kod.** `useful_lives_corpus.supplementary()` ger den kompletterande mängden: 1 271 meningar
+  (884 unika) efter en kandidat som beskriver en ändring och 74 (55 unika) med nyttjandeperiod och antal år. Alla 82
+  rader finns i den. Från och med nu är läsmängden kandidaterna plus den kompletterande mängden. Koden skrevs i
+  efterhand och visar att mängden går att göra om, inte exakt vilka meningar som lästes.
+- **Stoppens plats och självkontrollen (F-1).** Platsregeln för stopp täckte inte fallet där stycket finns kvar med tal
+  för en ny klass. De tre stoppen pekar då på policymeningen för den nya klassen (tolkning 10). Självkontrollen
+  ändrades efter första körningen: belopp i formen med en decimal godkänns, och stoppkontrollen är `class_stated()`
+  (klassens namn direkt följt av ett antal år, i någon mening i dokumentet) i stället för att ingen kandidatmening
+  anger ett antal år för klassen. Med den första kontrollen (`fc49225`) ger 11 av 305 rader fel (8 effekter och 3
+  stopp). R15 bekräftade alla 11 i sak.
+- **Effekt:** inga värden, inga serier och ingen kodningsregel ändras. "0 fel av 305" gäller den ändrade kontrollen.

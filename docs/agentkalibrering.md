@@ -29,6 +29,7 @@ En rad per spår, fylls på efter varje körning. Tumreglerna justeras när siff
 | 2026-11-24 | 11 | W4 + W2 skelett, designsystem, CI | webb (SvelteKit, tokens, primitiver, CI) | ~29 | ~93 | ~291 | 41 vitest, 78 Playwright, axe, budgetar, `pages-next.yml`, en deploy |
 | 2026-11-24 | 13 | P2a nyttjandeperioder | extraktion (agentläsning, 416 SEC-dokument, citat) | ~45 | ~90 | – | 305 kodade rader (68 policy, 21 ändringar, 213 effekter, 3 stopp), 30 katalogserier, stickprov 0 fel av 305, 43 tester |
 | 2026-11-24 | 13 | R15 granskning av P2a | granskning (extraktion, 91 SEC-dokument nyhämtade, egen sökning i 416) | ~80 | ~95 | – | 0 fel av 65 i stickprovet och 0 av 305 vid fullständig läsning, 21 av 21 ändringar, 4 should_fix och 2 noter (dokumentation), 28 tester varav 6 strikta xfail |
+| 2026-11-24 | 13 | X12 rättning av P2a efter R15 | rättning (dokumentation, not, läsmängd som kod) | ~35 | ~60 | – | 4 should_fix och N-1, N-2 rättade, registerpost, `supplementary()` täcker alla 82 rader utanför kandidaterna, 11 av 305 fel med gamla kontrollen bekräftat, serierna oförändrade (203 rader), 2 nya tester, 6 xfail blev vanliga |
 
 ## Körning 1, sammanfattning (2026-11-23, orkestrerare)
 

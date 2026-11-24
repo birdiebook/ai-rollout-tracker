@@ -8,7 +8,7 @@ numbers, dates and SHA-256 prefixes are kept here, never source text.
   every reviewed row (all 305 were read). A change to a reviewed row must be reviewed again.
 - Properties: effect signs and periods, in_effect(as_of) uses nothing known after as_of, series dates are filing
   dates, subset changes stay out of the series, stops close only the broader classes, notes quote only short wording.
-- Findings marked xfail(strict=True): F-1 to F-4 and N-1, N-2. Remove the mark when the correction is made.
+- Findings F-1 to F-4 and N-1, N-2 were strict xfail until corrected; corrected in auto14/x12-nyttjandeperioder.
 """
 
 from __future__ import annotations
@@ -285,7 +285,7 @@ def test_csv_notes_quote_only_short_wording(raw):
         assert len(r.note) <= 200, r.id
 
 
-# ------------------------------------------------------------------ findings (strict xfail until corrected)
+# ------------------------------------------------------------------ findings (corrected in X12)
 
 def _section(text: str, heading: str) -> str:
     start = text.index(heading)
@@ -293,32 +293,23 @@ def _section(text: str, heading: str) -> str:
     return text[start: nxt if nxt > 0 else len(text)]
 
 
-@pytest.mark.xfail(strict=True, reason="R15 F-1: useful_lives_check was changed after the first run (stop test via "
-                   "class_stated(), '$X.0 billion'); with the fc49225 check 11 of 305 rows fail (3 stops, 8 effects). "
-                   "The change and the stop locator choice are not under 'Tolkningar'")
 def test_stop_check_change_is_disclosed():
     text = SOURCE_DOC.read_text(encoding="utf-8")
     assert "class_stated" in _section(text, "## Tolkningar under kodningen")
 
 
-@pytest.mark.xfail(strict=True, reason="R15 F-2: 82 of 305 rows come from the supplementary search outside the locked "
-                   "candidate rule (tolkning 1); the deviation is not logged in docs/mattregister.md")
 def test_candidate_rule_deviation_is_registered():
     text = REGISTER.read_text(encoding="utf-8")
     sections = [s for s in text.split("\n### ") if "P2a" in s.split("\n", 1)[0]]
     assert any("kandidat" in s for s in sections)
 
 
-@pytest.mark.xfail(strict=True, reason="R15 F-3: the source document quotes whole sentences from the filings "
-                   "(5 quotes of 11-22 words); CLAUDE.md publishes numbers with references, never the text")
 def test_source_doc_has_no_long_quotes():
     text = re.sub(r"\n\s*", " ", SOURCE_DOC.read_text(encoding="utf-8"))
     quotes = [q for q in re.findall(r'"([^"]{3,300}?)"', text) if not re.search(r"[åäöÅÄÖ]", q)]
     assert max(len(q.split()) for q in quotes) < 11
 
 
-@pytest.mark.xfail(strict=True, reason="R15 F-4: _lo series mix points (changes) and ranges (policies), so Microsoft's "
-                   "servers lo falls from 6 to 2 years in 2026Q2 without a change; the public note does not say so")
 def test_lo_note_explains_points_and_ranges():
     from ai_tracker.series import useful_lives as series
 
@@ -326,14 +317,10 @@ def test_lo_note_explains_points_and_ranges():
     assert "intervall" in note
 
 
-@pytest.mark.xfail(strict=True, reason="R15 N-1: CoreWeave's S-1 of 2025-03-03 (0001193125-25-044231) already states "
-                   "the change 5 -> 6 years from 2023-01-01; the document says this was not checked")
 def test_source_doc_names_coreweave_s1():
     assert "2025-03-03" in SOURCE_DOC.read_text(encoding="utf-8")
 
 
-@pytest.mark.xfail(strict=True, reason="R15 N-2: Oracle's network series starts 2024Q1 (old life of the change row), "
-                   "not 2024Q2 as the document says")
 def test_source_doc_oracle_network_start(df):
     assert ul.series_frame(df, "orcl", "network", "hi")["period"].iloc[0] == "2024Q1"
     assert "Oracle `network` från 2024Q2" not in SOURCE_DOC.read_text(encoding="utf-8")

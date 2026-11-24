@@ -142,22 +142,31 @@ den oberoende granskningen.
 Följande fall täcktes inte uttryckligen av reglerna. Valet står här så att granskningen kan pröva det.
 
 1. **Kandidatfiltret var för smalt** på tre punkter, samma lärdom som R2-F1. (a) Meningar om effekt och effektivt datum
-   nämner sällan klassen med ett antal år ("it is estimated this change will increase our fiscal year 2021 operating
-   income by $2.7 billion"). Agenten läste därför de fem meningarna efter varje kandidat som beskriver en ändring.
+   nämner sällan klassen med ett antal år. Microsofts 10-K 2020 anger till exempel effekten på rörelseresultatet för
+   FY21 (2,7 miljarder USD) i en egen mening utan klass och period. Agenten läste därför de fem meningarna efter varje
+   kandidat som beskriver en ändring.
    (b) Oracles klass "Computer, network, machinery and equipment" i 10-K 2018–2022 matchade inte `CLASS_RE`. (c)
    CoreWeaves "computing equipment utilized in data centers" matchade inte heller. Agenten sökte därför också igenom
    alla meningar i korpusen som har "useful li", "depreciable li" eller "Estimated Useful Life" och ett antal år men
    inte var kandidater (55 unika meningar, alla lästa). Utöver (b) och (c) gällde de immateriella tillgångar och
    totalintervall för alla anläggningstillgångar (Oracle: 1–40 år).
-2. **Effektivt datum ur en mening i samma stycke.** Microsoft och Alphabet 2021 anger datumet i meningen efter
-   ("This change in accounting estimate will be effective beginning fiscal year 2021"). Noten anger det. Alphabets 8-K
-   2023-02-02 anger inget datum men en effekt "for the full fiscal year 2023" i samma mening, och året kodas därifrån.
+
+   *Tillägg efter R15 (spår X12):* 82 av 305 rader kommer från meningar utanför kandidaturvalet: 76 effekter
+   (Microsoft 38, Oracle 24, Meta 9, Amazon 4, Alphabet 1), Oracles 5 policyrader 2018–2022 och CoreWeaves ändring.
+   Avvikelsen från kandidatregeln är registrerad i `docs/mattregister.md` (2026-11-24, rättning efter R15). Sökningen
+   finns nu som kod, `useful_lives_corpus.supplementary()`, som `build()` skriver till `supplementary.jsonl`. Den ger
+   1 271 meningar (884 unika) efter en ändringskandidat och 74 (55 unika) i sökningen på nyttjandeperiod, och de 82
+   raderna finns alla i den mängden. Koden skrevs efter kodningen. Den visar att urvalet går att göra om, men inte
+   exakt vilka meningar agenten läste.
+2. **Effektivt datum ur en mening i samma stycke.** Microsoft och Alphabet 2021 anger datumet i meningen efter, som
+   säger att ändringen gäller från "fiscal year 2021". Noten anger det. Alphabets 8-K 2023-02-02 anger inget datum men
+   en effekt "for the full fiscal year 2023" i samma mening, och året kodas därifrån.
    Metas 10-Q 2021-10-26 säger "in prior years as well as in 2021", och 2021-01-01 kodas.
-3. **Ett 8-K som nämner ändringen utan perioder.** Amazons guidance (2020-01-30, 2022-02-03, 2024-02-01) "includes
-   approximately $X lower depreciation expense due to an increase in the estimated useful life of our servers beginning
-   on January 1". Det blir en effektrad (väntad, för kvartalet som guidas) med `ref` till ändringsraden i 10-K:t dagen
-   efter. Seriens värde får 10-K:ts datum, eftersom 8-K:t inte anger perioden. Att en ändring kom var alltså känt en dag
-   tidigare än den nya perioden.
+3. **Ett 8-K som nämner ändringen utan perioder.** Amazons guidance (2020-01-30, 2022-02-03, 2024-02-01) säger att
+   den guidade siffran innehåller cirka X lägre avskrivningar, eftersom nyttjandeperioden för servrar förlängs från
+   1 januari. Perioderna anges inte. Det blir en effektrad (väntad, för kvartalet som guidas) med `ref` till
+   ändringsraden i 10-K:t dagen efter. Seriens värde får 10-K:ts datum, eftersom 8-K:t inte anger perioden. Att en
+   ändring kom var alltså känt en dag tidigare än den nya perioden.
 4. **Effektens mått.** "Decreased our total operating expenses by X" (Oracle) kodas som `operating_income` +X.
    "Operating results ... favorably impacted by approximately $2.1 billion" (Alphabet 2021) kodas som
    `operating_income`. "Benefit to net loss" (Amazon 2022) kodas som `net_income` med plustecken. "Depreciation and
@@ -168,21 +177,37 @@ Följande fall täcktes inte uttryckligen av reglerna. Valet står här så att 
    själv servrar (10-Q 2021-10-26) och kodas som `OTHER`. "Certain network equipment" (Alphabet), "selected cohorts",
    "a majority of", "certain" och "most" servers and network assets (Meta) och "a subset of" (Amazon 2025) får
    `_SUBSET` och ingår inte i katalogserierna. Alphabets "servers and certain network equipment to six years" (2023)
-   delas i `SERVERS` och `NETWORK_SUBSET`. Alphabets 10-K 2024-01-31 ("information technology assets generally over a
-   period of six years for servers and network equipment") kodas bokstavligt för båda klasserna.
+   delas i `SERVERS` och `NETWORK_SUBSET`. Alphabets 10-K 2024-01-31 anger sex år för "information technology
+   assets" och för "servers and network equipment" i samma mening. Det kodas bokstavligt för båda klasserna.
 6. **Stopp är klassbyten.** Inget bolag har slutat ange en period helt. Tre bredare klasser byts mot en smalare och
    kodas som stopp: Microsoft 10-K 2026-07-29 ("computer equipment" blir "servers and network equipment", samma
    intervall 2–6 år), Alphabet 10-K 2025-02-05 ("information technology assets" försvinner, bara "servers and network
    equipment") och Meta 10-K 2022-02-03 ("network equipment" blir "servers and network assets"). Amazons 10-K
    2026-02-06 slår ihop "servers" och "networking equipment" till en klass. Det är inget stopp, eftersom perioden för
    servrar fortfarande anges, och serien fortsätter med `SERVERS_NETWORK`.
-7. **Perioden vid balansdagen.** Amazons 10-K 2021–2025 anger perioden före och efter ändringsdagen ("three years prior
-   to January 1, 2020 and four years subsequent"). Perioden som gäller vid balansdagen kodas.
+7. **Perioden vid balansdagen.** Amazons 10-K 2021–2025 anger perioden både före och efter ändringsdagen (till
+   exempel tre år före 2020-01-01 och fyra år efter). Perioden som gäller vid balansdagen kodas.
 8. **Oracles räkenskapsår börjar 1 juni.** Ändringarna gäller från 2022-06-01 och 2024-06-01, alltså mitt i kalender-Q2.
    Enligt regeln får den nya perioden kalender-Q2 och den gamla kvartalet före. Policyraderna för Oracles bredare klass
    har balansdagen 31 maj, som också ligger i kalender-Q2.
 9. **Metas andra ändring 2022** (till fem år från Q4) kodas med den gamla perioden 4,5 år, som står i samma mening för
    samma tillgångar.
+10. **Stoppens plats och självkontrollen** (tillagt efter R15, spår X12; valen gjordes under kodningen men skrevs inte
+    här). Platsregeln för stopp täcker två fall: stycket finns kvar utan tal (platsen är den meningen) eller stycket är
+    borta (`absent`). De tre stoppen är klassbyten, och stycket finns kvar med tal för den nya klassen. Platsen är då
+    policymeningen, alltså samma mening som policyraden för den nya klassen. Självkontrollen `useful_lives_check`
+    ändrades efter första körningen, när värdena var sedda:
+    - Belopp: formen "$X.0 billion" (en decimal) lades till.
+    - Stopp: kontrollen att meningen på platsen saknar antal år byttes mot `class_stated()`. Den godkänner stoppet om
+      ingen mening i dokumentet har klassens namn direkt följt av ett antal år, eller ett antal år följt av "for (our)"
+      och klassen. En sammansatt klass som slutar på samma ord räknas inte. Den låsta beskrivningen under Stickprov
+      ("ingen kandidatmening ... anger ett antal år för klassen") stämmer därför inte längre ordagrant.
+
+    Med kontrollen i `fc49225` ger 11 av 305 rader fel: 8 effekter med "$X.0 billion" (msft-2023-01-24-e4,
+    msft-2023-07-27-e3, googl-2022-02-01-e5, googl-2023-07-25-e4, googl-2024-01-30-e5, amzn-2021-02-03-e4,
+    amzn-2022-02-03-e1, amzn-2026-02-06-e3) och alla 3 stopp. X12 körde om båda versionerna på samma texter och fick
+    samma 11 rader. R15 läste alla 11 i dokumenten och bekräftade dem i sak. Ändringen är registrerad i
+    `docs/mattregister.md` (2026-11-24, rättning efter R15).
 
 ## Kodat (305 rader)
 
@@ -245,16 +270,20 @@ kvartal och hittills i år finns i CSV:n (213 rader).
 ## Serier
 
 30 katalogserier (15 par lo/hi) i G5 (`useful_life_<familj>_<bolag>_lo/_hi`), alla `publish=True`:
-- `servers` och `network` för alla utom CoreWeave (Oracle `network` från 2024Q2),
+- `servers` och `network` för alla utom CoreWeave (Oracle `network` från 2024Q1, med den gamla perioden fem år ur
+  ändringsraden),
 - `computer_equipment` för Microsoft och Alphabet (avslutade 2026 och 2025), Oracle och CoreWeave,
 - `other` för Meta (avslutad 2022).
 
-Två saker att veta när serierna används:
+Tre saker att veta när serierna används:
 - **lo och hi blandar punkter och intervall.** En ändring anger en punkt (Microsoft 2022: sex år), policyn ofta ett
   intervall (Microsoft FY26: två till sex år). Microsofts `lo` går därför från 6 till 2 år 2026Q2 utan att något har
   ändrats. För N7 är `hi` den relevanta.
 - **Glesa stegvärden.** `useful_lives.in_effect(bolag, "servers", "hi", as_of=prognosdag)` ger perioden per kvartal så
   som den var känd på prognosdagen.
+- **Ändringar för en del av flottan syns inte** (`_SUBSET`, R15 N-4). Serien för Meta har `hi` 4 under 2022, fast
+  merparten gick till 4,5 och sedan 5 år, och 5 under 2025, fast de flesta gick till 5,5. Amazons `hi` är 6 under 2025,
+  fast en del gick till 5. Ändringarna finns i `useful_lives.changes()`.
 
 ## Inte kodat
 
@@ -263,15 +292,19 @@ Två saker att veta när serierna används:
 - Amazons tunga utrustning (10 → 13 år från 2025, rörelseresultat cirka +900 MUSD 2025): utanför omfånget.
 - Avskrivningar per segment "including the effect of our change" (Alphabet 10-Q och 10-K), eftersom det inte är
   ändringens effekt.
-- CoreWeaves effekter för 2023 (tolkning 4).
+- CoreWeaves effekter för 2023 (tolkning 4). R15 (N-3) påpekar att minskningen av totala kostnader, 20 MUSD, kunde
+  kodas som rörelseresultat +20 MUSD på samma sätt som Oracles. Raden läggs inte till: inget använder den, och en ny
+  rad i den granskade CSV:n kräver en ny granskning.
 - Upprepningar: samma period eller samma belopp i ett senare dokument (till exempel Alphabets 10-Q, som upprepar
   beloppen i 8-K:t dagen före).
 
 ## Stickprov
 
 `python -m ai_tracker.useful_lives_check --frac 1.0` hämtade om alla 91 dokument och EDGAR:s submissions för de sex
-bolagen (utan cache) och kontrollerade alla 305 rader: **0 fel**, och ingen mening hade flyttat. Hash, tal och datum
-(`filed`, `accepted`) stämmer för alla. Stickprovet med `--frac 0.3 --seed 20261124` (92 rader, hämtade på nytt en gång till) gav också 0 fel.
+bolagen (utan cache) och kontrollerade alla 305 rader: **0 fel**, och ingen mening hade flyttat. Det gäller den
+ändrade kontrollen. Med kontrollen i `fc49225` ger 11 rader fel (tolkning 10). Hash, tal och datum (`filed`,
+`accepted`) stämmer för alla. Stickprovet med `--frac 0.3 --seed 20261124` (92 rader, hämtade på nytt en gång till)
+gav också 0 fel.
 
 Kontrollen bekräftar plats, tal och datum. Den bekräftar **inte** semantiken: klass och räckvidd, effektivt datum,
 effektens tecken och mått, och om första dokumentet verkligen är det första. Agenten läste om alla ändringsrader, men det
@@ -280,10 +313,13 @@ kodningen som skrev CSV:n i `data/raw/useful_lives_sentences/spec.py` och `build
 
 ## Begränsningar
 
-- Bara SEC-dokument. Microsofts samtal 2022-07-26 kom två dagar före 10-K:t, och CoreWeaves ändring kan ha stått i S-1
-  2025. Det är inte kontrollerat. known_from blir då senare än den första offentliga uppgiften, vilket är konservativt.
-- Bara 8-K med Item 2.02. Ett 8-K med Item 7.01 eller 8.01 som meddelar en ändring skulle ha missats. Inget tyder på
-  att det finns något sådant, men det är inte sökt.
+- Bara SEC-dokument i korpusen. Microsofts samtal 2022-07-26 kom två dagar före 10-K:t. known_from blir då senare än
+  den första offentliga uppgiften, vilket är konservativt.
+- CoreWeaves S-1 2025-03-03 (0001193125-25-044231) anger redan ändringen från fem till sex år från 2023-01-01 och sex
+  år för teknisk utrustning (R15 N-1, läst igen i X12). S-1 ingår inte enligt reglerna, så known_from 2026-03-02 är
+  ungefär ett år sent. Det är konservativt.
+- Bara 8-K med Item 2.02. Ett 8-K med Item 7.01 eller 8.01 som meddelar en ändring skulle ha missats. R15 läste sådana
+  8-K nära varje ändring, och de säger inget om nyttjandeperioder. Alla 8-K med Item 7.01 och 8.01 är inte sökta.
 - Ett 10-Q utan uppgift betyder att bolaget inte har angett någon ändring. Serien har ingen rad för kvartalet.
 
 ## Licens

@@ -403,3 +403,13 @@ Johannes valde rekommendationerna:
   redovisas, avvikelsen från kandidatregeln (82 av 305 rader) ska in i måttregistret, källdokumentet citerar hela
   meningar och noten för `_lo`-serierna ska säga att punkter och intervall blandas. CoreWeaves ändring stod redan i
   S-1 2025-03-03, så known_from är ungefär ett år sent (konservativt).
+
+## 2026-11-24 – X12: anmärkningarna från R15 rättade
+
+- Spåret X12 rättade R15:s fyra should_fix och noterna N-1 och N-2 för P2a:s nyttjandeperioder. Inga värden och inga
+  serier ändrades. De 30 serierna räknades om och är identiska (203 rader).
+- Avvikelsen från kandidatregeln (82 av 305 rader) och ändringen av självkontrollen (11 av 305 rader fel med den första
+  versionen) står nu i måttregistret. Den kompletterande läsmängden är kod (`useful_lives_corpus.supplementary()`).
+- Källdokumentet citerar inte längre hela meningar, och noten för `_lo`-serierna säger att punkter och intervall blandas.
+- CoreWeaves ändring kodas inte om ur S-1 (known_from står kvar, konservativt). N-3 kodas inte, eftersom inget använder
+  raden. N-4 (ändringar för en del av flottan syns inte i serierna) tas i granskningen av P3/N7.

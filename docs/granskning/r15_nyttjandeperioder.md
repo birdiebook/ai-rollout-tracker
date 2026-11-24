@@ -228,3 +228,8 @@ Anmärkningar utan rättning:
 - Klassbedömningen (till exempel Metas "network equipment" och Alphabets "information technology assets") vilar på
   bolagens egna ord. Hur stor del av en bredare klass som är servrar går inte att se i dokumenten.
 - Granskningen bekräftar extraktionen. Den säger inget om hur väl perioderna förklarar avskrivningarna i N7.
+
+## Rättat
+
+Rättat i `auto14/x12-nyttjandeperioder` (spår X12, 2026-11-24): R-1 till R-6 (F-1 till F-4, N-1 och N-2). De sex
+testerna är vanliga tester. Inga värden och inga serier är ändrade.

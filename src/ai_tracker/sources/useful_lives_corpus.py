@@ -9,6 +9,8 @@ Candidate sentences (locked before the coding): a sentence names an asset class 
 equipment (CLASS_RE) and either a useful life / depreciation (LIFE_RE) or a number of years (YEARS_RE), or it names a
 change in estimate together with depreciation. Long "sentences" (tables flattened to one line) are kept. The agent
 reads every candidate and codes the values into curated/useful_lives.csv; sentences stay in data/raw (gitignored).
+The supplementary reading set (supplementary(), registered after review R15) adds the sentences the candidate rule
+missed; candidates plus that set hold every coded row.
 
 Text = tsmc_sec.to_text(document), sentences = guidance_capex.sentences(text); locator "sentence #k" counts from 0.
 known_from of a document = its EDGAR filingDate (acceptanceDateTime kept).
@@ -49,6 +51,17 @@ NUMWORD = r"(?:\d+(?:\.\d+)?|one|two|three|four|five|six|seven|eight|nine|ten|fi
 YEARS_RE = re.compile(rf"(?i)\b{NUMWORD}(?:\s+and\s+(?:a|one)[\s-]half)?(?:\s*(?:-|–|—|to)\s*{NUMWORD})?\s*years?\b")
 ESTIMATE_RE = re.compile(r"(?i)change\w*\s+in\s+(?:accounting\s+)?estimates?")
 DEPRECIATION_RE = re.compile(r"(?i)depreciat")
+
+# Supplementary reading set (interpretation 1 of docs/kallor/nyttjandeperioder.md, registered 2026-11-24 after R15).
+# The locked candidate rule missed effect sentences (no asset class with years) and two class names, so the agent
+# also read (a) the WINDOW sentences after each candidate that describes a change and (b) every other sentence with
+# a useful life and a number of years. Written as code after the coding, so that the reading set can be rebuilt: it
+# holds every coded row that is not a candidate. The candidate rule itself is unchanged.
+CHANGE_RE = re.compile(r"(?i)change\w*\s+in\s+(?:accounting\s+)?estimates?|"
+                       r"(?:chang|increas|extend|lengthen|shorten|reduc|decreas|revis)\w*\s+(?:\w+\s+){0,6}?"
+                       r"(?:estimated\s+)?(?:useful|depreciable)\s+li(?:fe|ves)")
+LIFE_SCAN_RE = re.compile(r"(?i)useful\s+li|depreciable\s+li|estimated\s+useful\s+life")
+WINDOW = 5
 
 
 @dataclass
@@ -155,15 +168,33 @@ def candidates(doc: Document, text: str) -> list[dict]:
     return out
 
 
+def supplementary(doc: Document, text: str) -> list[dict]:
+    """Non-candidate sentences of the supplementary reading set; "why" is after_change and/or life_scan."""
+    sents = guidance_capex.sentences(text)
+    cand = {k for k, s in enumerate(sents) if is_candidate(s)}
+    why: dict[int, list[str]] = {}
+    for k in sorted(cand):
+        if CHANGE_RE.search(sents[k]):
+            for j in range(k + 1, min(k + 1 + WINDOW, len(sents))):
+                if j not in cand and "after_change" not in why.setdefault(j, []):
+                    why[j].append("after_change")
+    for k, s in enumerate(sents):
+        if k not in cand and LIFE_SCAN_RE.search(s) and YEARS_RE.search(s):
+            why.setdefault(k, []).append("life_scan")
+    return [{**asdict(doc), "k": k, "why": "+".join(why[k]), "sha256": guidance_capex.sentence_hash(sents[k]),
+             "length": len(sents[k]), "sentence": sents[k]} for k in sorted(why)]
+
+
 def build(companies: tuple[str, ...] = tuple(CIKS), first: str = FIRST, last: str = LAST) -> pd.DataFrame:
-    """Fetch the corpus (sequentially, http.py rate limits) and write documents.json and candidates.jsonl."""
+    """Fetch the corpus (sequentially, http.py rate limits) and write documents.json, candidates.jsonl and
+    supplementary.jsonl (the supplementary reading set). Returns the candidates."""
     docs = []
     for c in companies:
         docs += documents(c, first, last)
     docs.sort(key=lambda d: (d.filed, d.company, d.doc_type))
     CANDIDATES_DIR.mkdir(parents=True, exist_ok=True)
     (CANDIDATES_DIR / "documents.json").write_text(json.dumps([asdict(d) for d in docs], indent=1))
-    rows, failed = [], []
+    rows, extra, failed = [], [], []
     for d in docs:
         try:
             text = text_of(d.url)
@@ -172,9 +203,11 @@ def build(companies: tuple[str, ...] = tuple(CIKS), first: str = FIRST, last: st
             print(f"FAILED {d.url}: {type(exc).__name__}")
             continue
         rows += candidates(d, text)
-    with open(CANDIDATES_DIR / "candidates.jsonl", "w", encoding="utf-8") as fh:
-        for r in rows:
-            fh.write(json.dumps(r, ensure_ascii=False) + "\n")
+        extra += supplementary(d, text)
+    for name, out in (("candidates.jsonl", rows), ("supplementary.jsonl", extra)):
+        with open(CANDIDATES_DIR / name, "w", encoding="utf-8") as fh:
+            for r in out:
+                fh.write(json.dumps(r, ensure_ascii=False) + "\n")
     (CANDIDATES_DIR / "failed.json").write_text(json.dumps(failed, indent=1))
     return pd.DataFrame(rows)
 

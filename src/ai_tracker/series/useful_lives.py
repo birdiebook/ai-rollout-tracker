@@ -25,6 +25,10 @@ LAG = -(ul.MAX_LEAD_DAYS)  # a change can be announced before the quarter it app
 MAX_AGE = 550  # one 10-K a year (balance date + 2-3 months) plus margin
 LICENSE = ("SEC EDGAR: public information (sec.gov/privacy). Bara extraherade siffror med källhänvisning publiceras, "
            "aldrig text")
+# R15 F-4: a change states a point and a policy often a range, so lo can fall although the life did not change
+LO_NOTE = ("Lägsta värdet blandar punkter och intervall: en ändring anger en punkt, policyn ofta ett intervall. Värdet "
+           "kan därför sjunka när ett dokument går från en punkt till ett intervall, utan att perioden har ändrats "
+           "(till exempel Microsoft 2026Q2, från 6 till 2 år). Jämför över tid med det högsta värdet. ")
 
 
 def _specs() -> tuple[list[Spec], dict[str, str]]:
@@ -49,8 +53,10 @@ def _specs() -> tuple[list[Spec], dict[str, str]]:
                 closed = stop is not None
                 note = (f"Bolagets klass(er): {'; '.join(classes)}. Glesa stegvärden: ett värde bara där ett dokument "
                         f"anger det (policy vid balansdagen eller ny period från kvartalet där en ändring gäller), "
-                        f"daterat med inlämningsdagen. Agentextraherat, stickprov med python -m "
-                        f"ai_tracker.useful_lives_check. Se docs/kallor/nyttjandeperioder.md. "
+                        f"daterat med inlämningsdagen. "
+                        + (LO_NOTE if bound == "lo" else "")
+                        + "Agentextraherat, stickprov med python -m ai_tracker.useful_lives_check. Se "
+                        "docs/kallor/nyttjandeperioder.md. "
                         + (f"Avslutad: bolaget slutade ange perioden i 10-K {stop['filed']} ({stop['id']})."
                            if closed else f"Aktualitet: ett 10-K om året, gräns {MAX_AGE} dagar."))
                 specs.append(Spec(

@@ -312,3 +312,33 @@ def test_candidates_carry_document_fields():
     out = corpus.candidates(doc, text)
     assert len(out) == 1 and out[0]["k"] == 1 and out[0]["report_date"] == "2021-12-31"
     assert out[0]["sha256"] == hashlib.sha256(out[0]["sentence"].encode()).hexdigest()
+
+
+def test_supplementary_reading_set():
+    """The WINDOW sentences after a change candidate and other sentences with a life and years (X12, after R15)."""
+    doc = corpus.Document("orcl", "10-K", URL.format(folder="1"), "0000000001-22-000001", "2022-06-21",
+                          "2022-06-21T20:00:00.000Z", "10-K", "", "2022-05-31")
+    sents = ["Intro.",
+             "We increased the estimated useful life of our servers from four to five years.",  # 1: change candidate
+             "This change in accounting estimate is effective beginning fiscal year 2023.",  # 2-6: window
+             "It increased operating income by $434 million.", "Revenue grew.", "Costs rose.", "Margins rose.",
+             "Cash grew.",  # 7: outside the window
+             "Computer, network, machinery and equipment have useful lives of 1 to 5 years.",  # 8: life scan
+             "Our servers have an estimated useful life of five years.",  # 9: candidate, not a change
+             "Next."]
+    text = " ".join(sents)
+    assert [s.strip() for s in gc.sentences(text)] == sents
+    out = corpus.supplementary(doc, text)
+    assert [(r["k"], r["why"]) for r in out] == [(2, "after_change"), (3, "after_change"), (4, "after_change"),
+                                                (5, "after_change"), (6, "after_change"), (8, "life_scan")]
+    assert not {r["k"] for r in out} & {c["k"] for c in corpus.candidates(doc, text)}
+    assert out[1]["sha256"] == gc.sentence_hash(gc.sentences(text)[3]) and out[0]["filed"] == "2022-06-21"
+
+
+def test_lo_notes_say_points_and_ranges_are_mixed():
+    """R15 F-4: every _lo series says that lo can fall with no change in the life; _hi series do not carry it."""
+    from ai_tracker.series import useful_lives as series
+
+    assert series.SPECS
+    for s in series.SPECS:
+        assert (series.LO_NOTE in s.note) is s.key.endswith("_lo"), s.key
