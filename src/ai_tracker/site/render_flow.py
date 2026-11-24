@@ -207,7 +207,8 @@ def nowcast_block(n: dict, build: dict) -> str:
     mae = bt.get("mae") or {}
     bits = []
     if mae.get("mae") is not None:
-        rng = f", {esc(mae.get('first'))}–{esc(mae.get('last'))}" if mae.get("first") else ""
+        end = lambda p: str(p).split("/")[-1]  # noqa: E731 - N5 periods are collection windows "start/end"
+        rng = f", {esc(end(mae.get('first')))}–{esc(end(mae.get('last')))}" if mae.get("first") else ""
         bits.append(f"MAE {num(mae['mae'])} ({esc(n.get('error_unit') or '100 × log')}, n = {mae.get('n')}{rng})")
     if bt.get("coverage_80") is not None:
         band = bt.get("band_80") or [None, None]
@@ -301,7 +302,7 @@ def flow_page(doc: dict, build: dict) -> str:
 <section class="flowmap-wrap" aria-label="Kedjan i översikt">
 {svg_horizontal(doc)}
 {svg_vertical(doc)}
-<p class="small muted">Staplarna överst i varje led är grenarnas tillstånd (↑ accelererar, → stabil, ↓ bromsar in, · för få serier). Bågarna är avstämningarna, med riktningen i kvotens takt. Tryck på ett led för detaljerna.</p>
+<p class="small muted flowmap-note">Staplarna överst i varje led är grenarnas tillstånd (↑ accelererar, → stabil, ↓ bromsar in, · för få serier). Bågarna är avstämningarna, med riktningen i kvotens takt. Tryck på ett led för detaljerna.</p>
 </section>
 <div class="flow">
 {''.join(blocks)}

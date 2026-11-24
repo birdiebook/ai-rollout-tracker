@@ -181,6 +181,7 @@ details summary { cursor: pointer; color: var(--link); }
 /* flow page (flode.html) */
 .flowmap-wrap { background: var(--surface-1); border: 1px solid var(--border); border-radius: 10px; padding: 0.75rem; }
 .flowmap { display: block; width: 100%; height: auto; }
+.flowmap-note { margin: 0.6rem 0 0; }
 .flowmap-v { display: none; max-width: 440px; margin: 0 auto; }
 @media (max-width: 760px) { .flowmap-h { display: none; } .flowmap-v { display: block; } .flowmap-wrap { padding: 0.6rem 0.4rem; } }
 .flowmap .node { fill: var(--surface-0); stroke: var(--border); stroke-width: 1; }
