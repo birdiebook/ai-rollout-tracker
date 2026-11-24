@@ -10,11 +10,15 @@ Rules:
   `-thinking-32k` run) map to the same key: they are sold under one key at one price per token. A key's capability
   in a board is the highest rating among its names present there (the best variant per priced model).
 - Undated keys are used only when they are the model-specific name of a single model that never re-pointed (same
-  keys as model_map.MODEL_MAP where that table has the model). Aliases that drift (`gpt-4o`, `chatgpt-4o-latest`,
-  `*-chat-latest`, `-latest`, `qwen-max`, `qwen-plus`, `mistral-medium`, `gemini/gemini-1.5-pro`) are never mapped.
-- Rolling aliases (DeepSeek's `deepseek-chat`, `deepseek-reasoner`, `deepseek-coder`) are mapped per served
-  version with the date the alias started serving it (ROLLING). At a month end the alias counts only with the
-  version it served then; after the last documented version (`end`) it has no capability.
+  keys as model_map.MODEL_MAP where that table has the model). Aliases that drift without documented dates (`gpt-4o`,
+  `chatgpt-4o-latest`, `*-chat-latest`, `-latest`, `qwen-max`, `qwen-plus`, `mistral-medium`) are never mapped.
+- Rolling aliases (DeepSeek's `deepseek-chat`, `deepseek-reasoner`, `deepseek-coder`, and Gemini's stable
+  `gemini/gemini-1.5-flash` and `gemini/gemini-1.5-pro`) are mapped per served version with the date the alias started
+  serving it (ROLLING). At a month end the alias counts only with the version it served then; after the last
+  documented version (`end`) it has no capability. Gemini (X5, R8 R-5): the stable alias can only have served `-001`
+  while `-001` was the only stable version (GA 2024-05-24 until `-002` was released 2024-09-24), so it counts as `-001`
+  until 2024-09-23 and not after; what it served after `-002` is not used. The `-001` names stay mapped to the dated
+  key as well (the alias is a second key for the same model, priced while the dated key was missing in LiteLLM).
 - Experimental or consumer-only Arena entries (Gemini `-exp-`, Bard, Gemini Advanced, anonymous test names) and
   previews whose released API identity is not documented are not mapped.
 UNMAPPED lists every qualifying name (rating >= gpt-4-0314 in at least one BT board, data 2026-11-24) that is not
@@ -293,7 +297,16 @@ ROLLING: list[tuple[tuple[str, ...], tuple[str, ...], str, str | None, str]] = [
     (_DS_CODER, ("deepseek-coder-v2-0724", "DeepSeek-Coder-V2"), "2024-07-24", None, "Coder-V2-0724 (date in name)"),
     (_DS_CODER, ("deepseek-v2.5", "DeepSeek-V2.5"), "2024-09-05", "2024-12-09",
      "V2.5 also served under deepseek-coder; later coder targets not documented"),
+    # Gemini stable aliases (X5, R-5): only -001 existed as a stable version before -002 (2024-09-24)
+    (("gemini/gemini-1.5-flash",), ("gemini-1.5-flash-api-0514", "gemini-1.5-flash-001", "Gemini 1.5 Flash (001)"),
+     "2024-05-24", "2024-09-23", "stable alias = -001, the only stable 1.5 Flash version before -002 (2024-09-24)"),
+    (("gemini/gemini-1.5-pro",), ("gemini-1.5-pro-api-0514", "gemini-1.5-pro-001", "Gemini 1.5 Pro (001)"),
+     "2024-05-24", "2024-09-23", "stable alias = -001, the only stable 1.5 Pro version before -002 (2024-09-24)"),
 ]
+
+
+def rolling_provider(key: str) -> str:
+    return "gemini" if key.startswith("gemini/") else "deepseek"
 
 REASONS = {
     "alias_drifts": "ChatGPT / chat-latest alias that re-points without documented dates",
@@ -499,8 +512,11 @@ def problems() -> list[str]:
     for keys, arena_names, start, end, evidence in ROLLING:
         if end is not None and pd.Timestamp(end) < pd.Timestamp(start):
             errors.append(f"{arena_names}: served interval ends before it starts")
-        errors += [f"{k}: not first-party for deepseek" for k in keys if not model_map.is_first_party(k, "deepseek")]
-        errors += [f"{n}: both in MODELS and ROLLING" for n in arena_names if n in names]
+        errors += [f"{k}: not first-party for {rolling_provider(k)}" for k in keys
+                   if not model_map.is_first_party(k, rolling_provider(k))]
+        # a Gemini stable alias is a second key for the dated version's names; DeepSeek names map only to the alias
+        errors += [f"{n}: both in MODELS and ROLLING" for n in arena_names if n in names
+                   and not all(rolling_provider(k) == names[n] == "gemini" for k in keys)]
     rolling_names = {n for _, ns, *_ in ROLLING for n in ns}
     errors += [f"{n}: mapped and listed as unmapped" for n in UNMAPPED if n in names or n in rolling_names]
     errors += [f"{n}: unknown reason {r}" for n, r in UNMAPPED.items() if r not in REASONS]
@@ -532,7 +548,7 @@ def pairs_at(when) -> pd.DataFrame:
         start, end, names = max(live, key=lambda v: v[0])
         if end is not None and when > end:
             continue
-        rows += [(n, k, "deepseek") for n in names]
+        rows += [(n, k, rolling_provider(k)) for n in names]
     out = pd.concat([fixed_pairs(), pd.DataFrame(rows, columns=["name", "key", "provider"])], ignore_index=True)
     return out
 

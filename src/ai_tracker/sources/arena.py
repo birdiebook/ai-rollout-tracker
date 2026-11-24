@@ -19,6 +19,18 @@ Per leaderboard (subset, publish date) the source is chosen in this order:
   table Arena itself treats as the published `overall`); evidence = first commit adding the file; "release";
 - the dataset, if a titled commit exists; evidence = that commit's UTC date; "release";
 - else the dataset bulk upload: evidence = 2026-04-02, source "backfill" (censored, see above).
+
+Dataset rewrites (review R8, correction X5): a subset's file is rewritten in place. 2026-07-07 re-uploaded 16 text and
+16 text_style_control boards under their old titles (rows unchanged); 2026-07-29 "Remove erroneously published variant
+rows from text" (no board title) removed duplicate rows from six text boards (2026-06-10, 07-14, 07-20, 07-21, 07-26,
+07-27; tops about 10 points lower); webdev 2026-04-14 has two uploads (rows unchanged). A board's rows are therefore
+versioned (`version_plan`, `board_versions`): every commit that touches the subset's file and is a later titled commit
+for that board, or an untitled commit after the bulk upload, is a change point. Each version is read from a stored
+revision of the file (as few revisions as possible), dated by the commit that starts it, and collapsed into the
+previous version when the rows are equal. The rows at HEAD are never dated before the last change point
+(`parse_dataset_log` takes the LAST titled commit). Assumption: a first titled commit only appends its own board
+(checked for the 2026-04-03, 2026-07-03 and 2026-09-26 revisions).
+
 Space files with no equal dataset board are added as their own boards, with the table that the latest earlier matched
 file used (2025-08-15, 08-22, 08-29). known_from of a monthly value is never before max(publish date, evidence) (sources/vintages.py).
 
@@ -86,18 +98,122 @@ def update_clone(url: str, clone: Path) -> None:
                    check=True, env=env)
 
 
-def parse_dataset_log(log: str) -> dict[tuple[str, str], pd.Timestamp]:
-    """`git log --format=%cI|%s` of the dataset -> (subset, publish date) -> UTC date of the first titled commit."""
-    out: dict[tuple[str, str], pd.Timestamp] = {}
+_SHA = re.compile(r"^[0-9a-f]{7,40}$")
+
+
+def _log_lines(log: str):
+    """(sha or None, UTC day, title) per line of `git log --format=[%H|]%cI|%s`, in the log's order."""
     for line in log.splitlines():
-        if "|" not in line:
+        parts = line.strip().split("|", 2)
+        if len(parts) == 3 and _SHA.match(parts[0]):
+            sha, ts, title = parts
+        elif len(parts) >= 2:
+            sha, (ts, title) = None, line.strip().split("|", 1)
+        else:
             continue
-        ts, title = line.split("|", 1)
-        m = _TITLE.match(title.strip())
+        yield sha, pd.Timestamp(ts).tz_convert("UTC").tz_localize(None).normalize(), title.strip()
+
+
+def parse_dataset_log(log: str) -> dict[tuple[str, str], pd.Timestamp]:
+    """`git log --format=%cI|%s` of the dataset -> (subset, publish date) -> UTC date of the LAST titled commit.
+
+    The last titled upload is the one whose rows the current file holds, so it is the earliest date the current rows
+    can be dated to when no earlier revision is read (R8 R-1). Earlier uploads become earlier versions
+    (`version_plan`)."""
+    out: dict[tuple[str, str], pd.Timestamp] = {}
+    for _, day, title in _log_lines(log):
+        m = _TITLE.match(title)
         if m:
-            day = pd.Timestamp(ts).tz_convert("UTC").tz_localize(None).normalize()
             key = (m[1], m[2])
-            out[key] = min(out.get(key, day), day)
+            out[key] = max(out.get(key, day), day)
+    return out
+
+
+def parse_file_log(log: str) -> list[tuple[str, pd.Timestamp, str]]:
+    """`git log --format=%H|%cI|%s -- <subset file>` -> [(sha, UTC day, title)], oldest first (linear history)."""
+    return [(sha, day, title) for sha, day, title in _log_lines(log) if sha][::-1]
+
+
+def version_plan(subset: str, commits: list[tuple[str, pd.Timestamp, str]], dates, created: pd.Timestamp =
+                 DATASET_CREATED) -> tuple[dict[str, list[dict]], dict[int, str]]:
+    """Versions of every board of `subset` from the commits that touched its file (oldest first).
+
+    Change points of board d: later titled commits for d and untitled commits after the bulk upload (they may touch
+    any board). Version j of d starts at its change point and ends before the next; the last one is the file at HEAD
+    (`end` None). Returns (date -> [{start, end, evidence, source}], revision index -> sha), the revisions chosen so
+    that each non-final version is read from one revision inside it, as few as possible (interval stabbing)."""
+    bulk = [i for i, (_, day, title) in enumerate(commits) if day <= created and not _TITLE.match(title)]
+    bulk_end = bulk[-1] if bulk else -1
+    untitled = [i for i, (_, _, title) in enumerate(commits) if i > bulk_end and not _TITLE.match(title)]
+    titled: dict[str, list[int]] = {}
+    for i, (_, _, title) in enumerate(commits):
+        m = _TITLE.match(title)
+        if m and m[1] == subset:
+            titled.setdefault(m[2], []).append(i)
+    plan: dict[str, list[dict]] = {}
+    for d in dates:
+        t = titled.get(d, [])
+        if t:
+            first, source = t[0], "release"
+        elif bulk_end >= 0:
+            first, source = bulk_end, "backfill"
+        else:
+            continue  # unknown origin: left to the fallback (head rows, evidence from the titled log or the bulk date)
+        starts = [first] + sorted(set(t[1:]) | {i for i in untitled if i > first})
+        vs = []
+        for j, start in enumerate(starts):
+            evidence = created if (j == 0 and source == "backfill") else commits[start][1]
+            vs.append({"start": start, "end": starts[j + 1] if j + 1 < len(starts) else None,
+                       "evidence": max(evidence, created) if source == "backfill" else evidence, "source": source})
+        plan[d] = vs
+    # stabbing: each closed version [start, end) is read from revision `end - 1` of the earliest-ending open group
+    intervals = sorted(((v["start"], v["end"]) for vs in plan.values() for v in vs if v["end"] is not None),
+                       key=lambda iv: iv[1])
+    points: list[int] = []
+    for start, end in intervals:
+        if not any(start <= p < end for p in points):
+            points.append(end - 1)
+    for vs in plan.values():
+        for v in vs:
+            v["rev"] = None if v["end"] is None else next(p for p in points if v["start"] <= p < v["end"])
+    return plan, {p: commits[p][0] for p in points}
+
+
+def _same(a: pd.Series, b: pd.Series) -> bool:
+    a, b = a.dropna().sort_index(), b.dropna().sort_index()
+    return a.index.equals(b.index) and np.allclose(a.to_numpy(float), b.to_numpy(float), rtol=0, atol=MATCH_ATOL)
+
+
+def board_ratings(grp: pd.DataFrame) -> pd.Series:
+    """Ratings by model of one board. A name listed more than once (variant rows, e.g. text 2026-06-10 before
+    2026-07-29, webdev "gpt-5.3-codex (codex-harness)") keeps its best row, as the price series' best-variant rule;
+    the board's top is unchanged by this."""
+    return grp.groupby("model_name", sort=False)["rating"].max().astype(float)
+
+
+def _ratings(df: pd.DataFrame) -> dict[str, pd.Series]:
+    return {d: board_ratings(g) for d, g in df.groupby("leaderboard_publish_date")}
+
+
+def board_versions(plan: dict[str, list[dict]], head: pd.DataFrame, revisions: dict[int, pd.DataFrame | None]
+                   ) -> dict[str, list[tuple[pd.Timestamp, pd.Series, str]]]:
+    """date -> [(evidence, ratings, source)], oldest first, equal consecutive versions collapsed into the earlier.
+    `revisions`: revision index -> overall rows at that revision (None when it could not be read: the version is
+    dropped, which only delays what is known, never back-dates it)."""
+    head_r, rev_r = _ratings(head), {k: _ratings(v) for k, v in revisions.items() if v is not None}
+    out = {}
+    for d, vs in plan.items():
+        if d not in head_r:
+            continue
+        rows = []
+        for v in vs:
+            r = head_r[d] if v["end"] is None else rev_r.get(v["rev"], {}).get(d)
+            if r is None:
+                continue
+            if rows and _same(rows[-1][1], r):
+                continue
+            rows.append((v["evidence"], r, v["source"]))
+        out[d] = rows
     return out
 
 
@@ -246,14 +362,18 @@ def _near(date: str) -> list[str]:
 
 def boards(dataset: pd.DataFrame, subset: str, ds_evidence: dict[tuple[str, str], pd.Timestamp],
            space: dict[str, tuple[pd.Timestamp, str]], pickles: dict[str, dict[str, pd.Series]],
-           created: pd.Timestamp = DATASET_CREATED) -> list[tuple[pd.Timestamp, pd.Series, pd.Timestamp, str, str]]:
+           created: pd.Timestamp = DATASET_CREATED,
+           versions: dict[str, list[tuple[pd.Timestamp, pd.Series, str]]] | None = None
+           ) -> list[tuple[pd.Timestamp, pd.Series, pd.Timestamp, str, str]]:
     """Every published board of a subset: (published, ratings by model, evidence, source, origin), by date.
+    A dataset board with several versions gives one entry per version (same published date, later evidence).
 
-    `dataset`: overall rows of the subset (model_name, rating, leaderboard_publish_date); `pickles`: file name ->
-    tables (only the Space files that could be read)."""
+    `dataset`: overall rows of the subset at HEAD (model_name, rating, leaderboard_publish_date); `pickles`: file
+    name -> tables (only the Space files that could be read); `versions`: board_versions() (date -> versions)."""
+    versions = versions or {}
     out, used, matched = [], set(), {}
     for date, grp in dataset.groupby("leaderboard_publish_date"):
-        ratings = grp.set_index("model_name")["rating"].astype(float)
+        ratings = board_ratings(grp)
         board, evidence, source, origin = ratings, None, "release", "dataset"
         for near in _near(date):  # the Space file may be named one day off
             if near in space and space[near][1] in pickles:
@@ -263,6 +383,11 @@ def boards(dataset: pd.DataFrame, subset: str, ds_evidence: dict[tuple[str, str]
                     used.add(space[near][1])
                     matched[pd.Timestamp(near)] = name
                     break
+        if evidence is None and versions.get(date):
+            for k, (ev, r, src) in enumerate(versions[date]):
+                kind = "dataset" if src == "release" else "dataset-bulk"
+                out.append((pd.Timestamp(date), r.dropna(), ev, src, kind if k == 0 else f"{kind}-v{k + 1}"))
+            continue
         if evidence is None and (subset, date) in ds_evidence:
             evidence = ds_evidence[(subset, date)]
         if evidence is None:
@@ -310,13 +435,31 @@ def _dataset_sha(clone: Path) -> str:
     return _git(clone, "rev-parse", "HEAD").strip()
 
 
+def _file(subset: str) -> str:
+    return f"{subset}/full-00000-of-00001.parquet"
+
+
 def read_dataset(subset: str, sha: str) -> pd.DataFrame:
-    url = f"{HF}/datasets/{DATASET}/resolve/{sha}/{subset}/full-00000-of-00001.parquet"
+    url = f"{HF}/datasets/{DATASET}/resolve/{sha}/{_file(subset)}"
     r = http.get(url, SOURCE, save=False, timeout=300)
     df = pd.read_parquet(io.BytesIO(r.content), columns=["model_name", "rating", "category",
                                                         "leaderboard_publish_date"])
     df = df[df["category"] == CATEGORY].drop(columns="category").reset_index(drop=True)
     p = http.raw_path(SOURCE, url, ".overall.parquet")  # raw copy with fetch date (overall rows only)
+    p.parent.mkdir(parents=True, exist_ok=True)
+    df.to_parquet(p, index=False)
+    return df
+
+
+def read_revision(subset: str, sha: str, cache: Path = RAW / "revisions") -> pd.DataFrame | None:
+    """Overall rows of a subset at a dataset revision (immutable), cached by sha; None if it cannot be fetched."""
+    p = cache / f"{sha}_{subset}.overall.parquet"
+    if p.exists() and p.stat().st_size:
+        return pd.read_parquet(p)
+    try:
+        df = read_dataset(subset, sha)
+    except Exception:  # noqa: BLE001 - a missing revision only drops that earlier version (conservative)
+        return None
     p.parent.mkdir(parents=True, exist_ok=True)
     df.to_parquet(p, index=False)
     return df
@@ -351,16 +494,34 @@ def _evidence() -> tuple[dict, dict, str]:
     return ds, sp, _dataset_sha(ds_clone)
 
 
+def file_commits(subset: str) -> list[tuple[str, pd.Timestamp, str]]:
+    """Commits that touched the subset's dataset file, oldest first (needs the clone from _evidence())."""
+    return parse_file_log(_git(RAW / "dataset_repo", "log", "--format=%H|%cI|%s", "--", _file(subset)))
+
+
+@lru_cache(maxsize=None)
+def subset_versions(subset: str) -> tuple[pd.DataFrame, dict[str, list], dict]:
+    """(HEAD rows, board versions, version plan) of a subset."""
+    _, _, sha = _evidence()
+    dataset = read_dataset(subset, sha)
+    plan, revs = version_plan(subset, file_commits(subset), sorted(dataset["leaderboard_publish_date"].unique()))
+    return dataset, board_versions(plan, dataset, {i: read_revision(subset, s) for i, s in revs.items()}), plan
+
+
 @lru_cache(maxsize=None)
 def subset_boards(subset: str) -> list:
-    ds_ev, space, sha = _evidence()
-    dataset = read_dataset(subset, sha)
+    _, space, _ = _evidence()
+    dataset, versions, _ = subset_versions(subset)
+    ds_ev: dict[tuple[str, str], pd.Timestamp] = {}  # fallback only: last titled commit that touched the file
+    for _, day, title in file_commits(subset):
+        if m := _TITLE.match(title):
+            ds_ev[(m[1], m[2])] = max(ds_ev.get((m[1], m[2]), day), day)
     pickles = {}
     if PICKLE_TABLES.get(subset):
         for date, (_, name) in sorted(space.items()):
             if (data := read_pickle(name)) is not None:
                 pickles[name] = pickle_tables(data)
-    return boards(dataset, subset, ds_ev, space, pickles)
+    return boards(dataset, subset, ds_ev, space, pickles, versions=versions)
 
 
 def events(subset: str) -> pd.DataFrame:
