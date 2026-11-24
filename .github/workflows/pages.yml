@@ -8,6 +8,10 @@
 # One-time setup by the owner (cannot be done from code): Settings -> Pages -> Build and deployment ->
 # Source: GitHub Actions. See docs/drift.md.
 #
+# The new site (web/, docs/steg3/webb.md) is built by pages-next.yml, called here as the job `next`, and copied into
+# site/next/ before the single deploy. If `next` fails, the current site is deployed without /next/ (a warning says
+# so): the new site can never stop the existing one from updating.
+#
 # Permissions: pages: write + id-token: write are what actions/deploy-pages needs to publish this repository's Pages
 # site (OIDC token for the Pages service); contents: read for checkout and the cache. No push to the repository.
 name: Pages
@@ -28,9 +32,19 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  build:
-    # after a data job only when it succeeded (a failed run saved no new cache or wrote nothing new)
+  next:
+    # the new site under /next/ (real bundle); its result only decides whether /next/ is included
     if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    uses: ./.github/workflows/pages-next.yml
+    with:
+      bundle: real
+      ref: main
+
+  build:
+    needs: next
+    # after a data job only when it succeeded (a failed run saved no new cache or wrote nothing new); runs also when
+    # `next` failed, so the current site is never held back by the new one
+    if: ${{ !cancelled() && (github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success') }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
@@ -56,6 +70,15 @@ jobs:
         run: test -f data/observations.parquet || { echo "::error::no data in the cache; run 'Weekly data fetch' first"; exit 1; }
       - name: Warehouse checks and build site/
         run: python -m ai_tracker.site build --out site  # exit 1 on a failed warehouse check: no deploy
+      - name: Add the new site under /next/
+        if: needs.next.result == 'success'
+        uses: actions/download-artifact@v4
+        with:
+          name: web-next
+          path: site/next
+      - name: Note when /next/ is left out
+        if: needs.next.result != 'success'
+        run: echo "::warning::the new site (pages-next.yml) did not build; deploying the current site without /next/"
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
@@ -63,6 +86,8 @@ jobs:
 
   deploy:
     needs: build
+    # explicit: a failed `next` (an ancestor via build) must not skip the deploy of the current site
+    if: ${{ !cancelled() && needs.build.result == 'success' }}
     runs-on: ubuntu-latest
     environment:
       name: github-pages
