@@ -565,3 +565,37 @@ historik från datasetets massuppladdning 2026-04-02 är daterad därefter. Inga
 | Gren | Kärnserier | Anmärkning |
 |---|---|---|
 | G1 | `g1_epoch_bench_frontier_<valda>`, `g1_epoch_train_compute_frontier`, `g1_epoch_eci_frontier`, `g1_arena_text_top` | ECI spärrad (bakåtfylld). Arena från 2024-01 |
+
+### 2026-11-24 – M2: import av servrar, datordelar och halvledare per land (katalogserier, inte kärnserier)
+
+Spår M2 (förslag 4 i `docs/riktning.md`). Posten låser serier, källor och datering innan något värde i serierna har
+hämtats. Inga mått (takt, förändring i takt) räknas, och serierna ingår inte i grenarnas index. Att göra någon av dem
+till kärnserie kräver en egen registerpost och en granskning. Gren G6. Publiceras: ja (Census, amerikanskt
+federalt verk).
+
+**Ländernas koder** (Census `CTY_CODE`): `tw` 5830 Taiwan, `mx` 2010 Mexiko, `vn` 5520 Vietnam, `my` 5570 Malaysia,
+`th` 5490 Thailand, `cn` 5700 Kina, `world` hela världen (0000 i filen, `-` i API:t).
+
+| Nyckel | Källa | Innehåll | Frekv. | known_from |
+|---|---|---|---|---|
+| `us_imp_eu{21300,21301,21320}_{tw,mx,vn,my,th,cn,world}_a` | `enduse_imports.xlsx` (Annual Country by 5-digit End-Use Code), ingen nyckel | import per land och end-use-kod: 21300 datorer, 21301 datortillbehör och datordelar, 21320 halvledare. MUSD per år, ej säsongsrensad | A | 31 dec + 191 dagar (10 juli året efter) |
+| `us_imp_hs{8471,847150,847180,847330,8542}_{tw,mx,vn,my,th,cn,world}_m` | Census API `intltrade/imports/hs`, kräver `CENSUS_API_KEY` | `GEN_VAL_MO` (general imports, totalvärde) per land och HS-kod: 8471 alla datorer och enheter, 8471.50 processorenheter, 8471.80 andra enheter, 8473.30 delar till 8471, 8542 integrerade kretsar. MUSD, ej säsongsrensad, från 2013-01 | M | max(månadsslut + 41 dagar, sena FT-900-releaser i `census_trade.LATE`) |
+
+**Datering och läckage:**
+- *Årsfilen* byts ut vid FT-900:s årsrevision och har ingen versionshistorik. Årsrevisionen kom 4–9 juni 2018–2026
+  (`final_YYYY.pdf`, "FOR RELEASE"). Filens Last-Modified på servern är 2026-06-09 12:31 GMT, samma minut som
+  releasen (8:30 EDT). Att äldre versioner av filen kom vid samma release går inte att verifiera, så regeln har en
+  månads marginal. Hela historiken 2016–2025 är backfill med vintage 2026-06-09.
+- *HS-serierna* släpps med FT-900 och dateras därför som `us_imports_tw_m`. API:t har bara senaste vintage, så första
+  hämtningen är backfill. Ändrade värden blir revisioner med hämtdagen som `known_from`.
+- En månad inom svarets period som saknar post för ett land och en kod räknas som 0. Antagandet är att API:t bara har
+  poster för handel som har ägt rum, och det kontrolleras vid första hämtningen med nyckel.
+
+**Kända brott, skarvas inte:** HS 2017 (2017-01) och HS 2022 (2022-01). I HS 2022 kom den nya positionen 8524
+(platta bildskärmsmoduler), som kan ha flyttat varor från 8473.30. Brotten noteras och analyseras inte här.
+
+**Utan nyckel:** hämtningen av HS-serierna hoppas över (SKIPPED, inte FAILED), ingenting skrivs, och serierna
+undantas från aktualitetskontrollen tills nyckeln finns (`ai_tracker.keyed`). Veckojobbet fallerar alltså inte.
+
+**Inga nyckelfria månadsdata per land:** Census nyckelfria end-use-sidor har månadsdata bara för hela världen
+(FT-900 Exhibit 8, säsongsrensad) och per land bara som årssummor. Därför är årsfilen den nyckelfria leveransen.
