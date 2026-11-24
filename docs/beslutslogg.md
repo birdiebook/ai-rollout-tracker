@@ -388,6 +388,7 @@ Johannes valde rekommendationerna:
 
 
 
+
 ## 2026-11-24 – Riktning efter steg 2: pengarna, makron och förväntningarna först
 
 Johannes valde rekommendationerna i [riktning.md](riktning.md):
@@ -428,6 +429,18 @@ delmängden är G4–G6 hela, medan G7 och G9 får färre än tre källfamiljer.
 - **En familj med en serie som inte får visas** räknas i indexet men namnges inte och får ingen röst i brevet eller på
   sidorna, på samma sätt som serien själv.
 - **Rekonstruktionen** v1 mot v2 väntar på datasnapshoten (`docs/resultat/tillstand.md`, "Index v2").
+
+## 2026-11-24 – P1: avskrivningar och anläggningstillgångar ur XBRL
+
+- 26 katalogserier i G5 (`dep_*`, `dep_ppe_*`, `ppe_net_*`, `ppe_gross_*`, tre hyp4-summor och `dep_aws`), inte
+  kärnserier. Taggvalen förregistrerades före beräkningen. Källa och kontroller: `docs/kallor/sec_avskrivningar.md`.
+- **En definition per serie.** När en rad byter innehåll utan omräkning börjar serien vid den nya definitionen (Amazon
+  2019, Alphabet 2023), i stället för att äldre perioder skarvas på. Omräkningar över 2 % deklareras per serie, och en
+  odeklarerad stoppar hämtningen.
+- **Brutto = netto + ackumulerade avskrivningar** ur samma inlämning, eftersom bruttotaggar ibland är delsummor. Amazon
+  och Oracle saknar brutto per kvartal, så `ppe_gross_hyp4` finns inte.
+- **`dep_msft` är ingen ren avskrivningsserie.** Microsofts rad innehåller "other", och omklassificeringen 2026 räknade
+  bara om kvartalen från 2024Q4. P2b och P3 bör använda `dep_ppe_*` där de räcker, och annars redovisa förbehållet.
 
 ## 2026-11-24 – Fokus: för Johannes och vänner
 
@@ -470,6 +483,17 @@ poolade revideringsindex blir `ja`, fast de räknar Microsofts guidance från mi
 mergas. Alla rättningar är små. Tillsammans ändrar de bara Arenas två prisserier, till `okänd`, och inga
 kärnposter. Sju Microsoft-serier med bara SEC-rader är för restriktivt klassade (R10-6), men det är inte bråttom.
 
+## 2026-11-24 – R14: granskning av P1 (avskrivningar)
+
+- **Godkänd med anmärkningar** (`docs/granskning/r14_avskrivningar.md`). Ombygget är identiskt rad för rad, 15
+  handkontroller mot R-sidorna stämmer, och alla `known_from` är inlämningsdatum.
+- **Fel (R-1):** Microsoft räknade om 2024Q3 genom sexmånaderstalet i 10-Q 2026-01-28 (6 716 mot 7 383), men
+  `dep_msft` behåller det gamla värdet. Fönstret FY2025 blir 30 101 i stället för 29 433, och årstakten 2025Q3 +10 % i
+  stället för +21 %. Det rättas innan `dep_msft` och `dep_hyp4` används för takt i P2b och P3. Bara kvartalen i FY2024
+  går inte att räkna om.
+- Noten för `dep_hyp4` ska säga vilka definitioner som summeras (R-2). `dep_ppe_hyp4` är bättre i definition men har
+  bara 9 kvartal.
+
 ## 2026-11-24 – R9: granskning av index v2 (K1)
 
 - **Dom: godkänd med anmärkningar** (`docs/granskning/r9_index_v2.md`). Registerposten kom före koden och före alla
@@ -508,4 +532,22 @@ sex poolade revideringsindex blir `okänd` när F1 mergas (R10-1).
   över v1-raden när ingen regel ger tillstånd, och röstraden när alla röstande källor är dolda (N5). Kvartalsrapporten
   säger "källor" under v2 (N6), och båda fotnoterna säger att indexet jämförs oavrundat (N7). Namnregeln i G2 är
   rättad i registeranteckningen (N2). N9 väntar, eftersom ingen registrerad familj berörs i dag.
+
+## 2026-11-24 – X11: rättning av P1 efter R14
+
+- **R-1 rättat.** Ett värde som en 10-Q räknar om bara genom summorna (hittills i år minus tre månader i samma
+  inlämning) blir en version daterad till inlämningen. Regeln gäller P1:s flödesserier, skapar inga nya perioder och
+  bortser från avrundning. `dep_msft` 2024Q3 får 6 716 från 2026-01-28, och 2025Q3 på den nya basen (8 147) är känd
+  från 2026-01-28 i stället för 2026-10-28. Inga andra serier ändras, och första versionen av varje kvartal är
+  oförändrad. Tillägg i registret samma dag.
+- **Rättelse av P1-posten ovan.** Omklassificeringen 2026 räknade om kvartalen från 2024Q3, inte från 2024Q4. 2024Q3
+  räknades om genom sexmånaderstalet. Bara kvartalen till och med 2024Q2 (FY2024 och tidigare) ligger kvar på den gamla
+  basen.
+- **Delvis omräkning:** nyckeln behålls, och noten anger sista kvartal på gammal bas (granskningens rekommendation).
+  Det var redan P1:s praxis och ändrar inga värden. Ägaren kan välja ny nyckel i stället.
+- **P2b och P3 ska köras om på den rättade grenen.** P2b: bygg om `x_dep_rev`, `x_capcost_rev_r08`,
+  `x_capcost_rev_r12` och `x_dep_capex` (`x_dep_rev_aws` ändras inte), och rätta påståendet i `intaktskrav.md` att
+  Microsoft inte räknade om kvartalen. P3: kör om `python -m ai_tracker.nowcast backtest n7` som en ny daterad körning.
+  Utfallen (första versionen) är oförändrade, men indata as_of ändras vid origo 2026-04-20, 2026-07-20 och 2026-10-20.
+  N7:s specifikation ändras inte.
 

@@ -723,3 +723,114 @@ i A långt efter att modellen pensionerats.
   samma gren inte ska finnas utan motivering. Effekten på kärnseriens takt blir troligen noll av samma skäl som
   ovan (löpande minimum), men det ska visas och inte antas. Frågan hänger ihop med R8 R-6 (om G2:s front ska bortse
   från pensionerade modeller), som också är öppen.
+
+### 2026-11-24 – P1: avskrivningar och anläggningstillgångar som katalogserier (inte kärnserier)
+
+Spår P1 (förslag 3 i `riktning.md`). Serierna är katalogserier i G5 och underlag för intäktskravet (P2b) och prognosmålet
+N7 (P3). De ingår inte i diffusionsindexet, och här räknas inga takter eller tillstånd. Kod:
+`src/ai_tracker/series/sec_avskrivningar.py` och `sources/sec_custom.py`. Källa och kontroller:
+`docs/kallor/sec_avskrivningar.md`.
+
+**Regel för taggval.** Taggen väljs per bolag efter täckning och definitionskonsistens, aldrig efter seriens förlopp.
+- `dep_<co>` är den rad (eller de rader) som läggs tillbaka för avskrivningar i kassaflödesanalysen, med bolagets egen
+  etikett. Raden har kontrollerats i den renderade kassaflödesanalysen i 10-K (R-sidorna).
+- `dep_ppe_<co>` är avskrivningar på anläggningstillgångar utan amortering av förvärvade immateriella tillgångar, ur
+  noten om anläggningstillgångar, där den taggas per kvartal.
+- En serie har en definition. Om raden byter innehåll och tidigare perioder inte räknas om, börjar serien vid den nya
+  definitionen. Äldre perioder skarvas inte på.
+- Byte av tagg för samma rad, med identiska värden i överlappet, skarvas per kvartal med `sec.py`:s regel.
+- Omräkningar av samma rad är versioner, med regeln om konsekvent bas i `sec.py`. En inlämning som räknar om tidigare
+  värden med mer än 2 % (`sec_segment.definition_breaks`) ska deklareras per serie efter granskning, och en odeklarerad
+  omräkning stoppar hämtningen. En deklarerad omräkning av en kassaflödesrad ger ingen ny nyckel, eftersom bolagen gör
+  omklassificeringar just genom att räkna om jämförelsetalen. Kvartal som bolaget inte räknade om ligger kvar på den
+  gamla basen, och det redovisas per serie.
+
+| Bolag | `dep_<co>` | `dep_ppe_<co>` |
+|---|---|---|
+| MSFT | `msft:DepreciationAmortizationAndOther` ("Depreciation, amortization, and other"), en egen tagg som läses ur varje inlämnings XBRL-instans | `Depreciation`, per kvartal från FY2025 (2024Q3) |
+| GOOGL | `Depreciation` ("Depreciation of property and equipment"), från 2023Q1. Definitionen från 10-K för 2023 saknar nedskrivning, och de immateriella ligger i "Other". De äldre egna taggarna ("depreciation and impairment", 2014–2022) skarvas inte | samma tagg och samma värden som `dep_googl` |
+| AMZN | `DepreciationDepletionAndAmortization`, bara perioder som börjar 2019-01-01 eller senare. Raden innehåller operationella leasingtillgångar från 2019 (ASC 842, utan omräkning) och dessutom aktiverat innehåll (video och musik) | `Depreciation` (avskrivningar på anläggningstillgångar), per kvartal från 2024 |
+| META | `DepreciationDepletionAndAmortization` | `Depreciation`, per kvartal från 2019 |
+| ORCL | `Depreciation` + `AmortizationOfIntangibleAssets`, två rader som summeras ur samma inlämning | `Depreciation` |
+| CRWV | `DepreciationDepletionAndAmortization` | `Depreciation` |
+
+**Anläggningstillgångar** (balans vid kvartalets slut):
+- `ppe_net_<co>`: taggarna `PropertyPlantAndEquipmentAndFinanceLeaseRightOfUseAssetAfterAccumulatedDepreciationAndAmortization`
+  och sedan `PropertyPlantAndEquipmentNet`. De två är identiska i alla överlapp (GOOGL 7, AMZN 4, META 1, CRWV 8). För
+  Alphabet 2020Q1 läses bolagets egen tagg ur 10-Q:ns instans.
+- `ppe_gross_<co>` = netto + ackumulerade avskrivningar, ur samma inlämning och samma taggfamilj. Familjen med
+  finansiell leasing (`...AccumulatedDepreciationAndAmortization`) används först, därefter
+  `AccumulatedDepreciationDepletionAndAmortizationPropertyPlantAndEquipment`. Bruttotaggarna används inte, eftersom de
+  ibland står för en delsumma: i Alphabets 10-K för 2024 ligger `PropertyPlantAndEquipmentGross` för 2023-12-31 17 %
+  under bruttot i övriga inlämningar.
+- Bruttot finns per kvartal bara för MSFT, GOOGL, META och CRWV. Amazon och Oracle taggar bruttot och de ackumulerade
+  avskrivningarna bara vid räkenskapsårets slut. Därför finns ingen `ppe_gross_amzn`, `ppe_gross_orcl` eller
+  `ppe_gross_hyp4`.
+- En balans räknas bara om balansdagen är ett räkenskapskvartals slut. Kalenderkvartal sätts med mittpunktsregeln
+  (`sec_instant`).
+- Om finansiell leasing ingår redovisas per bolag i källdokumentet. Kontrollen görs mot bolagets egen text, inte mot
+  värdena.
+
+**Summor och segment:** `dep_hyp4`, `dep_ppe_hyp4` och `ppe_net_hyp4` (MSFT, GOOGL, AMZN och META) räknas med
+`sec.aggregate`. En version finns först när alla fyra är kända, och known_from är den senaste inlämningen. `dep_aws` är
+AWS-segmentets avskrivningar (`Depreciation` med `StatementBusinessSegmentsAxis` = `AmazonWebServicesSegmentMember`,
+äldre `DepreciationDepletionAndAmortization`). Värdet finns per kvartal i 10-Q från 2025-05 (2025Q1 med 2024 som
+jämförelse), och tidigare bara för helår.
+
+**Datering:** known_from är inlämningsdatumet för 10-Q eller 10-K. Varje inlämning är en version, och YTD-differenser,
+Q4 = helår − 9M och kalendermappning görs som i `sec.py`.
+
+**Vad som setts före denna post:** vilka perioder och datum varje kandidattagg täcker, och etikett och tagg för
+avskrivningsraderna i kassaflödesanalysen i ett urval 10-K (R-sidorna visar också helårsvärdena). Dessutom den relativa
+skillnaden mellan kandidattaggar i överlappande perioder, MSFT-taggens täckning och storleken på omräkningarna (relativt),
+och Alphabets balansposter i instanserna 2018–2020 (nivåer, för kontrollen netto = brutto − ackumulerat). Inga
+kvartalsserier eller takter har räknats.
+
+### 2026-11-24 – P1: omräkning genom summorna, delvis omräkning och ändringar efter första bygget (rättning efter granskning R14)
+
+Tillägg till posten "P1: avskrivningar och anläggningstillgångar som katalogserier". Den posten skrivs inte om.
+Granskning: `docs/granskning/r14_avskrivningar.md`. Rättningsspår X11 (`auto14/x11-avskrivningar`).
+
+**Skäl (R-1).** Microsoft räknade om 2024Q3 (Q1 FY2025) bara genom sexmånaderstalet i 10-Q:n 2026-01-28: 12 383 − 5 667
+= 6 716, mot 7 383 tidigare. I `sec.py` vinner ett direkt tremånadersvärde alltid över en differens, så `dep_msft`
+behöll 7 383 i alla versioner. Det följer inte postens egen regel att omräkningar är versioner.
+
+**Ny regel: omräkning genom summorna.** Gäller alla flödesserier i P1 (`dep_*`, `dep_ppe_*` och `dep_aws`), inte
+övriga SEC-serier.
+- När en 10-Q har både ett hittills-i-år-värde (start s, slut e) och ett tremånadersvärde som slutar e, ger skillnaden
+  hittills-i-år-värdet för perioden från s till förra kvartalets slut. Värdet blir en version daterad till inlämningen
+  (`sec_custom.implied_by_ytd`).
+- Det används bara om inlämningen inte själv redovisar perioden, om ett värde för perioden redan har lämnats in (regeln
+  skapar inga nya perioder), och om skillnaden mot det senast inlämnade värdet är större än avrundningen av de tre talen
+  (en halv redovisningsenhet vardera: 1,5 MUSD för tal i miljoner, 150 MUSD för tal i 0,1 miljard).
+- 10-K används inte, eftersom deras tremånadersvärden är den oreviderade kvartalsnoten.
+- Härledda värden prövas av stoppregeln som andra värden. En omräkning över 2 % som bara syns i summorna ska alltså
+  också deklareras.
+
+**Effekt.** Två värden ändras, båda i `dep_msft` och därmed `dep_hyp4`: 2024Q3 får versionen 6 716 den 2026-01-28, och
+2025Q3 på den nya basen (8 147) är känd från 2026-01-28 i stället för 2026-10-28. `dep_hyp4` 2024Q3 blir 28 170 (i
+stället för 28 837) från 2026-01-28. Tabellen får två rader till (1 063). Första versionen av varje kvartal är
+oförändrad. Inga andra serier ändras, och inga nya brott över 2 % uppstår. Med bara `sec.TOL` som gräns i stället för
+avrundningen hade regeln gett 11 rader till som bara är avrundning (`dep_ppe_meta` och `dep_ppe_hyp4`, 10 MUSD fram
+och tillbaka).
+
+**Delvis omräkning (R-5).** Postens två regler pekar åt olika håll när ett bolag räknar om en del av historiken. Det
+gäller:
+- En deklarerad omräkning behåller nyckeln. Kvartal som bolaget inte räknade om, varken direkt eller genom summorna,
+  ligger kvar på den gamla basen. Seriens not anger det sista kvartalet på den gamla basen i den senaste versionen.
+  För `dep_msft` är det 2024Q2: FY2024 räknades bara om som helår (22 287 till 20 958), och det går inte att fördela
+  på kvartal.
+- "En serie har en definition" gäller när raden byter innehåll och inga tidigare perioder räknas om (Amazon 2019,
+  Alphabet 2023). Då börjar serien vid den nya definitionen.
+
+**Summornas definitioner (R-2).** `dep_hyp4` summerar fyra definitioner: Microsofts rad med "other" (till och med 2024Q2
+på den gamla basen), Amazons rad med aktiverat innehåll och operationella leasingtillgångar, Metas rad med amortering på
+immateriella tillgångar, och för Alphabet bara avskrivningar på anläggningstillgångar. Katalognoten säger detta och
+hänvisar till `dep_ppe_hyp4` för jämförbar definition.
+
+**Ändringar efter första bygget (R-6).** Båda gjordes i P1 efter förregistreringen och står i koden och källdokumentet:
+- CoreWeave rapporterade i tusental till 10-K för 2025 och i miljoner därefter. En senare version som bara avrundar
+  till hela miljoner tas bort (`neoclouds.rounding_revisions_dropped`, alla fyra CRWV-serier). Filtret tar bort en rad:
+  `dep_crwv` 2025Q2, 560 den 2026-08-12 efter 559,481.
+- Alphabets taggar läses för perioder från 2021-01-01 (`first_start`), inte från 2023Q1 som posten säger. Värdena blir
+  desamma, eftersom 2021–2022 bara finns som helår med den nya taggen.
