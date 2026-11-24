@@ -53,6 +53,9 @@ from ai_tracker import catalog, config, publication
 DEFAULT_PATH = config.REPO / "data" / "observations.parquet"
 PATH = DEFAULT_PATH
 COLUMNS = ["series", "freq", "period", "value", "known_from", "source", "fetched_at"]
+# DataFrame.attrs flag on a release-dated fetch: its periods are every period the source has now. new_rows then
+# refuses a fetch that lacks a stored period (the source dropped it), so the series is rebuilt on purpose.
+COMPLETE = "complete_periods"
 LOG_COLUMNS = ["series", "fetched_at", "n_periods", "last_period", "rows_added"]
 KEY = ["series", "period", "known_from"]
 LOG_KEY = ["series", "fetched_at"]
@@ -259,6 +262,10 @@ def new_rows(spec: catalog.Spec, values: pd.Series | pd.DataFrame, table: pd.Dat
     if isinstance(values, pd.DataFrame):  # release-dated: each row is a vintage with its own date
         df = values.dropna(subset=["value"]).copy()
         df["period"] = [str(p) for p in to_periods(df["period"], spec.freq)]
+        if values.attrs.get(COMPLETE) and len(dropped := sorted(set(latest.index) - set(df["period"]))):
+            raise ValueError(f"{spec.key}: the source no longer has {len(dropped)} stored periods ({dropped[0]}.."
+                             f"{dropped[-1]}); rebuild on purpose: python -m ai_tracker.observations --rebuild "
+                             f"{spec.key}")
         df["known_from"] = pd.to_datetime(df["known_from"])
         if "source" not in df:  # optional column, e.g. "backfill" for rows dated by lag rather than a document
             df["source"] = "release"

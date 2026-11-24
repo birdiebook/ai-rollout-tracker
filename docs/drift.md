@@ -285,7 +285,7 @@ Settings → Secrets and variables → Actions → New repository secret:
 
 | Namn | Värde | Krävs |
 |---|---|---|
-| `SEC_USER_AGENT` | `ai-rollout-tracker <kontaktadress>` | **ja**. sec.gov kräver en deklarerad User-Agent med kontaktuppgift. Det finns ingen reserv: saknas den fallerar `fetch-weekly.yml` och `nowcast.yml` direkt med ett tydligt meddelande |
+| `SEC_USER_AGENT` | `ai-rollout-tracker <kontaktadress>` | **ja**. sec.gov och bls.gov (`download.bls.gov`, `www.bls.gov`, BLS-serierna från spår M1) kräver en deklarerad User-Agent med kontaktuppgift och svarar annars 403. Det finns ingen reserv: saknas den fallerar `fetch-weekly.yml` och `nowcast.yml` direkt med ett tydligt meddelande. Namnet gäller numera båda värdarna |
 | `CENSUS_API_KEY` | nyckel från api.census.gov | när den finns (används inte av koden än) |
 | `DATA_KEY` | lång slumpad lösenfras, till exempel `python -c "import secrets; print(secrets.token_urlsafe(32))"` | för datasnapshoten. Samma värde läggs in som miljövariabel i molnmiljön (`docs/miljo.md`). Saknas den hoppas snapshot-stegen över. Värdet sparas också utanför GitHub (lösenordshanterare), eftersom en secret inte går att läsa ut igen |
 | `ECOS_API_KEY` | nyckel från Bank of Korea ECOS | när den finns (används inte av koden än, se N2:s blockerade indikatorer) |

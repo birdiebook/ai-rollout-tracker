@@ -25,6 +25,7 @@ and KNOWN_STALE accepts a stale series until a given date (a source outage that 
 from __future__ import annotations
 
 import duckdb
+import numpy as np
 import pandas as pd
 
 from ai_tracker import catalog, observations
@@ -59,6 +60,13 @@ KNOWN_GAPS.update(_USEFUL_LIFE_GAPS)
 from ai_tracker.series.guidance_revisions import KNOWN_GAPS as _F1_GAPS  # noqa: E402
 
 KNOWN_GAPS.update(_F1_GAPS)
+
+# Accepted gaps per period: series -> {period: why}. The series passes no_gaps only if every missing period within
+# its span is listed, so a second gap is still reported. Prefer this to a whole-series exemption in KNOWN_GAPS.
+# BLS collected no CPI data for October 2025 (lapse in appropriations; track M1, docs/kallor/makro_bea_bls.md).
+from ai_tracker.series.bls import KNOWN_GAP_PERIODS as _BLS_GAP_PERIODS  # noqa: E402
+
+KNOWN_GAP_PERIODS: dict[str, dict[str, str]] = {**_BLS_GAP_PERIODS}
 
 # Stale series accepted until a date (ISO), and why: a known outage, never a permanent exemption
 # (that is Spec.max_age_days or Spec.closed). Example: {"us_imports_tw_m": ("2026-12-31", "shutdown, ...")}.
@@ -108,6 +116,10 @@ CHECKS = {
 }
 
 
+def _ordinals(periods: pd.PeriodIndex, freq: str):
+    return observations.fortnight_ordinal(periods) if freq == "2W" else periods.asi8
+
+
 def _with_periods(table: pd.DataFrame) -> pd.DataFrame:
     t = table.copy()
     t["period_end"] = pd.NaT
@@ -115,7 +127,7 @@ def _with_periods(table: pd.DataFrame) -> pd.DataFrame:
     for freq, idx in t.groupby("freq").groups.items():
         periods = to_periods(t.loc[idx, "period"], freq)
         t.loc[idx, "period_end"] = periods.end_time.normalize()
-        t.loc[idx, "ordinal"] = observations.fortnight_ordinal(periods) if freq == "2W" else periods.asi8
+        t.loc[idx, "ordinal"] = _ordinals(periods, freq)
     t["period_end"] = pd.to_datetime(t["period_end"])
     t["ordinal"] = t["ordinal"].astype("int64")
     return t
@@ -140,6 +152,18 @@ def connect(table: pd.DataFrame | None = None, specs: list[catalog.Spec] | None 
     return con
 
 
+def only_known_gaps(con: duckdb.DuckDBPyConnection, series: str) -> bool:
+    """True if every missing period of `series` within its span is listed in KNOWN_GAP_PERIODS."""
+    accepted = KNOWN_GAP_PERIODS.get(series)
+    if not accepted:
+        return False
+    got = con.execute("select freq, ordinal from obs_latest where series = ?", [series]).df()
+    freq = got["freq"].iloc[0]
+    have = set(got["ordinal"].astype("int64"))
+    missing = set(range(min(have), max(have) + 1)) - have
+    return missing <= {int(o) for o in _ordinals(to_periods(list(accepted), freq), freq)}
+
+
 def run_checks(con: duckdb.DuckDBPyConnection | None = None) -> dict[str, pd.DataFrame]:
     con = con or connect()
     out = {}
@@ -147,6 +171,8 @@ def run_checks(con: duckdb.DuckDBPyConnection | None = None) -> dict[str, pd.Dat
         df = con.execute(sql).df()
         if name == "no_gaps" and len(df):
             df = df[~df["series"].isin(KNOWN_GAPS)]
+            keep = np.array([not only_known_gaps(con, s) for s in df["series"]], dtype=bool)
+            df = df[keep].reset_index(drop=True)
         out[name] = df
     return out
 

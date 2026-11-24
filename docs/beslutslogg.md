@@ -391,6 +391,7 @@ Johannes valde rekommendationerna:
 
 
 
+
 ## 2026-11-24 – Riktning efter steg 2: pengarna, makron och förväntningarna först
 
 Johannes valde rekommendationerna i [riktning.md](riktning.md):
@@ -470,6 +471,19 @@ delmängden är G4–G6 hela, medan G7 och G9 får färre än tre källfamiljer.
 - **Microsofts sänkning för 2026** (`msft-29`) räknas inte som revidering, på grund av definitionsbrottet R5-F14. Utan
   regeln hade det rullande indexet för 2026Q4 varit 0,62 i stället för 0,67. Båda redovisas i
   `docs/resultat/f1_revideringar.md`.
+
+## 2026-11-24 – Spår M1: BNP-bidrag, datorimport och priser ur BEA:s arkiv och BLS flatfiler
+
+- **BEA-vintages ur BEA:s eget releasearkiv** (`apps.bea.gov/histdata`), inte ur flatfilen eller ALFRED: 107 releaser
+  från 2017-10-27, daterade med "Data published" i tabellhuvudet. Katalognamnen är uppladdningsdagar och hade läckt i
+  två fall. Ingen nyckel behövs.
+- **`ai_invest_contrib_gross`** = BEA:s bidrag från informationsbehandlingsutrustning + programvara (tabell 1.5.2), ur
+  samma vintage. **Ingen nettovariant:** BEA publicerar inget BNP-bidrag för datorimport. Importen visas separat.
+- **BLS via flatfiler** med projektets generiska klientidentitet i User-Agent (samma som för SEC), eftersom BLS nekar
+  klienter utan kontaktuppgift. API:t behövs inte (dess kvot för den delade IP-adressen var slut). Releasedatum tas ur
+  BLS arkiv över nyhetsreleaser, alltså primärkällan. KPI SA och PPI dateras efter BLS egna revideringsregler.
+- **PPI för databehandling och hosting i G4**, eftersom PPI mäter priset som moln- och hostingbolagen får.
+- Inga kärnserier ändras. Detaljer: [kallor/makro_bea_bls.md](kallor/makro_bea_bls.md).
 
 ## 2026-11-24 – Fokus: för Johannes och vänner
 
@@ -603,6 +617,21 @@ sex poolade revideringsindex blir `okänd` när F1 mergas (R10-1).
   över v1-raden när ingen regel ger tillstånd, och röstraden när alla röstande källor är dolda (N5). Kvartalsrapporten
   säger "källor" under v2 (N6), och båda fotnoterna säger att indexet jämförs oavrundat (N7). Namnregeln i G2 är
   rättad i registeranteckningen (N2). N9 väntar, eftersom ingen registrerad familj berörs i dag.
+
+## 2026-11-24 – Spår X9: rättningar i M1 efter granskning R12
+
+- **R-1 och R-2 är rättade**, och serierna är omräknade. PPI 518210 dateras aldrig före indexets införande
+  2002-02-15 (9 värden flyttas). BEA-serierna visar bara perioder som finns i den senaste vintage, så
+  `us_imp_computers_real` blandar inte längre basår och börjar 2007Q1. Om en ny release tar bort en lagrad period
+  stoppar hämtningen, och serien byggs om medvetet.
+- **Rättelse av premissen i M1-posten ovan:** "BEA publicerar inget BNP-bidrag för datorimport" var ofullständigt.
+  BEA publicerar `BB01RY` "Final sales of computers" (tabell 1.2.2 rad 17), ett nettobidrag för datorer efter handel,
+  men inte för programvara. Ingen serie läggs till. Ägaren avgör om `BB01RY` ska förregistreras.
+- **BLS-arkivet läses från 1994-01** (sexsiffriga filnamn). Värden före 1994 får arkivets första releasedag enligt
+  den registrerade regeln, alltså 5 år tidigare än förut. Den delen av historiken är inte verifierad (KPI SA före 1994,
+  PPI för kommersiell el före 1990). Ingen analys använder den.
+- Undantag för luckor gäller per period (`KNOWN_GAP_PERIODS`), och kontaktidentiteten skickas bara till sec.gov och
+  bls.gov med underdomäner. Detaljer: daterad post i [mattregister.md](mattregister.md).
 
 ## 2026-11-24 – X11: rättning av P1 efter R14
 
