@@ -27,6 +27,7 @@ En rad per spår, fylls på efter varje körning. Tumreglerna justeras när siff
 | 2026-11-24 | 11 | G2A pris vid fast Arena-förmåga | bygge (mappning, förregistrerad referens) | ~29 | ~68 | ~297 | 2 varianter (A gpt-4-0314, B gpt-4o), mappningstabell, avvecklingsregel; väntar på granskning R8 |
 | 2026-11-24 | 11 | W3 datakontrakt | infrastruktur (paket, schema, licensskanning) | ~35 | ~77 | ~312 | `site_bundle`, 14 JSON-scheman, versions-v1, 385 serier, 60 syntetiska fixtures |
 | 2026-11-24 | 11 | W4 + W2 skelett, designsystem, CI | webb (SvelteKit, tokens, primitiver, CI) | ~29 | ~93 | ~291 | 41 vitest, 78 Playwright, axe, budgetar, `pages-next.yml`, en deploy |
+| 2026-11-24 | 13 | L1 G8-kartläggning | kartläggning (källor, licenser, design), bara dokument | ~35 | ~100 | – | 21 källor och värdar testade, 6 exponeringsmått, G8 v2-förslag (4 familjer) med MDE-metod, 0 kodändringar |
 
 ## Körning 1, sammanfattning (2026-11-23, orkestrerare)
 

@@ -379,3 +379,19 @@ Johannes valde rekommendationerna:
   overifierat Mistral-pris. G2 har kvar en räknad kärnserie. Rättningsspåret X5 tar R-1–R-8. Viktigast är ett
   läckage i `arena.py`: omladdade tavlor (2026-07-07) var daterade till första commit, och det rör även G1:s
   `g1_arena_text_top`. B från 2024-09 prövas först efter rättningen och en ny granskning.
+
+## 2026-11-24 – L1: källor för G8 v2 kartlagda (inget byggt)
+
+- **Förslag:** G8 v2 med fyra källfamiljer från tre utgivare: Indeeds AI-andel (finns), BLS CES (sysselsättningsgap
+  mellan exponerade och mindre exponerade branscher), BLS CPS (arbetslöshetsgap för unga akademiker) och JobTech
+  (annonser per yrke i Sverige). Arbetsproduktivitet från BLS är en valfri femte familj. Alla har kommersiell klass `ja`.
+- **Användningsmått** (RPS, Anthropic Economic Index, SCB TAB6388 och BTOS Q8) hör till G3 eller används som
+  exponeringsmått, inte som utfall i G8.
+- **BTOS** frågar sedan cykel 202622 (2026-10) om AI:s effekt på antalet anställda och nyanställda (Q9–Q10). Takt finns
+  tidigast 2027-10.
+- **BLOCKED:** RPS och NY Fed (värdarna nekas, licens okänd), QCEW, LEHD QWI och O*NET (värdarna nekas) samt
+  betalkällorna. CPS-mikrodata kräver Census-nyckeln. AIOE saknar licens (`okänd`).
+- **Öppen fråga för Johannes:** gäller pausen för Anthropics webbplatser också Anthropics dataset på Hugging Face
+  (öppen licens, annan värd)? Rekommendation: nej, med högst en hämtning per release och bara som exponeringsmått.
+- Inget är registrerat och inga utfall är lästa. Designen, med MDE skattad på förperioden före öppning, registreras i
+  byggspåret. Detaljer: [datakallor/g8_kandidater.md](datakallor/g8_kandidater.md).
