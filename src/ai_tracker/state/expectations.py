@@ -53,6 +53,7 @@ def _index_entry(versions: pd.DataFrame, value: str, freq: str) -> dict:
 
     def row(r) -> dict:
         d = {k: (_num(r[k]) if k not in ("period", "known_from", "companies") else r[k]) for k in r.index}
+        d.update({k: int(d[k]) for k in d if k.startswith("n") and d[k] is not None})  # counts
         d["known_from"] = str(pd.Timestamp(r["known_from"]).date())
         return d
 
