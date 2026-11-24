@@ -30,9 +30,13 @@ MIN_INTERVAL = {"data.sec.gov": 0.2, "www.sec.gov": 0.2}  # SEC fair access: <= 
 _last_call: dict[str, float] = {}
 
 
+CONTACT_HOSTS = ("sec.gov", "bls.gov")  # refuse clients without a declared contact (SEC fair access, BLS policy)
+
+
 def user_agent(host: str) -> str:
-    if host.endswith("sec.gov"):
-        return config.require("SEC_USER_AGENT")  # SEC requires a declared contact; kept out of the repo
+    if host.endswith(CONTACT_HOSTS):
+        # The project's generic client identity with a contact address, from .env / Actions secret; never in the repo
+        return config.require("SEC_USER_AGENT")
     return DEFAULT_UA
 
 
