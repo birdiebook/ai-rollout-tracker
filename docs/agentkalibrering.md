@@ -27,6 +27,12 @@ En rad per spår, fylls på efter varje körning. Tumreglerna justeras när siff
 | 2026-11-24 | 11 | G2A pris vid fast Arena-förmåga | bygge (mappning, förregistrerad referens) | ~29 | ~68 | ~297 | 2 varianter (A gpt-4-0314, B gpt-4o), mappningstabell, avvecklingsregel; väntar på granskning R8 |
 | 2026-11-24 | 11 | W3 datakontrakt | infrastruktur (paket, schema, licensskanning) | ~35 | ~77 | ~312 | `site_bundle`, 14 JSON-scheman, versions-v1, 385 serier, 60 syntetiska fixtures |
 | 2026-11-24 | 11 | W4 + W2 skelett, designsystem, CI | webb (SvelteKit, tokens, primitiver, CI) | ~29 | ~93 | ~291 | 41 vitest, 78 Playwright, axe, budgetar, `pages-next.yml`, en deploy |
+| 2026-11-24 | 11 | R8 granskning G2 Arena-pris | granskning (adversariell) | ~22 | ~53 | ~251 | UNDERKÄND: golvmått, stegfunktion, Arena-läckage hittat, 3 tester |
+| 2026-11-24 | 12 | W5 startsidan | webb (sida) | ~34 | ~86 | ~301 | kedja, tre frågekort, ränder, genererad rubrik, 23 vitest + e2e |
+| 2026-11-24 | 12 | W6 led- och grensidor | webb (sidor) | ~34 | ~103 | ~296 | /flode, /flode/L*, /gren/G*, multiplar, inhållna rutor, e2e |
+| 2026-11-24 | 12 | W7 serieinstrumentet | webb (2 enheter) | ~41 | ~112 | ~309 | 387 seriesidor, asOf-API (golden mot Python), revisionsvy, CSV, permalänk, 130 vitest |
+| 2026-11-24 | 12 | W8 prognossidor | webb (sidor) | ~46 | ~116 | ~312 | översikt, sida per nowcast och skarp prognos, facit, kalibrering, D2-solfjäder |
+| 2026-11-24 | 12 | X5 rättning Arena | rättning (läckage + priser) | ~48 | ~122 | ~323 | tavlor versionerade per commit, daterade prisrättningar, ingen G1-historik ändrad |
 
 ## Körning 1, sammanfattning (2026-11-23, orkestrerare)
 
@@ -46,3 +52,11 @@ En rad per spår, fylls på efter varje körning. Tumreglerna justeras när siff
 - När spårets kod är mergad kör orkestreraren `python -m ai_tracker.datamerge /home/user/wt/<namn>/data`. Den kör
   datatesterna och vägrar skriva om de fallerar. Den tar cirka 10 sekunder för hela basen och kan köras om utan
   effekt. Mät tiden per merge i nästa körning. Detaljer finns i `docs/drift.md` (Delad data).
+
+## Körning 11–12, iakttagelser (2026-11-24)
+
+- Webbspår tar 34–46 minuter, dubbelt så lång tid som dataspår. Det mesta går åt till grindarna: bygg mot riktigt paket
+  (2 min), Playwright (2–3 min) och pytest (7 min), ofta flera gånger. Räkna ett webbspår som cirka 1,5 dataspår.
+- Parallella webbspår krockade på förhandsvisningsporten 4173. Playwright testade då tyst ett annat spårs bygge. Ge varje
+  spår en egen `PW_PORT`.
+- Granskningsspåren hittar fortfarande verkliga fel (R8: Arena-läckaget). Behåll en granskning per ny serie som ska räknas.
