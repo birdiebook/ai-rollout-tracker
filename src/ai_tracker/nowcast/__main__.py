@@ -3,7 +3,10 @@
     python -m ai_tracker.nowcast n1 --origin YYYY-MM-DD      live forecast -> forecasts/n1/<quarter>.json (never overwrites)
     python -m ai_tracker.nowcast n2 --origin YYYY-MM-DD [--refresh]
                                                              live forecast -> forecasts/n2/<month>.json (never overwrites)
-    python -m ai_tracker.nowcast backtest n1|n2              pre-registered backtest, logged to experiments/runs/
+    python -m ai_tracker.nowcast n3|n4|n6 --origin YYYY-MM-DD
+                                                             live forecast -> forecasts/<nowcast>/<quarter>.json
+    python -m ai_tracker.nowcast n5 --origin YYYY-MM-DD      live forecast -> forecasts/n5/<collection end>.json
+    python -m ai_tracker.nowcast backtest n1|n2|n3|n4|n5|n6  pre-registered backtest, logged to experiments/runs/
 
 The scheduled routine is `python -m ai_tracker.pipeline live`; these commands are for manual runs.
 `python -m ai_tracker.nowcast_n2 ...` and `python -m ai_tracker.nowcast_n2.backtest` are compatibility shims for n2.
@@ -15,7 +18,9 @@ import argparse
 from pathlib import Path
 
 from ai_tracker import evaluation, observations
-from ai_tracker.nowcast import n1, n2
+from ai_tracker.nowcast import n1, n2, n3, n4, n5, n6
+
+STEP2 = {"n3": n3, "n4": n4, "n5": n5, "n6": n6}
 
 FORECASTS = evaluation.REPO / "forecasts"
 
@@ -28,9 +33,26 @@ def main(argv=None) -> int:
     live.add_argument("--out-dir", default=str(FORECASTS / "n1"))
     live.add_argument("--table", default=None, help="observation table (default data/observations.parquet)")
     n2.add_live_args(sub.add_parser("n2", help="live N2 forecast (prints the written file)"))
+    for name in STEP2:
+        p = sub.add_parser(name, help=f"live {name.upper()} forecast (registered origin only)")
+        p.add_argument("--origin", required=True)
+        p.add_argument("--out-dir", default=None)
+        p.add_argument("--table", default=None, help="observation table (default data/observations.parquet)")
     bt = sub.add_parser("backtest", help="run a registered backtest")
-    bt.add_argument("nowcast", choices=["n1", "n2"])
+    bt.add_argument("nowcast", choices=["n1", "n2", *STEP2])
     args = ap.parse_args(argv)
+
+    if args.cmd in STEP2:
+        table = observations.load(Path(args.table) if args.table else None)
+        path = STEP2[args.cmd].write_live(table, args.origin, args.out_dir or FORECASTS / args.cmd)
+        print(f"wrote {path}")
+        return 0
+    if args.cmd == "backtest" and args.nowcast in STEP2:
+        m = STEP2[args.nowcast]
+        out = m.backtest()
+        print(m.format_report(out))
+        print(f"logged to {out['log']}")
+        return 0
 
     if args.cmd == "n1":
         table = observations.load(Path(args.table) if args.table else None)

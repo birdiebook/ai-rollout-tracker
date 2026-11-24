@@ -9,7 +9,8 @@ Series (docs/kallor/forvantningar.md, section 3):
 - Manifold: daily probability from the market's own trade history (/v0/bets, `probAfter` after every trade).
   Value of UTC day D = probability after the last trade before D+1 00:00 UTC (carried forward on days without
   trades); known_from = D+1 00:00 UTC, i.e. every trade used is timestamped before known_from. Days from the first
-  trade to the earlier of (close/resolution day, yesterday). The resolution itself is not a price point.
+  trade to the earlier of (close/resolution day, yesterday). The resolution itself is not a price point. Rows
+  known before the question's `selected_on` are source="backfill" (selection bias, see flag_preselection).
 - Polymarket: the price history lives on clob.polymarket.com, which this environment cannot reach, so only our
   own snapshots from gamma-api: value = Yes price (`outcomePrices`, what Polymarket displays) at the first fetch
   after the W-SUN week ended, period = that week, known_from = the fetch date (UTC midnight, as for every fetched
@@ -294,8 +295,21 @@ def manifold_series(q: dict, now: pd.Timestamp | None = None) -> pd.DataFrame:
     if bets.empty:
         return pd.DataFrame(columns=["period", "value", "known_from"])
     bets = bets.dropna(subset=["probAfter", "createdTime"])
-    return daily_from_trades(pd.to_datetime(bets["createdTime"], unit="ms"), bets["probAfter"],
-                             manifold_end_day(q, now))
+    df = daily_from_trades(pd.to_datetime(bets["createdTime"], unit="ms"), bets["probAfter"],
+                           manifold_end_day(q, now))
+    return flag_preselection(df, q)
+
+
+def flag_preselection(df: pd.DataFrame, q: dict) -> pd.DataFrame:
+    """source="backfill" for rows known before the question's selection day, "release" from it on (R3, D3).
+
+    Each value is point-in-time correct (recomputed from the trades), but the question set was chosen on
+    `selected_on` with metadata known only then (traders, life, resolution != CANCEL): a set-level view of G9
+    before that day is survivorship-conditioned. Backfill marks it, as for every history loaded after the fact.
+    """
+    df = df.copy()
+    df["source"] = ["backfill" if kf < pd.Timestamp(q["selected_on"]) else "release" for kf in df["known_from"]]
+    return df
 
 
 def yes_price(market: dict) -> float:

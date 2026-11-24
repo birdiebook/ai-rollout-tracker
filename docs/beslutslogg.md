@@ -266,3 +266,59 @@ Brevet genereras deterministiskt ur ögonblicksbilden (inga LLM-texter i driften
 visas på hemsidan. Grenarnas tillstånd och mått läses bara ur ögonblicksbilden. Prognoser, revideringar och guidance
 läses ur de committade prognosfilerna och tabellen avgränsad till ögonblicksbildens informationsmängd. Ett fel i brevet
 stoppar aldrig ögonblicksbilden.
+
+## 2026-11-23 – Förstapartspriser: Anthropic pausad i väntan på beslut
+
+Spår B5 byggde veckovisa ögonblicksbilder av förstapartspriser. Bara Anthropics prissida gick att nå, eftersom de
+andra fem leverantörernas värdar är blockerade. Anthropics villkor förbjuder automatisk åtkomst till tjänsterna "except
+... where we otherwise explicitly permit it". Det är oklart om `llms.txt` och `robots.txt` räknas som sådant tillstånd.
+Insamlingen är därför pausad (`status="BLOCKED"`, serien stängd) tills Johannes har beslutat. Koden och korskontrollen
+mot LiteLLM finns kvar och stämde exakt för alla 23 aktuella modeller.
+
+**Uppdatering samma dag:** Johannes godkände spåret, och insamlingen av Anthropics prissida är påslagen igen (en
+hämtning per vecka). Serien är fortfarande `publish=False`, eftersom sidan inte anger någon licens för vidarepublicering.
+
+**Slutligt beslut samma dag:** efter genomgång av villkoren valde Johannes rekommendationen att **pausa**
+insamlingen från Anthropics webbplatser (prissidan i B5 och nyhetssidorna i B6). G2 vilar på LiteLLM, som
+korskontrollen bekräftade. Inga återkommande automatiska hämtningar görs från anthropic.com, claude.com eller
+platform.claude.com. Redan hämtade meningar granskas mot sparade hashar.
+
+
+## 2026-11-23 – Våg 1: el, neoclouds och labbens intäkter
+
+- **PJM** (kapacitetsauktioner och lastprognoser) har `publish=False`, eftersom PJM:s villkor för icke-medlemmar
+  förbjuder vidarepublicering. Lastprognoserna lagras som årsversioner: perioden är rapportåret, och värdet är
+  prognosen för år +1, +5 och +10.
+- **ERCOT:s kö för stora laster** är PARTIAL. Siffrorna finns bara som diagram i PDF-presentationer, och ingen serie
+  byggs utan en granskad extraktion.
+- **Neoclouds:** Oracle, CoreWeave, Nebius (6-K, efter dekonsolideringen av Toloka) och IREN. CoreWeaves capex är
+  kassaflödesraden, inte bolagets egen periodiserade capex.
+- **Labbens intäkter:** bara Anthropic har förstapartsuttalanden. Nyhetsrumssiffrorna och S-1:ns definierade
+  "Run-Rate Revenue" är separata serier som aldrig blandas. Anthropic är börsnoterat från 2026-11-19, och reviderade
+  intäkter läggs till via SEC när den första 10-Q:n kommer.
+
+
+## 2026-11-23 – PyPI-historik som onsdagsurval
+
+Exakt daglig PyPI-historik för tolv paket skulle kosta cirka 2,1 TB i BigQuery. Sandboxen ger 1 TB per månad. Historiken
+är därför nedladdningarna en onsdag per vecka (176 GB). Exakta veckosummor hämtas framåt via pypistats, som läser samma
+tabell och stämde exakt med BigQuery på överlappsdagen. npm har exakta veckosummor från 2015 men ingen verifierad licens
+(`publish=False`).
+
+
+## 2026-11-23 – B3 för N2 passerade regeln, men väntar på granskning
+
+B3 (TSMC:s guidance korrigerad för systematisk avvikelse) gav MAE 5,81 mot B2 6,42 och Holm-p 0,038 i steg 2-familjen.
+Spåret bytte huvudmodell mekaniskt, men CLAUDE.md kräver en oberoende granskning per positivt resultat som ska
+användas. Bytet är därför återställt (`n2.CHAMPION = "B2"`), och B3 följer med som skugga. Granskningen R7 görs före den
+första skarpa N2-prognosen 2026-12-05. N3–N6: inga varianter passerade, och B1 är huvudmodell.
+
+
+## 2026-11-23 – R5:s tolkningsfrågor avgjorda
+
+Johannes valde rekommendationerna:
+- **F2:** B4:s tolkning 7 tillämpas som den står. H20-nedskrivningen kodas −2, och 2026Q2 blir 0.
+- **F4–F6:** granskningens läsning gäller. Microsofts koder för 2025Q1 (0) och 2024Q2 (+1) läggs till, och de 8
+  produkttalen kodas eller listas under "Inte kodat".
+
+Rättningarna F1–F14 görs i ett eget spår efter att kvoten har återställts.

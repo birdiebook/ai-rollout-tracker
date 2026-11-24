@@ -436,9 +436,8 @@ def branch_section(code: str, inp: Inputs) -> list[str]:
 
 
 def _next_origin(sub: str, after: pd.Timestamp, horizon: int = 200) -> tuple[str, str] | None:
-    fn = pipeline.n1_due if sub == "n1" else pipeline.n2_due
     for i in range(1, horizon):
-        dd = fn(after + pd.Timedelta(days=i))
+        dd = pipeline.due_for(sub, after + pd.Timedelta(days=i))
         if dd is not None:
             return str(dd.origin.date()), dd.period
     return None
@@ -477,7 +476,7 @@ def nowcasts(inp: Inputs) -> tuple[list[str], list[str]]:
         if new:
             lines += [f"Nya skarpa prognoser med prognosdag i {month_sv(inp.month)}:", ""]
             for origin, d, path in new:
-                period = d.get("quarter") or d.get("month")
+                period = d.get("quarter") or d.get("month") or d.get("period")
                 if show:
                     vs = ", ".join(f"{v} {value_text((d.get('variants') or {}).get(v))}" for v in variants
                                    if v != d.get("champion"))

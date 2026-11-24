@@ -247,9 +247,13 @@ def _spec(measure: str, company: str | None) -> Spec:
         key, who = f"{measure}_{company}", COMPANIES[company][0]
         note = _describe(measure, company)
         fetch = _fetch(company_series, measure, company)
+    # CoreWeave's 10-K lands ~61 days after Q4 (observed 38-61 days, track A2b): largest gap + 92 + 30 days.
+    max_age = 183 if company == "crwv" else None
+    if max_age:
+        note += " Aktualitet: CoreWeaves 10-K kommer upp till 61 dagar efter kvartalet, gräns 183 dagar."
     return Spec(key=key, branch="G5", label=f"{label}, {who}", unit="MUSD", freq="Q", source=sec_series.SOURCE,
                 fetch=fetch, lag_days=LAG.get(company, 25), license=sec_series.LICENSE, revised=True, publish=True,
-                question=question, note=note)
+                question=question, note=note, max_age_days=max_age)
 
 
 SPECS = ([_spec(m, c) for m in MEASURES for c in QUARTERLY[m]]

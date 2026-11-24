@@ -1,0 +1,7 @@
+utc,git_sha,target,variant,period,n,MAE,dm_p_vs_baseline
+2026-11-23T21:43:32Z,3f5b201,rev_nvda_datacenter,B0,full 2019Q2..2026Q2,29,17.4523,
+2026-11-23T21:43:32Z,3f5b201,rev_nvda_datacenter,B1,full 2019Q2..2026Q2,29,13.9205,
+2026-11-23T21:43:32Z,3f5b201,rev_nvda_datacenter,B2,full 2019Q2..2026Q2,29,10.5916,0.0493
+2026-11-23T21:43:32Z,3f5b201,rev_nvda_datacenter,B0,2023Q1- 2023Q1..2026Q2,14,22.8823,
+2026-11-23T21:43:32Z,3f5b201,rev_nvda_datacenter,B1,2023Q1- 2023Q1..2026Q2,14,15.3527,
+2026-11-23T21:43:32Z,3f5b201,rev_nvda_datacenter,B2,2023Q1- 2023Q1..2026Q2,14,10.7773,0.089

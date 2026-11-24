@@ -60,7 +60,11 @@ def test_one_year_has_12_n2_and_4_n1_origins_never_on_the_same_day():
     days = pd.date_range("2026-01-01", "2026-12-31")
     found = [(day, d.nowcast) for day in days for d in pipeline.due(day)]
     assert sum(k == "n2" for _, k in found) == 12 and sum(k == "n1" for _, k in found) == 4
-    assert len({day for day, _ in found}) == 16
+    assert len({day for day, k in found if k in ("n1", "n2")}) == 16
+    # step 2: N4 and N6 share N1's origin; N3 has four Nvidia origins of its own (fiscal quarter end + 14 days)
+    n1_days = {day for day, k in found if k == "n1"}
+    assert {day for day, k in found if k in ("n4", "n6")} == n1_days
+    assert sum(k == "n3" for _, k in found) == 4 and not {day for day, k in found if k == "n3"} & n1_days
 
 
 def test_due_cli_writes_step_outputs(tmp_path, monkeypatch, capsys):
@@ -252,7 +256,7 @@ def test_scorecard_never_scores_an_outcome_known_at_origin(tmp_path):
 
 def test_scorecard_on_empty_forecasts_dir(tmp_path):
     md = pipeline.scorecard(tmp_path, observations._empty(), today="2026-11-23").read_text(encoding="utf-8")
-    assert md.count("Inga skarpa prognoser än.") == 2
+    assert md.count("Inga skarpa prognoser än.") == len(pipeline.NOWCASTS)
 
 
 # ------------------------------------------------------------------ weekly and SEC requirement

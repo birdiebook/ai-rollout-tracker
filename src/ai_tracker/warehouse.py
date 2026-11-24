@@ -29,12 +29,16 @@ import pandas as pd
 
 from ai_tracker import catalog, observations
 from ai_tracker.observations import to_periods
+from ai_tracker.sources import plans as _plans
 
 # Series with an accepted gap, and why. Keep this short.
 KNOWN_GAPS: dict[str, str] = {
+    "lab_rev_anthropic_company_run_rate": "self-reported figures on irregular dates (period = the stated date)",
+    "lab_rev_anthropic_claude_code_run_rate": "self-reported figures on irregular dates (period = the stated date)",
     "guid_capex_msft_q_lo": "Microsoft gives a capex number for the next quarter only in some calls; else a direction",
     "guid_capex_msft_q_dir_qoq": "2025Q3 was guided as a number (over $30bn), not as a direction",
 }
+KNOWN_GAPS.update(_plans.known_gaps())  # D1 plan series are sparse by design (docs/kallor/planer.md)
 
 # Company AI KPIs (track B4) are stated irregularly; the series module lists its gapped series with the reason.
 from ai_tracker.series.ai_kpis import KNOWN_GAPS as _AI_KPI_GAPS  # noqa: E402
@@ -53,6 +57,8 @@ KNOWN_STALE: dict[str, tuple[str, str]] = {
     # month (2026-11) is known from 2026-12-31 (first day of the next month + 30 days).
     "g1_epoch_bench_frontier_spireclimb": ("2027-01-07", "new series: first month known 2026-12-31"),
     "g1_epoch_bench_runs_spireclimb": ("2027-01-07", "new series: first month known 2026-12-31"),
+    # Track B5: own first-party price snapshots from 2026-11-23, no backfill; the first complete month (2026-11) is
+    # known 2026-12-01 and computed by the first weekly run after that (Monday 2026-12-07).
 }
 
 PERIOD_DAYS = {"D": 1, "W": 7, "2W": 14, "M": 31, "Q": 92}

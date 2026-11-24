@@ -493,7 +493,7 @@ def merge_live(errors: pd.DataFrame, known_from: pd.Series, live: pd.DataFrame,
 
 
 def live_block(logs: dict, errors: pd.DataFrame, known_from: pd.Series, origin,
-               quantiles=QUANTILES, levels=LEVELS, live_index=None) -> dict:
+               quantiles=QUANTILES, levels=LEVELS, live_index=None, additive: bool = False) -> dict:
     """The `distribution` block of a live forecast file.
 
     logs: model -> 100 * log forecast (NaN if unavailable). errors: the backtest errors per model (columns), index
@@ -501,7 +501,10 @@ def live_block(logs: dict, errors: pd.DataFrame, known_from: pd.Series, origin,
     Per model: the stored distribution (method, pool and t parameters, so the scorecard rebuilds exactly this
     distribution), quantiles and central intervals of the outcome in levels, Q_y(p) = f * exp(-Q_e(1-p)/100) (F-C1).
     `errors` already includes the live errors (merge_live, F-C4); n_live counts the pool's errors from live files.
+    additive (N5, shares): `logs` are the forecasts themselves and errors are forecast - outcome in percentage points,
+    so Q_y(p) = f - Q_e(1-p) is reported without the exp transform.
     """
+    out_level = (lambda x: float(x)) if additive else (lambda x: float(math.exp(x / 100)))
     origin = pd.Timestamp(origin)
     models = {}
     for v, f in logs.items():
@@ -517,10 +520,10 @@ def live_block(logs: dict, errors: pd.DataFrame, known_from: pd.Series, origin,
         q = d.outcome_quantiles(float(f), quantiles)
         qi = {L: (f - d.quantile((1 + L) / 2), f - d.quantile((1 - L) / 2)) for L in levels}
         models[v] = {**d.to_json(), "n_live": n_live,
-                     "quantiles": {quantile_key(p): float(math.exp(x / 100)) for p, x in q.items()},
-                     "intervals": {level_key(L): [float(math.exp(lo / 100)), float(math.exp(hi / 100))]
-                                   for L, (lo, hi) in qi.items()}}
-    return {"registered": REGISTER_REF, "space": "100 * log, error = forecast - outcome",
+                     "quantiles": {quantile_key(p): out_level(x) for p, x in q.items()},
+                     "intervals": {level_key(L): [out_level(lo), out_level(hi)] for L, (lo, hi) in qi.items()}}
+    space = "percentage points, error = forecast - outcome" if additive else "100 * log, error = forecast - outcome"
+    return {"registered": REGISTER_REF, "space": space,
             "min_errors": MIN_ERRORS, "min_empirical": MIN_EMPIRICAL,
             "quantile_levels": [quantile_key(p) for p in quantiles], "interval_levels": [level_key(L) for L in levels],
             "models": models}

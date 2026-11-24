@@ -17,8 +17,8 @@ comparatives are later versions with the later filing date. A tag priority list 
 
 Formulas. Some measures are sums of tags (cash + marketable securities, current + noncurrent debt) or fall back
 between such sums. sum_frames adds component vintages (a quarter exists once every component has a value, each
-version dated by the latest component); first_available takes each quarter from the first formula that has it,
-with that formula's own vintages only.
+version dated by the latest component); first_available picks the formula per cutoff date: at each filing
+date, each quarter from the first formula that has it with what was filed by then (as balances_at does for tags).
 
 Gap fillers for flows (both dated no earlier than the filings they use):
 - derived_first_quarters: when a company discloses a flow only in some quarters (Meta's interest expense), the
@@ -131,17 +131,32 @@ def sum_frames(frames: list[pd.DataFrame]) -> pd.DataFrame:
 
 
 def first_available(frames: list[pd.DataFrame]) -> pd.DataFrame:
-    """Each period from the first frame that has it (that frame's vintages only)."""
-    taken: set[str] = set()
-    parts = []
-    for f in frames:
-        f = f[["period", "value", "known_from"]]
-        new = f[~f["period"].isin(taken)]
-        taken |= set(new["period"])
-        parts.append(new)
-    if not parts:
+    """Formula fallback per cutoff date: at every known_from d, each period from the first frame that has it by d.
+
+    As balances_at does for tags: the formula is chosen with only what was filed by d, so a later filing that
+    tags a missing component (e.g. as a comparative) cannot retroactively drop the fallback's earlier version.
+    A row is emitted when a period is new or its value changes by more than sec.TOL (frames are in MUSD), so an
+    unchanged value keeps its first publication date and a formula switch with a new value is a revision.
+    """
+    frames = [f[["period", "value", "known_from"]].sort_values("known_from", kind="stable") for f in frames]
+    frames = [f for f in frames if not f.empty]
+    if not frames:
         return pd.DataFrame(columns=["period", "value", "known_from"])
-    return pd.concat(parts, ignore_index=True).sort_values(["known_from", "period"], ignore_index=True)
+    cutoffs = sorted(set().union(*(set(f["known_from"]) for f in frames)))
+    last: dict[str, float] = {}
+    rows = []
+    for d in cutoffs:
+        chosen: dict[str, float] = {}
+        for f in frames:
+            known = f[f["known_from"] <= d]
+            for p, v in known.groupby("period", sort=False)["value"].last().items():
+                chosen.setdefault(p, float(v))
+        for p, v in sorted(chosen.items()):
+            if p not in last or abs(last[p] - v) > sec.TOL * 1e-6:
+                last[p] = v
+                rows.append((p, v, d))
+    return pd.DataFrame(rows, columns=["period", "value", "known_from"]).sort_values(
+        ["known_from", "period"], ignore_index=True)
 
 
 # ------------------------------------------------------------------ gap fillers for flows
