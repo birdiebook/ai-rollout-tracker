@@ -108,9 +108,17 @@ def combine(base: pd.DataFrame, track: pd.DataFrame, hide: list[str] | set[str] 
         return track.reset_index(drop=True)
     # Only base rows that the track overrides go; duplicates inside one layer are left as they are (the fetch
     # log has one row per fetch call, so two calls on one day are two rows).
-    won = pd.MultiIndex.from_frame(track[key].astype(str))
-    base = base[~pd.MultiIndex.from_frame(base[key].astype(str)).isin(won)]
+    won = _key_index(track, key)
+    base = base[~_key_index(base, key).isin(won)]
     return pd.concat([base, track[base.columns]], ignore_index=True)
+
+
+def _key_index(df: pd.DataFrame, key: list[str]) -> pd.MultiIndex:
+    """`key` as strings with one fixed timestamp format: `astype(str)` drops the time of day only when every value
+    in the column is midnight, so a base with intraday known_from (daily series) would never match a track row."""
+    cols = {c: (pd.to_datetime(df[c]).dt.strftime("%Y-%m-%dT%H:%M:%S.%f").fillna("NaT")
+                if pd.api.types.is_datetime64_any_dtype(df[c]) else df[c].astype(str)) for c in key}
+    return pd.MultiIndex.from_frame(pd.DataFrame(cols, index=df.index))
 
 
 def _empty() -> pd.DataFrame:
