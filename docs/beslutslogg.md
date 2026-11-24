@@ -393,3 +393,14 @@ Johannes valde rekommendationerna:
 - **Microsofts sänkning för 2026** (`msft-29`) räknas inte som revidering, på grund av definitionsbrottet R5-F14. Utan
   regeln hade det rullande indexet för 2026Q4 varit 0,62 i stället för 0,67. Båda redovisas i
   `docs/resultat/f1_revideringar.md`.
+
+## 2026-11-24 – R11: granskning av F1 (revideringar och överraskning)
+
+- **GODKÄND MED ANMÄRKNINGAR** (`docs/granskning/r11_revideringar.md`). Datering och kod håller, och as_of-trunkering
+  på verklig data ger identiska värden på 14 datum.
+- **Huvudvärdet ändras (R11-1).** CSV:n saknar Microsofts siffra från samtalet 2026-07-29 (cirka 175 mdr på den
+  smalare basen). Brottet R5-F14 ligger mellan `msft-26` och den raden, så `msft-29` (170 mdr) är en revidering nedåt
+  på samma bas. Rullande 2026Q4 blir 0,62, inte 0,67. "Ingen revidering nedåt sedan 2024" gäller inte.
+- Rättningsspåret tar R11-1 och R11-2 före merge (stängningsversionen ska vänta tills kvartalets sista dag har
+  passerat) och R11-3 – R11-10 i samma spår. Ägaren avgör om `guid_capex_meta/googl` ska publiceras, eftersom F1:s
+  serier i dag kringgår deras `publish=False` (R11-4).
