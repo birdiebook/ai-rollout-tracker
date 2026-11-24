@@ -98,7 +98,8 @@ def cut_context(ctx: Context, date: pd.Timestamp, max_fetched: str | None) -> Co
     if max_fetched:
         keep &= t["fetched_at"] <= pd.Timestamp(max_fetched) + pd.Timedelta(days=1) - pd.Timedelta(microseconds=1)
     return Context(t[keep].reset_index(drop=True), specs=ctx.specs, forecasts=ctx.forecasts, core=ctx.core,
-                   derived=ctx.derived, selection=ctx.selection)
+                   derived=ctx.derived, selection=ctx.selection,
+                   reconciliations=ctx.reconciliations)
 
 
 def reconstruct(when: pd.Timestamp, ctx: Context) -> dict:

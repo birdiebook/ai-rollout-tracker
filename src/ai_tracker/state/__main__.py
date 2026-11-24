@@ -11,6 +11,7 @@ import pandas as pd
 
 from ai_tracker import observations
 from ai_tracker.state import snapshot
+from ai_tracker.state.branch import reconciliations
 from ai_tracker.state.measures import Context
 
 
@@ -54,9 +55,15 @@ def main(argv: list[str] | None = None) -> int:
         _gh_output(written=str(rel))
         return 0
     if a.cmd == "show":
-        for code, br in snapshot.compute(a.date, Context(observations.load())).items():
+        ctx = Context(observations.load())
+        for code, br in snapshot.compute(a.date, ctx).items():
             print(f"{code}  index {_fmt(br['index'])}  {br['state']:28s} n={br['n_series']} "
                   f"(+{br['n_up']} 0:{br['n_neutral']} -{br['n_down']})")
+        rec = reconciliations(pd.Timestamp(a.date).normalize(), ctx)
+        print(f"{rec['group']} (inte i något grenindex)")
+        for m in rec["series"]:
+            print(f"  {m['series']:16s} {m.get('latest_period', '–'):8s} nivå {_fmt(m.get('level'))}  "
+                  f"takt {_fmt(m.get('pace'))}  förändring {_fmt(m.get('change_in_pace'))}  {m.get('reason', '')}")
         return 0
     if a.cmd == "backcast":
         df = snapshot.backcast(a.start, a.end, out=Path(a.out) if a.out else None)
