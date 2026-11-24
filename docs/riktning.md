@@ -248,7 +248,8 @@ intäkterna för ett frontlabb.
    **Rekommendation: ja.**
 2. **Index v2 med källfamiljer:** officiell regel från första skarpa ögonblicksbilden 2026-11-30, med v1 bredvid,
    eller bara som skugga? **Rekommendation: officiell från 2026-11-30.** Det skarpa registret börjar då, och att byta
-   senare ger ett brott. Ändringen gör tillstånden mer försiktiga och väljer ingen riktning.
+   senare ger ett brott. Ändringen väljer ingen riktning. *Rättelse:* den gör inte tillstånden genomgående mer
+   försiktiga. Se rättelsen i avsnitt 6, förslag 1. Johannes informerades 2026-11-24, och beslutet står.
 3. **Licensnivå:** ska utdata kunna användas kommersiellt av en fond eller bank? **Rekommendation:** sidan förblir
    icke-kommersiell. Lägg till ett fält för kommersiell användbarhet per serie, och välj öppna licenser i nya spår,
    så att en kommersiellt ren delmängd alltid går att räkna fram.
