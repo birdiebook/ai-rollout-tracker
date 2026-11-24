@@ -394,3 +394,13 @@ Johannes valde rekommendationerna:
 - **En familj med en serie som inte får visas** räknas i indexet men namnges inte och får ingen röst i brevet eller på
   sidorna, på samma sätt som serien själv.
 - **Rekonstruktionen** v1 mot v2 väntar på datasnapshoten (`docs/resultat/tillstand.md`, "Index v2").
+
+## 2026-11-24 – R9: granskning av index v2 (K1)
+
+- **Dom: godkänd med anmärkningar** (`docs/granskning/r9_index_v2.md`). Registerposten kom före koden och före alla
+  v2-värden på riktiga data. Familjetabellen täcker varje kärnpost en gång och följer regeln. `branch()`,
+  licensgrinden, ögonblicksbilden och paketet 1.1.0 håller i alla prövade kantfall.
+- **K1 ska vara på `main` före 2026-11-30 22:41 UTC.** Annars skrivs den första skarpa ögonblicksbilden med v1.
+- **Före eller vid mergen:** webbsessionen lägger till "för få källor" (S1). Fixturtestet fallerar i kataloger med den
+  delade rå-cachen, och det fanns före K1 (S2). Registret får en daterad anteckning om att "försiktigare åt båda
+  hållen" inte håller, utan regeländring (S3).
