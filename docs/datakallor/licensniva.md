@@ -5,8 +5,8 @@ varje serie får en klass för kommersiell användning, så att en kommersiellt 
 Nya spår väljer öppna licenser (public domain, CC0, CC BY, MIT) när det finns ett val.
 
 Kod: `src/ai_tracker/licenses.py`. Rapport: `PYTHONPATH=src python -m ai_tracker.licenses report [--markdown]`.
-Tabellerna nedan är genererade med `--markdown` på katalogen i main `dceec75` (488 serier), med rättningarna efter
-granskning R10 (spår X7, 2026-11-24). Kör om rapporten när serier läggs till.
+Tabellerna nedan är genererade med `--markdown` på katalogen efter integrationen av körning 13 (633 serier,
+2026-11-24), med rättningarna efter granskning R10 (spår X7). Kör om rapporten när serier läggs till.
 
 ## Klasserna
 
@@ -56,7 +56,7 @@ I tur och ordning, och det första som gäller avgör:
 | 2 | nyckel | g2_price_at_arena_capability_4o | okänd | tavlorna kommer från LMArenas Space-filer (arena.subset_boards("text")): datasetet är CC BY 4.0, men Space-filerna (belägg och kompletta tabeller) har ingen dokumenterad licens, och Arenas webbvillkor kunde inte läsas |
 | 3 | källa | alfred: /\b(?:AL)?FRED\b\|(?i:stlouisfed\.org)/ | okänd | kopian kommer från FRED eller ALFRED, vars villkor förbjuder användning i samband med maskininlärning; kommersiell användning är inte bedömd (primärkällan vore ja) |
 | 4 | källa | arena-space: /LMArena \(HF-dataset \+ Space-filer\)/ | okänd | datasetet är CC BY 4.0, men Space-filerna (belägg och kompletta tabeller) har ingen dokumenterad licens, och Arenas webbvillkor kunde inte läsas |
-| 5 | källa | curated: källan nämner curated/<fil>.csv | ja / okänd | raderna som serien läser: seriens egna (ROW_SERIES: ai_kpis.csv, lab_revenue.csv), annars bolagets (Kurerad extraktion (curated/<fil>.csv)), annars de som anges i CURATED_READS (12 serier). ja: egen extraktion ur dokument på sec.gov (alla raderna har source_url på sec.gov); okänd: egen extraktion, men ur bolagets egna sidor utan dokumenterade villkor; inga angivna rader: okänd, och validate ger fel. Den mest restriktiva av detta och licensreglerna avgör |
+| 5 | källa | curated: källan nämner curated/<fil>.csv | ja / okänd | raderna som serien läser: seriens egna (ROW_SERIES: ai_kpis.csv, lab_revenue.csv), annars bolagets (Kurerad extraktion (curated/<fil>.csv)), annars de som anges i CURATED_READS (13 serier). ja: egen extraktion ur dokument på sec.gov (alla raderna har source_url på sec.gov); okänd: egen extraktion, men ur bolagets egna sidor utan dokumenterade villkor; inga angivna rader: okänd, och validate ger fel. Den mest restriktiva av detta och licensreglerna avgör |
 | 6 | licens | derived-licence: /^derived: a + b/ | mest restriktiva delen | varje del klassas med reglerna nedan |
 | 7 | licens | unverified: /\bunverified\b/ | okänd | licensen är inte verifierad: villkoren saknas eller kunde inte läsas |
 | 8 | licens | cc-by-nc: /\bCC[ -]?BY-NC\b/ | nej | CC BY-NC: kommersiell användning är inte tillåten |
@@ -83,10 +83,21 @@ I tur och ordning, och det första som gäller avgör:
   `kpi_msft_azure_ai_pts_v2`. I `guidance_capex.csv` och `plans.csv` finns ingen koppling från rad till serie, så där
   gäller bolaget. Alla Microsofts rader där kommer från microsoft.com, så resultatet blir detsamma. Övriga bolag i
   filerna har bara sec.gov-rader och är `ja`.
-- **F1:s poolade revideringsindex blir `okänd`** när F1 mergas (`f1_rev_index_*`, `f1_rev_n_*`, `f1_rev_median_*`).
+- **F1:s poolade revideringsindex är `okänd`** (`f1_rev_index_*`, `f1_rev_n_*`, `f1_rev_median_*`).
   De räknar alla rader i `guidance_capex.csv`, också Microsofts från microsoft.com. Det står i `CURATED_READS`, och
   likaså att överraskningen för Meta och Alphabet bara läser bolagens egna rader (`ja`), och att TSMC:s och Nvidias
-  inte läser filen alls (R10-1).
+  inte läser filen alls (R10-1). Det gäller också känsligheten i US$ (`f1_surprise_tsmc_usd`, X8), som läser TSMC:s
+  6-K och är `ja`. Efter X8 har de tio F1-serier som läser filen alla `guid_capex_*` som komponenter (R11-4). Därför
+  blir också överraskningarna för Meta och Alphabet `okänd`, via Microsofts rader. `ja` är TSMC:s, Nvidias och US$-
+  känsligheten.
+- **Körning 13:s nya serier är `ja`, utom de tio F1-serier som läser den kurerade filen.** Avskrivningar och PP&E (P1),
+  avstämningarna för intäktskravet (P2b) och TSMC:s capex-utsikt och US$-intäkt (F1) kommer från sec.gov.
+  Nyttjandeperioderna (P2a) är en egen extraktion, och alla rader i `curated/useful_lives.csv` har källa på sec.gov.
+  BEA:s releasearkiv och BLS flatfiler (M1) är federala verk, och BLS säger "public domain material"
+  ([kallor/makro_bea_bls.md](../kallor/makro_bea_bls.md)). Census-importen (M2) är ett federalt verk, och API:ts
+  metadata anger CC0. API-villkoren kräver en notis, som står i `Spec.notice` och visas med serien
+  ([kallor/census_hs.md](../kallor/census_hs.md)). Notisen hindrar inte kommersiell användning. Ingen ny regel behövdes:
+  alla licenstexter träffar en befintlig regel.
 - **Census M3 via ALFRED är `okänd`.** Seriemärkningen är "Public Domain: Citation Requested", men kopian kommer från
   FRED, och FRED:s villkor förbjuder användning "in connection with the development or training of any software
   program or system or machine learning" ([datakallor/g6_g7_g8.md](../datakallor/g6_g7_g8.md)). Med en Census
@@ -131,6 +142,8 @@ Länken går till dokumentet som citerar licenstexten.
 | Anthropics nyhetsrum | 2 | okänd | curated | egen extraktion, men ur bolagets egna sidor utan dokumenterade villkor: seriens rader i curated/lab_revenue.csv kommer från www.anthropic.com, och bara sec.gov är kontrollerad (bolag: anthropic) | [kallor/labbintakter.md](../kallor/labbintakter.md) |
 | Anthropics prissida × Epoch AI | 1 | okänd | derived-licence | härledd ur Anthropic pricing page okänd, Epoch AI benchmarking hub ja; den mest restriktiva delen avgör (ingen öppen licens, eller vidarespridning inte kontrollerad) | [kallor/priser.md](../kallor/priser.md) |
 | Census M3 via ALFRED | 1 | okänd | alfred | kopian kommer från FRED eller ALFRED, vars villkor förbjuder användning i samband med maskininlärning; kommersiell användning är inte bedömd (primärkällan vore ja) | [datakallor/g6_g7_g8.md](../datakallor/g6_g7_g8.md) |
+| F1: revideringar och överraskning (härledda) | 6 | okänd | curated-reads | egen extraktion, men ur bolagets egna sidor utan dokumenterade villkor: filens rader i curated/guidance_capex.csv kommer också från www.microsoft.com, och bara sec.gov är kontrollerad (bolag: alla bolag) | [kallor/guidance.md](../kallor/guidance.md) |
+| F1: revideringar och överraskning (härledda) | 4 | okänd | derived | härledd: komponenten guid_capex_msft_cy_lo är okänd (egen extraktion, men ur bolagets egna sidor utan dokumenterade villkor: bolagets rader i curated/guidance_capex.csv kommer från www.microsoft.com, och bara sec.gov är kontrollerad (bolag: msft)) | [kallor/guidance.md](../kallor/guidance.md) |
 | GH Archive | 12 | okänd | no-open-licence | ingen öppen licens, eller vidarespridning inte kontrollerad | [kallor/github_ai.md](../kallor/github_ai.md) |
 | Kurerad extraktion: AI-nyckeltal | 29 | okänd | curated | egen extraktion, men ur bolagets egna sidor utan dokumenterade villkor: seriens rader i curated/ai_kpis.csv kommer från www.microsoft.com, och bara sec.gov är kontrollerad (bolag: msft) | [kallor/ai_nyckeltal.md](../kallor/ai_nyckeltal.md) |
 | Kurerad extraktion: AI-nyckeltal | 2 | okänd | curated | egen extraktion, men ur bolagets egna sidor utan dokumenterade villkor: seriens rader i curated/ai_kpis.csv kommer också från www.microsoft.com, och bara sec.gov är kontrollerad (bolag: msft) | [kallor/ai_nyckeltal.md](../kallor/ai_nyckeltal.md) |
@@ -143,20 +156,26 @@ Länken går till dokumentet som citerar licenstexten.
 | SWE-bench | 1 | okänd | unverified | licensen är inte verifierad: villkoren saknas eller kunde inte läsas | [kallor/g1g2_nya.md](../kallor/g1g2_nya.md) |
 | arXiv | 5 | okänd | unverified | licensen är inte verifierad: villkoren saknas eller kunde inte läsas | [kallor/epoch_arxiv.md](../kallor/epoch_arxiv.md) |
 | npm | 10 | okänd | unverified | licensen är inte verifierad: villkoren saknas eller kunde inte läsas | [kallor/utvecklaradoption.md](../kallor/utvecklaradoption.md) |
-| Avstämningar A5 (härledda ur SEC) | 5 | ja | sec | SEC: offentlig information som får kopieras och spridas vidare; egna siffror ur inlämnade dokument; alla komponenter är ja | [kallor/avstamning.md](../kallor/avstamning.md) |
+| Avstämningar A5 (härledda ur SEC) | 10 | ja | sec | SEC: offentlig information som får kopieras och spridas vidare; egna siffror ur inlämnade dokument; alla komponenter är ja | [kallor/avstamning.md](../kallor/avstamning.md) |
 | BEA NIPA | 4 | ja | public-domain | public domain (amerikansk myndighet): fri användning med källhänvisning | [kallor/census_eu.md](../kallor/census_eu.md) |
+| BEA NIPA, releasearkivet | 8 | ja | public-domain | public domain (amerikansk myndighet): fri användning med källhänvisning | [kallor/makro_bea_bls.md](../kallor/makro_bea_bls.md) |
+| BLS, flatfiler (KPI och PPI) | 4 | ja | public-domain | public domain (amerikansk myndighet): fri användning med källhänvisning | [kallor/makro_bea_bls.md](../kallor/makro_bea_bls.md) |
 | Census BTOS | 12 | ja | public-domain | public domain (amerikansk myndighet): fri användning med källhänvisning | [kallor/census_eu.md](../kallor/census_eu.md) |
 | Census C30 | 2 | ja | public-domain | public domain (amerikansk myndighet): fri användning med källhänvisning | [kallor/census_eu.md](../kallor/census_eu.md) |
 | Census FT-900 | 2 | ja | public-domain | public domain (amerikansk myndighet): fri användning med källhänvisning | [kallor/census_eu.md](../kallor/census_eu.md) |
+| Census, import per HS-kod och land (API) | 35 | ja | public-domain | public domain (amerikansk myndighet): fri användning med källhänvisning | [kallor/census_hs.md](../kallor/census_hs.md) |
+| Census, årsfil per land och end-use | 21 | ja | public-domain | public domain (amerikansk myndighet): fri användning med källhänvisning | [kallor/census_hs.md](../kallor/census_hs.md) |
 | EIA Electric Power Monthly | 7 | ja | public-domain | public domain (amerikansk myndighet): fri användning med källhänvisning | [kallor/indeed_vast_eia.md](../kallor/indeed_vast_eia.md) |
 | EIA-930 | 12 | ja | public-domain | public domain (amerikansk myndighet): fri användning med källhänvisning | [kallor/el_datacenter.md](../kallor/el_datacenter.md) |
 | Epoch AI | 13 | ja | cc-by | CC BY 4.0: kommersiell användning tillåten med källhänvisning | [kallor/epoch_arxiv.md](../kallor/epoch_arxiv.md) |
 | Eurostat | 4 | ja | cc-by | CC BY 4.0: kommersiell användning tillåten med källhänvisning | [kallor/census_eu.md](../kallor/census_eu.md) |
+| F1: revideringar och överraskning (härledda) | 3 | ja | sec | SEC: offentlig information som får kopieras och spridas vidare; egna siffror ur inlämnade dokument; alla komponenter är ja | [kallor/guidance.md](../kallor/guidance.md) |
 | Fed G.17 | 2 | ja | public-domain | public domain (amerikansk myndighet): fri användning med källhänvisning | [kallor/fed_g17.md](../kallor/fed_g17.md) |
 | Indeed Hiring Lab | 9 | ja | cc-by | CC BY 4.0: kommersiell användning tillåten med källhänvisning | [kallor/indeed_vast_eia.md](../kallor/indeed_vast_eia.md) |
 | Kurerad extraktion: AI-nyckeltal | 25 | ja | curated | egen extraktion ur dokument på sec.gov: seriens alla rader i curated/ai_kpis.csv kommer från sec.gov (bolag: amzn, googl, meta, msft, nvda) | [kallor/ai_nyckeltal.md](../kallor/ai_nyckeltal.md) |
 | Kurerad extraktion: capex-guidance | 9 | ja | curated | egen extraktion ur dokument på sec.gov: bolagets alla rader i curated/guidance_capex.csv kommer från sec.gov (bolag: amzn, googl, meta) | [kallor/guidance.md](../kallor/guidance.md) |
 | Kurerad extraktion: leasing som inte har börjat | 7 | ja | curated | egen extraktion ur dokument på sec.gov: bolagets alla rader i curated/lease_commitments.csv kommer från sec.gov (bolag: amzn, crwv, googl, meta, msft, orcl) | [kallor/finansiering.md](../kallor/finansiering.md) |
+| Kurerad extraktion: nyttjandeperioder | 30 | ja | curated | egen extraktion ur dokument på sec.gov: bolagets alla rader i curated/useful_lives.csv kommer från sec.gov (bolag: amzn, crwv, googl, meta, msft, orcl) | [kallor/nyttjandeperioder.md](../kallor/nyttjandeperioder.md) |
 | Kurerad extraktion: planer | 32 | ja | curated | egen extraktion ur dokument på sec.gov: bolagets alla rader i curated/plans.csv kommer från sec.gov (bolag: amzn, crwv, googl, meta, orcl) | [kallor/planer.md](../kallor/planer.md) |
 | LMArena, dataset | 1 | ja | cc-by | CC BY 4.0: kommersiell användning tillåten med källhänvisning | [kallor/g1g2_nya.md](../kallor/g1g2_nya.md) |
 | LiteLLM × Epoch AI | 6 | ja | derived-licence | härledd ur LiteLLM model_prices_and_context_window.json ja, Epoch AI benchmarking hub ja; alla delar är ja | [kallor/pris_formaga.md](../kallor/pris_formaga.md) |
@@ -165,15 +184,15 @@ Länken går till dokumentet som citerar licenstexten.
 | SCB | 2 | ja | cc0 | CC0: fri användning, även kommersiell | [kallor/census_eu.md](../kallor/census_eu.md) |
 | SEC EDGAR XBRL, RPO | 13 | ja | sec | SEC: offentlig information som får kopieras och spridas vidare; egna siffror ur inlämnade dokument | [kallor/rpo.md](../kallor/rpo.md) |
 | SEC EDGAR XBRL, RPO | 1 | ja | sec | SEC: offentlig information som får kopieras och spridas vidare; egna siffror ur inlämnade dokument; alla komponenter är ja | [kallor/rpo.md](../kallor/rpo.md) |
-| SEC EDGAR XBRL, companyfacts | 77 | ja | sec | SEC: offentlig information som får kopieras och spridas vidare; egna siffror ur inlämnade dokument | [kallor/sec.md](../kallor/sec.md) |
-| SEC EDGAR XBRL, companyfacts | 9 | ja | sec | SEC: offentlig information som får kopieras och spridas vidare; egna siffror ur inlämnade dokument; alla komponenter är ja | [kallor/sec.md](../kallor/sec.md) |
-| SEC EDGAR XBRL, instanser (Nvidias inköpsåtaganden) | 1 | ja | sec | SEC: offentlig information som får kopieras och spridas vidare; egna siffror ur inlämnade dokument | [kallor/halvledare.md](../kallor/halvledare.md) |
-| SEC EDGAR XBRL, segment | 18 | ja | sec | SEC: offentlig information som får kopieras och spridas vidare; egna siffror ur inlämnade dokument | [kallor/sec_segment.md](../kallor/sec_segment.md) |
+| SEC EDGAR XBRL, companyfacts | 96 | ja | sec | SEC: offentlig information som får kopieras och spridas vidare; egna siffror ur inlämnade dokument | [kallor/sec.md](../kallor/sec.md) |
+| SEC EDGAR XBRL, companyfacts | 12 | ja | sec | SEC: offentlig information som får kopieras och spridas vidare; egna siffror ur inlämnade dokument; alla komponenter är ja | [kallor/sec.md](../kallor/sec.md) |
+| SEC EDGAR XBRL, instanser (Nvidias inköpsåtaganden, P1:s egna taggar) | 4 | ja | sec | SEC: offentlig information som får kopieras och spridas vidare; egna siffror ur inlämnade dokument | [kallor/sec.md](../kallor/sec.md) |
+| SEC EDGAR XBRL, segment | 19 | ja | sec | SEC: offentlig information som får kopieras och spridas vidare; egna siffror ur inlämnade dokument | [kallor/sec_segment.md](../kallor/sec_segment.md) |
 | SEC EDGAR, ASML 6-K | 4 | ja | sec | SEC: offentlig information som får kopieras och spridas vidare; egna siffror ur inlämnade dokument | [kallor/halvledare.md](../kallor/halvledare.md) |
 | SEC EDGAR, Anthropics S-1/A | 1 | ja | curated | egen extraktion ur dokument på sec.gov: seriens alla rader i curated/lab_revenue.csv kommer från sec.gov (bolag: anthropic) | [kallor/labbintakter.md](../kallor/labbintakter.md) |
 | SEC EDGAR, Nebius 6-K | 3 | ja | sec | SEC: offentlig information som får kopieras och spridas vidare; egna siffror ur inlämnade dokument | [kallor/neoclouds.md](../kallor/neoclouds.md) |
 | SEC EDGAR, Nvidias 8-K (guidance) | 5 | ja | sec | SEC: offentlig information som får kopieras och spridas vidare; egna siffror ur inlämnade dokument | [kallor/ai_nyckeltal.md](../kallor/ai_nyckeltal.md) |
-| SEC EDGAR, TSMC 6-K | 11 | ja | sec | SEC: offentlig information som får kopieras och spridas vidare; egna siffror ur inlämnade dokument | [kallor/tsmc_asien.md](../kallor/tsmc_asien.md) |
+| SEC EDGAR, TSMC 6-K | 14 | ja | sec | SEC: offentlig information som får kopieras och spridas vidare; egna siffror ur inlämnade dokument | [kallor/tsmc_asien.md](../kallor/tsmc_asien.md) |
 | Wikimedia Pageviews | 24 | ja | cc0 | CC0: fri användning, även kommersiell | [kallor/trafik.md](../kallor/trafik.md) |
 
 ## Antal per gren
@@ -185,13 +204,13 @@ Alla serier i katalogen.
 | G1 Förmåga | 16 | 12 | 0 | 4 | 3 |
 | G2 Kostnad | 12 | 7 | 0 | 5 | 2 |
 | G3 Användning | 135 | 75 | 13 | 47 | 38 |
-| G4 Intäkter | 53 | 47 | 0 | 6 | 4 |
-| G5 Investeringar och finansiering | 143 | 130 | 0 | 13 | 7 |
-| G6 Utbud och halvledare | 41 | 40 | 0 | 1 | 0 |
-| G7 Fysiska flaskhalsar | 47 | 24 | 21 | 2 | 2 |
+| G4 Intäkter | 54 | 48 | 0 | 6 | 4 |
+| G5 Investeringar och finansiering | 217 | 196 | 0 | 21 | 7 |
+| G6 Utbud och halvledare | 108 | 105 | 0 | 3 | 0 |
+| G7 Fysiska flaskhalsar | 50 | 27 | 21 | 2 | 2 |
 | G8 Arbete och produktivitet | 9 | 9 | 0 | 0 | 0 |
 | G9 Forskning och öppet ekosystem | 32 | 2 | 0 | 30 | 0 |
-| Summa | 488 | 346 | 34 | 108 | 56 |
+| Summa | 633 | 481 | 34 | 118 | 56 |
 
 ## Kommersiellt ren delmängd
 
@@ -209,7 +228,7 @@ Per gren: kärnposterna i måttregistret (avsnitt 5) och källfamiljerna, och va
 | G8 | 9 | 9 | 0 | 0 | 1 | 1 | nej | – |
 | G9 | 5 | 2 | 0 | 3 | 3 | 2 | nej | `g9_arxiv_cs_ai` (okänd), `g9_arxiv_cs_lg` (okänd), `g9_arxiv_cs_cl` (okänd) |
 
-Familjeläsning: preliminär, en registercell per familj utom sammanslagningarna i PROVISIONAL_FAMILIES.
+Familjeläsning: registrets familjetabell (register.entry_families).
 
 **Läsning av tabellen.** Bara antal, inga seriers värden. 68 kärnposter, varav 56 `ja`, 4 `nej` och 8 `okänd`. 37
 familjer, varav 31 har minst en `ja`-post kvar.
@@ -223,12 +242,10 @@ familjer, varav 31 har minst en `ja`-post kvar.
 - **G2 och G8** har en familj var, med eller utan licensfilter.
 
 **Förbehåll.**
-- **Familjerna är en preliminär läsning** tills K1:s familjetabell (`register.entry_families`) är mergad. En
-  registercell är en familj, och celler med samma källa och samma begrepp som bara skiljer sig i geografi, kategori
-  eller bransch delar familj: arXiv (3 kategorier), Eurostat (EU27 och Sverige), G.17 (två branscher) och FT-900 (två
-  länder). Det är samma indelning som K1:s utkast 2026-11-24. När funktionen finns i registret använder rapporten den
-  automatiskt.
-- `g1_epoch_bench_frontier_<valda>` räknas som en post och en familj. Med K1:s regel blir det en familj per vald
+- **Familjerna är registrets familjetabell** (`register.entry_families`, K1). K2:s preliminära läsning
+  (`PROVISIONAL_FAMILIES`) togs bort när K1 var mergad (R10-12). Siffrorna blev desamma: 68 poster, 56 `ja`, 37
+  familjer och 31 kvar.
+- `g1_epoch_bench_frontier_<valda>` räknas här som en post och en familj. I index v2 är det en familj per vald
   benchmark. Alla är Epoch, CC BY 4.0, och alltså `ja`.
 - Spärrar för bakåtfylld historik är ingen licensfråga och ingår inte i tabellen. De nämns ovan där de ändrar bilden.
 
@@ -237,8 +254,8 @@ familjer, varav 31 har minst en `ja`-post kvar.
 - **Ny serie:** licenstexten i `Spec.license` ska träffa en regel. Annars ger `catalog.validate()` fel. Lägg då till en
   regel eller en override med skäl, och citera licenstexten i `docs/kallor/`.
 - **Från `okänd` till `ja`:** läs och citera villkoren i källans dokument, uppdatera `Spec.license`, och kör rapporten.
-  Klassen följer texten. Det som skulle flytta flest serier: microsoft.com-villkoren (44 serier, och F1:s sex
-  poolade index), npm:s villkor (10), arXiv:s API-villkor (5), Space-licensen hos LMArena (5) och en Census
+  Klassen följer texten. Det som skulle flytta flest serier: microsoft.com-villkoren (44 serier, och de tio F1-serier
+  som läser den kurerade filen), npm:s villkor (10), arXiv:s API-villkor (5), Space-licensen hos LMArena (5) och en Census
   API-nyckel för M3 (1).
 - **Serie som läser en kurerad fil utan att vara en extraktion av den:** ange vilka bolags rader den läser i
   `CURATED_READS`, eller koppla raderna till serien i `ROW_SERIES`. Annars blir serien `okänd`, och

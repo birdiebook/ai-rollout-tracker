@@ -363,11 +363,15 @@ def test_core_summary_counts_add_up():
     assert {e for e in by["G7"]["not_ja"]} == {"pjm_lf_peak_dom_h5", "pjm_lf_peak_rto_h5"}
 
 
-def test_provisional_families_name_core_cells():
+def test_core_summary_uses_the_register_families():
+    # R10-12: K2's provisional reading is gone now that K1's register.entry_families is merged
     from ai_tracker.state import register as R
 
-    cells = {name for names in R.CORE_SERIES.values() for name in names}
-    assert set(L.PROVISIONAL_FAMILIES) <= cells
+    assert not hasattr(L, "PROVISIONAL_FAMILIES")
+    for r in L.core_summary():
+        fams = R.entry_families(r["branch"])
+        assert r["reading"] == "register"
+        assert r["families"] == len({fams.get(e, e) for e in R.core_entries(r["branch"])})
 
 
 # ------------------------------------------------------------------ CLI

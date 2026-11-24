@@ -176,6 +176,8 @@ CURATED_READS: dict[str, tuple[str, tuple[str, ...] | None]] = {
     "f1_surprise_index": ("guidance_capex.csv", ("meta", "googl")),
     "f1_surprise_index_n": ("guidance_capex.csv", ("meta", "googl")),
     "f1_surprise_tsmc": ("guidance_capex.csv", ()),
+    # X8 (R11-7): the US$ sensitivity reads tsmc_rev_usd_q and TSMC's US$ guidance (both SEC 6-K), no row of the file
+    "f1_surprise_tsmc_usd": ("guidance_capex.csv", ()),
     "f1_surprise_nvda": ("guidance_capex.csv", ()),
 }
 
@@ -389,34 +391,15 @@ def entry_verdict(entry: str, specs: dict | None = None) -> Verdict:
     return worst(verdict(s, keys) for s in found)
 
 
-# Fallback until the register's source families (track K1, register.entry_families) are merged: one register cell is
-# one family, and cells of the same source and concept that differ only in geography, category or industry share one
-# (the reading in docs/riktning.md: "samma källa och samma begrepp = en familj"). Mirrors K1's draft of 2026-11-24.
-PROVISIONAL_FAMILIES: dict[str, str] = {
-    "g9_arxiv_cs_ai": "g9_arxiv", "g9_arxiv_cs_lg": "g9_arxiv", "g9_arxiv_cs_cl": "g9_arxiv",
-    "eu_ai_ent_eu27": "eu_ai_ent", "eu_ai_ent_se": "eu_ai_ent",
-    "us_ip_semis_m": "us_ip_g17", "us_ip_computers_m": "us_ip_g17",
-    "us_imports_tw_m": "us_imports_ft900", "us_imports_kr_m": "us_imports_ft900",
-}
-
-
-READINGS = {"register": "registrets familjetabell (register.entry_families)",
-            "preliminär": "preliminär, en registercell per familj utom sammanslagningarna i PROVISIONAL_FAMILIES"}
+READINGS = {"register": "registrets familjetabell (register.entry_families)"}
 
 
 def entry_families(branch: str) -> tuple[dict[str, str], str]:
-    """(expanded core entry -> family id, which reading): the register's families when they exist, else the
-    provisional reading above."""
+    """(expanded core entry -> family id, which reading): the register's source families (track K1). K2's provisional
+    reading (PROVISIONAL_FAMILIES) was removed after K1 was merged (R10-12); the numbers were identical."""
     from ai_tracker.state import register as R
 
-    official = getattr(R, "entry_families", None)
-    if official is not None:
-        return official(branch), "register"
-    out = {}
-    for name in R.CORE_SERIES.get(branch, []):
-        for k in R.expand(name):
-            out[k] = PROVISIONAL_FAMILIES.get(name, name)  # a brace cell is one family
-    return out, "preliminär"
+    return R.entry_families(branch), "register"
 
 
 def core_summary(specs: dict | None = None) -> list[dict]:
@@ -445,19 +428,28 @@ SOURCE_GROUPS: list[tuple[str, str, str]] = [
     ("SEC EDGAR XBRL, companyfacts", r"^SEC EDGAR XBRL companyfacts", "kallor/sec.md"),
     ("SEC EDGAR XBRL, RPO", r"^SEC EDGAR XBRL instances \(RPO\)", "kallor/rpo.md"),
     ("SEC EDGAR XBRL, segment", r"^SEC EDGAR XBRL instances \(segment", "kallor/sec_segment.md"),
-    ("SEC EDGAR XBRL, instanser (Nvidias inköpsåtaganden)", r"^SEC EDGAR XBRL instances$", "kallor/halvledare.md"),
+    # Nvidia's purchase commitments and P1's custom concepts (dep_msft, ppe_*_googl) share this source text
+    ("SEC EDGAR XBRL, instanser (Nvidias inköpsåtaganden, P1:s egna taggar)", r"^SEC EDGAR XBRL instances$",
+     "kallor/sec.md"),
     ("Avstämningar A5 (härledda ur SEC)", r"^Härledd \(A5\)", "kallor/avstamning.md"),
     ("SEC EDGAR, TSMC 6-K", r"^SEC EDGAR, TSMC Form 6-K", "kallor/tsmc_asien.md"),
     ("SEC EDGAR, ASML 6-K", r"^SEC EDGAR, ASML Form 6-K", "kallor/halvledare.md"),
     ("SEC EDGAR, Nebius 6-K", r"^SEC EDGAR, Nebius Form 6-K", "kallor/neoclouds.md"),
     ("SEC EDGAR, Nvidias 8-K (guidance)", r"^SEC EDGAR, Nvidia Form 8-K", "kallor/ai_nyckeltal.md"),
     ("SEC EDGAR, Anthropics S-1/A", r"^SEC EDGAR, Anthropic", "kallor/labbintakter.md"),
+    ("F1: revideringar och överraskning (härledda)", r"^Härledd \(F1\)", "kallor/guidance.md"),
     ("Kurerad extraktion: AI-nyckeltal", r"curated/ai_kpis\.csv", "kallor/ai_nyckeltal.md"),
     ("Kurerad extraktion: capex-guidance", r"curated/guidance_capex\.csv", "kallor/guidance.md"),
     ("Kurerad extraktion: planer", r"curated/plans\.csv", "kallor/planer.md"),
     ("Kurerad extraktion: leasing som inte har börjat", r"curated/lease_commitments\.csv", "kallor/finansiering.md"),
+    ("Kurerad extraktion: nyttjandeperioder", r"curated/useful_lives\.csv", "kallor/nyttjandeperioder.md"),
     ("Anthropics nyhetsrum", r"anthropic\.com/news", "kallor/labbintakter.md"),
+    ("BEA NIPA, releasearkivet", r"^BEA NIPA release archive", "kallor/makro_bea_bls.md"),
     ("BEA NIPA", r"^BEA NIPA", "kallor/census_eu.md"),
+    ("BLS, flatfiler (KPI och PPI)", r"^BLS flat file", "kallor/makro_bea_bls.md"),
+    ("Census, import per HS-kod och land (API)", r"^US Census Bureau API, intltrade", "kallor/census_hs.md"),
+    ("Census, årsfil per land och end-use", r"^US Census Bureau, Annual Country by 5-digit End-Use",
+     "kallor/census_hs.md"),
     ("Census BTOS", r"\bBTOS\b", "kallor/census_eu.md"),
     ("Census C30", r"Construction Spending \(C30\)", "kallor/census_eu.md"),
     ("Census FT-900", r"FT-900", "kallor/census_eu.md"),
