@@ -54,6 +54,7 @@ class Context:
     core: dict[str, list[str]] = field(default_factory=lambda: R.CORE_SERIES)
     derived: dict = field(default_factory=lambda: R.DERIVED)
     selection: Callable[[pd.Timestamp], list[str]] = field(default_factory=lambda: _default_selection)
+    reconciliations: list[str] = field(default_factory=lambda: list(R.RECONCILIATIONS))
     by_series: dict[str, pd.DataFrame] = field(init=False)
 
     def __post_init__(self):

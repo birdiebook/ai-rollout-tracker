@@ -17,7 +17,7 @@ import pandas as pd
 
 from ai_tracker import catalog, config, evaluation, observations
 from ai_tracker.state import register as R
-from ai_tracker.state.branch import branch
+from ai_tracker.state.branch import branch, reconciliations
 from ai_tracker.state.measures import Context
 
 SNAPSHOTS = config.REPO / "snapshots"
@@ -77,8 +77,10 @@ def build(when, table: pd.DataFrame | None = None, ctx: Context | None = None) -
                   "min_series": R.MIN_SERIES, "min_history": R.MIN_HISTORY, "pace_lag": R.PACE_LAG,
                   "change_lag": R.CHANGE_LAG, "doubling_window_months": R.DOUBLING_WINDOW,
                   "backfill_gated": sorted(R.BACKFILL_GATED), "backfill_flagged": sorted(R.BACKFILL_FLAGGED),
-                  "own_snapshot_months": R.OWN_SNAPSHOT_MONTHS, "g1_selected_benchmarks": ctx.selection(when)},
+                  "own_snapshot_months": R.OWN_SNAPSHOT_MONTHS, "g1_selected_benchmarks": ctx.selection(when),
+                  "reconciliations": list(ctx.reconciliations)},
         "branches": compute(when, ctx),
+        "reconciliations": reconciliations(when, ctx),
     })
 
 

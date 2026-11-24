@@ -12,6 +12,7 @@ registration (e.g. the G1 and G9 core series) is a data change in this file, not
   24 months of own snapshots (register, change 2026-11-23 on ECI and the Epoch model database).
   BACKFILL_FLAGGED lists backfilled core series that count but carry a flag (training compute).
 - DERIVED defines ratio series that are built from two catalog series (capex_ocf_hyp4).
+- RECONCILIATIONS lists the A5 reconciliation series (group "Avstämningar"), measured but never counted in a branch.
 """
 
 from __future__ import annotations
@@ -85,6 +86,15 @@ OWN_SNAPSHOT_MONTHS = 24
 DERIVED: dict[str, tuple[str, str, float, str, str, str]] = {
     "capex_ocf_hyp4": ("capex_hyp4", "ocf_hyp4", 100.0, "share", "Q", "G5"),
 }
+
+# ------------------------------------------------------------------ A5: reconciliations (register 2026-11-23)
+# Derived catalog series (ai_tracker.series.avstamning). Measured like other quarterly series with the registered
+# pace "y/y change in log(ratio) x100" (method log, also for x_capex_ocf, whose catalog unit is a percentage),
+# change in pace and percentiles as in section 1. Never counted in a branch's diffusion index: they are a separate
+# group in the snapshot, the monthly letter and the site.
+RECONCILIATIONS: list[str] = ["x_capex_cloud", "x_rpo_cover", "x_nvda_capex", "x_debt_capex", "x_capex_ocf"]
+RECONCILIATION_GROUP = "Avstämningar"
+METHOD_OVERRIDES.update({k: "log" for k in RECONCILIATIONS})
 
 # ------------------------------------------------------------------ section 2: branch state
 DEADBAND = 0.25  # x the series' expanding SD of change in pace

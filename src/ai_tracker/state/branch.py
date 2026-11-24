@@ -125,6 +125,10 @@ def branch(code: str, when, ctx: Context) -> dict:
             if key not in ctx.specs and key not in ctx.derived:
                 not_counted.append({"entry": entry, "series": key, "reason": f"{note}: serien saknas i katalogen"})
                 continue
+            if key in R.RECONCILIATIONS:  # register A5: never in a branch index
+                not_counted.append({"entry": entry, "series": key,
+                                    "reason": "avstämning (A5): räknas inte i grenarnas diffusionsindex"})
+                continue
             m = measure(key, when, ctx)
             m["entry"] = entry
             if note:
@@ -150,3 +154,26 @@ def branch(code: str, when, ctx: Context) -> dict:
         "series_used": used,
         "series_not_counted": not_counted,
     }
+
+
+RECONCILIATION_NOTE = ("Avstämningar mellan leden (register A5): härledda kvoter, takt = årsförändring i log(kvot) "
+                       "×100. Räknas inte i grenarnas diffusionsindex.")
+
+
+def reconciliations(when, ctx: Context) -> dict:
+    """Measures of the A5 reconciliation series as of `when` (register 2026-11-23), a group of its own.
+
+    Same measure engine as the branches (as_of(when), expanding statistics); `valid` means the measure is complete
+    (and fresh), never that the series counts anywhere: `in_diffusion` is always False. Keys missing from the
+    catalog of `ctx` are left out (test contexts)."""
+    out = []
+    for key in ctx.reconciliations:
+        if key not in ctx.specs:
+            continue
+        m = measure(key, when, ctx)
+        stale = stale_reason(key, when, ctx)
+        if stale and m["valid"]:
+            m["valid"], m["reason"] = False, stale
+        m["in_diffusion"] = False
+        out.append(m)
+    return {"group": R.RECONCILIATION_GROUP, "in_diffusion": False, "note": RECONCILIATION_NOTE, "series": out}

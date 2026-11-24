@@ -367,9 +367,11 @@ def as_of(series: str, when: pd.Timestamp | str, table: pd.DataFrame | None = No
 
 
 def refresh(keys: list[str] | None = None) -> dict[str, str]:
-    """Fetch every catalog series (or `keys`). One failing source doesn't stop the rest."""
+    """Fetch every catalog series (or `keys`). One failing source doesn't stop the rest.
+
+    Derived series (Spec.components) run last, so they see this run's component rows."""
     status = {}
-    for spec in catalog.ALL:
+    for spec in sorted(catalog.ALL, key=lambda s: bool(s.components)):
         if keys and spec.key not in keys:
             continue
         try:

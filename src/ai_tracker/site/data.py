@@ -19,6 +19,7 @@ from ai_tracker import catalog, config, evaluation, observations, pipeline
 from ai_tracker.nowcast import intervals, n1, n3, n4, n5, n6
 from ai_tracker.nowcast import n2
 from ai_tracker.nowcast import n2 as n2_live
+from ai_tracker.state import branch as BR
 from ai_tracker.state import register as R
 from ai_tracker.state import snapshot as S
 from ai_tracker.state.measures import Context, measure_path
@@ -215,6 +216,9 @@ def withheld_entry(key: str, ctx: Context, counted: bool) -> dict:
     if key in ctx.derived:
         bad = [k for k in ctx.derived[key][:2] if not publishable(k, ctx)]
         reason = "härledd ur serier som inte publiceras: " + ", ".join(bad)
+    elif spec is not None and spec.components and not spec.publish:
+        bad = [k for k in spec.components if not publishable(k, ctx)]
+        reason = "härledd ur serier som inte publiceras: " + ", ".join(bad) if bad else why_withheld(spec)
     else:
         reason = why_withheld(spec)
     return {"key": key, "label": spec.label if spec else key, "source": spec.source if spec else "",
@@ -312,12 +316,14 @@ class Record:
             self.kind, self.label, self.file = "skarp", LIVE_LABEL, snap["_file"]
             self.branches = snap["branches"]
             self.selected = (snap.get("rules") or {}).get("g1_selected_benchmarks")
+            self.reconciliations = snap.get("reconciliations")  # None in a snapshot written before A5
         else:
             self.when = last_month_end(self.today)
             self.month = str(self.when.to_period("M"))
             self.kind, self.label, self.file = "rekonstruerad", RECON_LABEL, None
             self.branches = self.compute(self.month)
             self.selected = ctx.selection(self.when)
+            self.reconciliations = S._clean(BR.reconciliations(self.when, ctx))
         first_live = min(self.live) if self.live else None
         self.first_live = first_live
         self.first_live_date = (self.live[first_live]["date"] if first_live else
@@ -387,6 +393,23 @@ def branch_view(code: str, rec: Record) -> dict:
     if code == "G1" and rec.selected is not None:
         view["selected_benchmarks"] = list(rec.selected)
     return view
+
+
+def reconciliation_view(rec: Record) -> dict:
+    """The A5 reconciliations for the method page: level, pace and change in pace per publishable series, from the
+    same record as the branches (the live snapshot, or the reconstruction). Not part of any branch."""
+    doc = rec.reconciliations
+    if not doc:
+        return {"available": False, "series": [], "withheld": []}
+    shown, withheld = [], []
+    for m in doc.get("series", []):
+        key = m.get("series")
+        if publishable(key, rec.ctx):
+            shown.append(series_entry(m, rec.when, rec.ctx, with_path=False))
+        elif key:
+            withheld.append(withheld_entry(key, rec.ctx, counted=False))
+    return {"available": True, "group": doc.get("group"), "note": doc.get("note"), "date": str(rec.when.date()),
+            "kind": rec.kind, "series": shown, "withheld": withheld}
 
 
 def overview(rec: Record, branches: dict[str, dict]) -> dict:
@@ -547,7 +570,7 @@ def assemble(ctx: Context | None = None, snapshots_dir: Path | None = None, fore
     branches = {code: branch_view(code, rec) for code in catalog.BRANCHES}
     docs = {"oversikt": overview(rec, branches), "prognoser": nowcasts(ctx, Path(forecasts_dir or
                                                                                   config.REPO / "forecasts"), today),
-            "metod": method(ctx), "manadsbrev": letters(Path(letters_dir or config.REPO / "docs" / "manadsbrev")),
+            "metod": {**method(ctx), "reconciliations": reconciliation_view(rec)}, "manadsbrev": letters(Path(letters_dir or config.REPO / "docs" / "manadsbrev")),
             "build": build_meta(rec)}
     for code, v in branches.items():
         docs[f"gren/{code}"] = {"record": rec.meta(), **v}

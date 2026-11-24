@@ -58,6 +58,9 @@ class Spec:
     # freq + lag_days. Override only with a documented reason in `note`.
     max_age_days: int | None = None
     closed: bool = False  # the series has ended (regime closed, table discontinued): no freshness check
+    # Derived from other catalog series (read from the observation table): refreshed after every other series,
+    # and publish=True needs every component publishable.
+    components: tuple[str, ...] = ()
 
 
 def _all() -> list[Spec]:
@@ -94,6 +97,13 @@ def validate(specs: list[Spec] | None = None) -> list[str]:
             errors.append(f"{s.key}: max_age_days must be positive")
         if (s.closed or s.max_age_days is not None) and not s.note.strip():
             errors.append(f"{s.key}: closed or max_age_days needs a reason in note")
+    keys = {**by_key(), **{s.key: s for s in specs}}  # components may live in other modules
+    for s in specs:
+        missing = [c for c in s.components if c not in keys]
+        if missing:
+            errors.append(f"{s.key}: unknown components {missing}")
+        if s.publish and any(c in keys and not keys[c].publish for c in s.components):
+            errors.append(f"{s.key}: publish=True needs every component publishable")
     return errors
 
 
