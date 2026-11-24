@@ -2,7 +2,7 @@
 // the old site. Static half of the check; tests/e2e/smoke.spec.ts checks the requests a real browser makes.
 //   node scripts/check-external-hosts.mjs [build-dir]
 // Fails on: absolute/protocol-relative URLs in src=, srcset=, <link href>, <use href>, CSS url()/@import, and on
-// http(s) URLs in JS/CSS/HTML whose host is not in ALLOWED (string constants that are never fetched).
+// http(s) URLs in JS/CSS whose host is not in ALLOWED (string constants that are never fetched).
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { rel, walk } from './lib.mjs';
@@ -29,7 +29,9 @@ for (const file of walk(build)) {
     for (const m of text.matchAll(/url\(\s*['"]?([^'")]+)/gi)) if (external(m[1])) problems.push(`${name}: url(${m[1]})`);
     for (const m of text.matchAll(/@import\s+(?:url\()?['"]?([^'");\s]+)/gi)) if (external(m[1])) problems.push(`${name}: @import ${m[1]}`);
   }
-  if (/\.(js|css|html)$/.test(file)) {
+  // Code only: in HTML, source links (<a href>, attribution text, inlined data) are shown but never loaded; what HTML
+  // loads is covered by the attribute checks above and by the browser test in tests/e2e/smoke.spec.ts.
+  if (/\.(js|css)$/.test(file)) {
     for (const m of text.matchAll(/https?:\/\/([a-z0-9.-]+\.[a-z]{2,})/gi)) {
       if (!ALLOWED.has(m[1].toLowerCase())) problems.push(`${name}: host ${m[1]}`);
     }
