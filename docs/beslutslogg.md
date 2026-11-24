@@ -374,3 +374,8 @@ Johannes valde rekommendationerna:
   riktningen syns, aldrig värden.
 - **G2:** ett spår bygger pris vid fast Arena-förmåga (referensmodeller i samma topplista, handgranskad
   namnkoppling) med granskning, och registreras som kärnserie först efter granskningen.
+- **G2 Arena-pris underkänt som kärnserie (R8).** Dateringen håller, men serien mäter i praktiken golvet i den billigaste
+  prisnivån (tröskeln binder inte från 2024-07/2025-02), den är en stegfunktion, och variant A:s takt bärs av ett
+  overifierat Mistral-pris. G2 har kvar en räknad kärnserie. Rättningsspåret X5 tar R-1–R-8. Viktigast är ett
+  läckage i `arena.py`: omladdade tavlor (2026-07-07) var daterade till första commit, och det rör även G1:s
+  `g1_arena_text_top`. B från 2024-09 prövas först efter rättningen och en ny granskning.
