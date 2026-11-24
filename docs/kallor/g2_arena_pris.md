@@ -85,9 +85,10 @@ LiteLLM tar inte bort poster när modeller pensioneras, men posten får fältet 
   Bara filen vid månadsslut används, så ett datum som LiteLLM lade till i efterhand påverkar inte tidigare månader
   (inget läckage). Datumen läses med `litellm_prices.deprecations()` (cache `deprecations_v1.parquet`).
 - Referensregeln i avsnitt 1 är oförändrad. Ändringen gäller båda varianterna.
-- Effekt i första bygget, redovisad för granskningen: variant A 2025-05 – 2025-12 och variant B 2025-09 – 2025-12
-  fick en annan modell vid minimum, och 2026-01 – 2026-02 en annan nivå (0,1375 i stället för 0,13125 USD).
-  2026-08 i båda varianterna gick från Mistral Small 3.2 (pensionerad 2026-07-31) till GPT-5 nano.
+- Effekt jämfört med första bygget, redovisad för granskningen: i variant A fick 2025-05 – 2025-12 en annan modell
+  vid minimum (Gemini 1.5 Flash 002 och 2.0 Flash-Lite Preview, samma nivå). I båda varianterna fick 2026-01 –
+  2026-02 GPT-5 nano (0,1375 i stället för 0,13125 USD) och 2026-08 GPT-5 nano i stället för Mistral Small 3.2
+  (pensionerad 2026-07-31; 0,1375 i stället för 0,09 USD). Övriga månader är oförändrade.
 - Regeln skulle också passa `g2_price_at_capability*`, men de serierna ändras inte i det här spåret.
 
 ## 3. Namnkoppling Arena → LiteLLM
