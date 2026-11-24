@@ -26,7 +26,7 @@ kunde göras. HS-serierna är alltså prövade mot dokumentationen och med synte
 |---|---|
 | 1. Saknad nyckel | **OK.** SKIPPED, inga rader och ingen rad i hämtloggen, bevisat på en kopia av den riktiga bastabellen. Undantaget gäller bara serier vars nyckel saknas |
 | 2. Nyckelhygien | **OK.** Nyckeln finns varken i loggar, felmeddelanden, råkopiornas sökvägar eller innehåll. En anmärkning om undantagets `__context__` |
-| 3. Årsfilens datering och värden | **OK.** Alla tio årsrevisioner (2017–2026) ligger 30–38 dagar före `known_from`. 210 av 210 värden stämmer med filen, och filen stämmer med Exhibit 7 och 13 |
+| 3. Årsfilens datering och värden | **OK.** Alla tio årsrevisioner (2017–2026) ligger 31–38 dagar före `known_from`. 210 av 210 värden stämmer med filen, och filen stämmer med Exhibit 7 och 13 |
 | 4. API-anropet och nollregeln | **Anmärkning.** Anropet följer guiden, och guiden stöder nollregeln. Men nollorna fylls över *båda* svarens period, vilket kan ge falska nollor (R13-1). Ett fel upprepas för alla 35 serier (R13-3). Första anropet med nyckel är inte prövat |
 | 5. Nomenklaturbrott | **Anmärkning.** HS-brotten är noterade som registrerat, och HS 2017 från 2017-01 är belagt. I årsfilen finns ett odokumenterat brott i end-use-klassificeringen mellan 2018 och 2019 (R13-4) |
 | 6. Census API:s notis | **Anmärkning.** Notisen står i licenssträngen, men den når inte hemsidan på en framträdande plats (R13-2) |
@@ -256,3 +256,7 @@ notis). En varning när en överhoppad serie redan har rader vore tydligare.
 - R13-1 – R13-5 (strikt xfail)
 
 `python -m pytest -q tests/test_r13_census_hs.py tests/test_census_hs.py`: 35 passerade, 5 xfail.
+Hela sviten (`PYTHONPATH=src python -m pytest -q -p no:cacheprovider`): 1 579 passerade, 3 överhoppade, 6 xfail och
+2 fallerade. De två är kända miljöfel: `test_freshness_as_of_last_fetch` (Arena-prisserierna saknas i basen, och M2:s
+21 årsserier finns bara i spårets `data/` tills de slås ihop med `datamerge`) och
+`test_committed_fixtures_are_the_current_synthetic_bundle` (registrets sha256 och kalenderdatum).
