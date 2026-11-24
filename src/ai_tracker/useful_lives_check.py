@@ -5,8 +5,10 @@ For each sampled row of curated/useful_lives.csv the document is fetched again (
   document is searched for the hash ("moved");
 - every number of the row is in that sentence: lives (life_lo/hi, old_lo/hi) as digits or words ("six", "4.5",
   "four and a half") followed by "year" within a few words, an effect as "$X million/billion" or "$0.xx";
-- a stop row's sentence states no number of years; a stop row with locator "absent" has no candidate sentence
-  naming its asset class with a number of years;
+- for a stop row (the class is no longer stated): no sentence of the document gives a number of years for the
+  asset class, i.e. the class name directly followed by a life ("network equipment Three to 20 years", "computer
+  equipment, two to six years", "over periods of ...") or a life followed by "for (our) <class>" (Amazon's wording);
+  a joint class that only ends in the same words ("servers and network equipment") is not the class;
 - filed and accepted equal EDGAR's filingDate and acceptanceDateTime (submissions API, fetched again).
 
     python -m ai_tracker.useful_lives_check [--frac 0.3] [--seed 20261124]
@@ -57,9 +59,11 @@ def effect_patterns(value: float, unit: str) -> list[str]:
     v = abs(value)
     if unit == "USD per share":
         return [rf"\$\s?{v:.2f}(?!\d)", rf"\$\s?{v:g}(?!\d)"]
-    forms = lambda y: list(dict.fromkeys([f"{y:g}", f"{y:,.0f}" if y == int(y) else f"{y:,}"]))  # noqa: E731
-    return ([rf"\$\s?{re.escape(f)}\s*million" for f in forms(v)]
-            + [rf"\$\s?{re.escape(f)}\s*billion" for f in forms(v / 1000)])
+    millions = list(dict.fromkeys([f"{v:g}", f"{v:,.0f}" if v == int(v) else f"{v:,}"]))
+    b = v / 1000
+    billions = list(dict.fromkeys([f"{b:g}", f"{b:.1f}", f"{b:.2f}"]))  # "$2 billion", "$2.0 billion", "$2.29 billion"
+    return ([rf"\$\s?{re.escape(f)}\s*million" for f in millions]
+            + [rf"\$\s?{re.escape(f)}\s*billion" for f in billions])
 
 
 def numbers_in(row: pd.Series, sentence: str) -> bool:
@@ -67,22 +71,27 @@ def numbers_in(row: pd.Series, sentence: str) -> bool:
     if row["row_type"] == "effect":
         return any(re.search(p, sentence, re.I) for p in effect_patterns(row["effect_value"], row["effect_unit"]))
     if row["row_type"] == "stop":
-        return useful_lives_corpus.YEARS_RE.search(sentence) is None
+        return True  # nothing to find in the sentence; check_row tests that the class is no longer stated
     vals = [row[c] for c in ("life_lo", "life_hi", "old_lo", "old_hi") if pd.notna(row[c])]
     return all(any(re.search(p, sentence, re.I) for p in life_patterns(v)) for v in vals)
 
 
 def class_stated(asset_class: str, text: str) -> bool:
-    """Some sentence of the document names the asset class together with a number of years."""
-    words = re.escape(re.sub(r"\s+", " ", asset_class.strip())).replace(r"\ ", r"\s+")
-    return any(re.search(words, s, re.I) and useful_lives_corpus.YEARS_RE.search(s)
-               for s in guidance_capex.sentences(text))
+    """Some sentence of the document gives a number of years for the asset class (see the module docstring)."""
+    cls = re.escape(re.sub(r"\s+", " ", asset_class.strip())).replace(r"\ ", r"\s+")
+    years = useful_lives_corpus.YEARS_RE.pattern.removeprefix("(?i)")
+    direct = (rf"(?<!\band\s)(?<!\band\s\s)\b{cls}\b[\s,:;()]*(?:are\s+)?(?:generally\s+)?(?:depreciated\s+)?"
+              rf"(?:over\s+(?:a\s+)?(?:periods?\s+(?:of\s+|up\s+to\s+)?)?)?{years}")
+    reverse = rf"{years}\s+(?:[\w,]+\s+){{0,6}}?for\s+(?:our\s+)?{cls}\b"
+    return any(re.search(direct, s, re.I) or re.search(reverse, s, re.I) for s in guidance_capex.sentences(text))
 
 
 def check_row(row: pd.Series, text: str) -> str:
     """'ok' | 'moved' | 'sentence_not_found' | 'number_not_in_sentence' | 'class_still_stated'."""
     if row["locator"] == "absent":
         return "class_still_stated" if class_stated(row["asset_class"], text) else "ok"
+    if row["row_type"] == "stop" and class_stated(row["asset_class"], text):
+        return "class_still_stated"
     sents = guidance_capex.sentences(text)
     k = int(re.search(r"sentence #(\d+)", row["locator"]).group(1))
     at = sents[k] if k < len(sents) else None

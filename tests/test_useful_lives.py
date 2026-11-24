@@ -170,6 +170,13 @@ def test_servers_network_feeds_both_families(df, tmp_path):
     assert ul.series_frame(d2, "amzn", "network", "hi")["value"].tolist() == [6.0]
 
 
+def test_mid_quarter_effective_date(tmp_path):
+    rows = [_row(row_type="change", life_lo="5", life_hi="5", old_lo="4", old_hi="4", effective="2022-06-01",
+                 period_end="2022-08-31", filed="2022-09-13", accepted="2022-09-12T20:00:00.000Z")]
+    hi = ul.series_frame(ul.load(_write(tmp_path, rows)), "amzn", "servers", "hi")
+    assert hi.set_index("period")["value"].to_dict() == {"2022Q1": 4.0, "2022Q2": 5.0}
+
+
 def test_up_to_gives_only_hi(tmp_path):
     d = ul.load(_write(tmp_path, [_row(life_lo="", life_hi="6")]))
     assert ul.series_frame(d, "amzn", "servers", "lo").empty
@@ -258,6 +265,11 @@ def test_check_stop_absent_and_dates():
     row = pd.Series({"row_type": "stop", "locator": "absent", "asset_class": "servers"})
     assert chk.check_row(row, "We depreciate equipment. Buildings 30 years.") == "ok"
     assert chk.check_row(row, "Servers are depreciated over 6 years.") == "class_still_stated"
+    assert chk.check_row(row, "It is three years for our servers and more.") == "class_still_stated"
+    assert chk.check_row(row, "Servers and networking equipment Five to six years.") == "ok"
+    net = pd.Series({"row_type": "stop", "locator": "absent", "asset_class": "networking equipment"})
+    assert chk.check_row(net, "Servers and networking equipment Five to six years.") == "ok"
+    assert chk.check_row(net, "Networking equipment Five to six years.") == "class_still_stated"
     r = pd.Series({"accession": "a", "filed": "2024-02-02", "accepted": "2024-02-01T21:30:00.000Z"})
     assert chk.check_dates(r, {"a": {"filed": "2024-02-02", "accepted": "2024-02-01T21:30:00.000Z"}}) == "ok"
     assert chk.check_dates(r, {"a": {"filed": "2024-02-03", "accepted": "x"}}).startswith("filed_differs")

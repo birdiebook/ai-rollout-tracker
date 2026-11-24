@@ -379,3 +379,16 @@ Johannes valde rekommendationerna:
   overifierat Mistral-pris. G2 har kvar en räknad kärnserie. Rättningsspåret X5 tar R-1–R-8. Viktigast är ett
   läckage i `arena.py`: omladdade tavlor (2026-07-07) var daterade till första commit, och det rör även G1:s
   `g1_arena_text_top`. B från 2024-09 prövas först efter rättningen och en ny granskning.
+
+## 2026-11-24 – P2a: nyttjandeperioder för servrar som katalogserier
+
+- Spåret P2a har extraherat nyttjandeperioderna för servrar och nätverksutrustning hos Microsoft, Alphabet, Amazon,
+  Meta, Oracle och CoreWeave ur 10-K, 10-Q och 8-K 2018–2026: 305 rader med citatplats och SHA-256 (68 policyrader,
+  21 ändringar, 213 effekter med bolagens egna belopp och 3 klassbyten). Reglerna låstes före kodningen
+  (`docs/kallor/nyttjandeperioder.md`).
+- 30 katalogserier i G5, glesa stegvärden daterade med inlämningsdagen. De är inga kärnserier. N7 (P3) läser perioderna
+  så som de var kända på prognosdagen med `useful_lives.in_effect`.
+- Ändringar för en del av flottan (`_SUBSET`, bland annat alla Metas ändringar och Amazons förkortning 2025) blir inga
+  serier men finns i CSV:n och i `useful_lives.changes()`.
+- `publish=True` enligt registret. Kontrollen mot nyhämtade dokument gav 0 fel av 305. Den oberoende granskningen
+  avgör om det står kvar.

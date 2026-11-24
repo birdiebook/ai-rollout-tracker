@@ -176,9 +176,8 @@ def points(df: pd.DataFrame, company: str, family: str) -> pd.DataFrame:
         else:
             eff = pd.Timestamp(r.effective)
             out.append((quarter(eff), r.life_lo, r.life_hi, r.known_from, r.accession, (1, rank), pos, r.id))
-            if pd.notna(r.old_hi):
-                out.append((quarter(eff - pd.Timedelta(days=1)), r.old_lo, r.old_hi, r.known_from, r.accession,
-                            (1, rank), pos, r.id))
+            if pd.notna(r.old_hi):  # the quarter before the effective quarter (Oracle's FY starts on June 1)
+                out.append((quarter(eff) - 1, r.old_lo, r.old_hi, r.known_from, r.accession, (1, rank), pos, r.id))
     cols = ["period", "lo", "hi", "known_from", "accession", "prio", "pos", "id"]
     p = pd.DataFrame(out, columns=cols)
     if p.empty:
