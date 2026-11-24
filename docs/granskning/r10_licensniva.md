@@ -153,3 +153,13 @@ Kontrollerat mot texten som dokumenten citerar. Domen gäller klassen, inte om k
 - Inga observationsvärden lästes, och inga serier hämtades.
 - Ingen rättning gjordes i K2:s kod. Rättningarna i tabellen provades i minnet och i en tillfällig kopia.
 - R10-1:s rättning (felet i `validate`) provades inte i kod, bara regeln för sökning var som helst i källan.
+
+## Rättat i auto14/x7-licensniva
+
+Spår X7, 2026-11-24. Rättat: R10-1 till R10-6 och R10-8. Deras tester i `tests/test_r10_licensniva.py` är vanliga
+tester nu, med samma påståenden. R10-1 rättades med `CURATED_READS` (vilka bolags rader F1:s serier läser) och en
+koppling från rad till serie för `lab_revenue.csv`, i stället för nyckel-overrides. R10-2 rättades med
+nyckel-overrides, R10-3, R10-4 och R10-5 som föreslaget (MIT-regeln godtar också "Licence: MIT"), R10-6 med
+`ai_kpis.series_key` och R10-8 med ett fel för en override med okänd klass. Utfall: 346 `ja`, 34 `nej` och 108
+`okänd`. Det är granskningens 339/34/115 plus de sju Microsoft-serierna från R10-6. Inga kärnposter ändras. Inte
+rättat: anteckningarna R10-7 och R10-9 till R10-12. Att nämna Space-filerna i `arena_price`:s källtext är kvar åt X5.

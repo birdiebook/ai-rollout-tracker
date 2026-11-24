@@ -50,13 +50,15 @@ def _classes(pattern: str) -> set[str]:
     (r"^BEA NIPA", "ja"), (r"BTOS|C30|FT-900", "ja"),  # US government works (17 U.S.C. § 105)
     (r"^Federal Reserve G\.17", "ja"), (r"^EIA", "ja"),  # public domain
     (r"^Eurostat|^Indeed Hiring Lab|^PyPI|^Epoch AI|^METR", "ja"), (r"^SCB|^Wikimedia", "ja"),  # CC BY 4.0, CC0
-    (r"^LiteLLM git-historik", "ja"),  # MIT + CC BY 4.0
+    (r"^LiteLLM git-historik.*× Epoch", "ja"),  # MIT + CC BY 4.0
     (r"^Cloudflare Radar", "nej"),  # CC BY-NC 4.0
     (r"^PJM", "nej"),  # non-members may not republish
     (r"^Census M3 via ALFRED", "okänd"),  # FRED terms (machine learning), not assessed
     (r"^npm|^arXiv|^Manifold|^Polymarket|^SWE-bench", "okänd"),  # unverified
     (r"^AWS Price List|^GH Archive|anthropic\.com/news|Anthropics prissida", "okänd"),  # no open licence / not checked
     (r"^LMArena \(HF-dataset \+ Space-filer\)", "okänd"),
+    (r"^LiteLLM git-historik.*× LMArena", "okänd"),  # the text boards come from the Space files (R10-2)
+    (r"^SEC EDGAR, Anthropic", "ja"),  # the S-1 row of curated/lab_revenue.csv is on sec.gov
 ])
 def test_known_sources_have_their_documented_class(pattern, expected):
     assert _classes(pattern) == {expected}
@@ -69,8 +71,9 @@ def test_known_sources_have_their_documented_class(pattern, expected):
     (cf.LICENSE, "nej"), (pjm.LICENSE, "nej"),
     (npm.LICENSE, "okänd"), (aws_gpu.LICENSE, "okänd"), (firstparty_prices.LICENSE, "okänd"),
     (github_ai.LICENSE_A, "okänd"), (github_ai.LICENSE_B, "okänd"),
-    # the licence text alone says public domain; the ALFRED copy is decided by the source override
-    (census_m3_alfred.LICENSE, "ja"),
+    # the text says public domain, but also FRED's "may be under copyright ... prohibited use" (R10-3); the ALFRED
+    # copy is decided by the source override in any case
+    (census_m3_alfred.LICENSE, "okänd"),
 ])
 def test_licence_rules_on_the_catalog_constants(text, expected):
     assert L.licence_verdict(text).klass == expected
@@ -97,6 +100,11 @@ def test_publish_and_commercial_class_are_orthogonal():
     ("US federal work, free under 17 U.S.C. § 105", "ja", "public-domain"), ("Public domain (agency)", "ja",
                                                                              "public-domain"),
     ("public: see sec.gov/privacy", "ja", "sec"),
+    # R10-3: restrictive wording beats a permissive token, but not the nej rules before it
+    ("CC BY 4.0 / redistribution prohibited", "okänd", "restrictive-wording"),
+    ("all rights reserved", "okänd", "restrictive-wording"),
+    ("MIT License", "ja", "mit"), ("Licence: MIT", "ja", "mit"), ("derived: A (MIT, file) + B (CC0)", "ja",
+                                                                  "derived-licence"),
 ])
 def test_rules_first_match_wins(text, klass, rule):
     v = L.licence_verdict(text)
@@ -108,6 +116,9 @@ def test_mit_is_case_sensitive_and_unmatched_text_raises():
         L.licence_verdict("submit a request; permission required")
     with pytest.raises(L.Unclassified):
         L.licence_verdict("checked")
+    for name in ("MIT Technology Review", "data from MIT CSAIL", "terms of MIT-IBM Watson AI Lab"):  # MIT as a name
+        with pytest.raises(L.Unclassified):
+            L.licence_verdict(name)
 
 
 def test_derived_licence_takes_the_most_restrictive_part():
@@ -116,14 +127,15 @@ def test_derived_licence_takes_the_most_restrictive_part():
     assert v.klass == "okänd" and v.rule == "derived-licence" and "A ja" in v.reason
     assert L.licence_verdict("derived: A (CC BY 4.0) + B (CC BY-NC 4.0) + C (unverified)").klass == "nej"
     with pytest.raises(L.Unclassified):
-        L.licence_verdict("derived: A (MIT) + B (all rights reserved)")
+        L.licence_verdict("derived: A (MIT) + B (terms on the website)")
+    assert L.licence_verdict("derived: A (MIT) + B (all rights reserved)").klass == "okänd"
 
 
 def test_unmatched_licence_is_a_validate_error():
-    errors = catalog.validate([spec("zz_new", license="all rights reserved")])
+    errors = catalog.validate([spec("zz_new", license="terms on the website")])
     assert any(e.startswith("zz_new: licence not classified") for e in errors)
     with pytest.raises(L.Unclassified):
-        L.classify(spec("zz_new", license="all rights reserved"))
+        L.classify(spec("zz_new", license="terms on the website"))
     # an empty licence is reported once, as missing
     assert [e for e in catalog.validate([spec("zz_empty", license="")]) if "zz_empty" in e] == [
         "zz_empty: licence missing (write 'unverified' until checked)"]
@@ -136,7 +148,23 @@ def test_key_override_is_final(monkeypatch):
     monkeypatch.setitem(L.KEY_OVERRIDES, "zz_k", ("nej", "test override"))
     assert L.classify(spec("zz_k", license="CC0")) == ("nej", "test override")
     # also an unmatched licence, and a derived series
-    assert L.classify(spec("zz_k", license="all rights reserved", components=("x",))) == ("nej", "test override")
+    assert L.classify(spec("zz_k", license="terms on the website", components=("x",))) == ("nej", "test override")
+
+
+def test_key_override_with_an_unknown_class_is_an_error(monkeypatch):
+    monkeypatch.setitem(L.KEY_OVERRIDES, "zz_typo", ("okand", "typo"))
+    with pytest.raises(L.Unclassified, match="okand"):
+        L.verdict(spec("zz_typo"))
+    assert all(k in L.CLASSES for k, _ in L.KEY_OVERRIDES.values() if k != "okand")
+    assert {r.klass for r in L.RULES + L.SOURCE_OVERRIDES} <= set(L.CLASSES)
+
+
+def test_arena_price_series_are_overridden_by_key():
+    from ai_tracker.series import arena_price
+
+    for key in arena_price.KEYS.values():  # follows a rename of the keys
+        assert L.verdict(catalog.by_key()[key]).rule == "key-override"
+        assert L.KEY_OVERRIDES[key][0] == "okänd"
 
 
 def test_source_override_beats_the_licence_text():
@@ -145,6 +173,11 @@ def test_source_override_beats_the_licence_text():
     assert L.verdict(spec("zz_bea", license=bea_nipa.LICENSE, source="BEA NIPA flat file")).klass == "ja"
     assert L.verdict(spec("zz_ar", source="LMArena (HF-dataset + Space-filer)")).rule == "arena-space"
     assert L.verdict(spec("zz_ar2", source="LMArena (HF-dataset)")).klass == "ja"
+    # R10-4: a FRED copy too, by the acronym or the host; a word that only contains the letters does not match
+    for source in ("FRED (fred.stlouisfed.org, fredgraph.csv) A34SNO", "St. Louis Fed, api.stlouisfed.org"):
+        v = L.verdict(spec("zz_fred", license="Public Domain: Citation Requested", source=source))
+        assert (v.klass, v.rule) == ("okänd", "alfred")
+    assert L.verdict(spec("zz_alf", license="CC0", source="Alfred's survey (Frederick County)")).klass == "ja"
 
 
 # ------------------------------------------------------------------ curated extractions
@@ -181,9 +214,83 @@ def test_curated_rule_on_the_real_files():
     verdicts, _ = L.classify_all()
     msft = [s.key for s in catalog.ALL if s.source.startswith("Kurerad extraktion (curated/ai_kpis.csv)")
             and "_msft_" in s.key]
-    assert msft and {verdicts[k].klass for k in msft} == {"okänd"}  # partly from microsoft.com
+    # per series since R10-6: a Microsoft KPI is ja when its own rows are all on sec.gov, okänd when some are from
+    # microsoft.com
+    assert msft and {verdicts[k].klass for k in msft} == {"ja", "okänd"}
+    assert {verdicts[k].scope for k in msft} == {"msft"}
+    assert all("seriens" in verdicts[k].reason for k in msft)
+    for name in ("guidance_capex", "plans"):  # no row mapping: by company, and all Microsoft rows are microsoft.com
+        keys = [s.key for s in catalog.ALL if s.source.startswith(f"Kurerad extraktion (curated/{name}.csv)")
+                and verdicts[s.key].scope == "msft"]
+        assert keys and {verdicts[k].klass for k in keys} == {"okänd"}, name
     lease = [s.key for s in catalog.ALL if s.source.startswith("Kurerad extraktion (curated/lease_commitments.csv)")]
     assert lease and {verdicts[k].klass for k in lease} == {"ja"}  # every row from 10-Q/10-K on sec.gov
+
+
+def test_series_naming_a_curated_file_must_declare_its_rows(curated, monkeypatch):
+    lic = "SEC EDGAR: public information (sec.gov/privacy)"
+    s = spec("zz_pooled", license=lic, source="Härledd ur bolagens guidance: curated/fx.csv och SEC EDGAR")
+    v = L.verdict(s, {})
+    assert (v.klass, v.rule) == ("okänd", "curated-undeclared")  # R10-1: never ja through the licence text
+    assert L.undeclared_curated(s) == ["fx.csv"]
+    assert any(e.startswith("zz_pooled: source names curated/fx.csv") for e in catalog.validate([s]))
+    # declared: every row (pooled over companies), some companies' rows, or no row
+    monkeypatch.setitem(L.CURATED_READS, "zz_pooled", ("fx.csv", None))
+    v = L.verdict(s, {})
+    assert (v.klass, v.rule, v.scope) == ("okänd", "curated-reads", "alla bolag") and "www.example.com" in v.reason
+    assert catalog.validate([s]) == []
+    monkeypatch.setitem(L.CURATED_READS, "zz_pooled", ("fx.csv", ("aaa",)))
+    assert (L.verdict(s, {}).klass, L.verdict(s, {}).scope) == ("ja", "aaa")
+    monkeypatch.setitem(L.CURATED_READS, "zz_pooled", ("fx.csv", ()))
+    assert L.verdict(s, {}).rule == "sec"  # reads no row: the licence decides
+    monkeypatch.setitem(L.CURATED_READS, "zz_pooled", ("fx.csv", ("zzz",)))  # a company with no rows
+    assert L.verdict(s, {}).klass == "okänd"
+    monkeypatch.setitem(L.CURATED_READS, "zz_pooled", ("other.csv", None))  # declared for another file
+    assert L.verdict(s, {}).rule == "curated-undeclared"
+    # a key override is final, and then nothing needs declaring
+    monkeypatch.delitem(L.CURATED_READS, "zz_pooled")
+    monkeypatch.setitem(L.KEY_OVERRIDES, "zz_pooled", ("okänd", "test"))
+    assert L.undeclared_curated(s) == [] and catalog.validate([s]) == []
+    # every file named counts: a curated extraction that also names another file must declare that one too
+    s2 = spec("kpi_aaa_x", license=lic, source="Kurerad extraktion (curated/fx.csv), jämförd med curated/gx.csv")
+    assert L.undeclared_curated(s2) == ["gx.csv"] and L.verdict(s2, {}).klass == "okänd"
+
+
+def test_row_series_follows_the_rows_of_the_series(tmp_path, monkeypatch):
+    (tmp_path / "curated").mkdir()
+    (tmp_path / "curated" / "lab_revenue.csv").write_text(
+        "id,lab,scope,measure,value,source_url\n"
+        "a1,lab1,company,RUN_RATE,1,https://www.lab1.example/news/a\n"
+        "a2,lab1,company,RUN_RATE_S1,2,https://www.sec.gov/Archives/edgar/data/1/a.htm\n", encoding="utf-8")
+    monkeypatch.setattr(config, "REPO", tmp_path)
+    lic = "SEC EDGAR: public information (sec.gov/privacy)"
+    src = "Nyhetsrum, kurerad extraktion i curated/lab_revenue.csv"
+    v = L.verdict(spec("lab_rev_lab1_company_run_rate_s1", license=lic, source=src), {})
+    assert (v.klass, v.rule, v.scope) == ("ja", "curated", "lab1")  # same lab, but only its own row counts
+    v = L.verdict(spec("lab_rev_lab1_company_run_rate", license=lic, source=src), {})
+    assert v.klass == "okänd" and "kommer från www.lab1.example" in v.reason  # no "också": no sec.gov row
+    assert L.verdict(spec("lab_rev_lab1_other", license=lic, source=src), {}).rule == "curated-undeclared"
+
+
+def test_curated_reads_name_real_files_and_companies():
+    assert L.CURATED_READS
+    for key, (name, companies) in L.CURATED_READS.items():
+        path = config.REPO / "curated" / name
+        assert path.exists(), key
+        present = {r[0] for r in L._curated_rows(str(path), path.stat().st_mtime)}
+        assert set(companies or ()) <= present, key
+
+
+def test_f1_series_get_the_curated_rule_on_the_rows_they_read():
+    # F1's source and licence (auto13/f1-revideringar series/guidance_revisions.py), on the real guidance_capex.csv:
+    # the pooled revision series read Microsoft's rows from microsoft.com (R10-1); the surprises do not
+    source = ("Härledd (F1) ur bolagens guidance: curated/guidance_capex.csv (granskad i R2), TSMC:s och Nvidias "
+              "guidance i SEC-inlämningar, och utfall ur SEC EDGAR")
+    lic = "SEC EDGAR: public information (sec.gov/privacy); egna kodade värden, bara siffror med källhänvisning"
+    classes = {k: L.verdict(spec(k, license=lic, source=source), {}).klass for k in L.CURATED_READS}
+    assert {k for k, c in classes.items() if c != "ja"} == {"f1_rev_index_4q", "f1_rev_index_q", "f1_rev_n_4q",
+                                                            "f1_rev_n_q", "f1_rev_median_4q", "f1_rev_median_q"}
+    assert set(classes.values()) == {"ja", "okänd"}
 
 
 # ------------------------------------------------------------------ derivation
@@ -279,5 +386,5 @@ def test_cli_report(capsys):
 
 
 def test_report_flags_unclassified_series():
-    text, n = L.report(specs=[spec("zz_new", license="all rights reserved")])
+    text, n = L.report(specs=[spec("zz_new", license="terms on the website")])
     assert n == 1 and "EJ KLASSAD zz_new" in text

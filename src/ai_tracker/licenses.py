@@ -13,16 +13,20 @@ gets a class for commercial use, so that a commercially clean subset can always 
 `verdict(spec)` decides in this order:
 1. KEY_OVERRIDES (series key -> class, reason): final.
 2. SOURCE_OVERRIDES: regexes on Spec.source, for cases where the licence string alone says too much (a copy taken
-   from ALFRED, LMArena's Space files).
-3. Curated extractions ("Kurerad extraktion (curated/<file>.csv)"): "ja" when every row of the series' company in that
-   file has its source_url on sec.gov, otherwise "okänd" (company web pages such as microsoft.com have no documented
-   terms). Only the company and source_url columns are read, never values.
+   from FRED or ALFRED, LMArena's Space files).
+3. Curated files: a series whose source names curated/<file>.csv gets the curated rule on the rows it reads: "ja" when
+   every one of them has its source_url on sec.gov, otherwise "okänd" (company web pages such as microsoft.com have no
+   documented terms). The rows are the series' own (ROW_SERIES), else its company's ("Kurerad extraktion
+   (curated/<file>.csv)", the company is the key token that is a company in the file), else those declared in
+   CURATED_READS. A series that names a curated file without any of these is "okänd", and catalog.validate() reports
+   it. Only identifying columns (company, lab, scope, measure, definition) and source_url are read, never values.
 4. RULES: ordered regexes on Spec.license, the first match wins. A "derived: a + b" licence is classified part by part.
+   A series with a curated rule takes the most restrictive of that rule and its licence.
 Derived series (Spec.components, and the *_hyp4 sums with the member companies named in their label) then take the most
 restrictive class of their own licence and their components: "ja" only if all are "ja", and "nej" before "okänd".
 
 A licence that nothing classifies raises Unclassified, and catalog.validate() reports it, so a new series cannot be
-added without a class.
+added without a class. A key override with a class other than ja, nej or okänd raises Unclassified as well.
 
     python -m ai_tracker.licenses report [--markdown]
 
@@ -88,10 +92,21 @@ RULES: list[Rule] = [
          r"no open licen[cs]e|no (?:data )?licen[cs]e stated|redistribution not checked|not checked for publication"
          r"|ej kontrollerad för publicering", OKAND,
          "ingen öppen licens, eller vidarespridning inte kontrollerad"),
+    # R10-3: wording that limits or hedges a permissive token ("CC BY 4.0 for the docs; data non-commercial") is never
+    # ja. Not nej: which part the limit covers is not parsed, so the class is not assessed.
+    Rule("restrictive-wording",
+         r"non-?commercial|all rights reserved|proprietary|third[- ]party rights|may be (?:under|subject to) copyright"
+         r"|not in the public domain|not verified|personal use only|prohibit|not (?:permitted|allowed)"
+         r"|does not (?:apply|cover)|\bunclear\b", OKAND,
+         "texten begränsar eller reserverar användningen (icke-kommersiell, förbud, upphovsrätt, tredje parts "
+         "rättigheter, oklar eller inte verifierad status); kommersiell användning är inte bedömd"),
     Rule("cc0", r"\bCC0\b", JA, "CC0: fri användning, även kommersiell"),
     Rule("cc-by", r"\bCC[ -]BY[ -]4\.0\b|Creative Commons Attribution 4\.0", JA,
          "CC BY 4.0: kommersiell användning tillåten med källhänvisning"),
-    Rule("mit", r"\bMIT\b", JA, "MIT: kommersiell användning tillåten med licenstexten", flags=0),
+    # MIT as the licence ("MIT (LICENSE ...)", "MIT License", "MIT,", "Licence: MIT"), not as a name (R10-3: "MIT
+    # Technology Review"). Case-sensitive, so "submit" never matches.
+    Rule("mit", r"(?<![\w-])MIT(?=[ -]?\(?(?i:licen[cs]e)|[,)])|(?i:licen[cs]e)\s*:\s*MIT\b", JA,
+         "MIT: kommersiell användning tillåten med licenstexten", flags=0),
     Rule("public-domain", r"17 U\.S\.C\. § ?105|\bpublic domain\b", JA,
          "public domain (amerikansk myndighet): fri användning med källhänvisning"),
     Rule("sec", r"sec\.gov/privacy", JA,
@@ -99,61 +114,154 @@ RULES: list[Rule] = [
 ]
 
 # ------------------------------------------------------------------ overrides
-# By series key: (class, reason). Final, also for derived series. Empty today: every current series is decided by a
-# source override, the curated rule or the licence rules.
-KEY_OVERRIDES: dict[str, tuple[str, str]] = {}
+ARENA_SPACE_REASON = ("datasetet är CC BY 4.0, men Space-filerna (belägg och kompletta tabeller) har ingen "
+                      "dokumenterad licens, och Arenas webbvillkor kunde inte läsas")
+
+# By series key: (class, reason). Final, also for derived series. Prefer these to free-text source patterns (R10-11).
+KEY_OVERRIDES: dict[str, tuple[str, str]] = {
+    # R10-2: the price series read arena.subset_boards("text"), which is built from the Space files (and adds the
+    # Space-only boards of 2025-08-15/22/29), so they rest on the same files as g1_arena_text_*. Their source text does
+    # not name the Space files, so the arena-space source override does not see them.
+    **{k: (OKAND, f"tavlorna kommer från LMArenas Space-filer (arena.subset_boards(\"text\")): {ARENA_SPACE_REASON}")
+       for k in ("g2_price_at_arena_capability", "g2_price_at_arena_capability_4o")},
+}
 
 # By source (regex on Spec.source), before the licence rules.
 SOURCE_OVERRIDES: list[Rule] = [
-    Rule("alfred", r"\bALFRED\b", OKAND,
-         "kopian kommer från ALFRED/FRED, vars villkor förbjuder användning i samband med maskininlärning; "
-         "kommersiell användning är inte bedömd (primärkällan vore ja)"),
-    Rule("arena-space", r"LMArena \(HF-dataset \+ Space-filer\)", OKAND,
-         "datasetet är CC BY 4.0, men Space-filerna (belägg och kompletta tabeller) har ingen dokumenterad licens, "
-         "och Arenas webbvillkor kunde inte läsas"),
+    # R10-4: also a direct FRED copy (fredgraph.csv, fred.stlouisfed.org), not only ALFRED. The acronyms are
+    # case-sensitive, so a word such as "Alfred" does not match.
+    Rule("alfred", r"\b(?:AL)?FRED\b|(?i:stlouisfed\.org)", OKAND,
+         "kopian kommer från FRED eller ALFRED, vars villkor förbjuder användning i samband med maskininlärning; "
+         "kommersiell användning är inte bedömd (primärkällan vore ja)", flags=0),
+    Rule("arena-space", r"LMArena \(HF-dataset \+ Space-filer\)", OKAND, ARENA_SPACE_REASON),
 ]
 
-# Curated extractions: the file named in the source; the company is the key token that is a company in the file.
+# Curated files (step 3 of the module doc).
 CURATED = re.compile(r"^Kurerad extraktion \(curated/([\w.-]+\.csv)\)")
+CURATED_FILE = re.compile(r"\bcurated/([\w.-]+\.csv)")  # any mention of a curated file in Spec.source
 SEC_HOSTS = frozenset({"www.sec.gov", "sec.gov"})
 CURATED_REASON_JA = "egen extraktion ur dokument på sec.gov"
-CURATED_REASON_OKAND = "egen extraktion, men delvis ur bolagets egna sidor utan dokumenterade villkor"
+CURATED_REASON_OKAND = "egen extraktion, men ur bolagets egna sidor utan dokumenterade villkor"
+UNDECLARED_REASON = ("källan nämner curated/{name}, men det är inte angivet vilka rader serien läser (lägg till den i "
+                     "CURATED_READS eller ROW_SERIES)")
+
+
+def _kpi_key(row: dict) -> str | None:
+    from ai_tracker.sources import ai_kpis  # late: keep this module light to import
+
+    return ai_kpis.series_key(row["definition"]) if row.get("definition") else None
+
+
+def _lab_revenue_key(row: dict) -> str | None:
+    # series/lab_revenue.py: one series per (lab, scope, measure). If that key changes, no row maps to the series, it
+    # becomes undeclared (okänd) and catalog.validate reports it.
+    lab, scope, measure = (row.get(c) or "" for c in ("lab", "scope", "measure"))
+    return f"lab_rev_{lab}_{scope}_{measure.lower()}" if lab and scope and measure else None
+
+
+# File -> function(row) -> the series key the row feeds. With a mapping the rule follows the series' own rows, not every
+# row of its company (R10-6). Files without one, and series no row maps to, fall back to the company.
+ROW_SERIES = {"ai_kpis.csv": _kpi_key, "lab_revenue.csv": _lab_revenue_key}
+
+# R10-1: series whose Spec.source names a curated file without being a curated extraction of it, and that no row maps
+# to: whose rows they read. None = every row of the file (pooled over companies), () = no row (the file is only named).
+# The curated rule is applied to those rows.
+CURATED_READS: dict[str, tuple[str, tuple[str, ...] | None]] = {
+    # F1 (series/guidance_revisions.py, track F1): capex_statements reads every row of the file, Microsoft's too
+    **{k: ("guidance_capex.csv", None) for k in ("f1_rev_index_4q", "f1_rev_index_q", "f1_rev_n_4q", "f1_rev_n_q",
+                                                 "f1_rev_median_4q", "f1_rev_median_q")},
+    # the surprises of Meta and Alphabet use their own capex guidance; TSMC's and Nvidia's come from SEC series
+    "f1_surprise_meta_capex": ("guidance_capex.csv", ("meta",)),
+    "f1_surprise_googl_capex": ("guidance_capex.csv", ("googl",)),
+    "f1_surprise_index": ("guidance_capex.csv", ("meta", "googl")),
+    "f1_surprise_index_n": ("guidance_capex.csv", ("meta", "googl")),
+    "f1_surprise_tsmc": ("guidance_capex.csv", ()),
+    "f1_surprise_nvda": ("guidance_capex.csv", ()),
+}
 
 # Members of a *_hyp4 sum, as the label names them ("..., MSFT+GOOGL+AMZN+META").
 MEMBERS = re.compile(r"\b([A-Z]{2,5}(?:\+[A-Z]{2,5})+)\s*$")
 
 
+Row = tuple  # (company, source_url host, series key or None) of one curated row
+
+
 @lru_cache(maxsize=None)
-def _curated_hosts(path: str, mtime: float) -> dict[str, frozenset[str]]:
-    """company -> hosts of its rows' source_url (mtime is part of the cache key)."""
-    hosts: dict[str, set[str]] = defaultdict(set)
+def _curated_rows(path: str, mtime: float) -> tuple[Row, ...]:
+    """(company or lab, host of source_url, series key by ROW_SERIES) per row; mtime is part of the cache key. Only
+    identifying columns are read, never values."""
+    to_key = ROW_SERIES.get(path.replace("\\", "/").rsplit("/", 1)[-1])
+    out = []
     with open(path, newline="", encoding="utf-8") as f:
         for row in csv.DictReader(f):
-            company = (row.get("company") or "").strip().lower()
-            hosts[company].add(urlparse((row.get("source_url") or "").strip()).netloc.lower())
-    return {k: frozenset(v) for k, v in hosts.items()}
+            company = (row.get("company") or row.get("lab") or "").strip().lower()
+            host = urlparse((row.get("source_url") or "").strip()).netloc.lower()
+            out.append((company, host, to_key(row) if to_key else None))
+    return tuple(out)
+
+
+def _rows_verdict(rows: list[Row], name: str, whose: str, scope: str, rule: str) -> Verdict:
+    """ja when every row is on sec.gov, else okänd; `whose` names the rows in the reason ("seriens", "bolagets",
+    "bolagens", "filens")."""
+    hosts = {h for _, h, _ in rows}
+    other = sorted(h or "rader utan källadress" for h in hosts - SEC_HOSTS)
+    if rows and not other:
+        return Verdict(JA, f"{CURATED_REASON_JA}: {whose} alla rader i curated/{name} kommer från sec.gov", rule, scope)
+    if not rows:
+        return Verdict(OKAND, f"curated/{name} har inga rader för serien, så raderna kan inte kontrolleras", rule,
+                       scope)
+    also = "också " if hosts & SEC_HOSTS else ""
+    return Verdict(OKAND, f"{CURATED_REASON_OKAND}: {whose} rader i curated/{name} kommer {also}från "
+                          f"{', '.join(other)}, och bara sec.gov är kontrollerad", rule, scope)
+
+
+def _file_verdict(spec: catalog.Spec, name: str) -> Verdict | None:
+    """The curated rule for one file named in Spec.source (module doc, step 3); None when the series reads no row."""
+    m = CURATED.match(spec.source or "")
+    extraction = m is not None and m.group(1) == name
+    declared = CURATED_READS.get(spec.key)
+    declared = declared if declared is not None and declared[0] == name else None
+    if declared is not None and declared[1] == ():
+        return None
+    undeclared = Verdict(OKAND, UNDECLARED_REASON.format(name=name), "curated-undeclared")
+    path = config.REPO / "curated" / name
+    if not path.exists():
+        if not extraction and declared is None:
+            return undeclared
+        return Verdict(OKAND, f"kurerad extraktion: curated/{name} saknas, så raderna kan inte kontrolleras", "curated")
+    rows = _curated_rows(str(path), path.stat().st_mtime)
+    own = [r for r in rows if r[2] == spec.key]
+    if own:
+        return _rows_verdict(own, name, "seriens", "/".join(sorted({c for c, _, _ in own})), "curated")
+    if extraction:
+        tokens = set(spec.key.lower().split("_"))
+        companies = sorted({c for c, _, _ in rows if c and c in tokens})
+        chosen = [r for r in rows if r[0] in companies] if companies else list(rows)
+        return _rows_verdict(chosen, name, "bolagets" if companies else "filens", "/".join(companies) or "alla bolag",
+                             "curated")
+    if declared is not None:
+        companies = declared[1]
+        if companies is None:
+            return _rows_verdict(list(rows), name, "filens", "alla bolag", "curated-reads")
+        chosen = [r for r in rows if r[0] in companies]
+        return _rows_verdict(chosen, name, "bolagets" if len(companies) == 1 else "bolagens",
+                             "/".join(sorted(companies)), "curated-reads")
+    return undeclared
 
 
 def curated_verdict(spec: catalog.Spec) -> Verdict | None:
-    """The curated rule (see module doc), or None when the source is not a curated extraction."""
-    m = CURATED.match(spec.source or "")
-    if not m:
-        return None
-    name = m.group(1)
-    path = config.REPO / "curated" / name
-    if not path.exists():
-        return Verdict(OKAND, f"kurerad extraktion: curated/{name} saknas, så raderna kan inte kontrolleras", "curated")
-    hosts = _curated_hosts(str(path), path.stat().st_mtime)
-    tokens = set(spec.key.lower().split("_"))
-    companies = sorted(c for c in hosts if c and c in tokens)
-    seen = frozenset().union(*(hosts[c] for c in (companies or list(hosts))))
-    who = "/".join(companies) or "alla bolag"
-    other = sorted(h or "rader utan källadress" for h in seen - SEC_HOSTS)
-    if seen and not other:
-        return Verdict(JA, f"{CURATED_REASON_JA}: bolagets alla rader i curated/{name} kommer från sec.gov", "curated",
-                       who)
-    return Verdict(OKAND, f"{CURATED_REASON_OKAND}: bolagets rader i curated/{name} kommer också från "
-                          f"{', '.join(other)}, och bara sec.gov är kontrollerad", "curated", who)
+    """The curated rule (see module doc) on every curated file Spec.source names, the most restrictive; None when it
+    names none, or the series reads no row of them."""
+    names = dict.fromkeys(CURATED_FILE.findall(spec.source or ""))
+    return worst(v for v in (_file_verdict(spec, n) for n in names) if v is not None)
+
+
+def undeclared_curated(spec: catalog.Spec) -> list[str]:
+    """Curated files named in Spec.source whose rows the series is not known to read (catalog.validate reports them)."""
+    if spec.key in KEY_OVERRIDES:
+        return []
+    names = dict.fromkeys(CURATED_FILE.findall(spec.source or ""))
+    return [n for n in names if (v := _file_verdict(spec, n)) is not None and v.rule == "curated-undeclared"]
 
 
 def _part_name(text: str) -> str:
@@ -180,11 +288,19 @@ def licence_verdict(text: str) -> Verdict:
 
 
 def own_verdict(spec: catalog.Spec) -> Verdict:
-    """The class of the series itself, before its components: source override, curated rule, licence rules."""
+    """The class of the series itself, before its components: source override, else the most restrictive of the
+    curated rule and the licence rules (R10-5: a restrictive licence text is never overruled by sec.gov rows)."""
     for rule in SOURCE_OVERRIDES:
         if rule.matches(spec.source):
             return Verdict(rule.klass, rule.reason, rule.name)
-    return curated_verdict(spec) or licence_verdict(spec.license)
+    lic = licence_verdict(spec.license)
+    cur = curated_verdict(spec)
+    if cur is None:
+        return lic
+    if RANK[lic.klass] > RANK[cur.klass]:
+        return Verdict(lic.klass, f"licenstexten avgör, fast raderna i den kurerade filen är {cur.klass}: {lic.reason}",
+                       lic.rule)
+    return cur
 
 
 def components(spec: catalog.Spec, keys: dict) -> tuple[str, ...]:
@@ -201,6 +317,8 @@ def verdict(spec: catalog.Spec, specs: dict | None = None, _seen: frozenset = fr
     """Commercial-use verdict of one series (see the module doc for the order). Raises Unclassified."""
     if spec.key in KEY_OVERRIDES:
         klass, reason = KEY_OVERRIDES[spec.key]
+        if klass not in CLASSES:  # R10-8: a typo ("okand") would break RANK in every series derived from this one
+            raise Unclassified(f"key override class {klass!r} is not one of {', '.join(CLASSES)}")
         return Verdict(klass, reason, "key-override")
     keys = catalog.by_key() if specs is None else specs
     own = own_verdict(spec)
@@ -423,9 +541,12 @@ def rule_rows() -> list[list]:
     n = len(rows)
     rows += [[n + i, "källa", f"{r.name}: /{r.pattern}/", r.klass, r.reason] for i, r in enumerate(SOURCE_OVERRIDES, 1)]
     n = len(rows)
-    rows.append([n + 1, "källa", "curated: Kurerad extraktion (curated/<fil>.csv)", "ja / okänd",
-                 f"ja: {CURATED_REASON_JA} (alla rader för bolaget har source_url på sec.gov); "
-                 f"okänd: {CURATED_REASON_OKAND}"])
+    rows.append([n + 1, "källa", "curated: källan nämner curated/<fil>.csv", "ja / okänd",
+                 f"raderna som serien läser: seriens egna (ROW_SERIES: {', '.join(ROW_SERIES)}), annars bolagets "
+                 f"(Kurerad extraktion (curated/<fil>.csv)), annars de som anges i CURATED_READS "
+                 f"({len(CURATED_READS)} serier). ja: {CURATED_REASON_JA} (alla raderna har source_url på sec.gov); "
+                 f"okänd: {CURATED_REASON_OKAND}; inga angivna rader: okänd, och validate ger fel. Den mest "
+                 f"restriktiva av detta och licensreglerna avgör"])
     n = len(rows)
     rows.append([n + 1, "licens", "derived-licence: /^derived: a + b/", "mest restriktiva delen",
                  "varje del klassas med reglerna nedan"])

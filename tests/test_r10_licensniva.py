@@ -1,8 +1,9 @@
 """Review R10 of the commercial-use class (track K2, ai_tracker.licenses): docs/granskning/r10_licensniva.md.
 
-Strict xfail tests mark confirmed defects; they turn into XPASS (and fail) once the defect is fixed, so the marker must
-then be removed. The other tests are guards for what the review checked and found correct. Synthetic specs and
-fixtures, no network, no observation values.
+The tests named after a finding (test_r10_<n>_...) were strict xfails for confirmed defects; R10-1 to R10-6 and R10-8
+were fixed in track X7 (auto14/x7-licensniva), and the markers removed with the assertions unchanged. The other tests
+are guards for what the review checked and found correct. Synthetic specs and fixtures, no network, no observation
+values.
 """
 
 from __future__ import annotations
@@ -64,8 +65,6 @@ def curated(tmp_path, monkeypatch):
 # ------------------------------------------------------------------ R10-1 (must_fix): curated file read outside the curated rule
 
 
-@pytest.mark.xfail(strict=True, reason="R10-1: a source that names curated/<file>.csv but does not start with "
-                                       "'Kurerad extraktion (' skips the curated rule; the SEC licence rule gives ja")
 @pytest.mark.parametrize("source", [F1_SOURCE, "Curated extraction (curated/fx.csv): SEC EDGAR and company pages"])
 def test_r10_1_series_reading_a_curated_file_gets_the_curated_rule(curated, source):
     # F1's pooled revision index reads every row of guidance_capex.csv, msft's too, and has no msft component.
@@ -87,9 +86,6 @@ def test_r10_1_guard_company_series_of_the_same_file_stay_ja(curated):
 ARENA_PRICE = ("g2_price_at_arena_capability", "g2_price_at_arena_capability_4o")
 
 
-@pytest.mark.xfail(strict=True, reason="R10-2: the Arena price series read arena.subset_boards('text'), built from the "
-                                       "Space files that make g1_arena_text_* okänd, but are ja (the arena-space "
-                                       "override matches only the source 'LMArena (HF-dataset + Space-filer)')")
 @pytest.mark.parametrize("key", ARENA_PRICE)
 def test_r10_2_arena_price_on_space_boards_is_not_ja(key):
     from ai_tracker.series import arena_price
@@ -130,9 +126,6 @@ ADVERSARIAL = [
 ]
 
 
-@pytest.mark.xfail(strict=True, reason="R10-3: RULES have no restrictive rule for non-commercial, all rights reserved, "
-                                       "proprietary, prohibited, third party rights, hedged or negated public domain, "
-                                       "'not verified'; the MIT rule matches the name MIT")
 @pytest.mark.parametrize("text", ADVERSARIAL)
 def test_r10_3_restrictive_wording_is_never_ja(text):
     assert klass_of(text) != "ja"
@@ -163,8 +156,6 @@ def test_r10_3_guard_proposed_mit_pattern_keeps_litellm():
 # ------------------------------------------------------------------ R10-4 (must_fix): a FRED copy is not caught
 
 
-@pytest.mark.xfail(strict=True, reason="R10-4: SOURCE_OVERRIDES 'alfred' matches only ALFRED; a FRED copy is ja "
-                                       "although the reason names ALFRED/FRED")
 def test_r10_4_fred_copy_is_not_ja():
     s = spec("zz_fred", license="Public Domain: Citation Requested (FRED series tag)",
              source="FRED (fred.stlouisfed.org, fredgraph.csv) A34SNO")
@@ -174,8 +165,6 @@ def test_r10_4_fred_copy_is_not_ja():
 # ------------------------------------------------------------------ R10-5 (should_fix): the curated rule ignores Spec.license
 
 
-@pytest.mark.xfail(strict=True, reason="R10-5: the curated rule replaces the licence rules instead of taking the most "
-                                       "restrictive of the two")
 @pytest.mark.parametrize("license", ["unverified: the exhibit's terms were not read", "CC BY-NC 4.0"])
 def test_r10_5_curated_rule_respects_a_restrictive_licence(curated, license):
     v = L.verdict(spec("kpi_aaa_x", license=license, source="Kurerad extraktion (curated/fx.csv)"), {})
@@ -195,8 +184,6 @@ def _ai_kpis_hosts() -> dict[str, set[str]]:
     return hosts
 
 
-@pytest.mark.xfail(strict=True, reason="R10-6: Microsoft KPI series whose own rows are all on sec.gov are okänd "
-                                       "because other Microsoft rows come from microsoft.com")
 def test_r10_6_msft_kpi_series_with_only_sec_rows_are_ja():
     hosts = _ai_kpis_hosts()
     verdicts, _ = L.classify_all()
@@ -215,7 +202,6 @@ def test_r10_6_guard_msft_kpi_series_with_microsoft_com_rows_are_okand():
 # ------------------------------------------------------------------ R10-8 (note): class of an override is not checked
 
 
-@pytest.mark.xfail(strict=True, reason="R10-8: validate does not check that an override's class is ja/nej/okänd")
 def test_r10_8_validate_rejects_an_override_with_an_unknown_class(monkeypatch):
     monkeypatch.setitem(L.KEY_OVERRIDES, "zz_typo", ("okand", "typo"))
     assert any(e.startswith("zz_typo") for e in catalog.validate([spec("zz_typo")]))

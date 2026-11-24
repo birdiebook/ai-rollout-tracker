@@ -115,6 +115,11 @@ def validate(specs: list[Spec] | None = None) -> list[str]:
                 licenses.verdict(s, keys)
             except licenses.Unclassified as e:
                 errors.append(f"{s.key}: {e}")
+        # a source that names a curated file must say which rows the series reads (R10-1); the class is okänd until then
+        for name in licenses.undeclared_curated(s):
+            errors.append(f"{s.key}: source names curated/{name}, but ai_tracker.licenses does not know which rows the "
+                          f"series reads (start the source with 'Kurerad extraktion (curated/{name})', or add the key "
+                          f"to licenses.CURATED_READS or a key override)")
     return errors
 
 

@@ -402,3 +402,19 @@ bygger på samma Space-filer som gör Arenas texttavlor `okänd`. R10-3: reglern
 poolade revideringsindex blir `ja`, fast de räknar Microsofts guidance från microsoft.com. Det rättas innan F1
 mergas. Alla rättningar är små. Tillsammans ändrar de bara Arenas två prisserier, till `okänd`, och inga
 kärnposter. Sju Microsoft-serier med bara SEC-rader är för restriktivt klassade (R10-6), men det är inte bråttom.
+
+## 2026-11-24 – X7: rättning av licensnivån efter R10
+
+Fynden R10-1 till R10-6 och R10-8 är rättade på grenen `auto14/x7-licensniva`. Katalogen på `dceec75` blir 488
+serier: 346 `ja`, 34 `nej` och 108 `okänd`. Arenas två prisserier blev `okänd` (R10-2), och sju Microsoft-nyckeltal med
+bara SEC-rader blev `ja` (R10-6). Inga kärnposter ändras. På körningens sex grenar ändras inget annat, utom att F1:s
+sex poolade revideringsindex blir `okänd` när F1 mergas (R10-1).
+- **R10-1 med deklarerade rader, inte nyckel-overrides.** En serie som nämner en kurerad fil utan att vara en extraktion
+  av den anger i `CURATED_READS` vilka bolags rader den läser. Den kurerade regeln räknas sedan på de raderna, så
+  klassen följer filen om villkoren för microsoft.com blir dokumenterade. Saknas uppgiften blir serien `okänd`, och
+  `validate` ger fel. `lab_rev_*` behövde ingen override: raderna kopplas till serien, så S-1-serien är `ja` och
+  nyhetsrummets två serier `okänd`, som förut.
+- **Restriktiva ord ger `okänd`, inte `nej`** (R10-3). Regeln ser inte vilken del av texten begränsningen gäller, så
+  klassen är inte bedömd.
+- R10-8 rättades också, eftersom felet var litet: en nyckel-override med okänd klass ger fel i `validate`.
+  Anteckningarna R10-7 och R10-9 till R10-12 är inte rättade.
