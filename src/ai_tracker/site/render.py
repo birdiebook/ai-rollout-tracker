@@ -77,7 +77,8 @@ def change_text(v: dict) -> str:
 
 def nav(active: str) -> str:
     items = [("index.html", "Översikt", "oversikt"), ("prognoser.html", "Prognoser", "prognoser"),
-             ("manadsbrev.html", "Månadsbrev", "manadsbrev"), ("metod.html", "Metod och källor", "metod")]
+             ("manadsbrev.html", "Månadsbrev", "manadsbrev"), ("kvartalsrapport.html", "Kvartalsrapporter", "kvartal"),
+             ("metod.html", "Metod och källor", "metod")]
     links = "".join(f'<a href="{href}"{" aria-current=\"page\"" if key == active else ""}>{label}</a>'
                     for href, label, key in items)
     return f'<nav class="top" aria-label="Huvudmeny"><a class="brand" href="index.html">{SITE_TITLE}</a>{links}</nav>'
@@ -487,3 +488,31 @@ def letter_page(letter: dict, build: dict) -> str:
 <p class="small muted">Källa: <a href="{esc(build["repo"])}/blob/main/{esc(letter["file"])}">{esc(letter["file"])}</a>.</p>
 </article>"""
     return page(f"{letter['title']} – {SITE_TITLE}", "manadsbrev", body, None, build)
+
+
+# ------------------------------------------------------------------ quarterly reports
+
+
+def reports_page(doc: dict, build: dict) -> str:
+    items = "".join(
+        f'<li><a href="{esc(x["page"])}">{esc(x["quarter_sv"].capitalize())}</a>'
+        f'{kind_note(x["kind"])} <span class="muted small">· <a href="{esc(build["repo"])}/blob/main/{esc(x["file"])}">'
+        f'Markdown i git</a></span></li>' for x in doc["reports"])
+    listing = f'<ul class="letters">{items}</ul>' if items else "<p>Inga kvartalsrapporter än.</p>"
+    body = f"""<section class="intro prose">
+<h1>Kvartalsrapporter</h1>
+<p class="lead">Läget i AI-utrullningen en gång per kvartal: hur takten ändrades i de nio grenarna och leden, skarpa prognoser mot utfall och baslinjer, regimsannolikheten och vad som hänt med data och metod. Rapporten genereras automatiskt och deterministiskt från kvartalets tre månatliga ögonblicksbilder (ingen språkmodell), och committas tillsammans med den sista.</p>
+<p>Rapporter märkta <em>rekonstruerad</em> bygger på en beräkning i efterhand, inte på skarpa ögonblicksbilder.</p>
+{listing}
+</section>"""
+    return page(f"Kvartalsrapporter – {SITE_TITLE}", "kvartal", body, None, build)
+
+
+def report_page(report: dict, build: dict) -> str:
+    content = MD.render(report["markdown"], {"Visas inte av licensskäl": "withheld"})
+    body = f"""<p class="crumb"><a href="kvartalsrapport.html">Kvartalsrapporter</a> › {esc(report["quarter"])}</p>
+<article class="letter prose">
+{content}
+<p class="small muted">Källa: <a href="{esc(build["repo"])}/blob/main/{esc(report["file"])}">{esc(report["file"])}</a>.</p>
+</article>"""
+    return page(f"{report['title']} – {SITE_TITLE}", "kvartal", body, None, build)

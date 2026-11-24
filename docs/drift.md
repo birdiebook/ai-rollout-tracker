@@ -71,6 +71,22 @@ Brevet är inte ett register som ögonblicksbilden. Det kan genereras om, och `p
 det är nytt eller ändrat. Om brevsteget fallerar committas ögonblicksbilden ändå (steget har
 `continue-on-error`), och brevet körs för hand. Hemsidan visar breven under Månadsbrev.
 
+## Kvartalsrapport
+
+Efter ögonblicksbilden för kvartalets sista månad (mars, juni, september, december) skriver `snapshot.yml` också
+kvartalsrapporten "Läget i AI-utrullningen" (`docs/kvartalsrapport/<YYYYQn>.md`, `python -m ai_tracker.quarterly
+--if-quarter-end <YYYY-MM>`) och committar den i samma commit som ögonblicksbilden och brevet. Den genereras
+deterministiskt, utan språkmodell, på samma villkor som brevet:
+
+- Underlaget är kvartalets tre ögonblicksbilder (jämförelse: månaden före kvartalet), de committade prognosfilerna
+  med scorecarden, ögonblicksbildernas regimavsnitt (C4, läses som de är lagrade) och daterade poster i
+  `docs/mattregister.md`, `docs/beslutslogg.md` och `docs/granskning/`.
+- Saknas någon av de tre ögonblicksbilderna vägrar kommandot. Den första skarpa rapporten blir därför 2027Q1, eftersom
+  den första ögonblicksbilden är 2026-11-30. `--quarter <YYYYQn> --reconstructed` skriver en rapport där saknade
+  månader är rekonstruerade, märkt "(rekonstruerad)" i rubriken, i en varningsruta och per månad.
+- Rapporten kan genereras om och committas när den är ny eller ändrad. Hemsidan visar rapporterna under
+  Kvartalsrapporter.
+
 ## Aktualitet: en källa som slutar uppdateras
 
 Datatesterna fångar fel i tabellen, men inte en källa som tyst slutar publicera eller byter adress. Därför har
@@ -277,6 +293,7 @@ python -m ai_tracker.pipeline due --today 2026-12-05    # vad som är aktuellt e
 python -m ai_tracker.pipeline live                      # skarpa prognoser som är aktuella i dag
 python -m ai_tracker.pipeline scorecard                 # forecasts/SCORECARD.md
 python -m ai_tracker.letter --month 2026-11            # månadsbrev ur snapshots/2026-11.json
+python -m ai_tracker.quarterly --quarter 2027Q1         # kvartalsrapport ur snapshots/2027-01..03.json
 python -m ai_tracker.pipeline --table <fil> weekly ...  # mot en annan tabell, t.ex. en kopia
 python -m ai_tracker.datamerge <spår>/data [--dry-run]  # slå ihop ett spårs data med basen (se Delad data)
 ```

@@ -20,7 +20,8 @@ shifted.
 
 Immutability. A forecast file that exists is never rewritten (the writers open with mode "x"), a due origin whose
 file exists is skipped, and `publish` refuses a path that is already in HEAD. A monthly letter
-(docs/manadsbrev/<YYYY-MM>.md) is not immutable: `publish` commits it when it is new or differs from HEAD.
+(docs/manadsbrev/<YYYY-MM>.md) and a quarterly report (docs/kvartalsrapport/<YYYYQn>.md) are not immutable: `publish`
+commits them when new or different from HEAD.
 """
 
 from __future__ import annotations
@@ -450,6 +451,7 @@ def _git(repo: Path, *args: str, check: bool = True) -> subprocess.CompletedProc
 SNAPSHOT_PATH = re.compile(r"snapshots/\d{4}-\d{2}\.json")
 FORECAST_PATH = re.compile(r"forecasts/[^/]+/[^/]+\.json")
 LETTER_PATH = re.compile(r"docs/manadsbrev/\d{4}-\d{2}\.md")
+REPORT_PATH = re.compile(r"docs/kvartalsrapport/\d{4}Q[1-4]\.md")  # quarterly report: regenerated, like a letter
 
 
 def publish(paths: list[str], repo: Path | None = None, scorecard_path: str = "forecasts/SCORECARD.md") -> bool:
@@ -463,7 +465,7 @@ def publish(paths: list[str], repo: Path | None = None, scorecard_path: str = "f
     repo = Path(repo or config.REPO)
     new, letters = [], []
     for p in paths:
-        if LETTER_PATH.fullmatch(p):
+        if LETTER_PATH.fullmatch(p) or REPORT_PATH.fullmatch(p):
             if not (repo / p).is_file():
                 raise SystemExit(f"{p} does not exist")
             in_head = _git(repo, "cat-file", "-e", f"HEAD:{p}", check=False).returncode == 0
@@ -474,7 +476,7 @@ def publish(paths: list[str], repo: Path | None = None, scorecard_path: str = "f
             continue
         if not (FORECAST_PATH.fullmatch(p) or SNAPSHOT_PATH.fullmatch(p)):
             raise SystemExit(f"refusing to publish {p}: only forecasts/<nowcast>/<period>.json, "
-                             "snapshots/<YYYY-MM>.json or docs/manadsbrev/<YYYY-MM>.md")
+                             "snapshots/<YYYY-MM>.json, docs/manadsbrev/<YYYY-MM>.md or docs/kvartalsrapport/<YYYYQn>.md")
         if _git(repo, "cat-file", "-e", f"HEAD:{p}", check=False).returncode == 0:
             print(f"{p} is already committed; live forecasts and snapshots are never re-committed. Skipping.")
             continue
@@ -501,8 +503,12 @@ def publish(paths: list[str], repo: Path | None = None, scorecard_path: str = "f
         parts.append(f"Live forecast {periods} (origin {utc_today().date()})")
     if snapshots:
         parts.append(f"Monthly snapshot {', '.join(Path(p).stem for p in snapshots)} (written {utc_today().date()})")
-    if letters:
-        parts.append(f"Monthly letter {', '.join(Path(p).stem for p in letters)}")
+    monthly = [p for p in letters if LETTER_PATH.fullmatch(p)]
+    reports = [p for p in letters if REPORT_PATH.fullmatch(p)]
+    if monthly:
+        parts.append(f"Monthly letter {', '.join(Path(p).stem for p in monthly)}")
+    if reports:
+        parts.append(f"Quarterly report {', '.join(Path(p).stem for p in reports)}")
     _git(repo, "-c", f"user.name={BOT_NAME}", "-c", f"user.email={BOT_EMAIL}", "commit", "-m", "; ".join(parts))
     print(f"committed {new + letters}")
     return True

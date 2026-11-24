@@ -552,6 +552,21 @@ def letters(letters_dir: Path) -> dict:
     return {"letters": out}
 
 
+def reports(reports_dir: Path) -> dict:
+    """The quarterly reports (docs/kvartalsrapport/<YYYYQn>.md), newest first: quarter, title, kind, file and the
+    Markdown. Written by ai_tracker.quarterly under the same licence rule as the site."""
+    from ai_tracker import quarterly as Q  # lazy: the report module imports this one
+
+    out = []
+    for f in sorted(Path(reports_dir).glob("[0-9][0-9][0-9][0-9]Q[1-4].md"), reverse=True):
+        md = f.read_text(encoding="utf-8")
+        meta = Q.parse(md)
+        out.append({"quarter": f.stem, "quarter_sv": Q.quarter_sv(f.stem), "title": meta["title"],
+                    "kind": meta["kind"], "file": f"docs/kvartalsrapport/{f.name}",
+                    "page": f"kvartalsrapport-{f.stem.lower()}.html", "markdown": md})
+    return {"reports": out}
+
+
 def build_meta(rec: Record) -> dict:
     t = rec.ctx.table
     return {"built_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"), "git_sha": evaluation.git_sha(),
@@ -561,9 +576,10 @@ def build_meta(rec: Record) -> dict:
 
 
 def assemble(ctx: Context | None = None, snapshots_dir: Path | None = None, forecasts_dir: Path | None = None,
-             today=None, history_from: str = HISTORY_FROM, letters_dir: Path | None = None) -> dict:
+             today=None, history_from: str = HISTORY_FROM, letters_dir: Path | None = None,
+             reports_dir: Path | None = None) -> dict:
     """Every JSON document of the site: {"oversikt": ..., "gren/G1": ..., "prognoser": ..., "metod": ...,
-    "manadsbrev": ..., "build": ...}."""
+    "manadsbrev": ..., "kvartalsrapport": ..., "build": ...}."""
     ctx = ctx or Context(observations.load())
     today = pd.Timestamp(today).normalize() if today is not None else utc_today()
     rec = Record(ctx, Path(snapshots_dir or S.SNAPSHOTS), today, history_from)
@@ -571,6 +587,7 @@ def assemble(ctx: Context | None = None, snapshots_dir: Path | None = None, fore
     docs = {"oversikt": overview(rec, branches), "prognoser": nowcasts(ctx, Path(forecasts_dir or
                                                                                   config.REPO / "forecasts"), today),
             "metod": {**method(ctx), "reconciliations": reconciliation_view(rec)}, "manadsbrev": letters(Path(letters_dir or config.REPO / "docs" / "manadsbrev")),
+            "kvartalsrapport": reports(Path(reports_dir or config.REPO / "docs" / "kvartalsrapport")),
             "build": build_meta(rec)}
     for code, v in branches.items():
         docs[f"gren/{code}"] = {"record": rec.meta(), **v}

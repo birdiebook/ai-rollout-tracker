@@ -52,6 +52,9 @@ REVISION_MIN_PP = 0.1  # ... or, for shares (register method "share"), at least 
 REVISION_ROWS = 12  # at most this many series in the revision table (most notable revisions first)
 GUIDANCE_MARK = "guid_"  # company guidance series: a new value is guidance news, not a data revision
 TOP_SERIES = 3  # series named per direction in a branch paragraph (the table lists all)
+# Judging words that the generated texts (this letter, ai_tracker.quarterly) never contain (tests check every text)
+BANNED_WORDS = re.compile(r"\b(bra|bättre|sämre|dålig\w*|stark\w*|svag\w*|oroande|tyvärr|glädjande|lyckad\w*)\b",
+                          re.I)
 
 MONTHS_SV = ["januari", "februari", "mars", "april", "maj", "juni", "juli", "augusti", "september", "oktober",
              "november", "december"]

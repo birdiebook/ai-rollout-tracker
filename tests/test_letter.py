@@ -210,8 +210,7 @@ def test_forecast_inputs_are_never_shown(env):
 
 def test_neutral_wording(env):
     for text in (recon_letter(env), live_letter(env)):
-        assert not re.search(r"\b(bra|bättre|sämre|dålig\w*|stark\w*|svag\w*|oroande|tyvärr|glädjande|lyckad\w*)\b",
-                             text, flags=re.I)
+        assert not L.BANNED_WORDS.search(text)
         assert re.search(r"\b(accelererar|stabil|bromsar in)\b", text)
 
 

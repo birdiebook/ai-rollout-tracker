@@ -38,9 +38,12 @@ def pages(docs: dict) -> dict[str, str]:
     out = {"index.html": H.overview_page(docs["oversikt"], build),
            "prognoser.html": H.nowcast_page(docs["prognoser"], build),
            "metod.html": H.method_page(docs["metod"], build),
-           "manadsbrev.html": H.letters_page(docs["manadsbrev"], build)}
+           "manadsbrev.html": H.letters_page(docs["manadsbrev"], build),
+           "kvartalsrapport.html": H.reports_page(docs["kvartalsrapport"], build)}
     for letter in docs["manadsbrev"]["letters"]:
         out[letter["page"]] = H.letter_page(letter, build)
+    for report in docs["kvartalsrapport"]["reports"]:
+        out[report["page"]] = H.report_page(report, build)
     for code in catalog.BRANCHES:
         out[f"gren-{code.lower()}.html"] = H.branch_page(docs[f"gren/{code}"], build)
     return out
@@ -57,6 +60,8 @@ def write(docs: dict, site_dir: Path = SITE_DIR) -> list[Path]:
     for name, doc in docs.items():
         if name == "manadsbrev":  # the letters are pages; their Markdown is not repeated in the JSON
             doc = {"letters": [{k: v for k, v in x.items() if k != "markdown"} for x in doc["letters"]]}
+        if name == "kvartalsrapport":  # likewise the quarterly reports
+            doc = {"reports": [{k: v for k, v in x.items() if k != "markdown"} for x in doc["reports"]]}
         path = site_dir / "data" / f"{name}.json"
         path.write_text(json.dumps(doc, ensure_ascii=False, separators=(",", ":"), allow_nan=False), encoding="utf-8")
         written.append(path)
@@ -74,10 +79,11 @@ def write(docs: dict, site_dir: Path = SITE_DIR) -> list[Path]:
 
 def build(site_dir: Path = SITE_DIR, table: pd.DataFrame | None = None, ctx: Context | None = None,
           snapshots_dir: Path | None = None, forecasts_dir: Path | None = None, today=None,
-          history_from: str = D.HISTORY_FROM, checks: bool = True, letters_dir: Path | None = None) -> list[Path]:
+          history_from: str = D.HISTORY_FROM, checks: bool = True, letters_dir: Path | None = None,
+          reports_dir: Path | None = None) -> list[Path]:
     if ctx is None:
         ctx = Context(observations.load() if table is None else table)
     if checks:
         run_checks(ctx.table)
-    docs = D.assemble(ctx, snapshots_dir, forecasts_dir, today, history_from, letters_dir)
+    docs = D.assemble(ctx, snapshots_dir, forecasts_dir, today, history_from, letters_dir, reports_dir)
     return write(docs, site_dir)

@@ -11,6 +11,8 @@ Builds site/ (gitignored) from the observation table, the committed snapshots/ a
     metod.html            framing, register, immutable files in git, sources and licences, not investment advice
     manadsbrev.html       the monthly letters (docs/manadsbrev/*.md, ai_tracker.letter), newest first, and one page
                           per letter (manadsbrev-<YYYY-MM>.html) rendered from its Markdown
+    kvartalsrapport.html  the quarterly reports (docs/kvartalsrapport/*.md, ai_tracker.quarterly), newest first, and
+                          one page per report (kvartalsrapport-<yyyyqn>.html) rendered from its Markdown
     data/*.json           the data each page draws its charts from
     assets/style.css, assets/app.js   no external hosts: charts are inline SVG drawn by app.js
 
