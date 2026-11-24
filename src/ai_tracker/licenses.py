@@ -282,6 +282,10 @@ PROVISIONAL_FAMILIES: dict[str, str] = {
 }
 
 
+READINGS = {"register": "registrets familjetabell (register.entry_families)",
+            "preliminär": "preliminär, en registercell per familj utom sammanslagningarna i PROVISIONAL_FAMILIES"}
+
+
 def entry_families(branch: str) -> tuple[dict[str, str], str]:
     """(expanded core entry -> family id, which reading): the register's families when they exist, else the
     provisional reading above."""
@@ -457,7 +461,7 @@ def report(markdown: bool = False, specs: list[catalog.Spec] | None = None) -> t
                              "ja" if r["families_ja"] >= 3 else "nej",
                              ", ".join(f"`{e}` ({v.klass})" for e, v in r["not_ja"].items()) or "–"] for r in core])
         readings = sorted({r["reading"] for r in core})
-        lines += ["", f"Familjeläsning: {', '.join(readings)}."]
+        lines += ["", "Familjeläsning: " + ", ".join(READINGS.get(r, r) for r in readings) + "."]
     else:
         lines.append(f"Kommersiell användning, {len(verdicts)} serier: ja {total.get(JA, 0)}, nej {total.get(NEJ, 0)}, "
                      f"okänd {total.get(OKAND, 0)}" + (f", EJ KLASSADE {len(errors)}" if errors else ""))

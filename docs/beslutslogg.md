@@ -379,3 +379,15 @@ Johannes valde rekommendationerna:
   overifierat Mistral-pris. G2 har kvar en räknad kärnserie. Rättningsspåret X5 tar R-1–R-8. Viktigast är ett
   läckage i `arena.py`: omladdade tavlor (2026-07-07) var daterade till första commit, och det rör även G1:s
   `g1_arena_text_top`. B från 2024-09 prövas först efter rättningen och en ny granskning.
+
+## 2026-11-24 – K2: klass för kommersiell användning per serie
+
+Beslutspunkt 3 genomförd. Varje serie har en klass för kommersiell användning, `ja`, `nej` eller `okänd`
+(`ai_tracker.licenses`), och klassen är oberoende av `publish`. `catalog.validate()` ger fel för en licenstext som
+ingen regel klassar, så en ny serie kan inte läggas till utan klass. Klassen bygger på dokumenterad licenstext och
+gissas aldrig. Härledda serier tar den mest restriktiva klassen av sina komponenter. Egna extraktioner ur dokument på
+sec.gov är `ja`. Microsofts kurerade serier är `okänd`, eftersom en del rader kommer från microsoft.com, vars villkor
+inte är dokumenterade. Census M3 via ALFRED och LMArena med Space-filer är `okänd`, och npm är `okänd`, inte `nej`.
+Utfall på main `dceec75`: 488 serier, 341 `ja`, 34 `nej` (Cloudflare, PJM) och 113 `okänd`. I den kommersiellt rena
+delmängden är G4–G6 hela, medan G7 och G9 får färre än tre källfamiljer. Detaljer:
+[datakallor/licensniva.md](datakallor/licensniva.md).
