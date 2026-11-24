@@ -1,6 +1,6 @@
 # Status steg 2
 
-Uppdateras av orkestreraren vid varje milstolpe. Senast: 2026-11-24 04:20 UTC.
+Uppdateras av orkestreraren vid varje milstolpe. Senast: 2026-11-24 08:00 UTC.
 
 ## Läge
 
@@ -18,8 +18,9 @@ Uppdateras av orkestreraren vid varje milstolpe. Senast: 2026-11-24 04:20 UTC.
   (MAE 5,83 mot B2 6,42, Holm-p 0,059). Första skarpa prognosen med B3 görs 2026-12-05.
 - **R5-rättningarna är mergade.** Nyckeltal, leasingåtaganden och planer är publicerbara.
 - **Faktormodellen (C3)** är utvecklad med holdouten stängd. Specifikationen är låst (`5431f41`). Utvecklingen visar
-  inga säkra vinster (N1 sämre, N2 och N3 bättre men inom slumpen). Nästa steg: C4 (regim) skrivs och låses, och
-  därefter öppnas holdouten för C3 och C4 i en körning, **efter ditt godkännande**.
+  inga säkra vinster (N1 sämre, N2 och N3 bättre men inom slumpen). **C4 (regim) är låst** (`735dc64`) och utvecklad.
+  Holdouten för C3 och C4 kan nu öppnas i en körning, **efter ditt godkännande**. Avstämningarna (A5) är mergade.
+  D2 (prognoser 1–8 kvartal) utvecklas.
 - **Tidigare:** Datasnapshoten är klar och väntar på `DATA_KEY`. Avstämningarna (A5) och D2 är
   förregistrerade.
 

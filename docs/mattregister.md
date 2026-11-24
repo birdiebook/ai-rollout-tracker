@@ -527,3 +527,10 @@ Faktormodellens fria val (serielistor per block, transformationer, standardiseri
 Mariano–Murasawa-vikter enligt F-B20 och DF-regressionen) är fastställda i `docs/steg2/c3_spec.md`, commit `5431f41`.
 Specifikationen committades före den första körningen på verklig data och ändras inte. Utvecklingsresultat:
 `docs/resultat/c3_utveckling.md`. Holdouten är stängd.
+
+### 2026-11-24 – C4: specifikation låst (G-D-tillägg, F-E4, F-D7)
+
+Regimmodellens fria val är fastställda i `docs/steg2/c4_spec.md`, commit `735dc64`. Specifikationen committades före
+den första körningen på verklig data och före holdoutens öppning för C3. Utvecklingsresultat:
+`docs/resultat/c4_utveckling.md`. Holdouten är stängd för både C3 och C4. Den öppnas i en körning för båda familjerna
+efter ägarens godkännande.
