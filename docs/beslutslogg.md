@@ -385,6 +385,7 @@ Johannes valde rekommendationerna:
   som beskrivande serier. G2 har fortsatt en räknad kärnserie. Öppet: ska avvecklingsregeln också gälla
   `g2_price_at_capability*`? Den rekommenderas som daterad registerändring efter en körning som visar effekten.
 
+
 ## 2026-11-24 – Riktning efter steg 2: pengarna, makron och förväntningarna först
 
 Johannes valde rekommendationerna i [riktning.md](riktning.md):
@@ -399,6 +400,21 @@ Johannes valde rekommendationerna i [riktning.md](riktning.md):
 - **Licensnivå:** sidan förblir icke-kommersiell. Varje serie klassas för kommersiell användning (ja, nej eller okänd)
   så att en kommersiellt ren delmängd alltid går att räkna fram. Nya spår väljer öppna licenser när det finns ett val.
 
+## 2026-11-24 – K1: diffusionsindex v2 med källfamiljer
+
+- **Regeln** är registrerad i `docs/mattregister.md` ("2026-11-24 – Diffusionsindex v2") och committades före koden
+  och före alla v2-värden på verklig data. Familjetabellen följer ägarens läsning av gränsfallen. Inget skäl att
+  avvika hittades: urvalsregeln för G1 väljer redan högst en benchmark per benchmarkfamilj, så en familj per vald
+  benchmark håller.
+- **Ögonblicksbilden** från 2026-11-30: `index` och `state` följer v2, `rule_version` är "v2", och v1 står under
+  `v1` i varje gren. Reglerna i filen anger regelversionen och familjetabellen. `snapshot.yml` och
+  `pipeline publish` är oförändrade.
+- **Paketet** (`site_bundle`) blir version 1.1.0, med bara tillägg och det nya tillståndet "för få källor".
+  Webbsessionen behöver lägga till tillståndet i `web/`.
+- **En familj med en serie som inte får visas** räknas i indexet men namnges inte och får ingen röst i brevet eller på
+  sidorna, på samma sätt som serien själv.
+- **Rekonstruktionen** v1 mot v2 väntar på datasnapshoten (`docs/resultat/tillstand.md`, "Index v2").
+
 ## 2026-11-24 – Fokus: för Johannes och vänner
 
 Projektet byggs främst för Johannes och några vänner, inte för många användare. De fyra målgrupperna i [riktning.md](riktning.md) är en ribba för kvaliteten på förståelsen, inte en plan för spridning. Arbete som bara gäller spridning prioriteras inte: engelsk version, separata vyer per målgrupp, nedladdningar och kommersiell användning. Licensklassningen (K2) behålls, eftersom repot och sidan är publika och klassningen är billig.
@@ -412,4 +428,27 @@ Beslutet om index v2 motiverades bland annat med att v2 gör tillstånden mer f�
 ## 2026-11-24 – Syftet förtydligat: hela AI-flödet, lager för lager
 
 Johannes förtydligade syftet. Projektet byggs för hans egen skull, för att ha bästa möjliga koll på hela AI-flödet lager för lager och se tidigt när något ändrar takt. Kopplingen till egna placeringar är indirekt och görs utanför repot. Repot är publikt och innehåller inga innehav. Följden är att körning 14 omprioriteras ([riktning.md](riktning.md), avsnitt 0 och 8). Först kommer stackens saknade lager (minne, nät, kraft och kylning, datacenterbolag), sedan finansiering, förmåga och kostnad, och Kina. G8 får lägre prioritet.
+
+## 2026-11-24 – R9: granskning av index v2 (K1)
+
+- **Dom: godkänd med anmärkningar** (`docs/granskning/r9_index_v2.md`). Registerposten kom före koden och före alla
+  v2-värden på riktiga data. Familjetabellen täcker varje kärnpost en gång och följer regeln. `branch()`,
+  licensgrinden, ögonblicksbilden och paketet 1.1.0 håller i alla prövade kantfall.
+- **K1 ska vara på `main` före 2026-11-30 22:41 UTC.** Annars skrivs den första skarpa ögonblicksbilden med v1.
+- **Före eller vid mergen:** webbsessionen lägger till "för få källor" (S1). Fixturtestet fallerar i kataloger med den
+  delade rå-cachen, och det fanns före K1 (S2). Registret får en daterad anteckning om att "försiktigare åt båda
+  hållen" inte håller, utan regeländring (S3).
+
+## 2026-11-24 – X6: rättningar efter R9 (index v2)
+
+- **S2:** den syntetiska världen har ett eget BTOS-schema (en fil som aldrig skrivs), via `Context.btos_schedule`.
+  Fixturerna blir då desamma i varje utcheckning, också med den delade rå-cachen. Enhetstesterna pekar dessutom
+  `census_btos.SCHEDULE_LOG` till en tom temp-katalog, på samma sätt som den delade basen.
+- **S3:** registret har fått en daterad anteckning om att "försiktigare åt båda hållen" inte håller. Regeln ändras
+  inte. `docs/riktning.md` avsnitt 9 är orkestrerarens fil och rättas inte här. Johannes bekräftar att beslut 2 står.
+- **S1** är inte rättad här. Webben (`web/`) ägs av en annan session, som lägger till "för få källor".
+- **Noter:** index v2 avgörs exakt med bråktal (N1). ASML har en egen licenstext (N8). Brevet och gamla sidan hoppar
+  över v1-raden när ingen regel ger tillstånd, och röstraden när alla röstande källor är dolda (N5). Kvartalsrapporten
+  säger "källor" under v2 (N6), och båda fotnoterna säger att indexet jämförs oavrundat (N7). Namnregeln i G2 är
+  rättad i registeranteckningen (N2). N9 väntar, eftersom ingen registrerad familj berörs i dag.
 

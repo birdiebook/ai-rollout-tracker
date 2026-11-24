@@ -50,6 +50,7 @@ SERIES: dict[str, tuple] = {
     "x_capex_cloud": ("2017Q1", "2026Q3", 0.0, 0.03, 0.5, True),
     "g9_arxiv_cs_lg": ("2012-01", "2026-10", 0.015, 0.04, 7.77777e6, False),
     "g9_arxiv_cs_ai": ("2012-01", "2026-10", 0.015, 0.04, 6.66666e6, False),
+    "us_ip_computers_m": ("2010-01", "2026-10", 0.003, 0.012, 95.0, True),  # last: earlier seeds stay unchanged
 }
 WITHHELD = [k for k, v in SERIES.items() if not v[5]]
 REVISED = {"us_ip_semis_m": 3, "ai_postings_share_us_d": 3, "tsmc_revenue_m": 2}  # vintages per period
@@ -61,10 +62,24 @@ CORE = {
     "G3": ["btos_ai_use_v3", "g3_pypi_openai_wed", "g3_wiki_chatgpt_en"],
     "G4": ["rev_aws", "rev_google_cloud", "rev_msft_cloud", "rev_nvda_datacenter", "rpo_hyp4"],
     "G5": ["capex_hyp4", "us_constr_datacenter"],
-    "G6": ["tsmc_revenue_m", "us_ip_semis_m", "us_imports_tw_m"],
+    "G6": ["tsmc_revenue_m", "us_ip_semis_m", "us_ip_computers_m", "us_imports_tw_m"],
     "G7": ["eia930_avg_pjm_dom_m", "us_elec_sales_com_va_m"],
     "G8": ["ai_postings_share_us_d"],
     "G9": ["g9_arxiv_cs_lg", "g9_arxiv_cs_ai", "g9_epoch_notable_models"],
+}
+# Source families (index v2) as in the register's table, restricted to the synthetic core series: G6 has a family
+# of two published series (Fed G.17), G9 a family of the two withheld arXiv series (counted, never named).
+FAMILIES = {
+    "G1": {"g1_epoch_eci": ["g1_epoch_eci_frontier"]},
+    "G2": {"g2_price_at_capability_gpqa": ["g2_price_at_capability_gpqa"]},
+    "G3": {"btos_ai_use": ["btos_ai_use_v3"], "g3_pypi": ["g3_pypi_openai_wed"], "g3_wiki": ["g3_wiki_chatgpt_en"]},
+    "G4": {k: [k] for k in CORE["G4"]},
+    "G5": {k: [k] for k in CORE["G5"]},
+    "G6": {"tsmc_revenue_m": ["tsmc_revenue_m"], "us_ip_g17": ["us_ip_semis_m", "us_ip_computers_m"],
+           "us_imports_ft900": ["us_imports_tw_m"]},
+    "G7": {"eia930_avg": ["eia930_avg_pjm_dom_m"], "us_elec_sales_com": ["us_elec_sales_com_va_m"]},
+    "G8": {"ai_postings_share": ["ai_postings_share_us_d"]},
+    "G9": {"g9_arxiv": ["g9_arxiv_cs_lg", "g9_arxiv_cs_ai"], "g9_epoch_notable_models": ["g9_epoch_notable_models"]},
 }
 RECONCILIATIONS = ["x_capex_cloud"]
 
@@ -118,8 +133,12 @@ def table() -> pd.DataFrame:
 
 
 def context(root: Path) -> Context:
+    """The synthetic world under `root`. Its BTOS schedule is a file under `root` that is never written, so N5 is
+    never due and the bundle does not depend on the checkout's raw cache (review R9, S2)."""
     return Context(table(), specs=specs(), derived={}, core={k: list(v) for k, v in CORE.items()},
-                   forecasts=root / "forecasts", selection=lambda when: [], reconciliations=list(RECONCILIATIONS))
+                   forecasts=root / "forecasts", selection=lambda when: [], reconciliations=list(RECONCILIATIONS),
+                   families={k: {f: list(e) for f, e in v.items()} for k, v in FAMILIES.items()},
+                   btos_schedule=root / "census_btos" / "schedule_log.parquet")
 
 
 def write_inputs(root: Path, ctx: Context) -> dict:

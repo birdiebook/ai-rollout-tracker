@@ -33,6 +33,9 @@ En rad per spår, fylls på efter varje körning. Tumreglerna justeras när siff
 | 2026-11-24 | 12 | W7 serieinstrumentet | webb (2 enheter) | ~41 | ~112 | ~309 | 387 seriesidor, asOf-API (golden mot Python), revisionsvy, CSV, permalänk, 130 vitest |
 | 2026-11-24 | 12 | W8 prognossidor | webb (sidor) | ~46 | ~116 | ~312 | översikt, sida per nowcast och skarp prognos, facit, kalibrering, D2-solfjäder |
 | 2026-11-24 | 12 | X5 rättning Arena | rättning (läckage + priser) | ~48 | ~122 | ~323 | tavlor versionerade per commit, daterade prisrättningar, ingen G1-historik ändrad |
+| 2026-11-24 | 13 | K1 källfamiljer och index v2 | regel + konsumenter (förregistrerad) | ~70 | ~95 | – | registerpost med familjetabell (G1–G9), `FAMILIES` med paritetstest, v2 officiell och v1 bredvid, brev, kvartalsrapport, gamla sidan, paket 1.1.0 (scheman, fixturer), 13 nya tester; backcast väntar på data |
+| 2026-11-24 | 13 | R9 granskning index v2 | granskning (förregistrering, kod, licens, paket, CLI) | ~40 | ~85 | – | GODKÄND MED ANMÄRKNINGAR, inga must_fix; 4 should_fix (webbens ordlista, fixturbygget läser miljön, registerteckning om effekten, kvartalstest), 9 noter; 50 tester varav 4 strikta xfail |
+| 2026-11-24 | 13 | X6 rättning efter R9 (index v2) | rättning (kod, register, tester) | ~35 | ~70 | – | S2 (schema i kontexten, isolering i conftest), S3 (registeranteckning), N1 (exakt index), N5–N8; 3 strikta xfail blev vanliga tester, 11 nya tester; S1 hör till webbsessionen |
 
 ## Körning 1, sammanfattning (2026-11-23, orkestrerare)
 

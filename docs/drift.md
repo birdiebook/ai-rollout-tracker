@@ -72,6 +72,9 @@ starten. Försöket 21:19 tar en dag där det första fallerade (till exempel at
   tillstånd. Reglerna för skifte och brott kedjas på förra månadens sektion. Den första (2026-11-30) startar från den
   rekonstruerade följden 2012-01–2026-10 (cirka 6 minuter utan cache). Ett fel i C4 skrivs i sektionen och stoppar
   inte ögonblicksbilden.
+- **Diffusionsindex v2 i ögonblicksbilden:** från 2026-11-30 är grenens `index` och `state` regel v2, en röst per
+  källfamilj och minst tre familjer (`docs/mattregister.md`, 2026-11-24). `rule_version`, `n_families` och
+  `families` står i grenen, och v1 (en röst per serie) under `v1`. `rules` har `index_rule` och familjetabellen.
 
 ## Månadsbrev
 
@@ -260,7 +263,7 @@ att göra från koden. Innan det är gjort fallerar deploy-steget i `pages.yml` 
 `Pages` för hand en gång (Actions → Pages → Run workflow), eller vänta på nästa veckohämtning.
 
 - **Vad som visas:** startsidan (vad som ändrade takt den här månaden: de nio grenarna med tillstånd,
-  diffusionsindex, antal serier och förändring mot föregående månad), en sida per gren (kärnserierna med takt
+  diffusionsindex, antal källor och serier och förändring mot föregående månad), en sida per gren (kärnserierna med takt
   och förändring i takt, senaste period, `known_from` och skälet till att en serie inte räknas), prognossidan
   (N1 och N2: skarpa prognoser och scorecard, huvudmodell och skuggor) och metodsidan (neutral inramning,
   måttregistret, filerna i git, källor och licenser, "inte investeringsrådgivning").

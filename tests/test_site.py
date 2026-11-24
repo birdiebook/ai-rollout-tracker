@@ -59,8 +59,10 @@ def write_forecast(root: Path):
     }), encoding="utf-8")
 
 
-def build_site(tmp_path, live: bool = False) -> Path:
+def build_site(tmp_path, live: bool = False, families: dict | None = None) -> Path:
     ctx = make_ctx(tmp_path)
+    if families is not None:
+        ctx.families = families
     snaps = tmp_path / "snapshots"
     snaps.mkdir(exist_ok=True)
     if live:  # a committed live snapshot, built by the real writer's build() on the same context
@@ -161,6 +163,28 @@ def test_branch_page_has_series_measures_known_from_and_chart_data(recon_site):
     html = (recon_site / "gren-g6.html").read_text(encoding="utf-8")
     assert 'data-chart="pace" data-key="pub_a"' in html and 'data-chart="change" data-key="pub_a"' in html
     assert "Källa: Testkälla G6" in html  # every chart cites its source
+
+
+def test_branch_page_shows_source_families_the_v2_state_and_v1(tmp_path):
+    """Index v2 (register 2026-11-24): G6's series as one source family, G9 with a family that has a withheld series."""
+    site = build_site(tmp_path, live=True, families={"G6": {"pub_fam": list(PUBLIC)}, "G9": {"mixed": [SECRET, "pub_g9"]}})
+    g6 = load(site, "gren/G6")
+    assert g6["rule_version"] == "v2" and g6["n_families"] == 1 and g6["n_series"] == 3
+    assert g6["state"] == "för få källor" and g6["state_v1"] in ("accelererar", "stabil", "bromsar in")
+    assert [f["family"] for f in g6["families"]] == ["pub_fam"] and g6["families"][0]["series"] == PUBLIC
+    assert g6["families"][0]["vote"] == pytest.approx(g6["index"], abs=1e-4)
+    html = (site / "gren-g6.html").read_text(encoding="utf-8")
+    assert "Källor som röstar" in html and "1 källa" in html and "Med regel v1, en röst per serie" in html
+    assert "badge st-few" in html and "för få källor" in html
+    g9 = load(site, "gren/G9")
+    assert [f["family"] for f in g9["families"]] == ["pub_g9b"] and g9["n_families_withheld"] == 1
+    assert "mixed" not in json.dumps(g9["families"])
+    tile = next(t for t in load(site, "oversikt")["branches"] if t["code"] == "G6")
+    assert tile["n_families"] == 1 and tile["history"][-1]["n_families"] == 1
+    fams = {(r["branch"], r["family"]): r for r in load(site, "metod")["index_families"]}
+    assert fams[("G6", "pub_fam")]["entries"] == PUBLIC and fams[("G9", "mixed")]["n_withheld"] == 1
+    assert "Källfamiljer i diffusionsindexet" in (site / "metod.html").read_text(encoding="utf-8")
+    assert SECRET not in json.dumps(strip_withheld(all_json(site)), ensure_ascii=False)
 
 
 def test_nowcast_page_shows_champion_shadows_and_scorecard_without_inputs(recon_site):

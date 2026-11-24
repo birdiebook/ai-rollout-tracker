@@ -102,7 +102,7 @@ def cut_context(ctx: Context, date: pd.Timestamp, max_fetched: str | None) -> Co
         keep &= t["fetched_at"] <= pd.Timestamp(max_fetched) + pd.Timedelta(days=1) - pd.Timedelta(microseconds=1)
     return Context(t[keep].reset_index(drop=True), specs=ctx.specs, forecasts=ctx.forecasts, core=ctx.core,
                    derived=ctx.derived, selection=ctx.selection,
-                   reconciliations=ctx.reconciliations)
+                   reconciliations=ctx.reconciliations, families=ctx.families, btos_schedule=ctx.btos_schedule)
 
 
 def reconstruct(when: pd.Timestamp, ctx: Context) -> dict:
@@ -198,6 +198,60 @@ def change_text(m: dict) -> str:
     if m.get("method") in ("doubling", "halving"):
         return f"{n(c, 1, signed=True)} mån mot 12 månader tidigare (kortare tid = snabbare)"
     return f"{n(c, 1, signed=True)} mot {CHANGE_LAG_TEXT.get(m.get('measure_freq') or m.get('freq'), '')}"
+
+
+def is_v2(b: dict) -> bool:
+    """The branch's official index is v2 (one vote per source family, register 2026-11-24). A document written
+    before v2 has no rule_version: its index and state are v1."""
+    return b.get("rule_version") == "v2"
+
+
+def sources_text(b: dict, detail: str = "") -> str:
+    """'N källor (M serier: detail)' for a v2 branch, 'M räknade serier (detail)' for a v1 document."""
+    k = b.get("n_series") or 0
+    if not is_v2(b):
+        return _plural(k, "räknad serie", "räknade serier") + (f" ({detail})" if detail else "")
+    f = b.get("n_families") or 0
+    return f"{_plural(f, 'källa', 'källor')} ({_plural(k, 'serie', 'serier')}{': ' + detail if detail else ''})"
+
+
+FEW_STATES = (R.STATE_FEW, R.STATE_FEW_FAMILIES)
+
+
+def v1_note(b: dict) -> str:
+    """One neutral sentence when the v1 rule (one vote per series) gives another state than the official v2. Not
+    when neither rule gives a state ('för få serier' against 'för få källor', review R9 N5)."""
+    v1 = b.get("v1") or {}
+    if not is_v2(b) or not v1 or v1.get("state") == b.get("state"):
+        return ""
+    if v1.get("state") in FEW_STATES and b.get("state") in FEW_STATES:
+        return ""
+    return (f"Med regel v1, en röst per serie, är tillståndet {v1.get('state')} "
+            f"(index {n(v1.get('index'), 2) if v1.get('index') is not None else '–'}).")
+
+
+def family_votes_text(b: dict, inp: "Inputs") -> str:
+    """Votes of the counted families whose counted series may all be shown (others are counted, not named). Only
+    when some family has more than one counted series: otherwise the votes are the series' directions."""
+    if not any(len(f.get("series") or []) > 1 for f in b.get("families") or []):
+        return ""
+    shown, hidden = [], 0
+    for f in b.get("families") or []:
+        if f.get("vote") is None:
+            continue
+        if all(publishable(k, inp) for k in f.get("series") or []):
+            shown.append(f"`{f['family']}` {n(f['vote'], 2)} ({_plural(len(f['series']), 'serie', 'serier')})")
+        else:
+            hidden += 1
+    if not shown and not hidden:
+        return ""
+    hidden_text = f"{_plural(hidden, 'källa', 'källor')} med serier som inte visas av licensskäl räknas utan att namnges"
+    if not shown:  # every voting family is hidden: only that sentence (review R9, N5)
+        return hidden_text[0].upper() + hidden_text[1:] + "."
+    text = "Röst per källa, medel av (riktning + 1)/2: " + "; ".join(shown)
+    if hidden:
+        text += f"; {hidden_text}"
+    return text + "."
 
 
 def counts_text(b: dict) -> str:
@@ -296,7 +350,7 @@ def headline(inp: Inputs, nowcast_news: list[str], data_news: list[str]) -> list
     for code in catalog.BRANCHES:
         st = inp.current["branches"].get(code, {}).get("state") or R.STATE_FEW
         groups.setdefault(st, []).append(code)
-    order = [R.STATE_ACCEL, R.STATE_STABLE, R.STATE_BRAKE, R.STATE_FEW]
+    order = [R.STATE_ACCEL, R.STATE_STABLE, R.STATE_BRAKE, R.STATE_FEW_FAMILIES, R.STATE_FEW]
     parts = [f"{st} {', '.join(groups[st])}" for st in order if st in groups]
     parts += [f"{st} {', '.join(v)}" for st, v in groups.items() if st not in order]
     lines.append("- Läget: " + "; ".join(parts) + ".")
@@ -360,12 +414,17 @@ def branch_section(code: str, inp: Inputs) -> list[str]:
     k = cur.get("n_series") or 0
     para = []
     if k:
-        para.append(f"Index {n(cur.get('index'), 2)} med {_plural(k, 'räknad serie', 'räknade serier')} "
-                    f"({counts_text(cur)}).")
+        para.append(f"Index {n(cur.get('index'), 2)} med {sources_text(cur, counts_text(cur))}.")
     else:
         para.append("Inga räknade serier, så inget index.")
-    if k and k < R.MIN_SERIES:
+    if is_v2(cur):
+        mins = (inp.current.get("rules") or {}).get("min_families", R.MIN_FAMILIES)
+        if k and (cur.get("n_families") or 0) < mins:
+            para.append(f"Med färre än {mins} räknade källor anges inget tillstånd.")
+    elif k and k < R.MIN_SERIES:
         para.append(f"Med färre än {R.MIN_SERIES} räknade serier anges inget tillstånd.")
+    if v1_note(cur):
+        para.append(v1_note(cur))
     if prev is not None:
         pl = prev_label(inp)
         if d is not None:
@@ -403,6 +462,9 @@ def branch_section(code: str, inp: Inputs) -> list[str]:
             flips.append(f"{series_name(key, inp.ctx)} " + ("räknas nu" if m["_counted"] else "räknas inte längre"))
     if flips:
         para.append(f"Ändrat sedan {prev_label(inp)}: {'; '.join(sorted(flips))}.")
+    votes = family_votes_text(cur, inp) if is_v2(cur) else ""
+    if votes:
+        para.append(votes)
     withheld = [m for m in branch_series(cur) if m.get("series") and not publishable(m["series"], inp)]
     if withheld:
         w_c = sum(1 for m in cur.get("series_used", []) if not publishable(m["series"], inp))
@@ -439,9 +501,10 @@ def branch_section(code: str, inp: Inputs) -> list[str]:
 # ------------------------------------------------------------------ nowcasts
 
 
-def _next_origin(sub: str, after: pd.Timestamp, horizon: int = 200) -> tuple[str, str] | None:
+def _next_origin(sub: str, after: pd.Timestamp, horizon: int = 200,
+                 schedule_file: Path | None = None) -> tuple[str, str] | None:
     for i in range(1, horizon):
-        dd = pipeline.due_for(sub, after + pd.Timedelta(days=i))
+        dd = pipeline.due_for(sub, after + pd.Timedelta(days=i), schedule_file)
         if dd is not None:
             return str(dd.origin.date()), dd.period
     return None
@@ -472,7 +535,7 @@ def nowcasts(inp: Inputs) -> tuple[list[str], list[str]]:
         new = [x for x in files if x[0] >= start]
         n_new += len(new)
         lines.append("")
-        nxt = _next_origin(sub, end)
+        nxt = _next_origin(sub, end, schedule_file=inp.ctx.btos_schedule)
         nxt_text = f" Nästa skarpa prognos: {nxt[1]}, prognosdag {nxt[0]}." if nxt else ""
         if not files:
             lines += [f"Inga skarpa prognoser med prognosdag till och med {end.date()}.{nxt_text}", ""]
@@ -749,6 +812,22 @@ def footer(inp: Inputs) -> list[str]:
     dead = rules.get("deadband_sd", R.DEADBAND)
     acc, brk = rules.get("accelerating_at_least", R.ACCELERATING), rules.get("braking_at_most", R.BRAKING)
     mins = rules.get("min_series", R.MIN_SERIES)
+    if rules.get("index_rule") == "v2":
+        index_rule = (
+            f"- **Diffusionsindex** (regel v2): varje källfamilj ger en röst, medelvärdet av (riktning + 1)/2 över "
+            f"familjens räknade serier, där riktningen är +1, 0 eller −1. En källfamilj är serier ur samma källa som "
+            f"mäter samma sak och bara skiljer sig i land, delstat, paket eller liknande. Indexet är medelvärdet av "
+            f"rösterna. Grenen accelererar vid index ≥ {n(acc, 2)}, bromsar in vid index ≤ {n(brk, 2)} och är stabil "
+            f"däremellan. Indexet jämförs oavrundat, så ett index som visas som {n(acc, 2)} kan vara 2/3 och då "
+            f"stabilt. Med färre än {rules.get('min_families', R.MIN_FAMILIES)} räknade källor anges inget "
+            f"tillstånd. Regel v1, en röst per serie och minst {mins} serier, nämns när den ger ett annat tillstånd. "
+            f"Reglerna är förregistrerade i `docs/mattregister.md`.")
+    else:
+        index_rule = (
+            f"- **Diffusionsindex** = (antal som accelererar + 0,5 × antal stabila) / antal räknade serier. Grenen "
+            f"accelererar vid index ≥ {n(acc, 2)}, bromsar in vid index ≤ {n(brk, 2)} och är stabil däremellan. Med "
+            f"färre än {mins} räknade serier anges inget tillstånd. Reglerna är förregistrerade i "
+            f"`docs/mattregister.md`.")
     return [
         "## Så ska brevet läsas", "",
         f"- **Takt** är förändringen över ett år: log×100 för positiva storheter (≈ procent för små tal, omräknat inom "
@@ -758,12 +837,11 @@ def footer(inp: Inputs) -> list[str]:
         "(12 månader för fördubblingstid, där kortare tid räknas som snabbare).",
         f"- En serie **accelererar** när förändringen i takt är större än dödbandet, {n(dead, 2)} standardavvikelser "
         f"av seriens egen historik, **bromsar in** när den är mindre än minus dödbandet och är **stabil** däremellan.",
-        f"- **Diffusionsindex** = (antal som accelererar + 0,5 × antal stabila) / antal räknade serier. Grenen "
-        f"accelererar vid index ≥ {n(acc, 2)}, bromsar in vid index ≤ {n(brk, 2)} och är stabil däremellan. Med färre "
-        f"än {mins} räknade serier anges inget tillstånd. Reglerna är förregistrerade i `docs/mattregister.md`.",
+        index_rule,
         "- Orden accelererar, stabil och bromsar in beskriver takten. De är inga omdömen, och en inbromsning redovisas "
         "på samma sätt som en acceleration.",
-        "- Grenar med tre till fem serier flyttas mycket av en enda serie. Om tillståndsregeln har något prognosvärde "
+        f"- Grenar med tre till fem {'källor' if rules.get('index_rule') == 'v2' else 'serier'} flyttas mycket av "
+        f"en enda {'källa' if rules.get('index_rule') == 'v2' else 'serie'}. Om tillståndsregeln har något prognosvärde "
         "är inte prövat. Kvartalsserier är korta och har regimbrott efter 2023.",
         "- Alla värden är de som var kända på beräkningsdagen (`known_from`). Serier utan sparade versioner dateras "
         "med publiceringsfördröjning (backfill). Ögonblicksbilden skrivs en gång och skrivs aldrig om. Brevet kan "

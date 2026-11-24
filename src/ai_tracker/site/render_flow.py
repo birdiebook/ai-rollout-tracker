@@ -302,7 +302,7 @@ def flow_page(doc: dict, build: dict) -> str:
 <section class="flowmap-wrap" aria-label="Kedjan i översikt">
 {svg_horizontal(doc)}
 {svg_vertical(doc)}
-<p class="small muted flowmap-note">Staplarna överst i varje led är grenarnas tillstånd (↑ accelererar, → stabil, ↓ bromsar in, · för få serier). Bågarna är avstämningarna, med riktningen i kvotens takt. Tryck på ett led för detaljerna.</p>
+<p class="small muted flowmap-note">Staplarna överst i varje led är grenarnas tillstånd (↑ accelererar, → stabil, ↓ bromsar in, · för få källor). Bågarna är avstämningarna, med riktningen i kvotens takt. Tryck på ett led för detaljerna.</p>
 </section>
 <div class="flow">
 {''.join(blocks)}

@@ -309,7 +309,30 @@ def next_month_end(today) -> pd.Timestamp:
 
 
 def aggregate(b: dict) -> dict:
-    return {k: b.get(k) for k in ("index", "state", "n_series", "n_up", "n_neutral", "n_down")}
+    """Index, state and counts of a branch record. `index`/`state` are the official rule of the record
+    (`rule_version`; v2 = one vote per source family from 2026-11-30). A record written before v2 has no
+    rule_version: its index is v1, and index_v1/state_v1 repeat it."""
+    out = {k: b.get(k) for k in ("index", "state", "n_series", "n_up", "n_neutral", "n_down")}
+    v1 = b.get("v1") or {"index": b.get("index"), "state": b.get("state")}
+    out.update(rule_version=b.get("rule_version") or "v1", n_families=b.get("n_families"),
+               index_v1=v1.get("index"), state_v1=v1.get("state"))
+    return out
+
+
+def families_view(b: dict, ctx: Context) -> tuple[list[dict], int]:
+    """The counted source families of a branch (index v2) whose counted series may all be shown, with their vote,
+    and the number of counted families with a withheld series (counted in the index, neither named nor voted here)."""
+    shown, hidden = [], 0
+    for f in b.get("families") or []:
+        keys = f.get("series") or []
+        if not keys or f.get("vote") is None:
+            continue
+        if all(publishable(k, ctx) for k in keys):
+            shown.append({"family": f["family"], "series": list(keys), "n_series": len(keys),
+                          "vote": _num(f["vote"], 4)})
+        else:
+            hidden += 1
+    return shown, hidden
 
 
 class Record:
@@ -397,7 +420,9 @@ def branch_view(code: str, rec: Record) -> dict:
         else:
             withheld.append(withheld_entry(key, ctx, counted=False))
     cur = aggregate(b)
+    families, families_withheld = families_view(b, ctx)
     view = {"code": code, "name": catalog.BRANCHES[code], "question": BRANCH_QUESTIONS.get(code, ""), **cur,
+            "families": families, "n_families_withheld": families_withheld,
             **change_vs_previous(cur, rec.previous(code)), "n_withheld": len(withheld),
             "n_withheld_counted": sum(w["counted"] for w in withheld), "has_core": bool(R.core_entries(code, ctx.core)),
             "counted": counted, "not_counted": not_counted, "withheld": withheld, "history": rec.history[code]}
@@ -427,9 +452,11 @@ def overview(rec: Record, branches: dict[str, dict]) -> dict:
     tiles = []
     for code, v in branches.items():
         tiles.append({k: v[k] for k in ("code", "name", "question", "index", "state", "n_series", "n_up", "n_neutral",
-                                        "n_down", "previous", "delta_index", "state_changed", "n_withheld",
-                                        "n_withheld_counted", "has_core")}
-                     | {"history": [{k: h[k] for k in ("month", "kind", "index", "state", "n_series")}
+                                        "n_down", "rule_version", "n_families", "index_v1", "state_v1", "previous",
+                                        "delta_index", "state_changed", "n_withheld", "n_withheld_counted",
+                                        "has_core")}
+                     | {"history": [{k: h[k] for k in ("month", "kind", "index", "state", "n_series", "n_families",
+                                                       "index_v1", "state_v1")}
                                     for h in v["history"]]})
     return {"record": rec.meta(), "branches": tiles}
 
@@ -444,10 +471,12 @@ def _target_history(key: str, ctx: Context, when) -> dict | None:
     return {"periods": [str(p) for p in s.index], "values": [_num(v, 6) for v in s.to_numpy()]}
 
 
-def next_origin(nowcast: str, today, root: Path, horizon_days: int = 200) -> tuple[str, str] | None:
+def next_origin(nowcast: str, today, root: Path, horizon_days: int = 200,
+                schedule_file: Path | None = None) -> tuple[str, str] | None:
+    """The next forecast day without a file under `root`. `schedule_file`: N5's BTOS schedule (Context.btos_schedule)."""
     day = pd.Timestamp(today).normalize()
     for i in range(horizon_days):
-        d = pipeline.due_for(nowcast, day + pd.Timedelta(days=i))
+        d = pipeline.due_for(nowcast, day + pd.Timedelta(days=i), schedule_file)
         if d is not None and not d.path(root).exists():
             return str(d.origin.date()), d.period
     return None
@@ -486,7 +515,7 @@ def nowcasts(ctx: Context, forecasts_dir: Path, today, calibration: dict | None 
                             "bias": _num(sum(e) / len(e), 4) if e else None})
         coverage = _coverage(scored, variants) if intervals.ENABLED else []
         spec = ctx.specs.get(target)
-        nxt = next_origin(sub, today, forecasts_dir)
+        nxt = next_origin(sub, today, forecasts_dir, schedule_file=ctx.btos_schedule)
         out.append({
             "id": sub, "label": sub.upper(), "title": info["title"], "target": target,
             "target_label": spec.label if spec else info.get("target_label", target),
@@ -589,7 +618,25 @@ def method(ctx: Context) -> dict:
     for w in withheld:
         w.pop("counted")
     return {"sources": rows, "withheld": withheld, "n_series": len(ctx.specs),
-            "n_published": sum(bool(s.publish) for s in ctx.specs.values())}
+            "n_published": sum(bool(s.publish) for s in ctx.specs.values()),
+            "index_families": index_families(ctx)}
+
+
+def index_families(ctx: Context) -> list[dict]:
+    """The registered source-family table (register 2026-11-24, index v2) per branch: family id, its expanded core
+    entries that may be shown (and placeholders), and the number of withheld entries (not named). A family whose id
+    is itself a withheld series key (an unlisted entry is its own family, named after it) is left out: the withheld
+    list names that series."""
+    out = []
+    for code in catalog.BRANCHES:
+        fam_of = R.entry_families(code, ctx.core, ctx.families)
+        for fam in dict.fromkeys(fam_of.values()):
+            if (fam in ctx.specs or fam in ctx.derived) and not publishable(fam, ctx):
+                continue
+            entries = [e for e, f in fam_of.items() if f == fam]
+            shown = [e for e in entries if "<" in e or publishable(e, ctx)]
+            out.append({"branch": code, "family": fam, "entries": shown, "n_withheld": len(entries) - len(shown)})
+    return out
 
 
 def letters(letters_dir: Path) -> dict:

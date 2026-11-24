@@ -267,3 +267,27 @@ så en kontraktsändring utan nya fixturer stoppar pytest.
   backtestkalibreringen (samma kostnad som den gamla sidan).
 - Granskningen R-W1 (licens och läckage) ska gå igenom grinden, skanningen och versionsreglerna innan paketet
   publiceras under `/next/`.
+
+## Ändringar
+
+### 2026-11-24 – 1.1.0: diffusionsindex v2 med källfamiljer (spår K1)
+
+Bara tillägg. Inga fält är borttagna eller har bytt typ.
+- `index` och `state` är den officiella regeln. Från ögonblicksbilden 2026-11-30 är det v2: en röst per källfamilj
+  (`docs/mattregister.md`, 2026-11-24). `rule_version` anger regeln. En post skriven före v2 saknar fältet i
+  ögonblicksbilden och får `"v1"` i paketet.
+- Nytt tillstånd i `common.json#/$defs/state`: `"för få källor"` (färre än 3 räknade källfamiljer). `"för få serier"`
+  finns kvar för v1.
+- `branch/<G>.json`: `rule_version`, `n_families`, `index_v1`, `state_v1`, `families[]` (`family`, `series`,
+  `n_series`, `vote`) och `n_families_withheld`. `families` tar bara med räknade familjer vars räknade serier alla får
+  visas. En familj med en innehållen serie räknas i indexet och i `n_families`, men namnges inte och har ingen röst i
+  paketet (`n_families_withheld`).
+- `overview.json`: rutorna har samma fält, och `stripes.rows[]` har `n_families`, `index_v1` och `state_v1` per månad.
+  `previous` och `history` (`$defs/aggregate`) har `rule_version`, `n_families`, `index_v1` och `state_v1`.
+- `flow.json`: ledens grenar har `n_families` och `rule_version`.
+- `method.json`: `rules.index_rule`, `rules.min_families` och `branches[].families` (registrets familjetabell med
+  `family`, `entries` och `n_withheld`).
+- `families[].family` är källfamiljen i indexet. Det är inte samma sak som `series.source_family`, som är källans namn
+  i licenstabellen.
+- Fixturerna är regenererade. `us_ip_computers_m` är ny i den syntetiska världen, så att G6 har en familj med två
+  serier.

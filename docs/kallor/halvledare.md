@@ -50,7 +50,8 @@ lämnas till **spår B4**. Capex för Broadcom och Marvell begärdes inte och ä
   public information and may be copied or further distributed by users of the web site without the SEC's
   permission. Please consider appropriate citation to the SEC as the source."* Därför `publish=True`, med
   SEC som källa. ASML:s siffror kommer ur en lagstadgad inlämning (6-K), och bara extraherade siffror
-  publiceras, med källhänvisning (samma licenstext som TSMC, `series/tsmc.py`).
+  publiceras, med källhänvisning (samma SEC-text som för TSMC, men med ASML som inlämnare,
+  `series/tsmc.py` `sixk_license`; rättat efter granskning R9).
 - CIK verifierade mot `entityName`: AMD 2488, Broadcom Inc. 1730168 (föregångare Broadcom Ltd 1649338 och
   Avago Technologies 1441634), Marvell Technology, Inc. 1835632 (föregångare Marvell Technology Group
   1058057), Micron 723125, Nvidia 1045810, ASML Holding 937966.

@@ -14,7 +14,21 @@
     "lead_code": {"type": "string", "pattern": "^L[1-9]$"},
     "series_key": {"type": "string", "pattern": "^[A-Za-z0-9_]+$"},
     "kind": {"enum": ["skarp", "rekonstruerad"], "description": "skarp = a committed live snapshot; rekonstruerad = recomputed as of the month end with today's table (labelled)."},
-    "state": {"enum": ["accelererar", "stabil", "bromsar in", "för få serier", "inga registrerade kärnserier"]},
+    "state": {"enum": ["accelererar", "stabil", "bromsar in", "för få källor", "för få serier", "inga registrerade kärnserier"],
+              "description": "Official state of the record's rule: v2 gives 'för få källor' (fewer than 3 source families), v1 'för få serier' (fewer than 3 series)."},
+    "rule_version": {"enum": ["v1", "v2"], "description": "Index rule of index/state: v2 = one vote per source family (register 2026-11-24, official from the snapshot 2026-11-30), v1 = one vote per series. A record written before v2 is v1."},
+    "family": {
+      "type": "object",
+      "description": "A counted source family (index v2) whose counted series may all be shown: id, series and vote = mean of (direction + 1) / 2. Not the same as series.source_family (licence grouping).",
+      "additionalProperties": false,
+      "required": ["family", "series", "n_series", "vote"],
+      "properties": {
+        "family": {"type": "string"},
+        "series": {"type": "array", "items": {"$ref": "#/$defs/series_key"}},
+        "n_series": {"type": "integer"},
+        "vote": {"$ref": "#/$defs/num"}
+      }
+    },
     "direction": {"enum": [-1, 0, 1, null], "description": "Direction of the change in pace beyond the deadband: 1 up, 0 within, -1 down."},
     "pair": {"type": ["array", "null"], "items": {"$ref": "#/$defs/num"}, "minItems": 2, "maxItems": 2, "description": "[lo, hi]."},
     "intervals": {
@@ -51,7 +65,11 @@
         "n_series": {"type": "integer"},
         "n_up": {"type": "integer"},
         "n_neutral": {"type": "integer"},
-        "n_down": {"type": "integer"}
+        "n_down": {"type": "integer"},
+        "rule_version": {"$ref": "#/$defs/rule_version"},
+        "n_families": {"$ref": "#/$defs/int_or_null", "description": "Counted source families (v2); null in a v1 record."},
+        "index_v1": {"$ref": "#/$defs/num", "description": "Index under rule v1 (one vote per series), shown alongside."},
+        "state_v1": {"anyOf": [{"$ref": "#/$defs/state"}, {"type": "null"}]}
       }
     },
     "withheld_entry": {

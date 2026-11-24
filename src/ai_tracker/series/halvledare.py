@@ -23,7 +23,7 @@ import pandas as pd
 from ai_tracker.catalog import Spec
 from ai_tracker.series.sec import LICENSE, NVDA_MAX_AGE_DAYS
 from ai_tracker.series.sec_segments import REVENUE, SEG, PROD, Line, checked_regimes
-from ai_tracker.series.tsmc import LICENSE as SIXK_LICENSE
+from ai_tracker.series.tsmc import sixk_license
 from ai_tracker.sources import asml_sec, sec, sec_instant, sec_segment
 
 SOURCE = "SEC EDGAR XBRL companyfacts"
@@ -232,6 +232,7 @@ ASML_BOOKINGS = [
      "ASML slutade redovisa orderingång per kvartal efter 2025Q4."),
 ]
 ASML_LAG_DAYS = 30  # results are published 14-29 days after the quarter (2006-2026)
+ASML_LICENSE = sixk_license("ASML")  # SEC dissemination text; ASML is the filer (review R9, N8)
 
 
 def _asml_fetch(measure: str, lo: pd.Period | None = None, hi: pd.Period | None = None, test=None):
@@ -245,7 +246,7 @@ def _asml_fetch(measure: str, lo: pd.Period | None = None, hi: pd.Period | None 
 
 def _asml_specs() -> list[Spec]:
     common = dict(branch="G6", unit="MEUR", freq="Q", source=SOURCE_ASML, lag_days=ASML_LAG_DAYS,
-                  license=SIXK_LICENSE, revised=True, publish=True,
+                  license=ASML_LICENSE, revised=True, publish=True,
                   question="Hur mycket litografiutrustning beställs och levereras, före chipkapaciteten?")
     specs = [Spec(key="asml_net_sales", label="ASML:s nettoomsättning", fetch=_asml_fetch("net_sales"),
                   note="Release-daterad: known_from = 6-K:ns inlämningsdatum (samma dag som pressmeddelandet). "

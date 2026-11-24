@@ -28,6 +28,8 @@
           "properties": {"code": {"$ref": "common.json#/$defs/branch_code"}, "name": {"$ref": "common.json#/$defs/str_or_null"},
                          "state": {"anyOf": [{"$ref": "common.json#/$defs/state"}, {"type": "null"}]},
                          "index": {"$ref": "common.json#/$defs/num"}, "n_series": {"$ref": "common.json#/$defs/int_or_null"},
+                         "n_families": {"$ref": "common.json#/$defs/int_or_null"},
+                         "rule_version": {"anyOf": [{"$ref": "common.json#/$defs/rule_version"}, {"type": "null"}]},
                          "n_up": {"$ref": "common.json#/$defs/int_or_null"}, "n_neutral": {"$ref": "common.json#/$defs/int_or_null"},
                          "n_down": {"$ref": "common.json#/$defs/int_or_null"}, "n_withheld_counted": {"$ref": "common.json#/$defs/int_or_null"},
                          "has_core": {"type": ["boolean", "null"]}, "delta_index": {"$ref": "common.json#/$defs/num"},

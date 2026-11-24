@@ -11,10 +11,12 @@ import math
 
 from ai_tracker import catalog
 from ai_tracker.site import markdown as MD
+from ai_tracker.state import register as R
 
 SITE_TITLE = "AI-utrullningen"
-STATE_ICON = {"accelererar": "↑", "stabil": "→", "bromsar in": "↓", "för få serier": "·"}
-STATE_CLASS = {"accelererar": "accel", "stabil": "stable", "bromsar in": "brake", "för få serier": "few"}
+STATE_ICON = {"accelererar": "↑", "stabil": "→", "bromsar in": "↓", "för få källor": "·", "för få serier": "·"}
+STATE_CLASS = {"accelererar": "accel", "stabil": "stable", "bromsar in": "brake", "för få källor": "few",
+               "för få serier": "few"}
 DIRECTION = {1: ("↑", "accelererar (+1)"), 0: ("→", "neutral (0)"), -1: ("↓", "bromsar in (−1)")}
 METHOD_TEXT = {"log": "årsförändring i log ×100", "share": "förändring i procentenheter över ett år",
                "logit": "förändring i logit över ett år (frontvärde)", "doubling": "fördubblingstid (24 månader)",
@@ -51,8 +53,36 @@ def counts(v: dict) -> str:
     word = "serie" if n == 1 else "serier"
     if not n:
         return "0 räknade serier"
-    return (f'{n} räknade {word} <span class="muted">(↑{v.get("n_up", 0)} · →{v.get("n_neutral", 0)} · '
-            f'↓{v.get("n_down", 0)})</span>')
+    dirs = f'↑{v.get("n_up", 0)} · →{v.get("n_neutral", 0)} · ↓{v.get("n_down", 0)}'
+    if v.get("rule_version") == "v2":
+        f = v.get("n_families") or 0
+        return (f'{f} {"källa" if f == 1 else "källor"} <span class="muted">({n} {word}: {dirs})</span>')
+    return f'{n} räknade {word} <span class="muted">({dirs})</span>'
+
+
+def v1_text(v: dict) -> str:
+    """One neutral line when rule v1 (one vote per series) gives another state than the official v2."""
+    if v.get("rule_version") != "v2" or v.get("state_v1") in (None, v.get("state")):
+        return ""
+    if {v.get("state_v1"), v.get("state")} <= {R.STATE_FEW, R.STATE_FEW_FAMILIES}:  # neither rule gives a state (R9 N5)
+        return ""
+    return (f'<p class="small muted">Med regel v1, en röst per serie: {esc(v.get("state_v1"))} '
+            f'(index {num(v.get("index_v1"))}).</p>')
+
+
+def families_section(v: dict) -> str:
+    rows = "".join(f'<tr><td><code>{esc(f["family"])}</code></td><td class="num">{f["n_series"]}</td>'
+                   f'<td class="num">{num(f["vote"])}</td></tr>' for f in v.get("families") or [])
+    hidden = v.get("n_families_withheld") or 0
+    if not rows and not hidden:
+        return ""
+    note = (f'<p class="small muted">{hidden} {"källa" if hidden == 1 else "källor"} med serier som inte visas av '
+            f'licensskäl räknas i indexet utan att namnges här.</p>' if hidden else "")
+    table = (f'<div class="table-wrap"><table><thead><tr><th>Källfamilj</th><th>Räknade serier</th><th>Röst</th></tr>'
+             f'</thead><tbody>{rows}</tbody></table></div>' if rows else "")
+    return f"""<section><h2>Källor som röstar</h2>
+<p>Indexet ger en röst per källfamilj: serier ur samma källa som mäter samma sak och bara skiljer sig i land, delstat, paket eller liknande. Familjens röst är medelvärdet av (riktning + 1)/2 över dess räknade serier, och indexet är medelvärdet av rösterna (regel v2 i måttregistret, från 2026-11-30).</p>
+{table}{note}</section>"""
 
 
 def change_text(v: dict) -> str:
@@ -148,6 +178,7 @@ def tile(t: dict) -> str:
 <p class="question">{esc(t.get('question'))}</p>
 <div class="tile-state">{state_badge(t.get('state'))}<span class="index" title="Diffusionsindex">{num(t.get('index'))}</span></div>
 <p class="small">{counts(t)}</p>
+{v1_text(t)}
 <p class="small change">{change_text(t)}</p>
 <figure class="spark" data-chart="spark" data-code="{code}" aria-label="Diffusionsindex per månad, {code}"></figure>
 {note}
@@ -185,8 +216,8 @@ def overview_page(doc: dict, build: dict) -> str:
 </section>
 <section class="howto">
 <h2>Så läses rutorna</h2>
-<p><strong>Diffusionsindex</strong> är andelen av grenens kärnserier som accelererar: (antal ↑ + 0,5 × antal →) / antal räknade serier. En serie accelererar när förändringen i takt är större än 0,25 standardavvikelser av sin egen historik. 0,5 betyder balans.</p>
-<p><strong>Tillstånd:</strong> accelererar om index ≥ 0,67, bromsar in om index ≤ 0,33, annars stabil. Med färre än tre räknade serier visas index men inget tillstånd. Reglerna låstes i <a href="{esc(build['repo'])}/blob/main/docs/mattregister.md">måttregistret</a> innan data analyserades.</p>
+<p><strong>Diffusionsindex</strong> ger en röst per källfamilj, alltså serier ur samma källa som mäter samma sak och bara skiljer sig i land, delstat, paket eller liknande. En serie accelererar (↑, +1) när förändringen i takt är större än 0,25 standardavvikelser av sin egen historik, bromsar in (↓, −1) när den är mindre än minus samma gräns och är stabil (→, 0) däremellan. Familjens röst är medelvärdet av (riktning + 1)/2, och indexet är medelvärdet av rösterna. 0,5 betyder balans.</p>
+<p><strong>Tillstånd:</strong> accelererar om index ≥ 0,67, bromsar in om index ≤ 0,33, annars stabil. Med färre än tre räknade källor visas index men inget tillstånd ("för få källor"). Regel v1, en röst per serie, visas bredvid när den ger ett annat tillstånd. Reglerna låstes i <a href="{esc(build['repo'])}/blob/main/docs/mattregister.md">måttregistret</a> innan data analyserades, och v2 gäller från 2026-11-30.</p>
 </section>"""
     return page(f"{SITE_TITLE} – översikt", "oversikt", body, "data/oversikt.json", build)
 
@@ -276,6 +307,7 @@ def branch_page(v: dict, build: dict) -> str:
         state_html = f"""<div class="branch-state">{state_badge(v.get('state'))}
 <span class="index" title="Diffusionsindex">{num(v.get('index'))}</span>
 <span>{counts(v)}</span></div>
+{v1_text(v)}
 <p class="change">{change_text(v)}</p>"""
     sel = ""
     if v.get("selected_benchmarks") is not None:
@@ -303,6 +335,7 @@ def branch_page(v: dict, build: dict) -> str:
 <section><h2>Serier som räknas</h2>
 <p>Takt och förändring i takt så som de var kända vid {esc(rec['date'])} (en version, <code>as_of</code> beräkningsdagen). Riktningen avgörs av den senaste perioden.</p>
 {counted}</section>
+{families_section(v)}
 {not_counted}
 {withheld_section(v)}"""
     return page(f"{code} {v['name']} – {SITE_TITLE}", "gren", body, f"data/gren/{code}.json", build)
@@ -605,6 +638,21 @@ def reconciliation_section(rec: dict) -> str:
 </section>"""
 
 
+def index_families_section(rows: list[dict]) -> str:
+    if not rows:
+        return ""
+    def hidden(r: dict) -> str:
+        return f' <span class="muted">({r["n_withheld"]} visas inte)</span>' if r["n_withheld"] else ""
+
+    body = "".join(f'<tr><td>{esc(r["branch"])}</td><td><code>{esc(r["family"])}</code></td>'
+                   f'<td>{esc(", ".join(r["entries"])) or "–"}{hidden(r)}</td></tr>' for r in rows)
+    return f"""<section>
+<h2>Källfamiljer i diffusionsindexet</h2>
+<p>Från ögonblicksbilden 2026-11-30 ger indexet en röst per källfamilj (regel v2, registrerad 2026-11-24). Skivor av samma källa, till exempel länder, delstater eller paket, samvarierar och ska inte räknas som oberoende. Tabellen är registrets familjetabell.</p>
+<div class="table-wrap"><table><thead><tr><th>Gren</th><th>Källfamilj</th><th>Kärnserier</th></tr></thead><tbody>{body}</tbody></table></div>
+</section>"""
+
+
 def method_page(doc: dict, build: dict) -> str:
     repo = esc(build["repo"])
     rows = "".join(
@@ -635,6 +683,7 @@ def method_page(doc: dict, build: dict) -> str:
 <p>{doc['n_published']} av {doc['n_series']} serier i katalogen får visas här. Bara serier vars licens är kontrollerad och tillåter vidarepublicering visas med värden. Från rapporter visas bara extraherade siffror med källhänvisning, aldrig text. Data committas inte till git, utan hämtas med skript.</p>
 <div class="table-wrap"><table><thead><tr><th>Källa</th><th>Grenar</th><th>Licens</th><th>Visas</th><th></th></tr></thead><tbody>{rows}</tbody></table></div>
 </section>
+{index_families_section(doc.get("index_families") or [])}
 {reconciliation_section(doc.get("reconciliations") or {})}
 <section id="withheld">
 <h2>Serier som inte visas</h2>

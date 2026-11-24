@@ -182,3 +182,30 @@ räknad serie (BTOS v1, 2025-05 till 2025-11).
 - Tillstånden byter ofta för G4–G7. Om tillståndsregeln har något prognos- eller beskrivningsvärde är inte prövat.
   Det är en egen fråga och kräver förregistrering.
 - G4 och G5 har 5 respektive 4 serier, så en enda serie flyttar indexet 0,1–0,125 eller mer.
+
+## Index v2 (källfamiljer)
+
+Spår K1, 2026-11-24. Ägarens beslut (beslutspunkt 2 i `docs/riktning.md`): diffusionsindexet ger en röst per
+källfamilj och kräver minst tre räknade familjer för ett tillstånd ("för få källor" annars). Det är officiell regel från
+den första skarpa ögonblicksbilden 2026-11-30. v1, en röst per serie, räknas och redovisas bredvid. Definition,
+familjetabell och regel står i `docs/mattregister.md` ("2026-11-24 – Diffusionsindex v2"), och koden i
+`state.register.FAMILIES` och `state.branch`.
+
+**Ordning (förregistrering):** registerposten committades först (`7ba72eb`), koden därefter (`d80d7e3`). Inget
+v2-värde har räknats på verklig data före registerposten. En senare daterad post byter bara namnet på G2:s familj,
+eftersom det gamla namnet var en annan katalogseries nyckel. Under arbetet fanns ingen verklig observationstabell i
+basen, och spåret har inte tittat på några verkliga värden. Familjeindelningen bygger bara på katalogens metadata
+(källa, etikett och licens per kärnserie).
+
+**Väntad effekt, bara efter konstruktion:** G2 och G8 har en familj och får "för få källor". G9 har tre familjer,
+men två är Epochs spärrade databasserier, så G9 får också "för få källor" tills spärren släpper. G7 har exakt tre
+familjer och får ett tillstånd bara om alla tre har en räknad serie.
+
+**Rekonstruktion v1 mot v2:** körs av orkestreraren när datasnapshoten är installerad. Kommandot är
+
+    PYTHONPATH=src python -m ai_tracker.state backcast --start 2024-01 --end 2026-10 --compare 6
+
+Det skriver `outputs/state_backcast.csv` med `index` och `state` (v2), `index_v1` och `state_v1`, `n_series`,
+`n_families` och familjernas röster. `--compare 6` skriver ut tabellen för de sista sex månaderna (2026-05 till
+2026-10) i Markdown: index, tillstånd, antal serier och antal familjer per gren med båda reglerna. Tabellen är en
+rekonstruktion och inget skarpt register, och den redovisas utan annan tolkning än vad som ändrades.

@@ -39,7 +39,10 @@
             "code": {"$ref": "common.json#/$defs/branch_code"}, "name": {"type": "string"},
             "index": {"type": "array", "items": {"$ref": "common.json#/$defs/num"}},
             "state": {"type": "array", "items": {"anyOf": [{"$ref": "common.json#/$defs/state"}, {"type": "null"}]}},
-            "n_series": {"type": "array", "items": {"$ref": "common.json#/$defs/int_or_null"}}}}},
+            "n_series": {"type": "array", "items": {"$ref": "common.json#/$defs/int_or_null"}},
+            "n_families": {"type": "array", "items": {"$ref": "common.json#/$defs/int_or_null"}},
+            "index_v1": {"type": "array", "items": {"$ref": "common.json#/$defs/num"}},
+            "state_v1": {"type": "array", "items": {"anyOf": [{"$ref": "common.json#/$defs/state"}, {"type": "null"}]}}}}},
         "thresholds": {"type": "object", "additionalProperties": false,
                        "properties": {"braking_at_most": {"type": "number"}, "accelerating_at_least": {"type": "number"}}}
       }
@@ -84,6 +87,10 @@
         "index": {"$ref": "common.json#/$defs/num"},
         "state": {"$ref": "common.json#/$defs/state"},
         "n_series": {"type": "integer"}, "n_up": {"type": "integer"}, "n_neutral": {"type": "integer"}, "n_down": {"type": "integer"},
+        "rule_version": {"$ref": "common.json#/$defs/rule_version"},
+        "n_families": {"$ref": "common.json#/$defs/int_or_null"},
+        "index_v1": {"$ref": "common.json#/$defs/num"},
+        "state_v1": {"anyOf": [{"$ref": "common.json#/$defs/state"}, {"type": "null"}]},
         "previous": {"anyOf": [{"$ref": "common.json#/$defs/aggregate"}, {"type": "null"}]},
         "delta_index": {"$ref": "common.json#/$defs/num"},
         "state_changed": {"type": ["boolean", "null"]},

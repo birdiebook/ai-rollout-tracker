@@ -25,7 +25,7 @@ from ai_tracker.state import snapshot as S
 from ai_tracker.state.measures import Context, measure_path, rule_for
 
 STATUS = {"skarp": "live", "rekonstruerad": "reconstructed"}
-STATES = [R.STATE_ACCEL, R.STATE_STABLE, R.STATE_BRAKE, R.STATE_FEW, "inga registrerade kärnserier"]
+STATES = [R.STATE_ACCEL, R.STATE_STABLE, R.STATE_BRAKE, R.STATE_FEW_FAMILIES, R.STATE_FEW, "inga registrerade kärnserier"]
 # Fields of a measure kept per month in a series' measure history (columnar, see series_doc).
 HISTORY_FIELDS = ("latest_period", "known_from", "pace", "change_in_pace", "pace_percentile", "change_percentile",
                   "direction", "valid")
@@ -85,7 +85,10 @@ def stripes(rec: D.Record) -> dict:
         rows.append({"code": code, "name": catalog.BRANCHES[code],
                      "index": [_n(by[m]["index"], 4) if m in by else None for m in months],
                      "state": [by[m]["state"] if m in by else None for m in months],
-                     "n_series": [by[m]["n_series"] if m in by else None for m in months]})
+                     "n_series": [by[m]["n_series"] if m in by else None for m in months],
+                     "n_families": [by[m].get("n_families") if m in by else None for m in months],
+                     "index_v1": [_n(by[m].get("index_v1"), 4) if m in by else None for m in months],
+                     "state_v1": [by[m].get("state_v1") if m in by else None for m in months]})
     return {"months": months, "kind": [kinds.get(m) for m in months], "rows": rows,
             "thresholds": {"braking_at_most": R.BRAKING, "accelerating_at_least": R.ACCELERATING}}
 
@@ -223,6 +226,7 @@ def _gate_nowcast(n: dict, ctx: Context) -> dict:
 
 def method_doc(ctx: Context, rec: D.Record) -> dict:
     m = D.method(ctx)
+    fams = m.get("index_families") or []
     branches = []
     for code, name in catalog.BRANCHES.items():
         shown, withheld = [], []
@@ -232,7 +236,9 @@ def method_doc(ctx: Context, rec: D.Record) -> dict:
             else:
                 withheld.append(D.withheld_entry(e, ctx, counted=True) | {"branch": code})
         branches.append({"code": code, "name": name, "question": D.BRANCH_QUESTIONS.get(code, ""),
-                         "core": shown, "withheld": withheld})
+                         "core": shown, "withheld": withheld,
+                         "families": [{k: f[k] for k in ("family", "entries", "n_withheld")}
+                                      for f in fams if f["branch"] == code]})
     leads = []
     for lead in F.LEADS:
         leads.append({"code": lead.code, "name": lead.name, "short": list(lead.short), "content": lead.content,
@@ -241,6 +247,7 @@ def method_doc(ctx: Context, rec: D.Record) -> dict:
                       "n_series_withheld": sum(1 for s in lead.series if "<" not in s and not G.publishable(s, ctx)),
                       "nowcasts": list(lead.nowcasts)})
     rules = {"deadband_sd": R.DEADBAND, "accelerating_at_least": R.ACCELERATING, "braking_at_most": R.BRAKING,
+             "index_rule": R.INDEX_RULE, "min_families": R.MIN_FAMILIES,
              "min_series": R.MIN_SERIES, "min_history": R.MIN_HISTORY, "pace_lag": R.PACE_LAG,
              "change_lag": R.CHANGE_LAG, "doubling_window_months": R.DOUBLING_WINDOW,
              "own_snapshot_months": R.OWN_SNAPSHOT_MONTHS,

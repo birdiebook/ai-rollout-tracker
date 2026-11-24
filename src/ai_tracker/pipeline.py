@@ -132,8 +132,9 @@ def n5_due(today, schedule_file: Path | None = None) -> Due | None:
 DUE = {"n2": n2_due, "n1": n1_due, "n3": n3_due, "n4": n4_due, "n5": n5_due, "n6": n6_due, "d2": d2_due}
 
 
-def due_for(nowcast: str, today) -> Due | None:
-    return DUE[nowcast](today)
+def due_for(nowcast: str, today, schedule_file: Path | None = None) -> Due | None:
+    """`schedule_file`: N5's BTOS schedule log (default: the one the fetch logged); the others ignore it."""
+    return n5_due(today, schedule_file) if nowcast == "n5" else DUE[nowcast](today)
 
 
 def due(today) -> list[Due]:

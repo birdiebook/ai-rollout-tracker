@@ -217,11 +217,33 @@ def test_neutral_wording(env):
 def test_branch_paragraph_and_table(env):
     text = live_letter(env)
     g6 = text.split("### G6 Utbud och halvledare: ", 1)[1].split("\n### ", 1)[0]
-    assert "Index " in g6 and "3 räknade serier" in g6
+    assert "Index " in g6 and "3 källor (3 serier: " in g6  # index v2: every G6 test series is its own family
+    assert "Röst per källa" not in g6 and "Med regel v1" not in g6  # singleton families: votes = directions
     assert "| Serie | Senaste period | Mått | Takt | Förändring i takt |" in g6
     for k in PUBLIC:
         assert f"(`{k}`)" in g6
     assert "log×100 per år" in g6 and "mot sex månader tidigare" in g6
+
+
+def test_branch_with_one_source_family_and_a_different_v1_state(env):
+    """Index v2 (register 2026-11-24): G6's three series as one family -> 'för få källor', v1 named once if it
+    differs; the votes of a family with a withheld series are not shown."""
+    ctx, snaps, fc = env
+    ctx.families = {"G6": {"pub_fam": list(PUBLIC)}, "G9": {"mixed": [SECRET, "pub_g9"], "pub_g9b": ["pub_g9b"]}}
+    path = write_snapshot(ctx, snaps, MONTH)
+    doc = json.loads(path.read_text(encoding="utf-8"))
+    g6 = doc["branches"]["G6"]
+    assert g6["n_families"] == 1 and g6["state"] == "för få källor" and g6["v1"]["state"] != "för få källor"
+    text = L.letter(MONTH, ctx, snapshots_dir=snaps, forecasts_dir=fc)
+    sec = text.split("### G6 Utbud och halvledare: för få källor", 1)[1].split("\n### ", 1)[0]
+    assert "med 1 källa (3 serier: " in sec and "Med färre än 3 räknade källor anges inget tillstånd." in sec
+    assert f"Med regel v1, en röst per serie, är tillståndet {g6['v1']['state']}" in sec
+    assert "Röst per källa, medel av (riktning + 1)/2: `pub_fam` " in sec
+    g9 = text.split("### G9 ", 1)[1].split("\n### ", 1)[0]
+    assert "`mixed`" not in g9 and "1 källa med serier som inte visas av licensskäl räknas utan att namnges" in g9
+    assert "`pub_g9b` " in g9
+    assert "regel v2" in text.split("## Så ska brevet läsas", 1)[1]
+    assert not L.BANNED_WORDS.search(text)
 
 
 def test_nowcasts_new_forecast_and_new_outcome(env):
