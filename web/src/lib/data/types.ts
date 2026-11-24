@@ -18,14 +18,23 @@ export interface RecordMeta {
 }
 
 export interface Manifest {
-  schema_version: string | number;
-  /** true only for the provisional W4 fixture (synthetic values) */
+  /** bundle schema version, semver (W3: "version"; "schema_version" accepted too) */
+  version?: string;
+  schema_version?: string;
+  /** true for fixtures (synthetic values): the site then shows a "Testdata" note */
+  synthetic?: boolean;
+  /** true only for W4's provisional fixture */
   provisional?: boolean;
   note?: string;
-  build?: { built_utc?: string; git_sha?: string; repo?: string; [k: string]: unknown };
-  documents?: string[];
+  built_utc?: string;
+  git_sha?: string;
+  repo?: string;
+  snapshot?: RecordMeta;
+  files?: { path: string; schema?: string; bytes?: number; gzip_bytes?: number; sha256?: string }[];
   [k: string]: unknown;
 }
+
+export const schemaVersion = (m: Manifest): string => String(m.version ?? m.schema_version ?? '');
 
 export interface BranchTile {
   code: string;

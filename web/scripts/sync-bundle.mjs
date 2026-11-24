@@ -30,4 +30,4 @@ const out = join(web, 'static', 'data');
 rmSync(out, { recursive: true, force: true });
 cpSync(dir, out, { recursive: true, filter: (src) => !src.endsWith('.py') });
 const m = JSON.parse(readFileSync(join(out, 'manifest.json'), 'utf-8'));
-console.log(`sync-bundle: ${kind} from ${dir} (schema ${m.schema_version}${m.provisional ? ', provisional' : ''}) -> static/data/`);
+console.log(`sync-bundle: ${kind} from ${dir} (schema ${m.version ?? m.schema_version}${m.synthetic ? ', synthetic' : ''}${m.provisional ? ', provisional' : ''}) -> static/data/`);

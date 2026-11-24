@@ -33,7 +33,7 @@
   <ThemeToggle />
 </header>
 
-{#if data.site.provisional}
+{#if data.site.testdata}
   <div class="wrap">
     <p class="testdata" role="note"><strong>Testdata.</strong> {data.site.note}</p>
   </div>

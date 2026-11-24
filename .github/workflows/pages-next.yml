@@ -1,0 +1,138 @@
+# The new site (web/, SvelteKit) under /next/: build, contract, quality gates and the deployable artifact.
+# docs/steg3/webb.md describes the design. This workflow never deploys by itself: Pages has ONE deployment per
+# repository, so pages.yml calls this workflow (workflow_call, bundle=real), downloads the `web-next` artifact into
+# site/next/ and deploys old and new site together in its single deploy job. If anything here fails, pages.yml still
+# deploys the current site (without /next/), so the existing site never breaks because of the new one.
+#
+# Triggers:
+# - push / pull_request touching web/, the bundle exporter or the fixtures: checks with fixtures (no data, no secret)
+# - workflow_dispatch: choose fixtures or the real bundle (restores the data cache the data jobs save)
+# - workflow_call from pages.yml: the real bundle, REQUIRE_REAL_BUNDLE=1 (fixtures are never published as data)
+#
+# Gates: svelte-check, vitest (tokens contrast/CVD, loaders against fixtures, components), prerender with
+# handleHttpError=fail (a schema break stops the build), no external hosts (static scan + browser requests),
+# performance budget (JS/CSS/data gzip per page), Playwright smoke at 1280 and 375 px, axe WCAG 2.2 AA in light and
+# dark mode, screenshots of every route (artifact `web-screenshots`).
+#
+# Permissions: contents: read (checkout and the data cache). Needs no secret.
+name: Pages /next/ (new site)
+
+on:
+  push:
+    paths:
+      - "web/**"
+      - "web-data-fixtures/**"
+      - "src/ai_tracker/site_bundle/**"
+      - ".github/workflows/pages-next.yml"
+  pull_request:
+    paths:
+      - "web/**"
+      - "web-data-fixtures/**"
+      - "src/ai_tracker/site_bundle/**"
+      - ".github/workflows/pages-next.yml"
+  workflow_dispatch:
+    inputs:
+      bundle:
+        description: "fixtures (W3's web-data-fixtures/, else web/fixtures/provisional) or real (python -m ai_tracker.site_bundle build)"
+        type: choice
+        options: [fixtures, real]
+        default: fixtures
+  workflow_call:
+    inputs:
+      bundle:
+        type: string
+        default: real
+      ref:
+        type: string
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      PYTHONPATH: src
+      BASE_PATH: /next
+      BUNDLE: ${{ inputs.bundle || 'fixtures' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      # ---- the real bundle (pages.yml and manual runs); fixtures need none of this
+      - uses: actions/setup-python@v5
+        if: env.BUNDLE == 'real'
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: ci/requirements.txt
+      - name: Install pinned Python dependencies
+        if: env.BUNDLE == 'real'
+        run: python -m pip install -r ci/requirements.txt
+      - name: Restore data cache (saved by the data jobs)
+        if: env.BUNDLE == 'real'
+        uses: actions/cache/restore@v4
+        with:
+          path: data
+          key: ai-data-${{ github.run_id }}
+          restore-keys: ai-data-
+      - name: Build the site bundle (licence gate and schema validation in Python)
+        if: env.BUNDLE == 'real'
+        run: |
+          test -f data/observations.parquet || { echo "::error::no data in the cache; run 'Weekly data fetch' first"; exit 1; }
+          python -c "import ai_tracker.site_bundle" 2>/dev/null || { echo "::warning::ai_tracker.site_bundle does not exist yet (track W3); /next/ is not built from real data"; exit 1; }
+          python -m ai_tracker.site_bundle build --out "$RUNNER_TEMP/site_bundle"
+          echo "SITE_BUNDLE_DIR=$RUNNER_TEMP/site_bundle" >> "$GITHUB_ENV"
+          echo "REQUIRE_REAL_BUNDLE=1" >> "$GITHUB_ENV"
+
+      # ---- SvelteKit
+      - name: Install pinned web dependencies
+        working-directory: web
+        run: npm ci --no-fund --no-audit
+      - name: Type check
+        working-directory: web
+        run: npm run check
+      - name: Unit and component tests (vitest)
+        working-directory: web
+        run: npm test
+      - name: Build (prerender every page under /next/)
+        working-directory: web
+        run: npm run build
+      - name: No external hosts in the build
+        working-directory: web
+        run: npm run external-hosts
+      - name: Performance budget
+        working-directory: web
+        run: BUDGET_REPORT="$RUNNER_TEMP/budget.json" npm run budget
+      - name: Install Chromium for Playwright
+        working-directory: web
+        run: npx playwright install --with-deps chromium
+      - name: Playwright smoke, axe and screenshots (1280 and 375 px)
+        working-directory: web
+        run: SHOTS_DIR="$RUNNER_TEMP/web-shots" npx playwright test
+      - name: Upload screenshots and reports
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-screenshots
+          path: |
+            ${{ runner.temp }}/web-shots
+            ${{ runner.temp }}/budget.json
+            web/playwright-report
+          retention-days: 14
+          if-no-files-found: ignore
+      - name: Upload the built site for pages.yml
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-next
+          path: web/build
+          retention-days: 1
+          include-hidden-files: true

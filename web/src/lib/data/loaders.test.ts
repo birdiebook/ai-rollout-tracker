@@ -3,7 +3,7 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { fsBundle } from '$lib/server/bundle';
 import { BundleError, createBundle, SCHEMA_MAJOR } from './loaders';
-import { BRANCH_CODES } from './types';
+import { BRANCH_CODES, schemaVersion } from './types';
 
 // The loaders run against every fixture set that exists: W4's provisional one and, once committed, W3's.
 const dirs = [resolve('fixtures/provisional'), resolve('../web-data-fixtures'), resolve('../web-data-fixtures/site_bundle')]
@@ -12,7 +12,7 @@ const dirs = [resolve('fixtures/provisional'), resolve('../web-data-fixtures'), 
 describe.each(dirs)('bundle fixtures in %s', (dir) => {
   const b = fsBundle(dir);
   it('manifest has the supported schema major version', async () => {
-    expect(Number(String((await b.manifest()).schema_version).split('.')[0])).toBe(SCHEMA_MAJOR);
+    expect(Number(schemaVersion(await b.manifest()).split('.')[0])).toBe(SCHEMA_MAJOR);
   });
   it('overview has headline, nine branches and stripes', async () => {
     const ov = await b.overview();
@@ -35,7 +35,7 @@ describe('contract checks', () => {
     return docs[p];
   });
   it('refuses another schema major version', async () => {
-    await expect(mem({ 'manifest.json': { schema_version: '2.0.0' } }).manifest()).rejects.toThrow(/schema_version/);
+    await expect(mem({ 'manifest.json': { version: '2.0.0' } }).manifest()).rejects.toThrow(/schema version/);
   });
   it('refuses a document without a required field', async () => {
     await expect(mem({ 'overview.json': { record: {}, headline: {}, branches: [], calendar: [] } }).overview()).rejects.toThrow(/stripes/);

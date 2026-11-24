@@ -34,9 +34,10 @@ function need(doc: Record<string, unknown>, path: string, fields: Record<string,
 
 const checks = {
   manifest: ((d, p) => {
-    need(d, p, { schema_version: 'any' });
-    const major = Number(String(d.schema_version).split('.')[0]);
-    if (major !== SCHEMA_MAJOR) throw new BundleError(p, `schema_version ${d.schema_version}, the site supports ${SCHEMA_MAJOR}.x`);
+    const v = d.version ?? d.schema_version;
+    if (v === undefined || v === null) throw new BundleError(p, 'missing field "version"');
+    const major = Number(String(v).split('.')[0]);
+    if (major !== SCHEMA_MAJOR) throw new BundleError(p, `schema version ${v}, the site supports ${SCHEMA_MAJOR}.x`);
   }) as Check,
   overview: ((d, p) => {
     need(d, p, { record: 'object', headline: 'object', branches: 'array', stripes: 'object', calendar: 'array' });

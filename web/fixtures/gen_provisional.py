@@ -96,16 +96,16 @@ method = {"record": record, "rules": {"deadband_sd": 0.25, "accelerating_at_leas
           "leads": [{"code": c, "name": n, "branches": b} for c, n, b in LEADS],
           "branches": [{"code": c, "name": n, "question": Q[c]} for c, n in BR.items()]}
 flow = {"record": record, "leads": [{"code": c, "name": n, "branches": b} for c, n, b in LEADS]}
-manifest = {"schema_version": "1.0.0", "provisional": True,
+manifest = {"bundle": "ai-rollout-tracker/site-bundle", "version": "1.0.0", "synthetic": True, "provisional": True,
             "note": "Provisorisk, syntetisk fixture från spår W4. Ersätts av W3:s web-data-fixtures/. Inga riktiga värden.",
-            "build": {"built_utc": "2026-11-24T00:00:00Z", "git_sha": "0000000", "repo": "https://github.com/birdiebook/ai-rollout-tracker"},
-            "documents": []}
+            "built_utc": "2026-11-24T00:00:00Z", "git_sha": "0000000",
+            "repo": "https://github.com/birdiebook/ai-rollout-tracker", "snapshot": record, "files": []}
 docs = {"overview.json": overview, "flow.json": flow, "method.json": method, "series/index.json": index,
         "nowcast/n2.json": nowcast, "nowcast/n1.json": n1,
         "withheld.json": {"withheld": [{"key": "test_withheld_m", "label": "Testserie som hålls inne", "why": "licens ej kontrollerad"}], "n": 1}}
 for code in BR: docs[f"branch/{code}.json"] = branch(code)
 for s in S: docs[f"series/{s['key']}.json"] = {"record": record, **s}
-manifest["documents"] = sorted(docs)
+manifest["files"] = [{"path": p} for p in sorted(docs)]
 docs["manifest.json"] = manifest
 for p, d in docs.items():
     f = out / p; f.parent.mkdir(parents=True, exist_ok=True)
