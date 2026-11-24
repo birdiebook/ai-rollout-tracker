@@ -379,3 +379,17 @@ Johannes valde rekommendationerna:
   overifierat Mistral-pris. G2 har kvar en räknad kärnserie. Rättningsspåret X5 tar R-1–R-8. Viktigast är ett
   läckage i `arena.py`: omladdade tavlor (2026-07-07) var daterade till första commit, och det rör även G1:s
   `g1_arena_text_top`. B från 2024-09 prövas först efter rättningen och en ny granskning.
+
+## 2026-11-24 – F1: revideringar av guidance och överraskning mot guidance
+
+- **Revideringsindex** som i PMI: (uppåt + 0,5 × oförändrade) / antal, alla bolag sammanslagna, med rullande 4 kvartal
+  som huvudmått eftersom ett kvartal sällan har 3 revideringar. Ett capex-besked som upprepas i en ny rapport räknas som
+  oförändrat. Indexet börjar 2020Q3, när den kurerade capex-filen börjar.
+- **Överraskning** mot den senaste guidancen före utfallet, på B2:s bas (TSMC i NT$, Nvidia, Meta och Alphabet), och ett
+  index av z utan avdraget medelvärde. Amazon och Microsoft ingår inte, eftersom deras definitioner inte går att jämföra.
+- **Egen grupp "Förväntningar mot utfall"** i ögonblicksbilden (`expectations`). Den räknas aldrig i grenarnas index och
+  har ingen takt.
+- **TSMC:s capex-budget** tolkas deterministiskt ur 6-K (2004–2026), utan LLM.
+- **Microsofts sänkning för 2026** (`msft-29`) räknas inte som revidering, på grund av definitionsbrottet R5-F14. Utan
+  regeln hade det rullande indexet för 2026Q4 varit 0,62 i stället för 0,67. Båda redovisas i
+  `docs/resultat/f1_revideringar.md`.

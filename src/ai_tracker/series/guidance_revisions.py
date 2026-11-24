@@ -540,6 +540,16 @@ SERIES = {
                             "Antal z i kvartalets senaste version. Aktualitet: gräns 199 dagar."),
 }
 KEYS = list(SERIES)
+# Series that are sparse by construction (warehouse no_gaps check): a period without enough events or components has
+# no value (register: n < 3 gives no index; the surprise index needs 2 companies).
+KNOWN_GAPS = {
+    "f1_rev_index_q": "no index in a quarter with fewer than 3 revisions",
+    "f1_rev_index_4q": "no index when the 4 quarters hold fewer than 3 revisions",
+    "f1_rev_median_q": "no median in a quarter without a revision with a size",
+    "f1_rev_median_4q": "no median when the 4 quarters hold no revision with a size",
+    "f1_surprise_index": "no index in a quarter with fewer than 2 companies' standardised surprises",
+    "f1_surprise_index_n": "no version in a quarter with fewer than 2 companies' standardised surprises",
+}
 
 
 def _spec(key: str) -> Spec:

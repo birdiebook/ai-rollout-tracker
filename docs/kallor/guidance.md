@@ -188,3 +188,20 @@ Granskningen (`docs/granskning/r2_guidance.md`) hittade en rad som saknades. Alp
 (8-K EX-99.1, accession 0001652044-25-000056) höjer capex för 2025 till cirka 85 mdr USD. Raden är nu tillagd
 (`googl-r2f1`), så filen har 102 rader. Det tidigare påståendet att höjningen i juli 2025 inte finns i EDGAR är fel:
 den finns i 8-K:n. Alphabets B2 för 2025Q3 bygger nu på 85 mdr.
+
+## TSMC:s capex-budget för året (spår F1, 2026-11-24)
+
+Kod: `src/ai_tracker/sources/tsmc_capex_guidance.py`, serier `tsmc_guid_capex_lo/hi` (år, MUSD) i
+`src/ai_tracker/series/guidance_revisions.py`. Deterministisk tolkning av samma 6-K som `tsmc_guidance` läser, ingen
+LLM. Regeln står i måttregistret (posten 2026-11-24 om F1).
+
+- **Form:** året och "capital expenditure(s)", "capex" eller "capital budget", ett verb (to be, will be, expected to
+  be, to remain) och about, around, approximately, between eller in the range of/between, med ett belopp i US$.
+  Året ska vara inlämningsåret eller nästa år. För varje meningsträff sparas SHA-256 och teckenposition, och texten
+  ligger bara i `data/raw`.
+- **Täckning:** 56 träffar i 6-K 2004–2026. Till och med 2015 upprepas utsikten i flera rapporter per år. Från 2016
+  står budgeten i pressmeddelandet i januari och när den ändras (till exempel 2016-07, 2017-10, 2018-04, 2019-10,
+  2020-07 och 2021-04).
+- **Inte kodat:** "slightly above US$9.5 billion" (2016-10-13), "near the mid point", "approach" och "above". Senare
+  ändringar som bara sades i samtalet finns inte i EDGAR.
+- **Licens:** som `tsmc_revenue_m` (SEC, offentlig). `publish=True`.
