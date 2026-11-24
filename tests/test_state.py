@@ -68,7 +68,7 @@ def test_register_parser_takes_later_tables_and_ignores_other_tables(tmp_path):
 def test_expand_braces():
     assert R.expand("us_elec_sales_com_{va,tx}_m") == ["us_elec_sales_com_va_m", "us_elec_sales_com_tx_m"]
     assert R.expand("rev_msft") == ["rev_msft"]
-    assert len(R.core_entries("G8")) == 9 and len(R.core_entries("G7")) == 6
+    assert len(R.core_entries("G8")) == 9 and len(R.core_entries("G7")) == 13  # G-A 2026-11-24
 
 
 def test_every_registered_core_series_exists_and_has_the_registered_method():

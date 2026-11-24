@@ -29,11 +29,11 @@ REGISTER_PATH = config.REPO / "docs" / "mattregister.md"
 CORE_SERIES: dict[str, list[str]] = {
     "G1": ["g1_epoch_bench_frontier_<valda>", "g1_epoch_train_compute_frontier", "g1_epoch_eci_frontier"],
     "G2": ["g2_price_at_capability_gpqa"],
-    "G3": ["btos_ai_use_<aktiv regim>", "eu_ai_ent_eu27", "eu_ai_ent_se"],
-    "G4": ["rev_aws", "rev_google_cloud", "rev_msft_cloud", "rev_nvda_datacenter", "rev_orcl_cloud"],
-    "G5": ["capex_hyp4", "us_constr_datacenter", "us_pfi_info_proc_eq_sw", "capex_ocf_hyp4"],
-    "G6": ["tsmc_revenue_m", "us_ip_semis_m", "us_ip_computers_m", "us_imports_tw_m", "us_imports_kr_m"],
-    "G7": ["us_elec_sales_com_{va,tx,ga,az,or,oh}_m"],
+    "G3": ["btos_ai_use_<aktiv regim>", "eu_ai_ent_eu27", "eu_ai_ent_se", "g3_npm_{openai,anthropic_sdk,langchain,vercel_ai}_w", "g3_pypi_{openai,anthropic,langchain,llama_index}_wed", "g3_wiki_{chatgpt,llm,genai}_en", "g3_cf_bots_ai_crawler_share", "g3_cf_ai_purpose_user_action"],
+    "G4": ["rev_aws", "rev_google_cloud", "rev_msft_cloud", "rev_nvda_datacenter", "rev_orcl_cloud", "rpo_hyp4"],
+    "G5": ["capex_hyp4", "us_constr_datacenter", "us_pfi_info_proc_eq_sw", "capex_ocf_hyp4", "capex_orcl"],
+    "G6": ["tsmc_revenue_m", "us_ip_semis_m", "us_ip_computers_m", "us_imports_tw_m", "us_imports_kr_m", "rev_amd_datacenter", "rev_avgo_semis", "rev_mrvl_datacenter", "asml_net_sales"],
+    "G7": ["us_elec_sales_com_{va,tx,ga,az,or,oh}_m", "eia930_avg_{pjm_dom,erco,azps,soco,srp}_m", "pjm_lf_peak_{dom,rto}_h5"],
     "G8": ["ai_postings_share_{us,gb,de,fr,ca,au,ie,it,nl}_d"],
     "G9": ["g9_arxiv_cs_ai", "g9_arxiv_cs_lg", "g9_arxiv_cs_cl", "g9_epoch_open_weights_share", "g9_epoch_notable_models"],
 }
