@@ -65,6 +65,8 @@
 
 ## 5. Vad de fyra målgrupperna behöver
 
+> **Fokus (Johannes 2026-11-24, samma dag):** projektet byggs för Johannes och några vänner, inte för många användare. Målgrupperna nedan är en ribba för kvaliteten på förståelsen, inte en plan för spridning. Arbete som bara gäller spridning prioriteras inte: engelsk version, separata vyer per målgrupp, nedladdningar och kommersiell användning.
+
 Det är en datakärna med fyra vyer, inte fyra produkter. Det som skiljer målgrupperna är vad de tittar på först.
 
 | Målgrupp | Huvudfråga | Behöver | Har vi |
