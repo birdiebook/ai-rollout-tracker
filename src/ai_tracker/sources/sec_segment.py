@@ -195,6 +195,9 @@ def definition_breaks(facts: list[sec.Fact], rel: float = BREAK_REL) -> list[pd.
     a new regime. A recast is rolled out over several filings (each 10-Q recasts its own prior-year
     comparatives, the 10-K the prior years), so after a break only values filed at or after it are
     compared: the later filings of the same recast restate old-regime values and are not new breaks.
+    Limitation (review R14, A-2b): a second reclassification soon after a break is flagged only where it
+    changes a period already re-reported since the break; a period last filed before the break is not
+    compared again.
     """
     seen: dict[tuple, float] = {}
     breaks = []

@@ -322,10 +322,70 @@ def test_aws_quarters_start_when_10q_segment_facts_start(monkeypatch):
     assert first_known(df)["2024Q1"] == "2025-05-02" and first_known(df)["2024Q4"] == "2025-10-31"
 
 
-def test_coreweave_rounding_to_millions_is_not_a_revision(monkeypatch):
-    rows = [fact("2025-01-01", "2025-03-31", 300.2, "2025-05-15"), fact("2025-01-01", "2025-06-30", 859.481, "2025-08-13"),
-            fact("2025-01-01", "2025-06-30", 860, "2026-08-12")]  # same figure in millions a year later
-    use(monkeypatch, {m.CRWV: companyfacts(DepreciationDepletionAndAmortization=rows)})
-    df = m.flow_series("dep", "crwv")
-    assert df.groupby("period").size().to_dict() == {"2025Q1": 1, "2025Q2": 1}
-    assert latest(df)["2025Q2"] == 559.281
+# P1's CoreWeave rounding test passed without the filter (R14, A-6a): the filter is tested by
+# tests/test_r14_avskrivningar.py::test_coreweave_rounding_filter_drops_a_difference_of_rounded_comparatives.
+
+
+# ------------------------------------------------------------------ restatements through year-to-date totals (R14 R-1)
+
+
+def F(start, end, val, filed, form="10-Q", accn=None):
+    return sec.Fact(pd.Timestamp(start), pd.Timestamp(end), val * M, pd.Timestamp(filed), form, accn or f"acc-{filed}")
+
+
+def implied(facts):
+    return [(str(f.start.date()), str(f.end.date()), round(f.val / M, 3), str(f.filed.date()))
+            for f in sec_custom.implied_by_ytd(facts)[len(facts):]]
+
+
+def test_ytd_minus_three_months_restates_the_previous_quarter_of_the_same_filing():
+    rows = [F("2025-07-01", "2025-09-30", 1234, "2025-10-29"),
+            F("2025-07-01", "2025-12-31", 2345, "2026-01-28"), F("2025-10-01", "2025-12-31", 1234, "2026-01-28")]
+    assert implied(rows) == [("2025-07-01", "2025-09-30", 1111, "2026-01-28")]
+    # dated to the filing and carrying its accession, so it is one version of that filing
+    assert sec_custom.implied_by_ytd(rows)[-1].accn == "acc-2026-01-28"
+
+
+def test_implied_value_needs_one_filing_an_earlier_value_and_more_than_rounding():
+    q1 = F("2025-07-01", "2025-09-30", 1234, "2025-10-29")
+    ytd, q2 = F("2025-07-01", "2025-12-31", 2345, "2026-01-28"), F("2025-10-01", "2025-12-31", 1234, "2026-01-28")
+    # YTD and 3-month figure from different filings: nothing implied
+    assert implied([q1, ytd, F("2025-10-01", "2025-12-31", 1234, "2026-02-15")]) == []
+    # the period was never filed: no new period (coverage is unchanged)
+    assert implied([ytd, q2]) == []
+    # the filing reports the period itself: the reported value is used as it is
+    assert implied([q1, ytd, q2, F("2025-07-01", "2025-09-30", 1201, "2026-01-28")]) == []
+    # 10-K: its 3-month figures are the unaudited quarterly note
+    assert implied([F("2025-07-01", "2026-03-31", 3456, "2026-04-29"),
+                    F("2025-07-01", "2026-06-30", 4567, "2026-07-29", "10-K"),
+                    F("2026-04-01", "2026-06-30", 1234, "2026-07-29", "10-K")]) == []
+    # millions: a difference of two rounded figures that is 1 off is rounding (Microsoft 20,116 - 7,734 = 12,382)
+    assert implied([F("2024-07-01", "2024-12-31", 12383, "2026-01-28"), F("2024-07-01", "2025-03-31", 20116, "2026-04-29"),
+                    F("2025-01-01", "2025-03-31", 7734, "2026-04-29")]) == []
+
+
+def test_rounding_tolerance_follows_the_reporting_unit():
+    """Meta tags Depreciation in 0.01 bn: 6,670 - 3,350 = 3,320 against 3,330 filed is rounding, 3,150 is not."""
+    q1 = F("2025-01-01", "2025-03-31", 3330, "2025-04-30")
+    assert implied([q1, F("2025-01-01", "2025-06-30", 6670, "2025-07-30"), F("2025-04-01", "2025-06-30", 3350, "2025-07-30")]) == []
+    assert implied([q1, F("2025-01-01", "2025-06-30", 6500, "2025-07-30"),
+                    F("2025-04-01", "2025-06-30", 3350, "2025-07-30")]) == [("2025-01-01", "2025-03-31", 3150, "2025-07-30")]
+    # in millions the same 10 MUSD gap is a revision
+    assert implied([F("2025-01-01", "2025-03-31", 3331, "2025-04-30"), F("2025-01-01", "2025-06-30", 6671, "2025-07-30"),
+                    F("2025-04-01", "2025-06-30", 3351, "2025-07-30")]) == [("2025-01-01", "2025-03-31", 3320, "2025-07-30")]
+
+
+def test_implied_restatement_is_a_vintage_and_passes_the_stop_rule(monkeypatch):
+    rows = (F("2025-07-01", "2025-09-30", 1234, "2025-10-29"),
+            F("2025-07-01", "2025-12-31", 2345, "2026-01-28"), F("2025-10-01", "2025-12-31", 1234, "2026-01-28"))
+    monkeypatch.setattr(sec_custom, "duration_facts", lambda cik, concepts, since, until: rows)
+    msft = m.COMPANIES["msft"]
+    monkeypatch.setitem(m.COMPANIES, "msft", msft.__class__(**{**msft.__dict__, "dep": m.Flow(custom=msft.dep.custom)}))
+    with pytest.raises(DefinitionBreakError, match="2026-01-28"):  # -10% only through the total: still a break
+        m.flow_series("dep", "msft")
+    m.flow_series.cache_clear()
+    monkeypatch.setitem(m.COMPANIES, "msft", msft.__class__(
+        **{**msft.__dict__, "dep": m.Flow(custom=msft.dep.custom, breaks=("2026-01-28",))}))
+    df = m.flow_series("dep", "msft")
+    q = df[df.period == "2025Q3"].sort_values("known_from")
+    assert [(v, str(k.date())) for v, k in zip(q.value.round(3), q.known_from)] == [(1234, "2025-10-29"), (1111, "2026-01-28")]

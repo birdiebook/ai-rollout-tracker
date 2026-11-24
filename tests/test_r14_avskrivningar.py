@@ -5,6 +5,7 @@ filed, read off the rendered cash-flow statements (R pages) of the 10-Q/10-K fil
 www.sec.gov. It pins the values that hold (every single quarter is on one basis) and marks the confirmed defect as a
 strict xfail: the first quarter of FY2025 (2024Q3) was restated through the six- and nine-month figures in the
 10-Q 2026-01-28 and later, but the series keeps the old three-month value, so the fiscal year 2025 window mixes bases.
+Both strict xfails (R-1, R-2) were fixed in track X11 (auto14/x11-avskrivningar) and are ordinary tests now.
 """
 
 from __future__ import annotations
@@ -140,22 +141,28 @@ def test_oracle_calendar_lag_and_freshness_as_documented():
     assert sec.calendar_quarter(pd.Timestamp("2025-09-01"), pd.Timestamp("2025-11-30")) == pd.Period("2025Q4", "Q")
 
 
-# ------------------------------------------------------------------ confirmed defects (strict xfail)
+# ------------------------------------------------------------------ confirmed defects (fixed in X11)
 
 
-@pytest.mark.xfail(strict=True, reason="R14 R-1: Microsoft restated Q1 FY2025 through the six-month comparative in the "
-                   "10-Q 2026-01-28 (12,383 - 5,667 = 6,716; also 20,116 - 5,667 - 7,734 and 29,433 - 22,718), but "
-                   "dep_msft keeps the old three-month value 7,383 for 2024Q3, so the FY2025 window is 30,101, not 29,433")
 def test_msft_first_quarter_restated_through_ytd_is_a_new_vintage(msft):
+    """R14 R-1: Microsoft restated Q1 FY2025 through the six-month comparative in the 10-Q 2026-01-28 (12,383 - 5,667
+    = 6,716; also 20,116 - 5,667 - 7,734 and 29,433 - 22,718), so 2024Q3 gets a version on the new basis and the
+    FY2025 window equals the restated full year."""
     assert versions(msft, "2024Q3")[-1] == (6716, "2026-01-28")
     got = latest(msft)
     assert abs(sum(got[p] for p in ("2024Q3", "2024Q4", "2025Q1", "2025Q2")) - 29433) <= 1
 
 
-@pytest.mark.xfail(strict=True, reason="R14 R-2: the published note of dep_hyp4 says only that the definitions differ; "
-                   "it should name them (MSFT 'other' with quarters on the old basis, AMZN content and operating "
-                   "leases, META intangibles, GOOGL depreciation only)")
+def test_msft_q1_fy2026_on_the_new_basis_is_dated_to_the_six_month_filing(msft):
+    """X11: 2025Q3 on the new basis (17,345 - 9,198 = 8,147) is known from the 10-Q 2026-01-28, not 2026-10-28, so
+    no vintage from 2026-01-28 has 2025Q3 on the old basis next to 2025Q4 on the new one."""
+    assert versions(msft, "2025Q3") == [(13061, "2025-10-29"), (8147, "2026-01-28")]
+    assert versions(msft, "2024Q3") == [(7383, "2024-10-30"), (6716, "2026-01-28")]
+
+
 def test_dep_hyp4_note_names_the_definitions_it_sums():
+    """R14 R-2: the published note of dep_hyp4 names the definitions it sums (MSFT 'other' with quarters on the old
+    basis, AMZN content and operating leases, META intangibles, GOOGL depreciation only)."""
     note = {s.key: s for s in m.SPECS}["dep_hyp4"].note
     for word in ("other", "operationell", "immateriell", "gamla basen"):
         assert word in note, word

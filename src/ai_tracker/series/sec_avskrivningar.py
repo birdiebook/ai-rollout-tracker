@@ -13,9 +13,11 @@ is the capital base a revenue requirement is computed on (tracks P2b and N7). Ca
 - dep_aws: AWS segment depreciation and amortization (dimensional fact in Amazon's filings, quarterly from 2025).
 
 Release-dated: known_from = 10-Q/10-K filing date, every filing a vintage; YTD differencing, Q4 = FY - 9M and the
-calendar mapping are those of ai_tracker.sources.sec, balances those of sec_instant. Restatements of more than 2% are
-declared per series after review (`breaks`); an undeclared one stops the fetch (DefinitionBreakError). Tag choices are
-pre-registered in docs/mattregister.md (2026-11-24, P1); tags, splices and checks: docs/kallor/sec_avskrivningar.md.
+calendar mapping are those of ai_tracker.sources.sec, balances those of sec_instant. A value that a 10-Q restates only
+through its year-to-date total (YTD - 3M in the same filing) is a version of that filing (sec_custom.implied_by_ytd;
+review R14, R-1). Restatements of more than 2% are declared per series after review (`breaks`); an undeclared one stops
+the fetch (DefinitionBreakError). Tag choices are pre-registered in docs/mattregister.md (2026-11-24, P1, amended after
+R14); tags, splices and checks: docs/kallor/sec_avskrivningar.md.
 """
 
 from __future__ import annotations
@@ -83,6 +85,7 @@ class Company:
     custom_balances: tuple[Custom, ...] = ()  # extra (net, accumulated) sources from instances
     thousands_to_millions: bool = False  # reported in thousands, later in millions: drop rounding-only versions
     balance_breaks: dict = field(default_factory=dict)  # "net"/"gross" -> declared restatements
+    freshness: str = ""  # Swedish: basis of max_age_days, when not the default wording
 
 
 MSFT, GOOGL, GOOG_INC, AMZN, META, ORCL, CRWV = 789019, 1652044, 1288776, 1018724, 1326801, 1341439, 1769628
@@ -93,11 +96,16 @@ COMPANIES: dict[str, Company] = {
         dep=Flow(custom=Custom(MSFT, ("DepreciationAmortizationAndOther",)), breaks=("2026-01-28",),
                  description="Raden 'Depreciation, amortization, and other' (egen tagg msft:DepreciationAmortizationAndOther, "
                              "ur varje inlämnings XBRL-instans). Från 10-Q:n 2026-01-28 flyttades belopp ur 'other' till "
-                             "förluster på investeringar, och FY2025 räknades om; kvartal till och med 2024Q3 ligger kvar "
-                             "på den gamla basen, så serien är ingen ren avskrivningsserie."),
+                             "raden för förluster på investeringar, och FY2025 räknades om. Kvartalen från 2024Q3 har "
+                             "versioner på den nya basen; 2024Q3 och 2025Q3 är sexmånaderstalet minus tremånaderstalet i "
+                             "10-Q:n 2026-01-28. Kvartalen i FY2024 och tidigare räknades inte om, bara helåret FY2024. "
+                             "Till och med 2024Q2 ligger serien alltså kvar på den gamla basen, och den är ingen ren "
+                             "avskrivningsserie."),
         dep_ppe=Flow(tags=(("Depreciation",),),
                      description="'Depreciation expense' i noten om anläggningstillgångar (us-gaap:Depreciation), per "
-                                 "kvartal från FY2025. Taggas avrundat till 0,1 miljard USD."),
+                                 "kvartal för perioder från FY2025 (2024Q3). Taggas per kvartal först i 10-Q:n "
+                                 "2025-10-29, så kvartalen i FY2025 blir kända genom jämförelsetal i FY2026. Taggas "
+                                 "avrundat till 0,1 miljard USD."),
         leases="Tillgångar under finansiell leasing ingår i 'Property and equipment' (leasingnoten anger dem som "
                "property and equipment, at cost, och accumulated depreciation)."),
     "googl": Company(
@@ -136,7 +144,7 @@ COMPANIES: dict[str, Company] = {
                              "10-Q:n 2014-04-25 räknade om 2013Q1 med −3,3 %."),
         dep_ppe=Flow(tags=(("Depreciation",),),
                      description="'Depreciation expense' i noten om anläggningstillgångar (us-gaap:Depreciation), per "
-                                 "kvartal från 2019."),
+                                 "kvartal från 2019. Taggas avrundat till 0,01 miljard USD (till exempel 3 330)."),
         leases="Från 2019 taggas 'Property and equipment, net' som anläggningstillgångar inklusive nyttjanderätter under "
                "finansiell leasing."),
     "orcl": Company(
@@ -149,7 +157,11 @@ COMPANIES: dict[str, Company] = {
         dep_ppe=Flow(tags=(("Depreciation",),), description="Raden 'Depreciation' (us-gaap:Depreciation)."),
         leases="Nyttjanderätter under finansiell leasing ingår i 'Property, plant and equipment, net' (10-K 2026-06-22: "
                "FinanceLeaseRightOfUseAssetStatementOfFinancialPositionExtensibleList = PropertyPlantAndEquipmentNet).",
-        gross=False),
+        gross=False,
+        freshness="Aktualitet: gräns 119 dagar = −3 + 92 + 30, som rev_orcl (neoclouds). I dessa serier kommer första "
+                  "versionen senast 1 dag efter kalenderkvartalets slut (2010Q2, 10-K 2010-07-01), och sedan 2012 "
+                  "senast 3 dagar före (2017Q2). Undantag är de första kvartalen 2008–2009, som bara finns som "
+                  "jämförelsetal."),
     "crwv": Company(
         "CoreWeave", (CRWV,), 45, 61 + 92 + 30, "kalenderår; 10-Q 38–45 dagar och 10-K 61 dagar efter kvartalet",
         dep=Flow(tags=(("DepreciationDepletionAndAmortization",),),
@@ -190,7 +202,7 @@ def flow_sources(company: str, flow: Flow) -> list[list[sec.Fact]]:
                                       for part in flow.tags])]
     if flow.first_start:
         sources = [sec_custom.starting_from(fs, flow.first_start) for fs in sources]
-    return sources
+    return [sec_custom.implied_by_ytd(fs) for fs in sources]
 
 
 def _as_facts(instants: list[sec_instant.Instant]) -> list[sec.Fact]:
@@ -266,7 +278,7 @@ def _rounded(company: str, df: pd.DataFrame) -> pd.DataFrame:
 
 @lru_cache(maxsize=None)
 def aws_series() -> pd.DataFrame:
-    facts = sec_segment.member_facts((AMZN,), AWS_SINCE, AWS_CONCEPTS, AWS_MEMBERS)
+    facts = sec_custom.implied_by_ytd(sec_segment.member_facts((AMZN,), AWS_SINCE, AWS_CONCEPTS, AWS_MEMBERS))
     checked("dep_aws", facts, AWS_BREAKS)
     return sec.contiguous_tail(sec.vintages([facts]))
 
@@ -308,6 +320,17 @@ LABELS = {
     "ppe_gross": ("Anläggningstillgångar, brutto",
                   "Hur stor är anläggningsstocken före avskrivningar, och hur stor del är redan avskriven?"),
 }
+# What each four-company sum adds up (review R14, R-2): the dep_* lines are four different definitions.
+HYP4_DEFINITIONS = {
+    "dep": ("Summan blandar fyra definitioner: Microsofts rad innehåller 'other' (till och med 2024Q2 på den gamla "
+            "basen, före omklassificeringen 2026), Amazons rad innehåller aktiverat innehåll och operationella "
+            "leasingtillgångar, Metas rad innehåller amortering på immateriella tillgångar, och Alphabets rad är bara "
+            "avskrivningar på anläggningstillgångar. För jämförbar definition: dep_ppe_hyp4 (från 2024Q3)."),
+    "dep_ppe": ("Samma innehåll hos alla fyra: avskrivningar på anläggningstillgångar utan amortering på immateriella "
+                "tillgångar. Microsoft taggar i 0,1 och Meta i 0,01 miljard USD. Om avskrivning på nyttjanderätter under "
+                "finansiell leasing ingår hos varje bolag är inte verifierat."),
+    "ppe_net": "Nettot omfattar nyttjanderätter under finansiell leasing hos alla fyra (se bolagsserierna).",
+}
 CAVEAT = ("Omfattar alla anläggningstillgångar (kontor, lager, nät, datacenter), inte bara AI-servrar. "
           "Nyttjandeperioden är ett redovisningsval.")
 
@@ -318,7 +341,7 @@ def _spec(measure: str, company: str | None) -> Spec:
     if company is None:
         key, who, lag, max_age, source = f"{measure}_hyp4", "MSFT+GOOGL+AMZN+META", 25, None, SOURCE
         note = ("Summa av fyra bolag per kalenderkvartal; en version finns först när alla fyra har lämnat in, "
-                "known_from = senaste inlämningen. Bolagens definitioner skiljer sig (se bolagsserierna).")
+                "known_from = senaste inlämningen. " + HYP4_DEFINITIONS[measure])
     else:
         c = COMPANIES[company]
         key, who, lag, max_age = f"{measure}_{company}", c.name, c.lag_days, c.max_age_days
@@ -335,8 +358,8 @@ def _spec(measure: str, company: str | None) -> Spec:
             source = SOURCE_INSTANCE if flow.custom else SOURCE
         note += f" Räkenskapsår: {c.calendar}. CIK {', '.join(map(str, c.ciks))}."
         if max_age is not None:
-            note += (f" Aktualitet: gräns {max_age} dagar = största observerade avstånd från kalenderkvartalets slut "
-                     "till första inlämningen + 92 + 30 (som neoclouds).")
+            note += " " + (c.freshness or f"Aktualitet: gräns {max_age} dagar = största observerade avstånd från "
+                           "kalenderkvartalets slut till första inlämningen + 92 + 30 (som neoclouds).")
     note += " " + CAVEAT
     return Spec(key=key, branch="G5", label=f"{label}, {who}", unit="MUSD", freq="Q", source=source,
                 fetch=_fetch(measure, company), lag_days=lag, license=LICENSE, revised=True, publish=True,
