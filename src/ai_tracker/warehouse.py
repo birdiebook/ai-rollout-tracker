@@ -50,6 +50,11 @@ from ai_tracker.series.github_ai import KNOWN_GAPS as _GH_AI_GAPS  # noqa: E402
 
 KNOWN_GAPS.update(_GH_AI_GAPS)
 
+# Useful lives of servers (track P2a) are sparse step values: a value only where a filing states it.
+from ai_tracker.series.useful_lives import KNOWN_GAPS as _USEFUL_LIFE_GAPS  # noqa: E402
+
+KNOWN_GAPS.update(_USEFUL_LIFE_GAPS)
+
 # Stale series accepted until a date (ISO), and why: a known outage, never a permanent exemption
 # (that is Spec.max_age_days or Spec.closed). Example: {"us_imports_tw_m": ("2026-12-31", "shutdown, ...")}.
 KNOWN_STALE: dict[str, tuple[str, str]] = {

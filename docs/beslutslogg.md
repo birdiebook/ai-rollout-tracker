@@ -389,6 +389,7 @@ Johannes valde rekommendationerna:
 
 
 
+
 ## 2026-11-24 – Riktning efter steg 2: pengarna, makron och förväntningarna först
 
 Johannes valde rekommendationerna i [riktning.md](riktning.md):
@@ -429,6 +430,19 @@ delmängden är G4–G6 hela, medan G7 och G9 får färre än tre källfamiljer.
 - **En familj med en serie som inte får visas** räknas i indexet men namnges inte och får ingen röst i brevet eller på
   sidorna, på samma sätt som serien själv.
 - **Rekonstruktionen** v1 mot v2 väntar på datasnapshoten (`docs/resultat/tillstand.md`, "Index v2").
+
+## 2026-11-24 – P2a: nyttjandeperioder för servrar som katalogserier
+
+- Spåret P2a har extraherat nyttjandeperioderna för servrar och nätverksutrustning hos Microsoft, Alphabet, Amazon,
+  Meta, Oracle och CoreWeave ur 10-K, 10-Q och 8-K 2018–2026: 305 rader med citatplats och SHA-256 (68 policyrader,
+  21 ändringar, 213 effekter med bolagens egna belopp och 3 klassbyten). Reglerna låstes före kodningen
+  (`docs/kallor/nyttjandeperioder.md`).
+- 30 katalogserier i G5, glesa stegvärden daterade med inlämningsdagen. De är inga kärnserier. N7 (P3) läser perioderna
+  så som de var kända på prognosdagen med `useful_lives.in_effect`.
+- Ändringar för en del av flottan (`_SUBSET`, bland annat alla Metas ändringar och Amazons förkortning 2025) blir inga
+  serier men finns i CSV:n och i `useful_lives.changes()`.
+- `publish=True` enligt registret. Kontrollen mot nyhämtade dokument gav 0 fel av 305. Den oberoende granskningen
+  avgör om det står kvar.
 
 ## 2026-11-24 – P1: avskrivningar och anläggningstillgångar ur XBRL
 
@@ -504,6 +518,17 @@ kärnposter. Sju Microsoft-serier med bara SEC-rader är för restriktivt klassa
   delade rå-cachen, och det fanns före K1 (S2). Registret får en daterad anteckning om att "försiktigare åt båda
   hållen" inte håller, utan regeländring (S3).
 
+## 2026-11-24 – R15: P2a:s nyttjandeperioder godkända med anmärkningar
+
+- Granskningen R15 (`docs/granskning/r15_nyttjandeperioder.md`) läste alla 305 rader i nyhämtade SEC-dokument: 0 fel
+  (stickprovet 0 av 65, 95 % KI 0–5,5 %). Alla 21 ändringar 2018–2026 finns, dateringen stämmer med EDGAR och
+  `in_effect(as_of)` använder inget som var okänt på prognosdagen. N7 kan använda serierna som de är.
+- `publish=True` står kvar.
+- Fyra anmärkningar ska rättas i dokumentationen: självkontrollen ändrades efter första körningen utan att det
+  redovisas, avvikelsen från kandidatregeln (82 av 305 rader) ska in i måttregistret, källdokumentet citerar hela
+  meningar och noten för `_lo`-serierna ska säga att punkter och intervall blandas. CoreWeaves ändring stod redan i
+  S-1 2025-03-03, så known_from är ungefär ett år sent (konservativt).
+
 ## 2026-11-24 – X7: rättning av licensnivån efter R10
 
 Fynden R10-1 till R10-6 och R10-8 är rättade på grenen `auto14/x7-licensniva`. Katalogen på `dceec75` blir 488
@@ -550,4 +575,14 @@ sex poolade revideringsindex blir `okänd` när F1 mergas (R10-1).
   Microsoft inte räknade om kvartalen. P3: kör om `python -m ai_tracker.nowcast backtest n7` som en ny daterad körning.
   Utfallen (första versionen) är oförändrade, men indata as_of ändras vid origo 2026-04-20, 2026-07-20 och 2026-10-20.
   N7:s specifikation ändras inte.
+
+## 2026-11-24 – X12: anmärkningarna från R15 rättade
+
+- Spåret X12 rättade R15:s fyra should_fix och noterna N-1 och N-2 för P2a:s nyttjandeperioder. Inga värden och inga
+  serier ändrades. De 30 serierna räknades om och är identiska (203 rader).
+- Avvikelsen från kandidatregeln (82 av 305 rader) och ändringen av självkontrollen (11 av 305 rader fel med den första
+  versionen) står nu i måttregistret. Den kompletterande läsmängden är kod (`useful_lives_corpus.supplementary()`).
+- Källdokumentet citerar inte längre hela meningar, och noten för `_lo`-serierna säger att punkter och intervall blandas.
+- CoreWeaves ändring kodas inte om ur S-1 (known_from står kvar, konservativt). N-3 kodas inte, eftersom inget använder
+  raden. N-4 (ändringar för en del av flottan syns inte i serierna) tas i granskningen av P3/N7.
 
