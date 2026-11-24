@@ -244,14 +244,14 @@ def _near(date: str) -> list[str]:
     return [date] + [(d + pd.Timedelta(days=k)).strftime("%Y-%m-%d") for k in (-1, 1)]
 
 
-def board_events(dataset: pd.DataFrame, subset: str, ds_evidence: dict[tuple[str, str], pd.Timestamp],
-                 space: dict[str, tuple[pd.Timestamp, str]], pickles: dict[str, dict[str, pd.Series]],
-                 created: pd.Timestamp = DATASET_CREATED) -> pd.DataFrame:
-    """One row per published board: published, top, top_model, ref, n_models, evidence, source, origin.
+def boards(dataset: pd.DataFrame, subset: str, ds_evidence: dict[tuple[str, str], pd.Timestamp],
+           space: dict[str, tuple[pd.Timestamp, str]], pickles: dict[str, dict[str, pd.Series]],
+           created: pd.Timestamp = DATASET_CREATED) -> list[tuple[pd.Timestamp, pd.Series, pd.Timestamp, str, str]]:
+    """Every published board of a subset: (published, ratings by model, evidence, source, origin), by date.
 
     `dataset`: overall rows of the subset (model_name, rating, leaderboard_publish_date); `pickles`: file name ->
     tables (only the Space files that could be read)."""
-    rows, used, matched = [], set(), {}
+    out, used, matched = [], set(), {}
     for date, grp in dataset.groupby("leaderboard_publish_date"):
         ratings = grp.set_index("model_name")["rating"].astype(float)
         board, evidence, source, origin = ratings, None, "release", "dataset"
@@ -267,10 +267,7 @@ def board_events(dataset: pd.DataFrame, subset: str, ds_evidence: dict[tuple[str
             evidence = ds_evidence[(subset, date)]
         if evidence is None:
             evidence, source, origin = created, "backfill", "dataset-bulk"
-        board = board.dropna()
-        ref = next((board[r] for r in REFERENCE if r in board.index), np.nan)
-        rows.append((pd.Timestamp(date), float(board.max()), str(board.idxmax()), float(ref), len(board),
-                     evidence, source, origin))
+        out.append((pd.Timestamp(date), board.dropna(), evidence, source, origin))
     # Space boards with no equal dataset board (e.g. 2025-08-15/22/29: the dataset has 08-14/21/28 with other
     # values): still published, dated records. The table is the one the latest earlier matched file used.
     for date, (day, file) in sorted(space.items()):
@@ -280,12 +277,25 @@ def board_events(dataset: pd.DataFrame, subset: str, ds_evidence: dict[tuple[str
         name = matched[max(before)] if before else None
         if name is None or name not in pickles[file]:
             continue
-        board = pickles[file][name].dropna()
+        out.append((pd.Timestamp(date), pickles[file][name].dropna(), day, "release", f"space-unmatched:{name}"))
+    return sorted(out, key=lambda b: (b[0], b[2]))
+
+
+def board_events(dataset: pd.DataFrame, subset: str, ds_evidence: dict[tuple[str, str], pd.Timestamp],
+                 space: dict[str, tuple[pd.Timestamp, str]], pickles: dict[str, dict[str, pd.Series]],
+                 created: pd.Timestamp = DATASET_CREATED) -> pd.DataFrame:
+    """One row per published board: published, top, top_model, ref, n_models, evidence, source, origin."""
+    return summarize(boards(dataset, subset, ds_evidence, space, pickles, created))
+
+
+def summarize(board_list: list) -> pd.DataFrame:
+    rows = []
+    for date, board, evidence, source, origin in board_list:
         ref = next((board[r] for r in REFERENCE if r in board.index), np.nan)
-        rows.append((pd.Timestamp(date), float(board.max()), str(board.idxmax()), float(ref), len(board), day,
-                     "release", f"space-unmatched:{name}"))
+        rows.append((date, float(board.max()), str(board.idxmax()), float(ref), len(board), evidence, source,
+                     origin))
     return pd.DataFrame(rows, columns=["published", "top", "top_model", "ref", "n_models", "evidence", "source",
-                                       "origin"]).sort_values("published").reset_index(drop=True)
+                                       "origin"])
 
 
 def monthly_rows(events: pd.DataFrame, column: str, last_month: pd.Period) -> pd.DataFrame:
@@ -342,7 +352,7 @@ def _evidence() -> tuple[dict, dict, str]:
 
 
 @lru_cache(maxsize=None)
-def events(subset: str) -> pd.DataFrame:
+def subset_boards(subset: str) -> list:
     ds_ev, space, sha = _evidence()
     dataset = read_dataset(subset, sha)
     pickles = {}
@@ -350,7 +360,11 @@ def events(subset: str) -> pd.DataFrame:
         for date, (_, name) in sorted(space.items()):
             if (data := read_pickle(name)) is not None:
                 pickles[name] = pickle_tables(data)
-    return board_events(dataset, subset, ds_ev, space, pickles)
+    return boards(dataset, subset, ds_ev, space, pickles)
+
+
+def events(subset: str) -> pd.DataFrame:
+    return summarize(subset_boards(subset))
 
 
 def series(subset: str, column: str) -> pd.DataFrame:
