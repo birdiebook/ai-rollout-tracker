@@ -19,7 +19,7 @@ Kod: `src/ai_tracker/sources/{arena,swebench,aws_gpu,vintages}.py`, serier i
 | `g1_arena_webdev_top` | G1 | 2025-11 (ärligt från 2026-04) | som ovan | CC BY 4.0 | ja |
 | `g1_swebench_verified_top` | G1 | 2024-10 | månadsslut + 1 dag, tavlan enligt sista commit på `main` ≤ månadsslut | ingen licensfil | nej |
 | `g2_aws_a100_gpu_hour` | G2 | 2020-11 | månadsslut + 1 dag, senaste prisliste­version med publiceringstid ≤ månadsslut | AWS-villkor, ingen öppen licens | nej |
-| `g2_aws_h100_gpu_hour` | G2 | 2023-07 | som ovan | som ovan | nej |
+| `g2_aws_h100_gpu_hour` | G2 | 2023-08 | som ovan | som ovan | nej |
 | `g2_price_at_capability_gpqa_{openai,anthropic,gemini,deepseek}` | G2 | 2025-03 / 2025-03 / 2025-04 / 2026-01 | månadsslut + 1 dag; GPQA-körning räknas från `Started at` + 30 dagar | MIT + CC BY 4.0 | ja |
 
 Alla serier är månadsserier med release-daterade rader (`source="release"`), utom Arena-tavlor som bara finns i
@@ -130,9 +130,14 @@ Per version läses `<id>/us-east-1/index.csv` (240–300 MB) strömmande. Bara m
 `CapacityStatus` = Used och användningstyp `BoxUsage:<typ>`, delat med antal GPU:er (8 för båda typerna).
 
 - `g2_aws_a100_gpu_hour`: p4d.24xlarge (8 × A100 40 GB), från 2020-11.
-- `g2_aws_h100_gpu_hour`: p5.48xlarge (8 × H100), från 2023-07.
-- Kontroll: 2023-12-22-versionen ger p5.48xlarge 98,32 och p4d.24xlarge 32,7726 USD per timme, vilket är AWS
-  publicerade listpriser.
+- `g2_aws_h100_gpu_hour`: p5.48xlarge (8 × H100), från 2023-08 (p5 lanserades 2023-07-26, och första versionen med
+  p5 publicerades i augusti).
+- Rader med $0,00 är platshållare för Capacity Blocks (från 2024) och tas bort. Finns fler än ett on-demand-pris för
+  en typ i en version, stoppar hämtningen i stället för att gissa.
+- Kontroll av nivåer: 2023-12-22-versionen ger p5.48xlarge 98,32 och p4d.24xlarge 32,7726 USD per timme, och
+  2026-11-24-versionen 55,04 och 21,957642, vilket är AWS publicerade listpriser.
+- **Listpriset har ändrats en gång per typ** under hela historiken (versionen för 2025-07, AWS sänkning av P4- och
+  P5-priserna i juni 2025). Serierna är alltså trappsteg med ett enda steg.
 - Listpris, inte marknadspris (spot, rabatter och kapacitetsblock ingår inte). Trappstegsserie, eftersom AWS sällan
   ändrar listpriset.
 - **Licens:** ingen öppen licens. Filens disclaimer: "This pricing list is for informational purposes only. All
@@ -176,6 +181,8 @@ värden över tid har tittats på.
   2025-08-29-tavlan fram till 2026-04-02. Förslag: takt beräknas bara inom Bradley–Terry-eran (från 2024-01-09).
   Skalbrotten 2025-05-16 och 2025-07-23 registreras som kända brott, utan korrigering. Mått: nivå i poäng
   (logitskala), takt = 12-månadersförändring.
+  Ärlig not: för beräkningsdagar 2025-09 – 2026-04-01 är det kända värdet tavlan från 2025-08-29. En takt som
+  beräknas då speglar mätglappet, inte förmågan.
 - `g1_arena_text_top_gap_ref`: referensvariant, inte kärnserie (samma företeelse som ovan). Den används för att
   kontrollera att förankringen inte driver nivån.
 - `g1_arena_text_sc_top`: inte kärnserie nu (samma företeelse). Om registret föredrar stilkontrollen, ska den
@@ -189,18 +196,26 @@ Med `g1_epoch_bench_frontier_frontiermath_erdos`, `g1_epoch_bench_frontier_spire
 får G1 tre räknade serier, så snart SpireClimb har sitt första kända värde (2026-12-31).
 
 **G2**
-- **`g2_aws_h100_gpu_hour`: föreslås.** Publiceringsdaterade versioner från 2023-07 (över tre år), ett fast
-  hårdvaruslag. Mått: log, halveringstid.
-- **`g2_aws_a100_gpu_hour`: föreslås**, som en andra fast förmågenivå (som de två trösklarna för pris vid fast
-  förmåga). Ärlig not: samma prisbeslut hos AWS kan flytta båda serierna samtidigt, så de är inte oberoende.
-  Registret kan välja bara H100 om ett mått per företeelse ska gälla strikt. Då har G2 två räknade serier.
-- `g2_price_at_capability_gpqa_<leverantör>`: inte kärnserier. Historiken är under 24 månader (från 2025-03), och de
-  är en uppdelning av den registrerade `g2_price_at_capability_gpqa`. Beskrivande.
-- Beslut som återstår för Johannes: AWS-serierna har `publish=False` (villkoren är inte öppna). Om kärnserier utan
-  publiceringsrätt får ingå i ett publicerat diffusionsindex (bara riktningen visas, inte nivån), är ett beslut
-  som orkestreraren eller Johannes behöver ta.
+- `g2_aws_h100_gpu_hour` och `g2_aws_a100_gpu_hour`: **inte kärnserier**, trots ärlig datering och lång historik
+  (72 respektive 39 månader). Listpriset har ändrats en gång per typ på sex år. Halveringstiden över 24 månader
+  skulle då bara spegla om steget ligger i fönstret eller inte. Det är samma skäl som för att inte bygga en fast
+  modells LiteLLM-pris. Serierna är referens för hyrpriset på beräkning.
+- `g2_price_at_capability_gpqa_<leverantör>`: inte kärnserier nu. Historiken är under 24 månader (från 2025-03), och
+  de är en uppdelning av den registrerade `g2_price_at_capability_gpqa`. Beskrivande. De når 24 månader 2027-03.
+- **Rekommendation: ett eget spår för pris vid fast Arena-förmåga** (1 spår + granskning). Det är den enda vägen
+  till en G2-serie med mer än 2 års ärligt daterad historik nu. Specifikation att registrera före bygget:
+  - Förmåga = modellens rating i den senaste dokumenterade Arena-tavlan (text, `overall`) där både modellen och
+    en fast referens finns. Kvalificerad om ratingen är ≥ referensens rating i samma tavla. Måttet är då oberoende
+    av skalans förankring och Elo/BT-bytet.
+  - Referenser, valda efter regel och inte efter utfall: `gpt-4-0314` (GPT-4 vid lansering) och
+    `gpt-4o-2024-05-13` (etta i tavlan 2024-06-11).
+  - Pris = lägsta blandade förstapartspris enligt LiteLLM vid månadsslut, med samma förstapartsregel som i
+    `model_map.py`. Bästa variant per prissatt modell (resonemangsnivåer), som i I6:s GPQA-regel.
+  - Kräver en handgranskad tabell från Arena-namn till LiteLLM-nyckel, inklusive DeepSeeks rullande alias och
+    visningsnamnen från 2026-10-20. Exakt namnmatchning täcker 102 av 406 kvalificerade namn.
 
-Med `g2_price_at_capability_gpqa`, `g2_aws_h100_gpu_hour` och `g2_aws_a100_gpu_hour` får G2 tre räknade serier.
+G2 får alltså inga nya räknade serier av det här spåret. Den har fortfarande bara `g2_price_at_capability_gpqa`
+tills Arena-spåret är byggt och granskat, eller tills leverantörsserierna når 24 månader.
 
 ## Drift
 

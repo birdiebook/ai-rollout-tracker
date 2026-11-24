@@ -25,6 +25,8 @@ def test_filter_rows_keeps_only_standard_on_demand_linux():
              _row(term="Reserved", price="50"), _row(ten="Dedicated", price="110"), _row(os_="RHEL", price="99"),
              _row(sw="SQL Web", price="120"), _row(cap="UnusedCapacityReservation", price="98.32"),
              _row(usage="USE1-BoxUsage:p5.48xlarge", price="1"), _row(it="c5.large", price="0.085")]
+    cb = _row(price="0.0").replace('"d"', '"$0.00 per Capacity Block Linux p5.48xlarge Instance Hour"')
+    lines.append(cb)
     rows = aws_gpu.filter_rows(lines)
     assert rows == [{"instance_type": "p5.48xlarge", "price_per_hour": 98.32, "effective": "2023-12-01"},
                     {"instance_type": "p4d.24xlarge", "price_per_hour": 32.7726, "effective": "2023-12-01"}]
@@ -46,8 +48,12 @@ def test_events_and_monthly_value_per_gpu():
     rows = {"a": pd.DataFrame({"instance_type": ["p5.48xlarge"], "price_per_hour": [98.32]}),
             "b": pd.DataFrame({"instance_type": ["p5.48xlarge"], "price_per_hour": [55.04]}),
             "c": pd.DataFrame({"instance_type": ["p4d.24xlarge"], "price_per_hour": [21.96]})}
-    ev = aws_gpu.events_from(v, rows, "p5.48xlarge")
+    rows["b"] = pd.concat([rows["b"], pd.DataFrame({"instance_type": ["p5.48xlarge"], "price_per_hour": [0.0]})])
+    ev = aws_gpu.events_from(v, rows, "p5.48xlarge")  # the $0 Capacity Block row is ignored
     assert ev["value"].tolist() == [pytest.approx(12.29), pytest.approx(6.88)]
+    bad = {"a": pd.DataFrame({"instance_type": ["p5.48xlarge"] * 2, "price_per_hour": [98.32, 90.0]})}
+    with pytest.raises(ValueError):
+        aws_gpu.events_from(v.iloc[:1], bad, "p5.48xlarge")
     m = vintages.monthly(ev, pd.Period("2025-07", "M"))
     assert m.set_index("period")["value"].round(2).to_dict() == {"2025-05": 12.29, "2025-06": 6.88, "2025-07": 6.88}
     assert m["known_from"].tolist() == [pd.Timestamp(d) for d in ("2025-06-01", "2025-07-01", "2025-08-01")]

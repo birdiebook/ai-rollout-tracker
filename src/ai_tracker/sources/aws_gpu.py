@@ -7,7 +7,7 @@ version for August 2023). So the id date is an honest known-from date: a price l
 
 Per version: `<id>/us-east-1/index.csv` (240-300 MB, streamed and filtered; only the matching rows are kept in
 data/raw/aws_gpu/<id>.csv). Price = on-demand, Linux, shared tenancy, no pre-installed software, `CapacityStatus`
-Used, usage type `BoxUsage:<type>` in US East (N. Virginia), divided by the number of GPUs in the instance.
+Used, not a Capacity Block ($0.00 placeholder rows), usage type `BoxUsage:<type>` in US East (N. Virginia), divided by the number of GPUs in the instance.
 
 Licence: no open licence. The file's disclaimer: "This pricing list is for informational purposes only. All prices
 are subject to the additional terms included in the pricing pages on http://aws.amazon.com." publish=False.
@@ -61,6 +61,8 @@ def filter_rows(lines, types=TYPES) -> list[dict]:
         it = row[header["Instance Type"]] if len(row) > header["Instance Type"] else ""
         if it not in types:
             continue
+        if "Capacity Block" in row[header["PriceDescription"]]:
+            continue
         if all(row[header[k]] == v for k, v in KEEP.items()) and row[header["usageType"]] == f"BoxUsage:{it}":
             out.append({"instance_type": it, "price_per_hour": float(row[header["PricePerUnit"]]),
                         "effective": row[header["EffectiveDate"]]})
@@ -91,9 +93,13 @@ def events_from(versions: pd.DataFrame, rows: dict[str, pd.DataFrame], instance_
         if r is None or r.empty:
             continue
         price = r.loc[r["instance_type"] == instance_type, "price_per_hour"]
-        if len(price) == 1:  # ambiguous or missing: skip the version
-            day = pub.normalize()
-            out.append((day, float(price.iloc[0]) / TYPES[instance_type], day, "release"))
+        price = price[price > 0]  # $0.00 rows are Capacity Block placeholders (2024-)
+        if price.empty:  # type not offered in this version
+            continue
+        if price.round(6).nunique() > 1:  # never guess between two list prices
+            raise ValueError(f"{vid}: {instance_type} has several on-demand prices {sorted(price.unique())}")
+        day = pub.normalize()
+        out.append((day, float(price.iloc[0]) / TYPES[instance_type], day, "release"))
     return pd.DataFrame(out, columns=["published", "value", "evidence", "source"])
 
 
