@@ -491,6 +491,17 @@ Tillägg samma dag: sidan är Johannes främsta sätt att ta in informationen oc
 
 Beslutet om index v2 motiverades bland annat med att v2 gör tillstånden mer försiktiga åt båda hållen. Backcasten på riktiga data (rekonstruktion, 2026-05 till 2026-10) visar att det inte stämmer genomgående. G8 blir "för få källor", men G6 blir "accelererar" i två månader där v1 sa "stabil", och G7 blir "bromsar in" i två månader. Skälet är att varje familj väger tungt när familjerna är få. Huvudskälet för beslutet, att indexet ska räkna oberoende källor, gäller fortfarande. Rekommendationen är att behålla v2. Johannes informeras.
 
+## 2026-11-24 – P3: N7, avskrivningar 1–8 kvartal
+
+- Förregistrerat före körning (`52a2231`): mål `dep_hyp4`, poolad utvärdering N7b per bolag, baslinjerna B0 och B1 och två
+  varianter. V1 är en rak linje på capex med N ur 3–10 år, och V2 använder bolagens angivna nyttjandeperiod för servrar
+  (P2a). Ingen V3 med capexguidance, eftersom den skulle kosta tre Holm-platser för mycket liten styrka.
+- **N7b avgör, inte summan.** `dep_hyp4` börjar 2023Q1 och har inga utvärderade rader, eftersom MSFT:s brottkvartal
+  2025Q4–2026Q3 inte poängsätts. Det är en avvikelse från N1, där N1b bara redovisades. Den är beslutad i förväg.
+- **Utfall: ingen variant klarar regeln, och B1 är huvudmodell i alla horisontgrupper.** V1 överskattar systematiskt
+  (förhållandet mellan avskrivningar och capex har sjunkit) och är sämre än B1 på kort sikt. V2 har lägre MAE än B1 på
+  3–8 kvartal i båda perioderna, men långt från signifikant. Resultat: `docs/resultat/n7.md`.
+
 ## 2026-11-24 – Syftet förtydligat: hela AI-flödet, lager för lager
 
 Johannes förtydligade syftet. Projektet byggs för hans egen skull, för att ha bästa möjliga koll på hela AI-flödet lager för lager och se tidigt när något ändrar takt. Kopplingen till egna placeringar är indirekt och görs utanför repot. Repot är publikt och innehåller inga innehav. Följden är att körning 14 omprioriteras ([riktning.md](riktning.md), avsnitt 0 och 8). Först kommer stackens saknade lager (minne, nät, kraft och kylning, datacenterbolag), sedan finansiering, förmåga och kostnad, och Kina. G8 får lägre prioritet.
@@ -584,6 +595,26 @@ sex poolade revideringsindex blir `okänd` när F1 mergas (R10-1).
   Microsoft inte räknade om kvartalen. P3: kör om `python -m ai_tracker.nowcast backtest n7` som en ny daterad körning.
   Utfallen (första versionen) är oförändrade, men indata as_of ändras vid origo 2026-04-20, 2026-07-20 och 2026-10-20.
   N7:s specifikation ändras inte.
+
+## 2026-11-24 – R16: granskning av N7 (spår P3)
+
+- Det negativa resultatet står. Ingen variant klarar regeln, och B1 förblir huvudmodell för N7 i alla horisontgrupper
+  (`docs/granskning/r16_n7.md`).
+- Ordningen register → kod → körning håller. En oberoende omräkning och en trunkering på verklig data (280 par) gav
+  samma prognoser, och indata stämmer med SEC. DM, HLN och Holm räknas om exakt.
+- V1:s överskattning är till största delen verklig: längre nyttjandeperioder (Microsofts avskrivningar sjönk FY2023
+  enligt bolagets 10-K) och capex med stor andel byggnader. För Meta finns en definitionsdel: amortering på immateriella
+  tillgångar, 38 % av raden 2015 och 2 % 2022. Microsofts "other" verkar åt andra hållet.
+- Rättning R-1 (should_fix): förklaringen av biasen i `docs/resultat/n7.md`. Övrigt är noter. Fyra registrerade
+  egenskaper som saknade test har fått tester.
+
+## 2026-11-24 – X13: rättning efter R16 (N7, spår P3)
+
+- R-1: förklaringen av V1:s överskattning i `docs/resultat/n7.md` bygger nu på det som är belagt: längre
+  nyttjandeperioder (Microsofts 10-K FY2021 och FY2023), mixen i capex och Metas amortering på immateriella
+  tillgångar. Microsofts "other" ger en underskattning 2024Q4–2025Q3, inte en överskattning.
+- Noterna R-2–R-5 är rättade i samma fil. Registret och N7:s specifikation är oförändrade, och beslutet står: B1 är
+  huvudmodell i alla horisontgrupper.
 
 ## 2026-11-24 – X12: anmärkningarna från R15 rättade
 

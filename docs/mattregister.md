@@ -878,6 +878,123 @@ registerpost och källdokument. P1:s resultat nämner två enskilda belopp från
 i Q4 FY2026 och Amazons avskrivningar på anläggningstillgångar 2025). Inga kvoter, takter eller nivåer av komponenterna
 har räknats eller setts i detta spår.
 
+### 2026-11-24 – N7: avskrivningar 1–8 kvartal (förregistrering, före körning)
+
+Spår P3 (förslag 3 i `riktning.md`). Posten committas innan någon prognos, något fel eller någon tillväxttakt för
+avskrivningarna har räknats. N7 är ett nytt mål i steg 2 med två varianter (budget högst 3, G-B). Kod:
+`src/ai_tracker/nowcast/n7.py`, körs med `python -m ai_tracker.nowcast backtest n7`. Avviker koden från texten gäller
+texten.
+
+**Vad som setts före posten.** Täckningen för `dep_<bolag>`, `dep_hyp4`, `capex_<bolag>` och `capex_hyp4`: första och
+sista kvartal, antal kvartal, luckor och intervallet för known_from i första versionen, samt första versionens datum för
+de sex första kvartalen av `dep_googl` och `dep_hyp4`. Brottkvartal och inlämningsdatum enligt F-B8-funktionen
+(`quarterly.breaks_of`), utan storlek. Nyttjandeperioderna för servrar (`useful_life_servers_<bolag>_hi`, värden och
+datum), som är indata. Dessutom visar `docs/resultat/n1.md` utfallen för `capex_hyp4` och B1:s fel per kvartal
+2024Q2–2026Q3, och uppdraget från orkestreraren citerade tre enstaka belopp ur P1:s handkontroller. Inga
+avskrivningsserier, tillväxttal eller prognosfel har räknats eller lästs.
+
+| Del | Val |
+|---|---|
+| Mål N7 | `dep_hyp4` (MSFT, GOOGL, AMZN och META), första versionen. Byggs om ur bolagsserierna med `quarterly.aggregate_rows`, som i N4. `dep_ppe_hyp4` väljs inte, eftersom den bara har 9 kvartal mot 15 |
+| N7b | Samma modeller per bolag på `dep_msft`, `dep_googl`, `dep_amzn` och `dep_meta`, poolat över bolag och prognosdagar, som N1b |
+| Capex | `capex_<bolag>` (komponenterna i `capex_hyp4`). För N7 summeras bolagens glidande medel |
+| Prognosdag | Kalenderkvartalets slut + 20 dagar (`n1.origin_for`). All information `as_of(prognosdag)`, även målets egen historik och nyttjandeperioderna |
+| Horisont | L = det senaste kvartalet av målet som är känt på prognosdagen. h = 1–8, och målkvartalet är L + h, som i D2. På de registrerade prognosdagarna har inget av bolagen rapporterat det kvartal som just slutat, så normalt är h = 1 det kvartalet (N1:s nowcastkvartal), och h = 8 ligger sju kvartal efter det |
+| Fel | 100 × (log prognos − log utfall). MAE är huvudmått, och bias redovisas |
+| B0 | y(L) för alla h |
+| B1 | y(L) × exp(h × medel av de 4 senaste kvartalens log-tillväxt), som D2 (`n1.b1_path`) |
+| V1 | Rak linje: ŷ(t) = c · m(t), där m(t) = Σ över bolagen av (1/J) · Σ_{j=1..J} capex(t − j) och J = 4N kvartal. N väljs på varje prognosdag ur rutnätet {3, 4, …, 10} år, och c skattas med OLS genom origo |
+| V2 | V1 med N per bolag = den senast angivna nyttjandeperioden för servrar (P2a), känd på prognosdagen. Bara c skattas |
+
+**V1 i detalj.**
+- **Träningsrad:** ett kvartal t i målets historik `as_of(prognosdag)` med y(t) > 0, där capex(t − 1), …, capex(t − J)
+  för vart och ett av enhetens bolag är kända och positiva `as_of(prognosdag)`. Träningen använder alltså de versioner
+  som är kända på prognosdagen, som N1. Minst 12 sådana rader.
+- **c** = Σ y(t) · m(t) / Σ m(t)², i nivå.
+- **Val av N:** kandidater är de N i rutnätet som har minst 12 träningsrader. Kandidaterna jämförs på sina gemensamma
+  rader (raderna för den största kandidaten), med c skattat på samma rader. Lägst MAE i stickprovet,
+  100 × |log(c · m(t)) − log y(t)|, vinner, och vid lika vinner det mindre N. Därefter skattas c på nytt på alla
+  träningsrader för det valda N.
+- **Framtida capex:** ett kvartal efter bolagets senast kända capexkvartal Lc får bolagets B1-bana från prognosdagen,
+  capex(Lc) × exp(k × medel av de 4 senaste log-tillväxterna), där k = antal kvartal efter Lc. Utan 4 tillväxttal finns
+  ingen V1.
+- Saknas kandidater finns ingen V1 på prognosdagen. Varianten registreras som saknad och fylls inte i.
+
+**V2 i detalj.** N_bolag = `useful_life_servers_<bolag>_hi`, det värde som gäller för det senaste angivna kvartalet
+bland raderna med known_from ≤ prognosdagen (en stegfunktion, samma som `useful_lives.in_effect`). P2a rekommenderar `hi`
+för N7. J_bolag = avrundat 4 × N_bolag kvartal, och för N7 har varje bolag sitt eget J i m(t). Samma N gäller för alla
+träningsrader och för prognosen. Framtida capex som i V1. V2 saknas om något bolag i enheten saknar en angiven period på
+prognosdagen eller har färre än 12 träningsrader. Enligt täckningen är perioden känd från 2019-02-05 (GOOGL), 2018-02-02
+(AMZN), 2020-07-30 (MSFT) och 2022-02-03 (META).
+
+**Utvärdering.**
+- Per enhet från den första prognosdagen där V1 kan bildas, till och med 2026-10-20 (rolling origin, expanderande
+  fönster). En rad är (enhet, prognosdag, h) där första versionen av L + h finns, inte var känd på prognosdagen och inte
+  är ett brottkvartal.
+- **Definitionsbrott (F-B8, som N4 och D2):** ett kvartal vars första inlämning räknar om ett tidigare kvartal av
+  bolagsserien med mer än 2 % poängsätts inte, och B1:s fönster (tillväxttal som slutar i L − 3, …, L) får inte
+  innehålla ett brott som är känt på prognosdagen. För N7 gäller alla fyra bolagens brott. Enligt täckningen är
+  brottkvartalen MSFT 2025Q4–2026Q3 (den deklarerade omräkningen 2026-01-28 och de följande inlämningarna), AMZN 2023Q1
+  och 2023Q4 och META 2014Q1–Q2. Träningsraderna har ingen brottregel.
+- **Urval per variant:** varje variant utvärderas på de rader där varianten, B0 och B1 finns. Jämförelsemodellen är den
+  bästa av B0 och B1 efter MAE på samma rader (vid lika B0). N7 har ingen tidigare huvudmodell, och V1 och V2 bygger inte
+  på någon registrerad modell, så F-B10 ger samma jämförelsemodell.
+- **Horisontgrupper:** h1–2, h3–4 och h5–8, som D2. n i en grupp = antalet olika prognosdagar (D2-posten 2026-11-24).
+  MAE och bias per h redovisas som information.
+- **Perioder:** hela perioden och från 2023, det vill säga prognosdagar från 2023-04-20 (den första där h = 1 är
+  2023Q1).
+
+**Test.**
+- Diebold–Mariano på absolutfel per grupp och period. d = |fel variant| − |fel jämförelsemodell| per rad. Medlet tas
+  över raderna (samma som den poolade MAE:n). Variansen är Newey–West (Bartlett) på summan per prognosdag av d minus
+  medlet (Driscoll–Kraay, som `engine.pooled_dm`), med prognosdagarna i tidsordning. Fördröjningen är
+  max(⌊4(T/100)^(2/9)⌋, h_max − 1), där h_max är gruppens största h, eftersom prognoser upp till h kvartal framåt
+  överlappar. HLN-korrektion med h = h_max, p ur t-fördelningen med T − 1 frihetsgrader. T = antal prognosdagar.
+- Inget test (p = 1) vid T < 8 eller när HLN-termen är ≤ 0.
+- **Holm-familjen** är {V1, V2} × {h1–2, h3–4, h5–8}, alltså 6 tester, och Holm görs över dem i varje period för sig.
+  Ett test som inte kan göras ingår med p = 1.
+- MDE = 2,8 × SE redovisas per test.
+
+**Beslut.**
+- Per horisontgrupp, med N1:s stränga läsning (F-B11): en variant klarar gruppen om den i båda perioderna har lägre MAE
+  än jämförelsemodellen och Holm-p < 0,10. Annars förblir B1 huvudmodell för gruppen.
+- **Vilken utvärdering som avgör:** N7 för en grupp när N7 har minst 8 prognosdagar med varianten i gruppen i båda
+  perioderna, annars N7b. Enligt täckningen kan V1 för N7 bildas först 2026-04-20 (`dep_hyp4` från 2023Q1, och
+  Alphabets kvartal 2023 blev kända först 2024), och B1 för N7 stoppas 2026 av MSFT:s brottkvartal. **N7b avgör alltså i
+  denna backtest, och N7 redovisas.** Det är en avvikelse från N1, där N1b bara redovisades. Utan den regeln kan N7 inte
+  avgöras på flera år.
+- Klarar båda varianterna en grupp väljs den med lägst MAE på de rader där båda finns.
+- En variant som klarar regeln är ett **villkorat** resultat. Den kräver ett oberoende granskningsspår innan den används
+  (CLAUDE.md), och V2 dessutom granskningen av P2a:s extraktion. Inga skarpa prognoser skrivs i spåret.
+
+**Holdout (G-E).** V1 och V2 är enkla registrerade varianter med högst två parametrar (N och c) som skattas på
+expanderande fönster. De är inga komplexa metodfamiljer som C3, C4 och D2. De utvärderas därför över hela perioden med
+Holm, som C2. Rader med prognosdag i holdouten (2025-07-01–2026-10-31) ingår, och antalet redovisas som information.
+
+**Intervall (G-C med F-C7):** en felpool per enhet, modell och h, och ett fel ingår först från sitt utfalls known_from.
+Det redovisas som information och avgör ingenting.
+
+**Korta serier.**
+- Amazons bruttocapex (`capex_amzn`) börjar 2017Q3, och därmed också `capex_hyp4`. För N7 måste J kvartal av alla fyra
+  bolagens capex ligga före t. För `dep_hyp4`:s första kvartal 2023Q1 räcker det till J = 22 (N ≤ 5). N = 6 blir möjligt
+  från t = 2023Q3 och N = 10 först från 2027Q3.
+- Den större begränsningen är målet. `dep_hyp4` börjar 2023Q1 (Alphabets definition) och ger 12 träningskvartal först på
+  prognosdagen 2026-04-20. Därför går N7 inte att testa i backtesten.
+- N7b har längre historik. META (avskrivningar och capex från 2011Q3) och MSFT (avskrivningar från 2010Q3, capex från
+  2008Q3) ger V1 från ungefär 2014–2017, AMZN från 2023 (capex från 2017Q3 + J + 12 rader) och GOOGL från 2026. N7b är
+  den enda utvärderingen med statistisk styrka, och den domineras av META och MSFT.
+
+**Varför ingen V3.** En variant med bolagens capexguidance som framtida capex registreras inte. Guidance finns bara för
+Metas och Alphabets capex, Alphabets mål börjar 2023, och framtida capex väger högst 7/J i m(t). Varianten skulle kosta
+tre platser i Holm-familjen för mycket liten styrka, som R6 konstaterade om N1:s B3.
+
+**Ärliga noter.**
+- Bolagens rader har olika innehåll: MSFT inklusive "other", AMZN inklusive innehåll och operationell leasing, META
+  inklusive immateriella tillgångar och GOOGL bara avskrivningar. c tar upp ett konstant förhållande, inte en ändrad mix.
+- Capex är betalningar, inte tillgångar som tagits i bruk. Finansiell leasing (stor hos Amazon) ingår inte i capex men
+  ingår i avskrivningarna.
+- Bolagens egen guidance för avskrivningar är inte extraherad. Jämförelsen med guidance (arbetsregel 4) saknas för N7.
+
 ### 2026-11-24 – P1: omräkning genom summorna, delvis omräkning och ändringar efter första bygget (rättning efter granskning R14)
 
 Tillägg till posten "P1: avskrivningar och anläggningstillgångar som katalogserier". Den posten skrivs inte om.
