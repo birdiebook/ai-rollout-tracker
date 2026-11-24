@@ -261,4 +261,4 @@ Fynd:
 - en tavla som laddats upp igen ska dateras till den commit som har värdena (strikt xfail, R-1)
 
 `python -m pytest -q tests/test_r8_g2_arena.py tests/test_arena_price.py`: 18 passerade, 1 xfail. Hela sviten:
-se slutrapporten.
+1 527 passerade, 3 överhoppade, 1 xfail.
