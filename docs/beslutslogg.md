@@ -379,3 +379,18 @@ Johannes valde rekommendationerna:
   overifierat Mistral-pris. G2 har kvar en räknad kärnserie. Rättningsspåret X5 tar R-1–R-8. Viktigast är ett
   läckage i `arena.py`: omladdade tavlor (2026-07-07) var daterade till första commit, och det rör även G1:s
   `g1_arena_text_top`. B från 2024-09 prövas först efter rättningen och en ny granskning.
+
+## 2026-11-24 – K1: diffusionsindex v2 med källfamiljer
+
+- **Regeln** är registrerad i `docs/mattregister.md` ("2026-11-24 – Diffusionsindex v2") och committades före koden
+  och före alla v2-värden på verklig data. Familjetabellen följer ägarens läsning av gränsfallen. Inget skäl att
+  avvika hittades: urvalsregeln för G1 väljer redan högst en benchmark per benchmarkfamilj, så en familj per vald
+  benchmark håller.
+- **Ögonblicksbilden** från 2026-11-30: `index` och `state` följer v2, `rule_version` är "v2", och v1 står under
+  `v1` i varje gren. Reglerna i filen anger regelversionen och familjetabellen. `snapshot.yml` och
+  `pipeline publish` är oförändrade.
+- **Paketet** (`site_bundle`) blir version 1.1.0, med bara tillägg och det nya tillståndet "för få källor".
+  Webbsessionen behöver lägga till tillståndet i `web/`.
+- **En familj med en serie som inte får visas** räknas i indexet men namnges inte och får ingen röst i brevet eller på
+  sidorna, på samma sätt som serien själv.
+- **Rekonstruktionen** v1 mot v2 väntar på datasnapshoten (`docs/resultat/tillstand.md`, "Index v2").

@@ -42,6 +42,8 @@ def main(argv: list[str] | None = None) -> int:
     b.add_argument("--start", default="2019-01")
     b.add_argument("--end", required=True)
     b.add_argument("--out", default=None)
+    b.add_argument("--compare", type=int, default=0, metavar="N",
+                   help="also print a Markdown table v1 vs v2 for the last N months (register 2026-11-24)")
     d = sub.add_parser("due")
     d.add_argument("--today", default=None)
     a = ap.parse_args(argv)
@@ -69,6 +71,8 @@ def main(argv: list[str] | None = None) -> int:
     if a.cmd == "backcast":
         df = snapshot.backcast(a.start, a.end, out=Path(a.out) if a.out else None)
         print(f"wrote {a.out or snapshot.BACKCAST} ({len(df)} rows, {snapshot.BACKCAST_LABEL})")
+        if a.compare:
+            print(snapshot.rule_comparison(df, a.compare), end="")
         return 0
     today = pd.Timestamp(a.today) if a.today else snapshot.utc_today()
     is_due = snapshot.due(today)

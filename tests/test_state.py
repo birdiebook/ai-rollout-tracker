@@ -684,6 +684,9 @@ def test_backcast_is_labelled_reconstructed(tmp_path, monkeypatch):
     assert {"index", "state", "n_families", "index_v1", "state_v1", "families"} <= set(df.columns)
     g6 = df[df["branch"] == "G6"]
     assert (g6["index"] - g6["index_v1"]).abs().max() < 1e-12  # singleton families
+    table = S.rule_comparison(df, last=2).splitlines()
+    assert table[0].startswith("| Gren | Månad | Index v1 | Tillstånd v1 | Serier | Index v2 |")
+    assert len(table) == 2 + 2 * len(core) and "| G6 | 2025-03 |" in table[-1]
 
 
 # ------------------------------------------------------------------ publish snapshots

@@ -173,3 +173,20 @@ def backcast(start: str, end: str, table: pd.DataFrame | None = None, out: Path 
         out.parent.mkdir(parents=True, exist_ok=True)
         df.to_csv(out, index=False)
     return df
+
+
+def rule_comparison(df: pd.DataFrame, last: int = 6) -> str:
+    """Markdown table of a backcast's last `last` months: index, state and counts per branch under v1 and v2."""
+    def num(x) -> str:
+        return "–" if x is None or (isinstance(x, float) and not math.isfinite(x)) else f"{x:.2f}".replace(".", ",")
+
+    months = sorted(df["month"].astype(str).unique())[-last:]
+    d = df[df["month"].astype(str).isin(months)].sort_values(["branch", "month"])
+    lines = ["| Gren | Månad | Index v1 | Tillstånd v1 | Serier | Index v2 | Tillstånd v2 | Källor |",
+             "|---|---|---|---|---|---|---|---|"]
+    for r in d.itertuples(index=False):
+        idx1 = None if pd.isna(r.index_v1) else float(r.index_v1)
+        idx2 = None if pd.isna(r.index) else float(r.index)
+        lines.append(f"| {r.branch} | {r.month} | {num(idx1)} | {r.state_v1} | {int(r.n_series)} | {num(idx2)} | "
+                     f"{r.state} | {int(r.n_families)} |")
+    return "\n".join(lines) + "\n"
