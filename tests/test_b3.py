@@ -38,6 +38,40 @@ def _dev(company, period, k, d, kf, origin="2000-01-01"):
 # ================================================================== b3.py, pure
 
 
+def test_single_position_company_enters_group_mean_at_every_position():
+    """Register 2026-11-24 (R7-F1): Nvidia's k = 1 deviations enter TSMC's group mean at k = 1-3; its own n stays
+    at k = 1."""
+    rows = [_dev("tsmc", f"201{i}Q1", k, 0.01 * k, "2015-01-01") for i in range(4) for k in (1, 2, 3)]
+    rows += [_dev("nvda", f"201{i}Q1", 1, 0.05, "2015-01-01") for i in range(3)]
+    pool = pd.DataFrame(rows, columns=b3.COLUMNS)
+    for k in (1, 2, 3):
+        s = b3.shift(pool, "tsmc", k, "2020-01-01")
+        assert s.group_n == 2 and s.n == 4 and s.group_mean == pytest.approx((0.01 * k + 0.05) / 2)
+        assert s.m == pytest.approx(0.5 * 0.01 * k + 0.5 * s.group_mean)
+    assert b3.shift(pool, "nvda", 2, "2020-01-01").n == 0 and b3.shift(pool, "nvda", 1, "2020-01-01").n == 3
+
+
+def test_n3_b3_deviations_from_2017q2_with_guidance_known_at_n3_origin():
+    from ai_tracker.nowcast import n3
+
+    qs = list(pd.period_range("2016Q3", "2018Q2", freq="Q-DEC"))
+    rev = [100.0 * (i + 1) for i in range(len(qs))]
+    o = [n3.origin_for(q) for q in qs]
+    t = pd.concat([
+        _rows("rev_nvda", "Q", qs, rev, [x + 20 * DAY for x in o]),
+        _rows("rev_nvda", "Q", qs, [v * 2 for v in rev], [x + 400 * DAY for x in o]),  # revision: never used
+        _rows("nvda_guid_rev_mid", "Q", qs, [v / 1.05 for v in rev], [x - 60 * DAY for x in o]),
+        _rows("nvda_guid_rev_mid", "Q", qs, [v * 9 for v in rev], [x + DAY for x in o]),  # after N3's origin
+    ], ignore_index=True)
+    d = n3.b3_deviations(t)
+    assert list(d["period"]) == [str(q) for q in qs if q >= Q("2017Q2")]
+    assert set(d["company"]) == {"nvda"} and set(d["position"]) == {1}
+    assert d["d"].to_numpy() == pytest.approx(math.log(1.05))
+    assert list(d["guidance_origin"]) == [n3.origin_for(Q(p)) for p in d["period"]]
+    assert list(d["outcome_known_from"]) == [n3.origin_for(Q(p)) + 20 * DAY for p in d["period"]]
+    assert "ai_tracker.nowcast.n3:b3_deviations" in b3.BUILDERS["quarterly_revenue"]
+
+
 def test_shrinkage_arithmetic_unweighted_group_mean_company_included():
     meta = [0.10, 0.20, 0.05, 0.15, 0.25]  # n = 5
     googl = [-0.10, 0.30]  # n = 2: in the group mean, but its own m = 0
@@ -233,11 +267,11 @@ def test_n2_step2_comparator_is_b2_and_holm_counts_df():
     assert set(good.holm) == {"V1", "B2"}  # the locked family is not recomputed with B3
     # better than B1 but worse than B2: fails against the F-B10 comparator
     bad = n2.evaluate(_n2_frame(e2 * 0.3, e2 * 0.6)).step2
-    assert bad["passed"] == {"B3": False} and bad["champion"] == n2.CHAMPION
+    assert bad["passed"] == {"B3": False} and bad["champion"] == n2.CHAMPION_AT_STEP2 == "B2"
     # no B3 column: unevaluated, p = 1
     frame = _n2_frame(e2, e2).drop(columns="e_B3")
     none = n2.evaluate(frame).step2
-    assert none["p"] == {"B3": 1.0, "DF": 1.0} and none["passed"] == {} and none["champion"] == n2.CHAMPION
+    assert none["p"] == {"B3": 1.0, "DF": 1.0} and none["passed"] == {} and none["champion"] == n2.CHAMPION_AT_STEP2
 
 
 def test_n2_step2_needs_both_periods():
@@ -394,9 +428,9 @@ def test_n1_step2_promotion_mechanics():
     assert p["checks"]["B3"]["full"]["comparator"] == "B2"
     # beats B1 (the champion) but not B2: fails (F-B10)
     q = n1.promotion_step2(_res({**base, "B3": 4.5}, 0.02))
-    assert not q["checks"]["B3"]["promoted"] and q["champion"] == n1.CHAMPION
+    assert not q["checks"]["B3"]["promoted"] and q["champion"] == n1.CHAMPION_AT_STEP2
     r = n1.promotion_step2(_res({**base, "B3": 3.0}, 0.2))  # Holm fails
-    assert not r["checks"]["B3"]["promoted"] and r["champion"] == n1.CHAMPION
+    assert not r["checks"]["B3"]["promoted"] and r["champion"] == n1.CHAMPION_AT_STEP2
 
 
 def test_n1_step2_holm_family_has_df_at_one(capex):

@@ -331,3 +331,15 @@ GitHub tog bort commit-meddelanden ur Events API den 2025-10-07, så GH Archive 
 med ett förregistrerat urval av sju timmar per vecka. BigQuery användes inte (15,7 GB per dag). En levande ersättare
 via GitHubs commit-sökning är BLOCKED av hastighetsgränser. Förslag för senare: andel öppnade pull requests från
 AI-agenters botkonton i GH Archive, efter att 2026 års täckning har mätts.
+
+
+## 2026-11-24 – B3 blir huvudmodell för N2 (efter R7)
+
+Granskningen R7 bekräftade B3 med förbehåll. Spåret X4 rättade R7-F1 (Nvidia i gruppmedlet för kvartalsintäkt enligt
+registerposten samma dag: bara kvartal från 2017Q2, Nvidias värde på alla tre TSMC-positioner) och R7-F2 (fast
+jämförelsemodell `CHAMPION_AT_STEP2`, B2 för N2 och B1 för N1). Den registrerade omkörningen gav B3 MAE 5,83 mot B2
+6,42, ΔMAE −0,59, DM-p 0,029 och Holm-p 0,059 i {B3, DF}, och lägre MAE än B0, B1 och B2 i båda perioderna. Det är exakt
+R7:s läsning "från 2017Q2, alla positioner". Regeln tillämpades mekaniskt: `n2.CHAMPION = "B3"`. Marginalen mot
+gränsen 0,10 är mindre än i C2:s körning (0,038), och vinsten är i praktiken en korrektion av TSMC:s konstanta bias
+(cirka +1,6 %). N1 är oförändrad (körlogg identisk med 20261123T214413Z). Den första skarpa prognosen med B3 görs
+2026-12-05.

@@ -60,7 +60,8 @@ Se `docs/plan.md`, avsnitt 8. Uppdatera här när en fas är klar.
 - **Fas 1** ✅ källor och licenser (`docs/datakallor/`)
 - **Fas 2** ✅ cirka 130 serier i G1–G9 (`docs/kallor/`), måttregister låst (`docs/mattregister.md`)
 - **Fas 3** ✅ N1 (capex) och N2 (TSMC) med backtest. Läckagegranskning R1 och rättning X1
-- **Fas 4** ✅ guidance (E1), granskning R2. **N2:s huvudmodell är B2 (TSMC:s guidance)**, N1:s huvudmodell är B1
+- **Fas 4** ✅ guidance (E1), granskning R2. **N2:s huvudmodell är B3 (TSMC:s guidance korrigerad för systematisk
+  avvikelse, från 2026-11-24 efter granskning R7)**, N1:s huvudmodell är B1
 - **Fas 5** ✅ tillstånd per gren (`python -m ai_tracker.state`), månatlig ögonblicksbild från 2026-11-30
 - **Fas 6** ✅ hemsida på GitHub Pages (`python -m ai_tracker.site build`, `pages.yml`; ägaren aktiverar
   Pages en gång, se `docs/drift.md`). Månadsbrev ✅ (`python -m ai_tracker.letter`, committas med ögonblicksbilden)
