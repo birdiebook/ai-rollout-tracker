@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://birdiebook.github.io/ai-rollout-tracker/schema/v1/horizons.json",
+  "title": "nowcast/d2.json: D2 forecasts 1-8 quarters ahead (shadow; site.data.horizons)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["record", "first_live", "origin", "file", "next_origin", "next_period", "groups", "interval_levels", "targets", "error"],
+  "properties": {
+    "record": {"$ref": "common.json#/$defs/record"},
+    "first_live": {"$ref": "common.json#/$defs/date"},
+    "origin": {"$ref": "common.json#/$defs/str_or_null"},
+    "file": {"$ref": "common.json#/$defs/str_or_null"},
+    "next_origin": {"$ref": "common.json#/$defs/date_or_null"},
+    "next_period": {"$ref": "common.json#/$defs/str_or_null"},
+    "groups": {"type": "object", "additionalProperties": {"type": "array", "items": {"type": "integer"}}},
+    "interval_levels": {"type": "array", "items": {"type": "string"}},
+    "error": {"$ref": "common.json#/$defs/str_or_null"},
+    "targets": {"type": "array", "items": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "name", "target", "label", "unit", "publishable", "models", "champion_by_group", "base", "fan", "paths", "history", "summary"],
+      "properties": {
+        "id": {"type": "string"}, "name": {"type": "string"}, "target": {"type": "string"}, "label": {"type": "string"},
+        "unit": {"type": "string"}, "publishable": {"type": "boolean"},
+        "models": {"type": "array", "items": {"type": "string"}},
+        "champion_by_group": {"type": "object", "additionalProperties": {"type": "string"}},
+        "base": {"$ref": "common.json#/$defs/str_or_null"},
+        "fan": {"type": ["object", "null"], "additionalProperties": false,
+                "required": ["periods", "champion", "values", "intervals"],
+                "properties": {"periods": {"type": "array", "items": {"type": "string"}},
+                               "champion": {"type": "array", "items": {"type": "string"}},
+                               "values": {"type": "array", "items": {"$ref": "common.json#/$defs/num"}},
+                               "intervals": {"type": "object", "additionalProperties": {
+                                 "type": "object", "additionalProperties": false, "required": ["lo", "hi"],
+                                 "properties": {"lo": {"type": "array", "items": {"$ref": "common.json#/$defs/num"}},
+                                                "hi": {"type": "array", "items": {"$ref": "common.json#/$defs/num"}}}}}}},
+        "paths": {"type": "array", "items": {
+          "type": "object", "additionalProperties": false, "required": ["h", "quarter", "champion", "value"],
+          "properties": {"h": {"type": "integer"}, "quarter": {"type": "string"}, "champion": {"type": "string"},
+                         "value": {"$ref": "common.json#/$defs/num"},
+                         "models": {"type": "object", "additionalProperties": {"$ref": "common.json#/$defs/num"}},
+                         "interval_80": {"$ref": "common.json#/$defs/pair"}}}},
+        "history": {"$ref": "common.json#/$defs/series_values"},
+        "summary": {"type": "array", "items": {
+          "type": "object", "required": ["h", "group", "n"],
+          "properties": {"h": {"type": "integer"}, "group": {"type": "string"}, "n": {"type": "integer"},
+                         "n_dist": {"type": "integer"}, "crps": {"$ref": "common.json#/$defs/num"}},
+          "patternProperties": {"^n_[A-Za-z0-9_]+$": {"type": "integer"},
+                                "^(mae|bias)_[A-Za-z0-9_]+$": {"$ref": "common.json#/$defs/num"},
+                                "^coverage_\\d{2}$": {"$ref": "common.json#/$defs/num"}},
+          "additionalProperties": false}}
+      }
+    }}
+  }
+}

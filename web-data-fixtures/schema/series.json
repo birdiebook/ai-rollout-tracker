@@ -1,0 +1,105 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://birdiebook.github.io/ai-rollout-tracker/schema/v1/series.json",
+  "title": "series/<key>.json: one publishable series (metadata, licence, levels, measures, measure history, versions)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["key", "label", "unit", "freq", "branch", "license", "measure_as_of", "measure", "measure_path",
+               "measure_history", "levels", "versions"],
+  "properties": {
+    "key": {"$ref": "common.json#/$defs/series_key"},
+    "label": {"type": "string"},
+    "unit": {"type": "string"},
+    "freq": {"enum": ["D", "W", "2W", "M", "Q", "A"]},
+    "branch": {"$ref": "common.json#/$defs/branch_code"},
+    "branch_name": {"type": "string"},
+    "question": {"type": "string"},
+    "source": {"type": "string"},
+    "source_family": {"type": "string"},
+    "license": {
+      "type": "object", "additionalProperties": false, "required": ["short", "text", "attribution"],
+      "properties": {
+        "short": {"type": "string"},
+        "text": {"type": "string", "description": "The catalog's licence text as checked (Spec.license)."},
+        "attribution": {"type": "string", "description": "Line to show with every chart and download."}
+      }
+    },
+    "revised": {"type": "boolean", "description": "The source revises published values (versions matter)."},
+    "lag_days": {"$ref": "common.json#/$defs/int_or_null"},
+    "derived_from": {"type": ["array", "null"], "items": {"$ref": "common.json#/$defs/series_key"}},
+    "core": {"type": "boolean", "description": "Named in a branch's registered core series."},
+    "reconciliation": {"type": "boolean", "description": "An A5 reconciliation ratio (never counted in a branch)."},
+    "in_record": {"type": "boolean", "description": "Measured by the record (live snapshot or reconstruction) on the record date."},
+    "counted": {"type": "boolean"},
+    "record_branch": {"type": ["string", "null"]},
+    "method": {"enum": ["log", "share", "logit", "doubling", "halving", null]},
+    "aggregation": {"enum": ["mean", "sum", null], "description": "D/W/2W series: how days/weeks become calendar months in the measures."},
+    "measure_as_of": {"$ref": "common.json#/$defs/date"},
+    "measure": {"anyOf": [{"$ref": "common.json#/$defs/measure"}, {"type": "null"}]},
+    "measure_path": {"$ref": "common.json#/$defs/path"},
+    "measure_history": {
+      "type": ["object", "null"],
+      "description": "The record's measure of this series at every month end of the stripes (live snapshot where one exists, else the labelled reconstruction). Columnar: index i of every array is months[i].",
+      "additionalProperties": false,
+      "required": ["months", "kind", "counted"],
+      "properties": {
+        "months": {"type": "array", "items": {"$ref": "common.json#/$defs/month"}},
+        "kind": {"type": "array", "items": {"$ref": "common.json#/$defs/kind"}},
+        "counted": {"type": "array", "items": {"type": "boolean"}},
+        "latest_period": {"type": "array", "items": {"$ref": "common.json#/$defs/str_or_null"}},
+        "known_from": {"type": "array", "items": {"$ref": "common.json#/$defs/date_or_null"}},
+        "pace": {"type": "array", "items": {"$ref": "common.json#/$defs/num"}},
+        "change_in_pace": {"type": "array", "items": {"$ref": "common.json#/$defs/num"}},
+        "pace_percentile": {"type": "array", "items": {"$ref": "common.json#/$defs/num"}},
+        "change_percentile": {"type": "array", "items": {"$ref": "common.json#/$defs/num"}},
+        "direction": {"type": "array", "items": {"$ref": "common.json#/$defs/direction"}},
+        "valid": {"type": "array", "items": {"type": ["boolean", "null"]}}
+      }
+    },
+    "levels": {
+      "type": ["object", "null"],
+      "description": "The latest version of every period known on as_of (native frequency).",
+      "additionalProperties": false,
+      "required": ["as_of", "periods", "values"],
+      "properties": {
+        "as_of": {"$ref": "common.json#/$defs/date"},
+        "periods": {"type": "array", "items": {"$ref": "common.json#/$defs/period"}},
+        "values": {"type": "array", "items": {"$ref": "common.json#/$defs/num"}}
+      }
+    },
+    "rows": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "properties": {
+        "counts": {"type": "object", "additionalProperties": {"type": "integer"}, "description": "Rows per source type (release, fetch, revision, backfill, derived)."},
+        "backfill_last_known": {"$ref": "common.json#/$defs/date_or_null", "description": "Backfilled rows carry today's vintage: time travel before this date shows reconstructed history."}
+      }
+    },
+    "versions": {"anyOf": [{"$ref": "#/$defs/versions"}, {"type": "null"}]}
+  },
+  "$defs": {
+    "versions": {
+      "type": "object",
+      "description": "Encoding versions-v1 (site_bundle.vintages): one row per version, arrays p/d/v sorted by (date, period). as_of(D): walk rows while dates[d[i]] <= D, keep the last v per periods[p[i]].",
+      "additionalProperties": false,
+      "required": ["encoding", "freq", "native_freq", "aggregation", "periods", "dates", "p", "d", "v", "n_versions",
+                   "n_revised_periods", "first_known", "last_known", "collapsed_before"],
+      "properties": {
+        "encoding": {"const": "versions-v1"},
+        "freq": {"enum": ["W", "2W", "M", "Q", "A"], "description": "Frequency of the stored versions (a daily series is stored as calendar months)."},
+        "native_freq": {"enum": ["D", "W", "2W", "M", "Q", "A"]},
+        "aggregation": {"enum": ["mean", "sum", null]},
+        "periods": {"type": "array", "items": {"$ref": "common.json#/$defs/period"}},
+        "dates": {"type": "array", "items": {"$ref": "common.json#/$defs/date"}, "description": "Distinct known_from days, ascending."},
+        "p": {"type": "array", "items": {"type": "integer", "minimum": 0}},
+        "d": {"type": "array", "items": {"type": "integer", "minimum": 0}},
+        "v": {"type": "array", "items": {"type": "number"}},
+        "n_versions": {"type": "integer"},
+        "n_revised_periods": {"type": "integer"},
+        "first_known": {"$ref": "common.json#/$defs/date"},
+        "last_known": {"$ref": "common.json#/$defs/date"},
+        "collapsed_before": {"$ref": "common.json#/$defs/date_or_null", "description": "Versions known before this day were collapsed into the version current on it (size guard)."}
+      }
+    }
+  }
+}

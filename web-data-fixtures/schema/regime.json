@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://birdiebook.github.io/ai-rollout-tracker/schema/v1/regime.json",
+  "title": "regime.json: C4 regime probability and breaks from the committed live snapshots (site.probabilities.regime_view)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["record", "available", "months", "spec_version", "blocks", "shifts", "breaks", "n_breaks_withheld", "block_labels"],
+  "properties": {
+    "record": {"$ref": "common.json#/$defs/record"},
+    "available": {"type": "boolean", "description": "false until a live snapshot carries a regime section (never reconstructed)."},
+    "months": {"type": "array", "items": {"$ref": "common.json#/$defs/month"}},
+    "spec_version": {"$ref": "common.json#/$defs/str_or_null"},
+    "blocks": {"type": "array", "items": {
+      "type": "object", "additionalProperties": false, "required": ["block", "label", "history", "latest"],
+      "properties": {"block": {"type": "string"}, "label": {"type": "string"},
+                     "history": {"type": "array", "items": {"$ref": "#/$defs/block_month"}},
+                     "latest": {"$ref": "#/$defs/block_month"}}}},
+    "shifts": {"type": "array", "items": {"type": "object", "additionalProperties": false,
+               "properties": {"month": {"$ref": "common.json#/$defs/month"}, "block": {"type": "string"},
+                              "label": {"type": "string"}, "state": {"type": "string"}}}},
+    "breaks": {"type": "array", "items": {"type": "object", "additionalProperties": false,
+               "properties": {"month": {"$ref": "common.json#/$defs/month"}, "series": {"$ref": "common.json#/$defs/series_key"},
+                              "branch": {"$ref": "common.json#/$defs/str_or_null"}, "latest_period": {"$ref": "common.json#/$defs/str_or_null"},
+                              "p_recent": {"$ref": "common.json#/$defs/num"}}}},
+    "n_breaks_withheld": {"type": "integer"},
+    "block_labels": {"type": "object", "additionalProperties": {"type": "string"}}
+  },
+  "$defs": {
+    "block_month": {"type": "object", "additionalProperties": false,
+                    "properties": {"month": {"$ref": "common.json#/$defs/month"}, "p_slow": {"$ref": "common.json#/$defs/num"},
+                                   "state": {"$ref": "common.json#/$defs/str_or_null"}, "shift": {"$ref": "common.json#/$defs/str_or_null"},
+                                   "n_months": {"$ref": "common.json#/$defs/int_or_null"}, "reason": {"type": "string"}}}
+  }
+}

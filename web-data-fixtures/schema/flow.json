@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://birdiebook.github.io/ai-rollout-tracker/schema/v1/flow.json",
+  "title": "flow.json: the chain L1-L9 (site.flow.flow_view)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["record", "leads", "reconciliations", "reconciliations_available", "withheld"],
+  "properties": {
+    "record": {"$ref": "common.json#/$defs/record"},
+    "leads": {"type": "array", "items": {"$ref": "#/$defs/lead"}},
+    "reconciliations": {"type": "array", "description": "A5 ratios between leads, placed by their lead span; a withheld one keeps only span and lead.",
+                        "items": {"anyOf": [{"$ref": "common.json#/$defs/series_entry"}, {"$ref": "#/$defs/hidden"}]}},
+    "reconciliations_available": {"type": "boolean"},
+    "withheld": {"$ref": "common.json#/$defs/withheld_list"}
+  },
+  "$defs": {
+    "hidden": {"type": "object", "additionalProperties": false, "required": ["hidden"],
+               "properties": {"hidden": {"const": true}, "span": {"type": ["array", "null"], "items": {"type": "integer"}},
+                              "lead": {"$ref": "common.json#/$defs/str_or_null"}}},
+    "lead": {
+      "type": "object", "additionalProperties": false,
+      "required": ["code", "name", "short", "content", "branches", "series", "n_withheld", "nowcasts"],
+      "properties": {
+        "code": {"$ref": "common.json#/$defs/lead_code"}, "name": {"type": "string"},
+        "short": {"type": "array", "items": {"type": "string"}}, "content": {"type": "string"},
+        "branches": {"type": "array", "items": {
+          "type": "object", "additionalProperties": false,
+          "properties": {"code": {"$ref": "common.json#/$defs/branch_code"}, "name": {"$ref": "common.json#/$defs/str_or_null"},
+                         "state": {"anyOf": [{"$ref": "common.json#/$defs/state"}, {"type": "null"}]},
+                         "index": {"$ref": "common.json#/$defs/num"}, "n_series": {"$ref": "common.json#/$defs/int_or_null"},
+                         "n_up": {"$ref": "common.json#/$defs/int_or_null"}, "n_neutral": {"$ref": "common.json#/$defs/int_or_null"},
+                         "n_down": {"$ref": "common.json#/$defs/int_or_null"}, "n_withheld_counted": {"$ref": "common.json#/$defs/int_or_null"},
+                         "has_core": {"type": ["boolean", "null"]}, "delta_index": {"$ref": "common.json#/$defs/num"},
+                         "state_changed": {"type": ["boolean", "null"]}}}},
+        "series": {"type": "array", "items": {"$ref": "common.json#/$defs/series_entry"}},
+        "n_withheld": {"type": "integer"},
+        "nowcasts": {"type": "array", "items": {"$ref": "#/$defs/nowcast_summary"}}
+      }
+    },
+    "nowcast_summary": {
+      "type": "object", "additionalProperties": false, "required": ["id", "label", "title", "champion", "latest", "backtest"],
+      "properties": {
+        "id": {"type": "string"}, "label": {"type": "string"}, "title": {"type": "string"}, "unit": {"type": ["string", "null"]},
+        "decimals": {"type": "integer"}, "error_unit": {"type": ["string", "null"]}, "champion": {"type": "string"},
+        "latest": {"type": ["object", "null"], "additionalProperties": false,
+                   "properties": {"period": {"type": ["string", "null"]}, "origin": {"$ref": "common.json#/$defs/str_or_null"},
+                                  "champion": {"$ref": "common.json#/$defs/str_or_null"}, "value": {"$ref": "common.json#/$defs/num"},
+                                  "interval_80": {"$ref": "common.json#/$defs/pair"}, "file": {"type": "string"}}},
+        "next_origin": {"$ref": "common.json#/$defs/date_or_null"}, "next_period": {"$ref": "common.json#/$defs/str_or_null"},
+        "results_doc": {"type": "string"},
+        "backtest": {"type": ["object", "null"], "additionalProperties": false,
+                     "properties": {"model": {"type": "string"}, "mae": {"$ref": "common.json#/$defs/mae"},
+                                    "error": {"$ref": "common.json#/$defs/str_or_null"}, "n": {"type": "integer"},
+                                    "first": {"$ref": "common.json#/$defs/str_or_null"}, "last": {"$ref": "common.json#/$defs/str_or_null"},
+                                    "crps": {"$ref": "common.json#/$defs/num"}, "calibrated": {"type": "boolean"},
+                                    "coverage_80": {"$ref": "common.json#/$defs/num"}, "band_80": {"$ref": "common.json#/$defs/pair"}}}
+      }
+    }
+  }
+}

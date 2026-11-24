@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://birdiebook.github.io/ai-rollout-tracker/schema/v1/method.json",
+  "title": "method.json: register summary (rules, core series, leads, nowcast variants, sources and licences)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["record", "register", "rules", "states", "branches", "leads", "nowcasts", "interval_levels", "reconciliations",
+               "labels", "sources", "n_series", "n_published", "n_withheld"],
+  "properties": {
+    "record": {"$ref": "common.json#/$defs/record"},
+    "register": {"type": "object", "additionalProperties": false,
+                 "properties": {"file": {"type": "string"}, "sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"}}},
+    "rules": {"type": "object", "additionalProperties": false,
+              "properties": {"deadband_sd": {"type": "number"}, "accelerating_at_least": {"type": "number"},
+                             "braking_at_most": {"type": "number"}, "min_series": {"type": "integer"},
+                             "min_history": {"$ref": "#/$defs/per_freq"}, "pace_lag": {"$ref": "#/$defs/per_freq"},
+                             "change_lag": {"$ref": "#/$defs/per_freq"}, "doubling_window_months": {"type": "integer"},
+                             "own_snapshot_months": {"type": "integer"},
+                             "backfill_gated": {"type": "array", "items": {"type": "string"}},
+                             "backfill_flagged": {"type": "array", "items": {"type": "string"}}}},
+    "states": {"type": "array", "items": {"$ref": "common.json#/$defs/state"}},
+    "branches": {"type": "array", "items": {
+      "type": "object", "additionalProperties": false, "required": ["code", "name", "question", "core", "withheld"],
+      "properties": {"code": {"$ref": "common.json#/$defs/branch_code"}, "name": {"type": "string"}, "question": {"type": "string"},
+                     "core": {"type": "array", "items": {"type": "string"}, "description": "Registered core entries (expanded), publishable or placeholders."},
+                     "withheld": {"$ref": "common.json#/$defs/withheld_list"}}}},
+    "leads": {"type": "array", "items": {
+      "type": "object", "additionalProperties": false,
+      "properties": {"code": {"$ref": "common.json#/$defs/lead_code"}, "name": {"type": "string"},
+                     "short": {"type": "array", "items": {"type": "string"}}, "content": {"type": "string"},
+                     "branches": {"type": "array", "items": {"$ref": "common.json#/$defs/branch_code"}},
+                     "series": {"type": "array", "items": {"type": "string"}}, "n_series_withheld": {"type": "integer"},
+                     "nowcasts": {"type": "array", "items": {"type": "string"}}}}},
+    "nowcasts": {"type": "array", "items": {
+      "type": "object", "additionalProperties": false,
+      "properties": {"id": {"type": "string"}, "title": {"type": "string"}, "frequency": {"type": "string"},
+                     "origin_rule": {"type": "string"}, "results_doc": {"type": "string"},
+                     "variants": {"type": "array", "items": {"type": "object", "additionalProperties": false,
+                                  "properties": {"id": {"type": "string"}, "text": {"type": "string"}}}}}}},
+    "interval_levels": {"type": "array", "items": {"type": "string"}},
+    "reconciliations": {"type": "object", "additionalProperties": false,
+                        "properties": {"group": {"type": "string"}, "keys": {"type": "array", "items": {"$ref": "common.json#/$defs/series_key"}}}},
+    "labels": {"type": "object", "additionalProperties": false,
+               "properties": {"reconstructed": {"type": "string"}, "live": {"type": "string"}}},
+    "sources": {"type": "array", "items": {
+      "type": "object", "additionalProperties": false,
+      "properties": {"source": {"type": "string"}, "license": {"type": "string"}, "license_text": {"type": "string"},
+                     "branches": {"type": "array", "items": {"$ref": "common.json#/$defs/branch_code"}},
+                     "n_series": {"type": "integer"}, "n_published": {"type": "integer"}}}},
+    "n_series": {"type": "integer"}, "n_published": {"type": "integer"}, "n_withheld": {"type": "integer"}
+  },
+  "$defs": {
+    "per_freq": {"type": "object", "additionalProperties": {"type": "integer"}}
+  }
+}

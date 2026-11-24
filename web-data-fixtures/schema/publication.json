@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://birdiebook.github.io/ai-rollout-tracker/schema/v1/publication.json",
+  "title": "letters/<YYYY-MM>.json and reports/<YYYYQn>.json: one letter or report with its Markdown",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["title", "kind", "file", "markdown"],
+  "oneOf": [{"required": ["month"]}, {"required": ["quarter"]}],
+  "properties": {
+    "month": {"$ref": "common.json#/$defs/month"}, "month_sv": {"type": "string"},
+    "quarter": {"type": "string", "pattern": "^\\d{4}Q[1-4]$"}, "quarter_sv": {"type": "string"},
+    "title": {"type": "string"},
+    "kind": {"type": "string", "description": "skarp ögonblicksbild or rekonstruerad (from the title)."},
+    "file": {"type": "string", "description": "The committed Markdown in the repository."},
+    "markdown": {"type": "string", "description": "Written by ai_tracker.letter / ai_tracker.quarterly under the same licence rule."}
+  }
+}

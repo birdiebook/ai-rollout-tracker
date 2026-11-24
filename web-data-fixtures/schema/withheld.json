@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://birdiebook.github.io/ai-rollout-tracker/schema/v1/withheld.json",
+  "title": "withheld.json: every catalog series with publish=False, names and reasons only",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["withheld", "n"],
+  "properties": {
+    "withheld": {"$ref": "common.json#/$defs/withheld_list"},
+    "n": {"type": "integer"}
+  }
+}

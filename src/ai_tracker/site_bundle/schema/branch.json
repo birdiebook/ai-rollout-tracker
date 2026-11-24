@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://birdiebook.github.io/ai-rollout-tracker/schema/v1/branch.json",
+  "title": "branch/<G>.json: one branch (site.data.branch_view)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["record", "code", "name", "question", "index", "state", "n_series", "counted", "not_counted", "withheld", "history"],
+  "properties": {
+    "record": {"$ref": "common.json#/$defs/record"},
+    "code": {"$ref": "common.json#/$defs/branch_code"},
+    "name": {"type": "string"},
+    "question": {"type": "string"},
+    "index": {"$ref": "common.json#/$defs/num"},
+    "state": {"$ref": "common.json#/$defs/state"},
+    "n_series": {"type": "integer"}, "n_up": {"type": "integer"}, "n_neutral": {"type": "integer"}, "n_down": {"type": "integer"},
+    "previous": {"anyOf": [{"$ref": "common.json#/$defs/aggregate"}, {"type": "null"}]},
+    "delta_index": {"$ref": "common.json#/$defs/num"},
+    "state_changed": {"type": ["boolean", "null"]},
+    "n_withheld": {"type": "integer"},
+    "n_withheld_counted": {"type": "integer", "description": "Withheld series that count in the index (only the aggregate shows them)."},
+    "has_core": {"type": "boolean"},
+    "counted": {"type": "array", "items": {"$ref": "common.json#/$defs/series_entry"}, "description": "Publishable series counted in the index, with measures and path."},
+    "not_counted": {"type": "array", "items": {"$ref": "common.json#/$defs/series_entry"}, "description": "Registered but not counted this month (reason), publishable only."},
+    "withheld": {"$ref": "common.json#/$defs/withheld_list"},
+    "history": {"type": "array", "items": {"$ref": "common.json#/$defs/aggregate"}},
+    "selected_benchmarks": {"type": "array", "items": {"type": "string"}, "description": "G1: the benchmarks selected by the registered rule."}
+  }
+}

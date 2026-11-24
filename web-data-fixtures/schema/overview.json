@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://birdiebook.github.io/ai-rollout-tracker/schema/v1/overview.json",
+  "title": "overview.json: the start page (record, headline, branch tiles, state stripes, calendar, regime)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["record", "headline", "branches", "stripes", "calendar", "regime", "facts"],
+  "properties": {
+    "record": {"$ref": "common.json#/$defs/record"},
+    "headline": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["month", "n_branches", "n_with_state", "counts", "changes", "sentence", "change_sentence"],
+      "properties": {
+        "month": {"$ref": "common.json#/$defs/month"},
+        "n_branches": {"type": "integer"},
+        "n_with_state": {"type": "integer", "description": "Branches whose state is accelererar, stabil or bromsar in."},
+        "counts": {"type": "object", "propertyNames": {"$ref": "common.json#/$defs/state"}, "additionalProperties": {"type": "integer"}},
+        "changes": {"type": "array", "items": {
+          "type": "object", "additionalProperties": false, "required": ["code", "name", "from", "to"],
+          "properties": {"code": {"$ref": "common.json#/$defs/branch_code"}, "name": {"type": "string"},
+                         "from": {"$ref": "common.json#/$defs/state"}, "to": {"$ref": "common.json#/$defs/state"}}}},
+        "sentence": {"type": "string", "description": "The headline generated from the counts (Swedish)."},
+        "change_sentence": {"type": "string"}
+      }
+    },
+    "branches": {"type": "array", "items": {"$ref": "#/$defs/tile"}},
+    "stripes": {
+      "type": "object",
+      "description": "Branch x month: diffusion index and state per month, columnar. Index i of every array is months[i].",
+      "additionalProperties": false,
+      "required": ["months", "kind", "rows", "thresholds"],
+      "properties": {
+        "months": {"type": "array", "items": {"$ref": "common.json#/$defs/month"}},
+        "kind": {"type": "array", "items": {"anyOf": [{"$ref": "common.json#/$defs/kind"}, {"type": "null"}]}},
+        "rows": {"type": "array", "items": {
+          "type": "object", "additionalProperties": false, "required": ["code", "name", "index", "state", "n_series"],
+          "properties": {
+            "code": {"$ref": "common.json#/$defs/branch_code"}, "name": {"type": "string"},
+            "index": {"type": "array", "items": {"$ref": "common.json#/$defs/num"}},
+            "state": {"type": "array", "items": {"anyOf": [{"$ref": "common.json#/$defs/state"}, {"type": "null"}]}},
+            "n_series": {"type": "array", "items": {"$ref": "common.json#/$defs/int_or_null"}}}}},
+        "thresholds": {"type": "object", "additionalProperties": false,
+                       "properties": {"braking_at_most": {"type": "number"}, "accelerating_at_least": {"type": "number"}}}
+      }
+    },
+    "calendar": {"type": "array", "items": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "label", "title", "champion", "next_origin", "next_period", "n_live"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^(n[1-9]|d2)$"}, "label": {"type": "string"}, "title": {"type": "string"},
+        "champion": {"$ref": "common.json#/$defs/str_or_null"},
+        "next_origin": {"$ref": "common.json#/$defs/date_or_null"}, "next_period": {"$ref": "common.json#/$defs/str_or_null"},
+        "n_live": {"type": "integer", "description": "Live forecast files committed so far."}}}},
+    "regime": {
+      "type": "object", "additionalProperties": false, "required": ["available", "blocks"],
+      "properties": {
+        "available": {"type": "boolean"},
+        "blocks": {"type": "array", "items": {
+          "type": "object", "additionalProperties": false,
+          "properties": {"block": {"type": "string"}, "label": {"type": "string"}, "month": {"$ref": "common.json#/$defs/month"},
+                         "p_slow": {"$ref": "common.json#/$defs/num"}, "state": {"$ref": "common.json#/$defs/str_or_null"},
+                         "shift": {"$ref": "common.json#/$defs/str_or_null"}}}}
+      }
+    },
+    "facts": {
+      "type": "object", "additionalProperties": false,
+      "required": ["n_series", "n_published", "n_withheld", "n_nowcasts", "table_max_fetched_at"],
+      "properties": {
+        "n_series": {"type": "integer", "description": "Series in the catalog."},
+        "n_published": {"type": "integer"}, "n_withheld": {"type": "integer"}, "n_nowcasts": {"type": "integer"},
+        "table_max_fetched_at": {"$ref": "common.json#/$defs/date_or_null"}}
+    }
+  },
+  "$defs": {
+    "tile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "name", "question", "index", "state", "n_series"],
+      "properties": {
+        "code": {"$ref": "common.json#/$defs/branch_code"},
+        "name": {"type": "string"},
+        "question": {"type": "string"},
+        "index": {"$ref": "common.json#/$defs/num"},
+        "state": {"$ref": "common.json#/$defs/state"},
+        "n_series": {"type": "integer"}, "n_up": {"type": "integer"}, "n_neutral": {"type": "integer"}, "n_down": {"type": "integer"},
+        "previous": {"anyOf": [{"$ref": "common.json#/$defs/aggregate"}, {"type": "null"}]},
+        "delta_index": {"$ref": "common.json#/$defs/num"},
+        "state_changed": {"type": ["boolean", "null"]},
+        "n_withheld": {"type": "integer"},
+        "n_withheld_counted": {"type": "integer"},
+        "has_core": {"type": "boolean"}
+      }
+    }
+  }
+}
