@@ -29,6 +29,7 @@ En rad per spår, fylls på efter varje körning. Tumreglerna justeras när siff
 | 2026-11-24 | 11 | W4 + W2 skelett, designsystem, CI | webb (SvelteKit, tokens, primitiver, CI) | ~29 | ~93 | ~291 | 41 vitest, 78 Playwright, axe, budgetar, `pages-next.yml`, en deploy |
 | 2026-11-24 | 13 | F1 revideringar och överraskning | mått + härledda serier (förregistrerade) + deterministisk tolkning | ~95 | ~85 | – | 14 serier (12 F1, 2 TSMC capex-budget), avsnitt `expectations`, 76 revideringar, överraskning för 4 bolag, 44 tester |
 | 2026-11-24 | 13 | R11 granskning F1 | granskning (primärkällor: sec.gov, microsoft.com; omräkning) | ~80 | ~95 | – | 10 fynd (2 måste), saknad Microsoft-rad funnen i samtalet, 18 TSMC-dokument kontrollerade, 6 strikta xfail + 3 tester |
+| 2026-11-24 | 13 | X8 rättning F1 efter R11 | rättning (data, kod, register, två känsligheter, ny tolkning) | ~80 | ~100 | – | 3 CSV-rader verifierade mot källan, brottet flyttat (0,67 → 0,62), stängningsversion, cache, publiceringsgrind, US$-intäkt TSMC (40 kvartal), grannkontroll 81 dokument, 12 nya tester, 6 xfail → pass |
 
 ## Körning 1, sammanfattning (2026-11-23, orkestrerare)
 

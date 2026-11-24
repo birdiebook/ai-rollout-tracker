@@ -275,3 +275,12 @@ saknas, inte att planen var oförändrad.
 
 Alla sex xfail-test prövades mot simulerade rättningar i en kopia och slog då om (XPASS). Hela sviten: se
 beslutsloggen och spårets slutrapport.
+
+## Rättat i `auto14/x8-revideringar`
+
+Spår X8 (2026-11-24) rättade R11-1–R11-10. R11-1: `msft-r11f1` tillagd och brottet flyttat (ny registerpost), rullande
+2026Q4 = 0,62. R11-2: `end < today`. R11-3: CSV:ns hash i cachens nyckel. R11-4: CSV-baserade F1-serier listar
+`guid_capex_*` och har `publish=False`. R11-5: Metas rader för 2020 tillagda. R11-6 och R11-7: känsligheterna bara
+siffror och TSMC i US$ (`tsmc_rev_usd_q`, `f1_surprise_tsmc_usd`). R11-8–R11-10: dokumentation. De sex strikta
+xfail-testen passerar nu som vanliga test. Se registerposten "F1: brottet flyttas, stängningsversionen och känsligheter
+(rättning efter granskning R11)" och `docs/resultat/f1_revideringar.md`.

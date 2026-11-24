@@ -404,3 +404,21 @@ Johannes valde rekommendationerna:
 - Rättningsspåret tar R11-1 och R11-2 före merge (stängningsversionen ska vänta tills kvartalets sista dag har
   passerat) och R11-3 – R11-10 i samma spår. Ägaren avgör om `guid_capex_meta/googl` ska publiceras, eftersom F1:s
   serier i dag kringgår deras `publish=False` (R11-4).
+
+## 2026-11-24 – X8: rättning av F1 efter R11
+
+- **Microsofts julisiffra läggs till och brottet flyttas (R11-1).** Raden `msft-r11f1` (cirka 175 mdr, samtalet
+  2026-07-29, #228) läggs till, och en ny registerpost flyttar brottet R5-F14 dit. Skälet är primärkällan: bolaget sa
+  att planen var oförändrad utom definitionen. `msft-29` (170 mdr) blir en sänkning på samma bas (−2,9). Rullande
+  2026Q4 blir **0,62** (n 13: 4/8/1) och kvartalet 0,50 (n 3). F1:s tidigare 0,67 och "brottet ignoreras" (0,62)
+  redovisas som känslighet. Raden som ett brott håller utanför visas med sin storlek (−8,2) i ögonblicksbilden.
+- **Metas utsikt för 2020 läggs till (R11-5).** Revideringsindexet ändras för 2020Q4–2021Q3. Metas överraskning börjar
+  som registrerat 2021. N1:s B2 och B3 för Meta får 2020: N1b:s MAE för B2 går från 14,43 till 14,34, och N1:s B3 från
+  5,44 till 5,43. Inget beslut ändras.
+- **Stängningsversionen** skapas när kvartalets sista dag har passerat, som registret säger (R11-2).
+- **Känsligheter, inga nya huvudmått.** Indexet med bara siffror (1,00 för 2024Q4–2026Q1, 0,75 för 2026Q4) och TSMC:s
+  överraskning i US$ (valutadelens SD 1,3 mot 2,0 för s i NT$). Båda står i avsnittet `expectations`.
+- **Publicering (R11-4).** F1-serierna som läser CSV:n har `publish=False` tills ägaren beslutar om
+  `guid_capex_meta/googl`.
+- **Urvalet** av kandidatmeningar vidgas till meningen efter en capex-mening. Kontrollen läste 81 dokument och hittade
+  ingen ny capex-guidance.
