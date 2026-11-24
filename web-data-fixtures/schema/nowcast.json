@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://birdiebook.github.io/ai-rollout-tracker/schema/v1/nowcast.json",
+  "title": "nowcast/n<k>.json: one nowcast N1-N6 (live files, scorecard, coverage, backtest calibration)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["record", "publishable", "id", "label", "title", "target", "champion", "shadows", "variants"],
+  "properties": {
+    "record": {"$ref": "common.json#/$defs/record"},
+    "publishable": {"type": "boolean", "description": "false: the target is withheld and only the rule is shown (the withheld list names it)."},
+    "id": {"type": "string", "pattern": "^n[1-9]$"},
+    "label": {"type": "string"},
+    "title": {"type": "string"},
+    "target": {"type": ["string", "null"]},
+    "target_label": {"type": "string"},
+    "unit": {"type": "string"},
+    "source": {"type": "string"},
+    "license": {"type": "string"},
+    "decimals": {"type": "integer"},
+    "error_unit": {"type": "string"},
+    "frequency": {"type": "string"},
+    "origin_rule": {"type": "string"},
+    "results_doc": {"type": "string"},
+    "champion": {"type": "string"},
+    "shadows": {"type": "array", "items": {"type": "string"}},
+    "variants": {"type": "array", "items": {"type": "object", "additionalProperties": false, "required": ["id", "text"],
+                                            "properties": {"id": {"type": "string"}, "text": {"type": "string"}}}},
+    "next_origin": {"$ref": "common.json#/$defs/date_or_null"},
+    "next_period": {"$ref": "common.json#/$defs/str_or_null"},
+    "forecasts": {"type": "array", "description": "Committed live forecast files (forecasts/<n>/*.json), oldest first; inputs never included.",
+                  "items": {"$ref": "#/$defs/forecast"}},
+    "scorecard": {"type": "array", "items": {"$ref": "#/$defs/score_row"}},
+    "summary": {"type": "array", "items": {"type": "object", "additionalProperties": false, "required": ["variant", "n"],
+                "properties": {"variant": {"type": "string"}, "n": {"type": "integer"}, "mae": {"$ref": "common.json#/$defs/num"},
+                               "bias": {"$ref": "common.json#/$defs/num"}}}},
+    "scorecard_error": {"$ref": "common.json#/$defs/str_or_null"},
+    "coverage": {"type": "array", "description": "Live coverage per variant (stored distributions).",
+                 "items": {"type": "object", "additionalProperties": false, "required": ["variant", "n"],
+                           "properties": {"variant": {"type": "string"}, "n": {"type": "integer"}, "crps": {"$ref": "common.json#/$defs/num"}},
+                           "patternProperties": {"^coverage_\\d{2}$": {"$ref": "common.json#/$defs/num"},
+                                                 "^band_\\d{2}$": {"$ref": "common.json#/$defs/pair"}}}},
+    "interval_levels": {"type": "array", "items": {"type": "string"}},
+    "history": {"$ref": "common.json#/$defs/series_values", "description": "The target's recent levels as known today."},
+    "backtest_calibration": {"$ref": "common.json#/$defs/calibration"},
+    "withheld": {"$ref": "common.json#/$defs/withheld_list"}
+  },
+  "$defs": {
+    "forecast": {
+      "type": "object", "additionalProperties": false, "required": ["period", "file", "value", "champion"],
+      "properties": {
+        "nowcast": {"type": "string"}, "target": {"type": "string"}, "month": {"type": "string"}, "quarter": {"type": "string"},
+        "origin": {"type": "string"}, "registered_origin": {"type": "string"}, "unit": {"type": "string"},
+        "champion": {"type": "string"}, "value": {"$ref": "common.json#/$defs/num"},
+        "variants": {"type": "object", "additionalProperties": {"$ref": "common.json#/$defs/num"}},
+        "period": {"type": ["string", "null"]}, "file": {"type": "string"},
+        "intervals": {"$ref": "common.json#/$defs/intervals"}
+      }
+    },
+    "score_row": {
+      "type": "object", "description": "One forecast file against its first-vintage outcome (pipeline.score).",
+      "required": ["period", "status"],
+      "properties": {
+        "period": {"type": "string"}, "status": {"type": "string"}, "origin": {"$ref": "common.json#/$defs/str_or_null"},
+        "champion": {"$ref": "common.json#/$defs/str_or_null"}, "forecast": {"$ref": "common.json#/$defs/num"},
+        "outcome": {"$ref": "common.json#/$defs/num"}, "known_from": {"$ref": "common.json#/$defs/str_or_null"}
+      },
+      "patternProperties": {
+        "^interval_\\d{2}$": {"$ref": "common.json#/$defs/pair"},
+        "^(err|crps|pit)_[A-Za-z0-9_]+$": {"$ref": "common.json#/$defs/num"},
+        "^hit_\\d{2}_[A-Za-z0-9_]+$": {"type": ["boolean", "integer", "number", "null"]},
+        "^(f|value)_[A-Za-z0-9_]+$": {"$ref": "common.json#/$defs/num"}
+      },
+      "additionalProperties": false
+    }
+  }
+}

@@ -2,6 +2,9 @@
 data/*
 !data/README.md
 
+# Datapaketet till nya sidan byggs i CI (python -m ai_tracker.site_bundle build); bara de syntetiska fixturerna committas
+web-data/
+
 # Hemligheter
 .env
 

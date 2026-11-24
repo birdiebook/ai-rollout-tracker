@@ -13,6 +13,7 @@ dependencies = [
     "openpyxl>=3.1",
     "pyyaml>=6",
     "cryptography>=43",
+    "jsonschema>=4.23",
 ]
 
 [project.optional-dependencies]
@@ -32,3 +33,4 @@ where = ["src"]
 
 [tool.setuptools.package-data]
 "ai_tracker.site" = ["static/*"]
+"ai_tracker.site_bundle" = ["schema/*.json"]

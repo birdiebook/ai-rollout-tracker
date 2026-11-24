@@ -1,0 +1,194 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://birdiebook.github.io/ai-rollout-tracker/schema/v1/common.json",
+  "title": "Shared definitions of the site bundle",
+  "$defs": {
+    "num": {"type": ["number", "null"], "description": "A number rounded to 5-6 significant digits; null when missing or not finite."},
+    "int_or_null": {"type": ["integer", "null"]},
+    "str_or_null": {"type": ["string", "null"]},
+    "date": {"type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$"},
+    "date_or_null": {"type": ["string", "null"], "pattern": "^\\d{4}-\\d{2}-\\d{2}$"},
+    "month": {"type": "string", "pattern": "^\\d{4}-\\d{2}$"},
+    "period": {"type": "string", "description": "A period as in the observation table: 2026, 2026Q3, 2026-09, 2026-09-14, 2026-09-08/2026-09-14 (week)."},
+    "branch_code": {"type": "string", "pattern": "^G[1-9]$"},
+    "lead_code": {"type": "string", "pattern": "^L[1-9]$"},
+    "series_key": {"type": "string", "pattern": "^[A-Za-z0-9_]+$"},
+    "kind": {"enum": ["skarp", "rekonstruerad"], "description": "skarp = a committed live snapshot; rekonstruerad = recomputed as of the month end with today's table (labelled)."},
+    "state": {"enum": ["accelererar", "stabil", "bromsar in", "för få serier", "inga registrerade kärnserier"]},
+    "direction": {"enum": [-1, 0, 1, null], "description": "Direction of the change in pace beyond the deadband: 1 up, 0 within, -1 down."},
+    "pair": {"type": ["array", "null"], "items": {"$ref": "#/$defs/num"}, "minItems": 2, "maxItems": 2, "description": "[lo, hi]."},
+    "intervals": {
+      "type": ["object", "null"],
+      "description": "Central intervals per level key (50/80/95): [lo, hi] in the target's unit.",
+      "propertyNames": {"pattern": "^\\d{2}$"},
+      "additionalProperties": {"$ref": "#/$defs/pair"}
+    },
+    "record": {
+      "type": "object",
+      "description": "Which record the document shows: the newest live snapshot, or the labelled reconstruction before the first one.",
+      "additionalProperties": false,
+      "required": ["status", "kind", "label", "month", "date", "file", "first_live_date", "live_months", "recon_label"],
+      "properties": {
+        "status": {"enum": ["live", "reconstructed"]},
+        "kind": {"$ref": "#/$defs/kind"},
+        "label": {"type": "string"},
+        "month": {"$ref": "#/$defs/month"},
+        "date": {"$ref": "#/$defs/date"},
+        "file": {"type": ["string", "null"], "description": "snapshots/<YYYY-MM>.json for a live record."},
+        "first_live_date": {"$ref": "#/$defs/date"},
+        "live_months": {"type": "array", "items": {"$ref": "#/$defs/month"}},
+        "recon_label": {"type": "string"}
+      }
+    },
+    "aggregate": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "month": {"$ref": "#/$defs/month"},
+        "kind": {"$ref": "#/$defs/kind"},
+        "index": {"$ref": "#/$defs/num"},
+        "state": {"$ref": "#/$defs/state"},
+        "n_series": {"type": "integer"},
+        "n_up": {"type": "integer"},
+        "n_neutral": {"type": "integer"},
+        "n_down": {"type": "integer"}
+      }
+    },
+    "withheld_entry": {
+      "type": "object",
+      "description": "All the bundle says about a withheld series (publish=False): names and reasons, never values.",
+      "additionalProperties": false,
+      "required": ["key", "label", "why"],
+      "properties": {
+        "key": {"$ref": "#/$defs/series_key"},
+        "label": {"type": "string"},
+        "source": {"type": "string"},
+        "license": {"type": "string"},
+        "why": {"type": "string"},
+        "counted": {"type": "boolean", "description": "Counts in its branch's diffusion index (direction only, in the aggregate)."},
+        "branch": {"$ref": "#/$defs/branch_code"}
+      }
+    },
+    "withheld_list": {"type": "array", "items": {"$ref": "#/$defs/withheld_entry"}},
+    "path": {
+      "type": ["object", "null"],
+      "description": "The measure's history as of the record date (pace and change in pace per period, the last ten years).",
+      "additionalProperties": false,
+      "required": ["periods", "pace", "change"],
+      "properties": {
+        "periods": {"type": "array", "items": {"$ref": "#/$defs/period"}},
+        "pace": {"type": "array", "items": {"$ref": "#/$defs/num"}},
+        "change": {"type": "array", "items": {"$ref": "#/$defs/num"}}
+      }
+    },
+    "series_values": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "required": ["periods", "values"],
+      "properties": {
+        "periods": {"type": "array", "items": {"$ref": "#/$defs/period"}},
+        "values": {"type": "array", "items": {"$ref": "#/$defs/num"}}
+      }
+    },
+    "measure_fields": {
+      "description": "The registered measures of one series (state.measures.measure), as copied by site.data.SERIES_FIELDS.",
+      "type": "object",
+      "properties": {
+        "series": {"type": ["string", "null"]},
+        "entry": {"type": ["string", "null"], "description": "The register entry it resolves (placeholders like <aktiv regim>)."},
+        "resolved": {"type": "string"},
+        "method": {"enum": ["log", "share", "logit", "doubling", "halving", null]},
+        "freq": {"type": ["string", "null"]},
+        "measure_freq": {"type": ["string", "null"]},
+        "latest_period": {"$ref": "#/$defs/str_or_null"},
+        "known_from": {"$ref": "#/$defs/date_or_null"},
+        "sources": {"type": "array", "items": {"type": "string"}},
+        "level": {"$ref": "#/$defs/num"},
+        "pace_unit": {"$ref": "#/$defs/str_or_null"},
+        "pace": {"$ref": "#/$defs/num"},
+        "change_in_pace": {"$ref": "#/$defs/num"},
+        "pace_percentile": {"$ref": "#/$defs/num"},
+        "change_percentile": {"$ref": "#/$defs/num"},
+        "n_pace": {"$ref": "#/$defs/int_or_null"},
+        "n_change": {"$ref": "#/$defs/int_or_null"},
+        "surprise": {"$ref": "#/$defs/num"},
+        "surprise_basis": {"$ref": "#/$defs/str_or_null"},
+        "sd_change": {"$ref": "#/$defs/num"},
+        "deadband": {"$ref": "#/$defs/num"},
+        "direction": {"$ref": "#/$defs/direction"},
+        "flag": {"type": "string"},
+        "reason": {"type": "string"},
+        "own_snapshot_months": {"type": "integer"},
+        "valid": {"type": "boolean"}
+      }
+    },
+    "measure": {
+      "allOf": [{"$ref": "#/$defs/measure_fields"}],
+      "unevaluatedProperties": false
+    },
+    "series_entry": {
+      "description": "A publishable series as shown on a page: measures + catalog metadata + the measure path.",
+      "allOf": [{"$ref": "#/$defs/measure_fields"}],
+      "required": ["key", "label"],
+      "properties": {
+        "key": {"type": ["string", "null"]},
+        "label": {"$ref": "#/$defs/str_or_null"},
+        "unit": {"type": "string"},
+        "question": {"type": "string"},
+        "source": {"type": "string"},
+        "license": {"type": "string", "description": "Short licence label (site.data.short_license)."},
+        "derived_from": {"type": "array", "items": {"$ref": "#/$defs/series_key"}},
+        "path": {"$ref": "#/$defs/path"},
+        "counted": {"type": "boolean"},
+        "branch": {"type": ["string", "null"]},
+        "in_core": {"type": "boolean"},
+        "short": {"type": "string"},
+        "span": {"type": ["array", "null"], "items": {"type": "integer"}},
+        "lead": {"$ref": "#/$defs/str_or_null"}
+      },
+      "unevaluatedProperties": false
+    },
+    "calibration": {
+      "type": ["object", "null"],
+      "description": "Backtest calibration of one nowcast (site.probabilities.backtest_calibration): pseudo-out-of-sample, computed at build time, never a live record.",
+      "additionalProperties": false,
+      "properties": {
+        "available": {"type": "boolean"},
+        "rows": {"type": "array", "items": {"$ref": "#/$defs/calibration_row"}},
+        "n_periods": {"type": "integer"},
+        "first": {"$ref": "#/$defs/str_or_null"},
+        "last": {"$ref": "#/$defs/str_or_null"},
+        "best_baseline": {"$ref": "#/$defs/str_or_null"},
+        "champion_mae": {"$ref": "#/$defs/mae"},
+        "error": {"$ref": "#/$defs/str_or_null"}
+      }
+    },
+    "mae": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "properties": {"mae": {"$ref": "#/$defs/num"}, "n": {"type": "integer"}, "first": {"$ref": "#/$defs/str_or_null"}, "last": {"$ref": "#/$defs/str_or_null"}}
+    },
+    "calibration_row": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["model", "n"],
+      "properties": {
+        "model": {"type": "string"},
+        "n": {"type": "integer"},
+        "first": {"$ref": "#/$defs/str_or_null"},
+        "last": {"$ref": "#/$defs/str_or_null"},
+        "n_student_t": {"type": "integer"},
+        "n_empirical": {"type": "integer"},
+        "crps": {"$ref": "#/$defs/num"},
+        "calibrated": {"type": "boolean"},
+        "pit_mean": {"$ref": "#/$defs/num"},
+        "pit_var": {"$ref": "#/$defs/num"}
+      },
+      "patternProperties": {
+        "^coverage_\\d{2}$": {"$ref": "#/$defs/num"},
+        "^band_\\d{2}$": {"$ref": "#/$defs/pair"},
+        "^holm_\\d{2}$": {"$ref": "#/$defs/num"}
+      }
+    }
+  }
+}

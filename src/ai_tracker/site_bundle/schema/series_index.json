@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://birdiebook.github.io/ai-rollout-tracker/schema/v1/series_index.json",
+  "title": "series/index.json: every publishable series (search, filters, catalog)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["as_of", "n", "series"],
+  "properties": {
+    "as_of": {"$ref": "common.json#/$defs/date"},
+    "n": {"type": "integer"},
+    "series": {"type": "array", "items": {
+      "type": "object", "additionalProperties": false,
+      "required": ["key", "label", "branch", "freq", "unit", "license"],
+      "properties": {
+        "key": {"$ref": "common.json#/$defs/series_key"}, "label": {"type": "string"},
+        "branch": {"$ref": "common.json#/$defs/branch_code"}, "freq": {"type": "string"}, "unit": {"type": "string"},
+        "source_family": {"type": "string"}, "license": {"type": "string"},
+        "core": {"type": "boolean"}, "counted": {"type": "boolean"}, "reconciliation": {"type": "boolean"},
+        "first_period": {"$ref": "common.json#/$defs/str_or_null"}, "latest_period": {"$ref": "common.json#/$defs/str_or_null"},
+        "n_versions": {"type": "integer"}, "direction": {"$ref": "common.json#/$defs/direction"},
+        "valid": {"type": ["boolean", "null"]}}}}
+  }
+}
