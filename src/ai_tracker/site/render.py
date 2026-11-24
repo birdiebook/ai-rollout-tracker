@@ -76,7 +76,8 @@ def change_text(v: dict) -> str:
 
 
 def nav(active: str) -> str:
-    items = [("index.html", "Översikt", "oversikt"), ("prognoser.html", "Prognoser", "prognoser"),
+    items = [("index.html", "Översikt", "oversikt"), ("flode.html", "Flödet", "flode"),
+             ("prognoser.html", "Prognoser", "prognoser"),
              ("manadsbrev.html", "Månadsbrev", "manadsbrev"), ("metod.html", "Metod och källor", "metod")]
     links = "".join(f'<a href="{href}"{" aria-current=\"page\"" if key == active else ""}>{label}</a>'
                     for href, label, key in items)
@@ -370,6 +371,7 @@ def nowcast_section(n: dict, build: dict) -> str:
                      "byter inte huvudmodell.</p>")
     elif n.get("scorecard_error"):
         sc = f'<p class="reason">Scorecarden kunde inte beräknas: {esc(n["scorecard_error"])}</p>'
+    sc += calibration_block(n)
     chart = ""
     if n.get("history"):
         chart = (f'<figure class="chart wide" data-chart="nowcast" data-id="{esc(n["id"])}"><figcaption>'
@@ -396,8 +398,125 @@ def nowcast_page(doc: dict, build: dict) -> str:
 <p class="lead">Nowcasts med scorecard. Varje skarp prognos görs på en registrerad prognosdag med bara data som var känd den dagen, committas till git och skrivs aldrig om. Tidsstämpeln i git är beviset. Utfallet är målseriens första publicerade värde, och felet är 100 × (log prognos − log utfall), för andelar (N5) prognos − utfall i procentenheter.</p>
 <p>Huvudmodellen är den som stod i filen när prognosen gjordes. Övriga varianter visas som skuggor och jämförs på samma utfall. Alla prognoser i <a href="{esc(build['repo'])}/tree/main/forecasts">forecasts/</a>.</p>
 </section>
-{''.join(nowcast_section(n, build) for n in doc['nowcasts'])}"""
+<nav class="branches" aria-label="Mål">{''.join(f'<a href="#{esc(n["id"])}">{esc(n["label"])}</a>' for n in doc['nowcasts'])}<a href="#regim">Regim</a></nav>
+{''.join(nowcast_section(n, build) for n in doc['nowcasts'])}
+{regime_section(doc.get("regime") or {}, build)}"""
     return page(f"Prognoser – {SITE_TITLE}", "prognoser", body, "data/prognoser.json", build)
+
+
+# ------------------------------------------------------------------ probabilities (E4)
+
+
+MIN_CALIBRATION_N = 10  # below this the page says "för få" instead of a calibration verdict
+
+
+def calibration_svg(row: dict, levels: list[str]) -> str:
+    """Coverage against nominal level for one model: the diagonal, the binomial 90 % band per level and the observed
+    coverage. Axes 0.3-1.0 (values outside are drawn at the edge and labelled in the table)."""
+    W, Hh, ml, mr, mt, mb = 300, 190, 40, 12, 10, 30
+    lo, hi = 0.3, 1.0
+    X = lambda v: ml + (min(max(v, lo), hi) - lo) / (hi - lo) * (W - ml - mr)  # noqa: E731
+    Y = lambda v: Hh - mb - (min(max(v, lo), hi) - lo) / (hi - lo) * (Hh - mt - mb)  # noqa: E731
+    out = [f'<svg class="calib" viewBox="0 0 {W} {Hh}" role="img" aria-label="Täckning mot nominell nivå, '
+           f'{esc(row["model"])}">']
+    for t in (0.4, 0.6, 0.8, 1.0):
+        out.append(f'<line class="grid" x1="{ml}" x2="{W - mr}" y1="{Y(t):.1f}" y2="{Y(t):.1f}"/>'
+                   f'<text x="{ml - 6}" y="{Y(t) + 4:.1f}" text-anchor="end">{num(t, 1)}</text>')
+    out.append(f'<line class="ref" x1="{X(lo):.1f}" y1="{Y(lo):.1f}" x2="{X(hi):.1f}" y2="{Y(hi):.1f}"/>')
+    for k in levels:
+        L = int(k) / 100
+        band = row.get(f"band_{k}") or [None, None]
+        out.append(f'<text x="{X(L):.1f}" y="{Hh - 10}" text-anchor="middle">{k} %</text>')
+        if band[0] is not None and band[1] is not None:
+            out.append(f'<rect class="cband" x="{X(L) - 7:.1f}" y="{Y(band[1]):.1f}" width="14" '
+                       f'height="{max(1.0, Y(band[0]) - Y(band[1])):.1f}" rx="3"/>')
+        c = row.get(f"coverage_{k}")
+        if c is not None:
+            out.append(f'<circle class="cdot" cx="{X(L):.1f}" cy="{Y(c):.1f}" r="5"><title>{k} %: {num(c)}</title></circle>')
+    out.append("</svg>")
+    return "".join(out)
+
+
+def calibration_block(n: dict) -> str:
+    cal = n.get("backtest_calibration")
+    if cal is None:
+        return ""
+    if not cal.get("available"):
+        why = "backtesten kunde inte beräknas vid bygget" if cal.get("error") else "ingen modell har ett intervall"
+        return f'<h3>Kalibrering i backtest</h3><p class="small muted">Ingen kalibrering att visa: {why}.</p>'
+    levels = n.get("interval_levels") or ["50", "80", "95"]
+    rows = cal["rows"]
+    champ = next((r for r in rows if r["model"] == n["champion"]), rows[0])
+
+    def cov(r, k):
+        b = r.get(f"band_{k}") or [None, None]
+        return (f'<td class="num">{num(r.get(f"coverage_{k}"))}<br><span class="muted small">[{num(b[0])}–{num(b[1])}]'
+                f'</span></td>')
+
+    def verdict(r):
+        return "för få" if r["n"] < MIN_CALIBRATION_N else ("ja" if r.get("calibrated") else "nej")
+
+    body = "".join(
+        (f'<tr class="champ"><td><strong>{esc(r["model"])}</strong></td>' if r["model"] == n["champion"]
+         else f'<tr><td>{esc(r["model"])}</td>') + f'<td class="num">{r["n"]}</td>'
+        + "".join(cov(r, k) for k in levels)
+        + f'<td class="num">{num(r.get("crps"))}</td><td>{verdict(r)}</td></tr>' for r in rows)
+    head = "".join(f"<th>Täckning {esc(k)} %</th>" for k in levels)
+    mae = cal.get("champion_mae") or {}
+    mae_txt = (f" Huvudmodellens MAE i samma backtest: {num(mae.get('mae'))} ({esc(n.get('error_unit'))}, "
+               f"n = {mae.get('n')}).") if mae.get("mae") is not None else ""
+    return f"""<h3>Kalibrering i backtest</h3>
+<div class="calib-wrap">
+<figure class="calib-fig">{calibration_svg(champ, levels)}<figcaption class="small">{esc(champ["model"])}: täckning (punkt) mot nominell nivå (diagonalen). Stapeln är det binomiala 90 %-bandet för n = {champ["n"]}: en väl kalibrerad modell hamnar inom det i nio fall av tio.</figcaption></figure>
+<div class="table-wrap"><table><thead><tr><th>Modell</th><th>n</th>{head}<th>CRPS</th><th>Kalibrerad</th></tr></thead><tbody>{body}</tbody></table></div>
+</div>
+<p class="small muted">Fetstil: huvudmodellen. Hakparentes: binomialt 90 %-band. "För få": färre än {MIN_CALIBRATION_N} utfall med intervall, ingen bedömning. Varje skarp prognos får 50-, 80- och 95 %-intervall ur huvudmodellens tidigare fel, och de skarpa utfallens täckning visas i scorecarden ovan när de finns. Pseudo-out-of-sample: varje intervall bygger bara på modellens tidigare fel vars utfall var kända på prognosdagen (grind G-C). Beräknad vid bygget med den registrerade koden, {esc(cal.get("first"))}–{esc(cal.get("last"))}. Den registrerade första körningen står i resultatfilen. CRPS i felets enhet ({esc(n.get("error_unit"))}), lägre är skarpare. "Kalibrerad" betyder att ingen nivå underkänns i testet (Holm-p &lt; 0,10). Kalibreringen byter aldrig huvudmodell.{mae_txt}</p>"""
+
+
+def regime_section(reg: dict, build: dict) -> str:
+    repo = esc(build["repo"])
+    intro = (f'<p>Regimmodellen (C4) skattar för två faktorblock, {esc(" och ".join((reg.get("block_labels") or {}).values()) or "capex och efterfrågan")}, '
+             f'sannolikheten att blocket är i den lägre av två takter (”inbromsning”) i en Markov-switchingmodell. Ordet '
+             f'är modellens namn på regimen, inte en bedömning. Ett skifte rapporteras när sannolikheten är minst 0,8 två '
+             f'månader i rad (tillbaka vid högst 0,2). Strukturbrott per serie skattas med BOCPD. Varken regim eller brott '
+             f'ändrar grenarnas index eller tillstånd. Specifikation: <a href="{repo}/blob/main/docs/steg2/c4_spec.md">'
+             f'docs/steg2/c4_spec.md</a>, utvecklingsresultat: <a href="{repo}/blob/main/docs/resultat/c4_utveckling.md">'
+             f'docs/resultat/c4_utveckling.md</a>.</p>')
+    if not reg.get("available"):
+        return (f'<section class="nowcast" id="regim"><h2>Regim</h2>{intro}<p class="banner">Inget skarpt värde än. '
+                f'Sannolikheten lagras i den månatliga ögonblicksbilden och räknas aldrig om. Den visas här från den första '
+                f'ögonblicksbilden efter att holdouten för C3 och C4 har öppnats.</p></section>')
+    cards = []
+    for b in reg["blocks"]:
+        lt = b["latest"]
+        hist = "".join(f'<tr><td>{esc(h["month"])}</td><td class="num">{num(h.get("p_slow"))}</td>'
+                       f'<td>{esc(h.get("state") or "–")}</td><td>{esc(h.get("shift") or "")}</td></tr>'
+                       for h in reversed(b["history"]))
+        reason = f'<p class="small muted">{esc(lt["reason"])}</p>' if lt.get("reason") else ""
+        cards.append(f"""<article class="series"><h3>{esc(b['label'])}</h3>
+<dl class="stats">{stat("P(inbromsning)", num(lt.get("p_slow")), esc(lt["month"]))}{stat("Rapporterat tillstånd", esc(lt.get("state") or "–"))}{stat("Månader faktorhistorik", esc(lt.get("n_months") if lt.get("n_months") is not None else "–"))}</dl>
+{reason}
+<div class="table-wrap"><table class="narrow"><thead><tr><th>Ögonblicksbild</th><th>P(inbromsning)</th><th>Tillstånd</th><th>Skifte</th></tr></thead><tbody>{hist}</tbody></table></div>
+</article>""")
+    shifts = ("".join(f'<li>{esc(x["month"])}: {esc(x["label"])} → {esc(x["state"])}</li>' for x in reg["shifts"])
+              or "<li>Inga rapporterade skiften.</li>")
+    br = "".join(f'<li>{esc(x["month"])}: <code>{esc(x["series"])}</code> ({esc(x.get("branch") or "")}), senaste period '
+                 f'{esc(x.get("latest_period"))}, P(r ≤ 2) = {num(x.get("p_recent"))}</li>' for x in reg["breaks"])
+    if reg.get("n_breaks_withheld"):
+        br += f'<li>{reg["n_breaks_withheld"]} brott i serier som inte visas av licensskäl.</li>'
+    br = br or "<li>Inga rapporterade strukturbrott.</li>"
+    return f"""<section class="nowcast" id="regim"><h2>Regim</h2>{intro}
+<p class="small muted">Från skarpa ögonblicksbilder: {esc(", ".join(reg["months"]))} (specifikation {esc(reg.get("spec_version") or "–")}).</p>
+{''.join(cards)}
+<h3>Rapporterade skiften</h3><ul>{shifts}</ul>
+<h3>Rapporterade strukturbrott</h3><ul>{br}</ul>
+</section>"""
+
+
+def flow_page(doc: dict, build: dict) -> str:
+    from ai_tracker.site import render_flow  # the flow page module builds on this one
+
+    return render_flow.flow_page(doc, build)
 
 
 # ------------------------------------------------------------------ method

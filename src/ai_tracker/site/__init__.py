@@ -7,7 +7,9 @@ Builds site/ (gitignored) from the observation table, the committed snapshots/ a
     index.html            what changed in pace this month: nine branch tiles (state, index, series, change)
     gren-g1.html ...      one page per branch: core series with pace and change-in-pace charts, latest period,
                           known_from, and why uncounted series are not counted
-    prognoser.html        N1-N6 live forecasts and the scorecard (champion and shadows)
+    flode.html            the flow L1-L9: branch states, key series, nowcast per lead, reconciliations between leads
+    prognoser.html        N1-N6 live forecasts and the scorecard (champion and shadows), intervals and backtest
+                          calibration (coverage vs nominal, binomial band, CRPS), and the C4 regime section
     metod.html            framing, register, immutable files in git, sources and licences, not investment advice
     manadsbrev.html       the monthly letters (docs/manadsbrev/*.md, ai_tracker.letter), newest first, and one page
                           per letter (manadsbrev-<YYYY-MM>.html) rendered from its Markdown

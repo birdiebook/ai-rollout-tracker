@@ -35,7 +35,7 @@ def run_checks(table: pd.DataFrame) -> None:
 def pages(docs: dict) -> dict[str, str]:
     """Relative path -> HTML."""
     build = docs["build"]
-    out = {"index.html": H.overview_page(docs["oversikt"], build),
+    out = {"index.html": H.overview_page(docs["oversikt"], build), "flode.html": H.flow_page(docs["flode"], build),
            "prognoser.html": H.nowcast_page(docs["prognoser"], build),
            "metod.html": H.method_page(docs["metod"], build),
            "manadsbrev.html": H.letters_page(docs["manadsbrev"], build)}
@@ -74,10 +74,11 @@ def write(docs: dict, site_dir: Path = SITE_DIR) -> list[Path]:
 
 def build(site_dir: Path = SITE_DIR, table: pd.DataFrame | None = None, ctx: Context | None = None,
           snapshots_dir: Path | None = None, forecasts_dir: Path | None = None, today=None,
-          history_from: str = D.HISTORY_FROM, checks: bool = True, letters_dir: Path | None = None) -> list[Path]:
+          history_from: str = D.HISTORY_FROM, checks: bool = True, letters_dir: Path | None = None,
+          calibration: dict | None = None) -> list[Path]:
     if ctx is None:
         ctx = Context(observations.load() if table is None else table)
     if checks:
         run_checks(ctx.table)
-    docs = D.assemble(ctx, snapshots_dir, forecasts_dir, today, history_from, letters_dir)
+    docs = D.assemble(ctx, snapshots_dir, forecasts_dir, today, history_from, letters_dir, calibration)
     return write(docs, site_dir)
