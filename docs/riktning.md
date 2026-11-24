@@ -1,6 +1,6 @@
 # Riktning: vad projektet kan säga i dag och vad som ska byggas härnäst
 
-**Status: förslag 2026-11-24, inte beslutat.** Skrivet av VD/riktningssessionen efter genomläsning av `CLAUDE.md`,
+**Status: beslutat 2026-11-24.** Johannes valde rekommendationerna och beslutspunkterna 1–3 (`docs/beslutslogg.md`). Skrivet av VD/riktningssessionen efter genomläsning av `CLAUDE.md`,
 `docs/plan.md`, `docs/steg2/STATUS.md`, `docs/beslutslogg.md`, `docs/mattregister.md`, `docs/holdout_logg.md`,
 `docs/granskning/r8_g2_arena.md`, `docs/resultat/` och katalogen (488 serier). Inga andra filer är ändrade.
 

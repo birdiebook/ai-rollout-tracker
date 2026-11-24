@@ -379,3 +379,18 @@ Johannes valde rekommendationerna:
   overifierat Mistral-pris. G2 har kvar en räknad kärnserie. Rättningsspåret X5 tar R-1–R-8. Viktigast är ett
   läckage i `arena.py`: omladdade tavlor (2026-07-07) var daterade till första commit, och det rör även G1:s
   `g1_arena_text_top`. B från 2024-09 prövas först efter rättningen och en ny granskning.
+
+## 2026-11-24 – Riktning efter steg 2: pengarna, makron och förväntningarna först
+
+Johannes valde rekommendationerna i [riktning.md](riktning.md):
+- **Riktning:** inga nya prognosvarianter för N1–N6. Nästa körning bygger det som saknas för alla fyra målgrupperna
+  (fond, bankens makroavdelning, strategi i bolag och en nyfiken läsare): oberoende källor i diffusionsindexet (K1),
+  revideringar av guidance (F1), avskrivningar och intäktskrav med prognosmålet N7 (P1–P3), BNP-bidrag och elpris (M1),
+  serverimport på HS-nivå (M2, väntar på Census-nyckeln) och licenskartläggning för G8 (L1).
+- **Diffusionsindex v2:** en röst per källfamilj, minst tre familjer för ett tillstånd, och det blir officiell regel
+  från första skarpa ögonblicksbilden 2026-11-30. v1 räknas och redovisas bredvid. Ändringen görs efter att backcasten
+  har setts. Den motiveras av att serierna inte är oberoende, inte av utfallet, och den gör tillstånden mer försiktiga
+  åt båda hållen.
+- **Licensnivå:** sidan förblir icke-kommersiell. Varje serie klassas för kommersiell användning (ja, nej eller okänd)
+  så att en kommersiellt ren delmängd alltid går att räkna fram. Nya spår väljer öppna licenser när det finns ett val.
+
