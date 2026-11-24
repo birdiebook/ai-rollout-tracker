@@ -565,3 +565,67 @@ historik från datasetets massuppladdning 2026-04-02 är daterad därefter. Inga
 | Gren | Kärnserier | Anmärkning |
 |---|---|---|
 | G1 | `g1_epoch_bench_frontier_<valda>`, `g1_epoch_train_compute_frontier`, `g1_epoch_eci_frontier`, `g1_arena_text_top` | ECI spärrad (bakåtfylld). Arena från 2024-01 |
+
+### 2026-11-24 – M1: AI-relaterat bidrag till BNP-tillväxt och priser (definitioner, före beräkning)
+
+Spår M1, förslag 4 i [riktning.md](riktning.md). Serierna är beskrivande och blir **inte kärnserier**. Om de ska ingå i
+en grens index är det ett G-A-beslut senare. Inga takter eller tillstånd är beräknade.
+
+**Vad som har setts före registreringen.** För att hitta tabeller, koder och filformat lästes tabellhuvuden och det
+senaste kvartalets värde i BEA:s förhandsberäkning för 2026Q3 (2026-10-29) och för 2017Q3 (2017-10-27), och de senaste
+16 månaderna i BLS-filerna för de fyra prisserierna. Ingen historik och ingen takt har räknats.
+
+**BEA, kvartal, SAAR.** Riktiga vintages ur BEA:s releasearkiv (`apps.bea.gov/histdata`, NIPA, en katalog per
+BNP-release med alla tabeller som de publicerades). Arkivets filer är xlsx från 2017-10-27. Den senaste releasen läses
+också från `apps.bea.gov/national/Release/XLSX/Survey/`. known_from = datumet "Data published" i tabellhuvudet.
+Katalognamnet används inte: det avviker i två fall (2018Q4: katalog 2019-03-01, publicerad 2019-02-28; 2025Q3:
+katalog 2025-12-22, publicerad 2025-12-23). Perioder före första arkiverade vintage får den vintagens datum, vilket är
+konservativt.
+
+- **`ai_invest_contrib_gross`** = bidraget till procentuell förändring i real BNP från informationsbehandlingsutrustning
+  (NIPA-tabell 1.5.2, rad 31, `Y034RY`) + bidraget från programvara (rad 38, `B985RY`). Procentenheter i årstakt.
+  Båda talen tas ur samma vintage. BEA avrundar till två decimaler, så summan kan avvika högst 0,01 procentenhet från
+  ett oavrundat värde.
+- Komponenterna lagras separat: `us_gdp_contrib_info_proc_eq` (`Y034RY`), `us_gdp_contrib_software` (`B985RY`) och
+  delmängden datorer och kringutrustning, `us_gdp_contrib_computers` (rad 32, `B935RY`).
+- Skala: `us_gdp_real_growth` = real BNP-tillväxt i årstakt (rad 1, `A191RL`, samma tal som tabell 1.1.1 rad 1).
+  Ingen kvot mellan bidraget och BNP-tillväxten definieras, eftersom den är instabil när tillväxten är nära noll.
+
+**Ingen nettovariant.** BEA publicerar importens bidrag till BNP-tillväxten bara uppdelat på varor och tjänster (tabell
+1.5.2, rad 49–51). För import av datorer, kringutrustning och delar finns bara bidraget till den reala importens
+tillväxt (tabell 4.2.2, rad 35, `B852RZ`), inte till BNP:s. Att räkna om det med importens andel av BNP vore vår egen
+approximation, eftersom Fisher-vikterna skiljer sig mellan aggregaten. Den registreras inte nu. Datorimporten visas i
+stället separat:
+- `us_imp_computers_nom`: import av datorer, kringutrustning och delar, MUSD i löpande priser (tabell 4.2.5 och
+  4.2.5B, `B852RC`).
+- `us_imp_computers_real`: samma i kedjade dollar (tabell 4.2.6 och 4.2.6B, `B852RX`). Basåret följer vintage
+  (2009, 2012 eller 2017), så nivån jämförs bara inom en vintage.
+- `us_imp_computers_contrib_imp`: bidraget till procentuell förändring i real import (tabell 4.2.2, `B852RZ`),
+  procentenheter.
+
+**Förbehåll: kategorierna är bredare än AI.** Informationsbehandlingsutrustning omfattar alla datorer,
+kommunikationsutrustning, instrument och kontorsutrustning. Programvara omfattar all köpt, beställd och egenutvecklad
+programvara, men inte programvara som ingår i köpt utrustning. Datorimporten omfattar även persondatorer och tillbehör.
+Ett bidrag på x procentenheter betyder alltså inte att AI bidrog med x.
+
+**BLS, månad, index.** Flatfiler på `download.bls.gov` (med deklarerad User-Agent). Releasedatum ur BLS arkiv över
+nyhetsreleaser (`www.bls.gov/bls/news-release/cpi.htm` och `ppi.htm`, referensmånad och releasedag i filnamnet).
+- `us_cpi_electricity_nsa_m` (`CUUR0000SEHF01`) och `us_cpi_electricity_sa_m` (`CUSR0000SEHF01`): KPI-U för el,
+  USA-genomsnitt, 1982–84 = 100. G7.
+- `us_ppi_data_processing_m` (`PCU518210518210`): PPI för databehandling, hosting och relaterade tjänster (NAICS
+  518210), ej säsongsrensat. G4, eftersom PPI mäter det pris som producenterna, alltså moln- och hostingbolagen, får.
+- `us_ppi_elec_commercial_m` (`PCU22112222112242`): PPI för eldistribution till kommersiella kunder, ej
+  säsongsrensat. G7. Det är samma kundsektor som EIA:s kommersiella elpris.
+
+**Dateringsregler för BLS:**
+- KPI NSA är slutlig när den publiceras. known_from = releasedagen för referensmånaden enligt arkivet. En månad utan
+  egen release (oktober 2025) får nästa releasedag. Månader före arkivet (före 2002-05) får arkivets första releasedag.
+  Ett värde med fotnoten R (reviderat) får datumet för den fil vi läser.
+- KPI SA: säsongsfaktorerna revideras varje februari för de fem föregående åren. Ett värde i år y får releasedagen för
+  januari-KPI år y + 5, eller den senaste januari-releasen före hämtningen om y + 5 inte har kommit. Månader i
+  innevarande år får sin första releasedag.
+- PPI: alla index kan revideras varje månad i upp till fyra månader efter publicering. Ett värde med fotnoten P
+  (preliminär) får datumet för den fil vi läser, alltså den senaste PPI-releasen. Ett slutligt värde får releasedagen
+  för referensmånad m + 4. En referensmånad utan egen release och månader före arkivet behandlas som för KPI.
+- Filens datum = max(senaste releasedag i arkivet, filens Last-Modified).
+- Regeldaterade rader märks `backfill`. Från andra hämtningen blir varje ändrat värde en `revision` med hämtdatum.
