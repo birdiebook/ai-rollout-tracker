@@ -520,3 +520,10 @@ till registrets text, inte en ny variant. R7:s rekommendation gäller:
 
 R7 redovisade att B3 passerar regeln under alla fyra rimliga läsningar (Holm-p 0,040–0,059). Körningen med denna
 läsning är den som gäller.
+
+### 2026-11-24 – C3: teknisk specifikation låst (F-E5)
+
+Faktormodellens fria val (serielistor per block, transformationer, standardisering, laddningar, EM, Kalman,
+Mariano–Murasawa-vikter enligt F-B20 och DF-regressionen) är fastställda i `docs/steg2/c3_spec.md`, commit `5431f41`.
+Specifikationen committades före den första körningen på verklig data och ändras inte. Utvecklingsresultat:
+`docs/resultat/c3_utveckling.md`. Holdouten är stängd.

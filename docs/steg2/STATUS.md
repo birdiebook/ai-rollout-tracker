@@ -1,6 +1,6 @@
 # Status steg 2
 
-Uppdateras av orkestreraren vid varje milstolpe. Senast: 2026-11-24 00:50 UTC.
+Uppdateras av orkestreraren vid varje milstolpe. Senast: 2026-11-24 04:00 UTC.
 
 ## Läge
 
@@ -14,6 +14,12 @@ Uppdateras av orkestreraren vid varje milstolpe. Senast: 2026-11-24 00:50 UTC.
   Holm-p 0,038). B2 är huvudmodell tills den oberoende granskningen R7 är klar, före 2026-12-05. B3 för capex passerade inte. R3-rättningarna är mergade.
 - **G-A registrerad** (2026-11-24): nya kärnserier i G3–G7. **G3 (användning) har nu ett tillstånd** med 13 räknade serier
   (npm, PyPI, Wikipedia, Cloudflare). Kör nu: GitHub (B2), granskning R7 (B3 för TSMC), rättning X3 (R5-fynd).
+- **N2:s huvudmodell är B3** sedan 2026-11-24, efter granskning R7 och rättningen med Nvidia i gruppmedlet
+  (MAE 5,83 mot B2 6,42, Holm-p 0,059). Första skarpa prognosen med B3 görs 2026-12-05.
+- **R5-rättningarna är mergade.** Nyckeltal, leasingåtaganden och planer är publicerbara.
+- **Faktormodellen (C3)** är utvecklad med holdouten stängd. Specifikationen är låst (`5431f41`). Utvecklingen visar
+  inga säkra vinster (N1 sämre, N2 och N3 bättre men inom slumpen). Nästa steg: C4 (regim) skrivs och låses, och
+  därefter öppnas holdouten för C3 och C4 i en körning, **efter ditt godkännande**.
 - **Tidigare:** Datasnapshoten är klar och väntar på `DATA_KEY`. Avstämningarna (A5) och D2 är
   förregistrerade.
 
