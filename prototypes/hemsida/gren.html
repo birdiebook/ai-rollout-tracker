@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gren G6 tidsresa</title>
+<link rel="stylesheet" href="shared.css">
+<style>
+  .tt { position: sticky; top: 0; z-index: 10; background: color-mix(in srgb, var(--page) 92%, transparent);
+    backdrop-filter: blur(6px); border-bottom: 1px solid var(--grid); padding: 10px 0; }
+  .tt-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
+  .tt .asof { font-size: 22px; font-weight: 680; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; min-width: 9.5em; }
+  .tt .asof small { display: block; font-size: 12px; font-weight: 500; color: var(--muted); letter-spacing: 0; }
+  .tt input[type=range] { flex: 1 1 260px; accent-color: var(--ink); min-width: 200px; height: 32px; }
+  .tt .btns { display: flex; gap: 6px; }
+  .state-big { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+  .state-big .g { font-size: 28px; line-height: 1; }
+  .state-big .w { font-size: 24px; font-weight: 680; letter-spacing: -0.01em; }
+  .two { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 14px; align-items: stretch; }
+  @media (max-width: 860px) { .two { grid-template-columns: 1fr; } }
+  .multiples { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 14px; }
+  @media (max-width: 560px) { .multiples { grid-template-columns: 1fr; } }
+  .sm { cursor: pointer; }
+  .sm[aria-pressed="true"] { border-color: var(--ink); box-shadow: 0 0 0 1px var(--ink); }
+  .sm .meta { font-size: 12.5px; color: var(--ink-2); margin: 2px 0 6px; min-height: 2.6em; }
+  .sm .meta b { color: var(--ink); font-weight: 620; }
+  .sm svg, #idx svg, #fan svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .dir { font-weight: 650; }
+  .key { display: inline-block; width: 18px; height: 0; border-top: 2px solid var(--ink); vertical-align: middle; margin-right: 5px; }
+  .key.ghost { border-top: 2px dashed var(--muted); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <a class="brand" href="index.html">AI-utrullningen</a>
+    <nav aria-label="Prototyper">
+      <a href="index.html">Flödet</a>
+      <a href="gren.html" aria-current="page">Gren G6 · tidsresa</a>
+      <a href="nowcast.html">Nowcast N2</a>
+    </nav>
+    <button class="theme-btn" type="button" aria-label="Byt ljust/mörkt läge">Ljus/mörk</button>
+  </header>
+
+  <div style="padding:22px 0 8px">
+    <span class="kicker">L6 Halvledare och minne · gren G6</span>
+    <h1>Utbud och halvledare</h1>
+    <p class="lede">Hur går leveranskedjan? Dra i tidslinjen för att se vad som var känt ett visst datum: bara värden som var publicerade då, med de versioner som gällde då.</p>
+  </div>
+</div>
+
+<div class="tt" role="group" aria-label="Tidsresa">
+  <div class="wrap tt-row">
+    <div class="asof" aria-live="polite"><small>Vad visste vi den</small><span id="asof-label"></span></div>
+    <input type="range" id="slider" aria-label="Datum för tidsresan">
+    <div class="btns">
+      <button class="chip" id="back" aria-label="En månad bakåt">−1 mån</button>
+      <button class="chip" id="play" aria-pressed="false">▶ Spela</button>
+      <button class="chip" id="fwd" aria-label="En månad framåt">+1 mån</button>
+      <button class="chip" id="today">I dag</button>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <section class="two">
+    <div class="panel">
+      <div class="kicker">Grenens tillstånd vid datumet</div>
+      <div class="state-big" id="state"></div>
+      <div class="note" id="state-note"></div>
+    </div>
+    <div class="panel">
+      <div class="kicker" style="margin-bottom:6px">Diffusionsindex per månadsslut (andel kärnserier som ökar takten, neutrala räknas som halva)</div>
+      <div id="idx"></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Kärnserierna: takt som den såg ut då</h2>
+    <div class="legend" style="margin:4px 0 12px"><span><span class="key"></span>takt med det som var känt vid datumet</span><span><span class="key ghost"></span>samma månader med dagens versioner</span><span>Takt = årsförändring i log ×100 (≈ %)</span></div>
+    <div class="multiples" id="multiples"></div>
+  </section>
+
+  <section class="panel">
+    <h2 id="fan-h">Revideringar</h2>
+    <p class="note" style="margin:2px 0 10px" id="fan-note"></p>
+    <div id="fan"></div>
+    <div class="legend" id="fan-legend" style="margin-top:8px"></div>
+  </section>
+
+  <footer>Prototyp (spår W1). Serierna är publiceringsbara (publish=True) och visas med källa och licens. Takt och riktning räknas här i webbläsaren enligt måttregistret (avsnitt 1–2) på varje version; den riktiga sidan läser pipelinens värden. Grenens index är sajtens rekonstruktion vid varje månadsslut. Inte investeringsrådgivning.</footer>
+</div>
+<div id="tip" role="status"></div>
+<script type="module">
+import { load, svg, h, lin, fmt, signed, monthLabel, dateLabel, stateOf, tip, themeButton, onResize, readHash, writeHash, mo, ym } from "./shared.js";
+themeButton();
+
+const [vint, g6] = await Promise.all([load("vintages_g6.json"), load("gren/G6.json")]);
+const TODAY = "2026-11-24";
+const START = "2020-01-01";
+const DAY = 864e5;
+const d2s = (t) => new Date(t).toISOString().slice(0, 10);
+const t0 = Date.parse(START), t1 = Date.parse(TODAY);
+
+// ---- versions: per series, per period, [[known_from, value], ...] sorted by known_from
+const S = {};
+for (const [key, s] of Object.entries(vint.series)) {
+  const byP = new Map();
+  for (const [p, v, k] of s.rows) { if (!byP.has(p)) byP.set(p, []); byP.get(p).push([k, v]); }
+  S[key] = { ...s, key, byP, periods: [...byP.keys()].sort() };
+}
+function asOf(s, date) { // period -> value known on date
+  const out = new Map();
+  for (const p of s.periods) {
+    let v = null; for (const [k, x] of s.byP.get(p)) { if (k <= date) v = x; else break; }
+    if (v !== null) out.set(p, v);
+  }
+  return out;
+}
+function pace(vals) { // 12-month change in log x100
+  const out = new Map();
+  for (const [p, v] of vals) { const q = ym(mo(p) - 12); const w = vals.get(q); if (w > 0 && v > 0) out.set(p, 100 * Math.log(v / w)); }
+  return out;
+}
+function direction(pc) { // docs/mattregister.md section 2: change in pace vs 0.25 x expanding sd of change in pace
+  const ps = [...pc.keys()].sort(), ch = [];
+  for (const p of ps) { const q = ym(mo(p) - 6); if (pc.has(q)) ch.push([p, pc.get(p) - pc.get(q)]); }
+  if (ch.length < 24) return { dir: null, change: ch.length ? ch[ch.length - 1][1] : null };
+  const xs = ch.map((c) => c[1]), m = xs.reduce((a, b) => a + b, 0) / xs.length;
+  const sd = Math.sqrt(xs.reduce((a, b) => a + (b - m) ** 2, 0) / (xs.length - 1));
+  const last = xs[xs.length - 1];
+  return { dir: last > 0.25 * sd ? 1 : last < -0.25 * sd ? -1 : 0, change: last, sd };
+}
+
+// ---- state
+const hs = readHash();
+let asof = hs.as_of && hs.as_of >= START && hs.as_of <= TODAY ? hs.as_of : "2023-06-30";
+let sel = hs.serie && S[hs.serie] ? hs.serie : "us_ip_semis_m";
+const slider = document.getElementById("slider");
+slider.min = 0; slider.max = Math.round((t1 - t0) / DAY); slider.step = 1;
+
+const X0 = "2017-01", X1 = "2026-10";
+const todayPace = Object.fromEntries(Object.values(S).map((s) => [s.key, pace(asOf(s, TODAY))]));
+
+function setAsof(d, push = true) {
+  asof = d < START ? START : d > TODAY ? TODAY : d;
+  slider.value = Math.round((Date.parse(asof) - t0) / DAY);
+  document.getElementById("asof-label").textContent = dateLabel(asof);
+  if (push) writeHash({ as_of: asof, serie: sel });
+  render();
+}
+
+// ---- branch index (site's reconstruction per month end)
+function drawIndex() {
+  const host = document.getElementById("idx"); host.replaceChildren();
+  const hist = g6.history, W = Math.max(280, host.clientWidth), H = 150, L = 30, R = 8, T = 8, B = 22;
+  const x = lin(mo(hist[0].month), mo(hist[hist.length - 1].month), L, W - R), y = lin(0, 1, H - B, T);
+  const s = svg("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": "Diffusionsindex G6 per månad" }, host);
+  svg("rect", { x: L, y: y(0.67), width: W - L - R, height: y(0.33) - y(0.67), fill: "var(--mid)", opacity: 0.7 }, s);
+  [0, 0.33, 0.67, 1].forEach((t) => { svg("line", { x1: L, x2: W - R, y1: y(t), y2: y(t), class: "gridline" }, s); const tx = svg("text", { x: L - 6, y: y(t) + 4, "text-anchor": "end" }, s); tx.textContent = fmt(t, t % 1 ? 2 : 0); });
+  hist.forEach((d) => { if (d.month.endsWith("-01")) { const tx = svg("text", { x: x(mo(d.month)), y: H - 6, "text-anchor": "middle" }, s); tx.textContent = d.month.slice(0, 4); } });
+  const asofMonth = ym(mo(asof.slice(0, 7)) - (asof.slice(8) >= "28" && new Date(Date.parse(asof) + DAY).getUTCDate() === 1 ? 0 : 1));
+  const known = hist.filter((d) => d.month <= asofMonth && d.index != null), later = hist.filter((d) => d.month >= (known.length ? known[known.length - 1].month : "0") && d.index != null);
+  const path = (arr) => arr.map((d, i) => `${i ? "L" : "M"}${x(mo(d.month)).toFixed(1)},${y(d.index).toFixed(1)}`).join("");
+  if (later.length > 1) svg("path", { d: path(later), fill: "none", stroke: "var(--axis)", "stroke-width": 1.5, "stroke-dasharray": "3 3" }, s);
+  if (known.length > 1) svg("path", { d: path(known), fill: "none", stroke: "var(--ink)", "stroke-width": 2, "stroke-linejoin": "round" }, s);
+  known.forEach((d) => { const st = stateOf(d.state); svg("circle", { cx: x(mo(d.month)), cy: y(d.index), r: 3, fill: st.cls === "none" ? "var(--surface)" : `var(--${st.cls})` }, s); });
+  const cur = known[known.length - 1];
+  if (cur) svg("circle", { cx: x(mo(cur.month)), cy: y(cur.index), r: 6.5, fill: `var(--${stateOf(cur.state).cls})`, stroke: "var(--surface)", "stroke-width": 2 }, s);
+  const hit = svg("rect", { x: L, y: 0, width: W - L - R, height: H - B, fill: "transparent" }, s);
+  hit.addEventListener("mousemove", (e) => {
+    const r = s.getBoundingClientRect(), m = Math.round(x.invert(((e.clientX - r.left) / r.width) * W));
+    const d = hist.find((q) => mo(q.month) === m); if (!d) return;
+    tip(`<b>${monthLabel(d.month, true)}</b><br>${d.index == null ? "inget index" : "index " + fmt(d.index, 2)} · ${stateOf(d.state).glyph} ${d.state}<br><span class="t-muted">${d.n_up} ▲ ${d.n_neutral} ● ${d.n_down} ▼ · ${d.kind}${d.month > asofMonth ? " · efter tidsresans datum" : ""}</span>`, e);
+  });
+  hit.addEventListener("mouseleave", () => tip(null));
+  hit.addEventListener("click", (e) => { const r = s.getBoundingClientRect(), m = Math.round(x.invert(((e.clientX - r.left) / r.width) * W)); const end = new Date(Date.UTC(Math.floor(m / 12), (m % 12) + 1, 0)); setAsof(d2s(end)); });
+  const st = cur ? stateOf(cur.state) : null;
+  document.getElementById("state").innerHTML = cur
+    ? `<span class="g glyph-${st.cls}">${st.glyph}</span><span class="w">${st.word}</span><span class="note">index ${fmt(cur.index, 2)} · ${monthLabel(cur.month, true)}</span>`
+    : `<span class="w" style="color:var(--muted)">ingen rekonstruktion</span>`;
+  document.getElementById("state-note").innerHTML = cur
+    ? `${cur.n_up} ▲ &nbsp; ${cur.n_neutral} ● &nbsp; ${cur.n_down} ▼ av ${cur.n_series} serier. <br>${cur.kind === "rekonstruerad" ? "Rekonstruerad historik, inte ett skarpt underlag." : "Skarp ögonblicksbild."} Klicka i diagrammet för att resa dit.`
+    : `Rekonstruktionen av tillståndet börjar ${monthLabel(hist[0].month, true)}. Serierna nedan går längre tillbaka.`;
+}
+
+// ---- small multiples
+function drawMultiples() {
+  const host = document.getElementById("multiples"); host.replaceChildren();
+  for (const s of Object.values(S)) {
+    const vals = asOf(s, asof), pc = pace(vals), dir = direction(pc), now = todayPace[s.key];
+    const lastP = [...vals.keys()].sort().pop();
+    const lastK = lastP ? s.byP.get(lastP).filter(([k]) => k <= asof).pop()[0] : null;
+    const revised = [...pc.keys()].filter((p) => now.has(p) && Math.abs(now.get(p) - pc.get(p)) > 0.05).length;
+    const card = h("div", { class: "panel sm", role: "button", tabindex: 0, "aria-pressed": String(s.key === sel) });
+    const dirTxt = dir.dir === null ? `<span class="note">för kort historik för riktning</span>` : `<span class="dir glyph-${["brk", "stb", "acc"][dir.dir + 1]}">${["▼ minskande", "● oförändrad", "▲ ökande"][dir.dir + 1]}</span> takt`;
+    card.append(h("h3", {}, s.label), h("div", { class: "meta", html: lastP
+      ? `Senast känd: <b>${monthLabel(lastP)}</b> (publicerad ${dateLabel(lastK)}) · takt <b>${signed(pc.get(lastP))}</b> · ${dirTxt}`
+      : `Inget värde var publicerat än.` }));
+    const W = 330, H = 150, L = 30, R = 6, T = 8, B = 20;
+    const all = [...pc.values(), ...now.values()].filter((v) => mo([...pc.keys()][0] || X0) >= 0 && Number.isFinite(v));
+    let lo = Math.min(-10, ...all), hi = Math.max(10, ...all); lo = Math.floor(lo / 10) * 10; hi = Math.ceil(hi / 10) * 10;
+    const x = lin(mo(X0), mo(X1), L, W - R), y = lin(lo, hi, H - B, T);
+    const g = svg("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": `${s.label}: takt som känd ${asof}` }, card);
+    const step = hi - lo > 120 ? 50 : hi - lo > 50 ? 20 : 10;
+    for (let v = Math.ceil(lo / step) * step; v <= hi; v += step) { svg("line", { x1: L, x2: W - R, y1: y(v), y2: y(v), class: v === 0 ? "axisline" : "gridline" }, g); const t = svg("text", { x: L - 5, y: y(v) + 4, "text-anchor": "end" }, g); t.textContent = fmt(v); }
+    ["2018", "2020", "2022", "2024", "2026"].forEach((yr) => { const t = svg("text", { x: x(mo(`${yr}-01`)), y: H - 5, "text-anchor": "middle" }, g); t.textContent = yr; });
+    const xa = x(mo(asof.slice(0, 7)) + (+asof.slice(8, 10)) / 31);
+    svg("rect", { x: xa, y: T, width: Math.max(0, W - R - xa), height: H - B - T, fill: "var(--page)", opacity: 0.55 }, g);
+    const line = (m, attrs) => { let d = "", prev = null; for (const p of [...m.keys()].sort()) { if (p < X0) continue; const o = mo(p); d += `${prev !== null && o === prev + 1 ? "L" : "M"}${x(o).toFixed(1)},${y(m.get(p)).toFixed(1)}`; prev = o; } if (d) svg("path", { d, fill: "none", ...attrs }, g); };
+    line(now, { stroke: "var(--muted)", "stroke-width": 1.3, "stroke-dasharray": "3 3" });
+    line(pc, { stroke: "var(--ink)", "stroke-width": 2, "stroke-linejoin": "round" });
+    svg("line", { x1: xa, x2: xa, y1: T, y2: H - B, stroke: "var(--ink)", "stroke-width": 1 }, g);
+    if (lastP && pc.has(lastP)) svg("circle", { cx: x(mo(lastP)), cy: y(pc.get(lastP)), r: 4.5, fill: dir.dir === null ? "var(--ink)" : `var(--${["brk", "stb", "acc"][dir.dir + 1]})`, stroke: "var(--surface)", "stroke-width": 2 }, g);
+    const hit = svg("rect", { x: L, y: T, width: W - L - R, height: H - B - T, fill: "transparent" }, g);
+    hit.addEventListener("mousemove", (e) => {
+      const r = g.getBoundingClientRect(), p = ym(Math.round(x.invert(((e.clientX - r.left) / r.width) * W)));
+      const a = pc.get(p), b = now.get(p);
+      tip(`<b>${s.label.split(" (")[0]}</b><br>${monthLabel(p, true)}<br>Takt då: <b>${a === undefined ? "ej känd" : signed(a)}</b><br>Takt i dag: ${b === undefined ? "–" : signed(b)}${a !== undefined && b !== undefined ? `<br><span class="t-muted">revidering ${signed(b - a)} e.</span>` : ""}`, e);
+    });
+    hit.addEventListener("mouseleave", () => tip(null));
+    card.append(h("div", { class: "note", style: "margin-top:4px" }, `${revised} av ${pc.size} månaders takt har reviderats sedan dess. Källa: ${s.source}.`));
+    const pick = () => { sel = s.key; writeHash({ serie: sel }); drawMultiples(); drawFan(); };
+    card.addEventListener("click", pick);
+    card.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick(); } });
+    host.append(card);
+  }
+}
+
+// ---- revision fan: the selected series' pace in the 36 months before the date, one line per month-end vintage
+function drawFan() {
+  const s = S[sel], host = document.getElementById("fan"); host.replaceChildren();
+  document.getElementById("fan-h").textContent = `Revideringar: ${s.label.split(" (")[0]}`;
+  const endO = mo(asof.slice(0, 7)), startO = endO - 36;
+  const vintages = [];
+  for (let o = Math.max(mo(vint.first_known.slice(0, 7)), startO); o <= endO; o++) {
+    const end = d2s(Date.UTC(Math.floor(o / 12), (o % 12) + 1, 0)); vintages.push(end > asof ? asof : end);
+  }
+  vintages.push(TODAY);
+  const curves = vintages.map((d) => ({ d, pc: pace(asOf(s, d)) }));
+  const W = Math.max(300, host.clientWidth), H = 230, L = 34, R = 10, T = 10, B = 22;
+  const vals = curves.flatMap((c) => [...c.pc].filter(([p]) => mo(p) >= startO - 12).map(([, v]) => v));
+  let lo = Math.floor(Math.min(0, ...vals) / 10) * 10, hi = Math.ceil(Math.max(10, ...vals) / 10) * 10;
+  const x = lin(startO - 12, Math.max(endO, mo(TODAY.slice(0, 7)) - 1), L, W - R), y = lin(lo, hi, H - B, T);
+  const g = svg("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": "Takt enligt varje månadsversion" }, host);
+  const step = hi - lo > 120 ? 50 : hi - lo > 50 ? 20 : 10;
+  for (let v = Math.ceil(lo / step) * step; v <= hi; v += step) { svg("line", { x1: L, x2: W - R, y1: y(v), y2: y(v), class: v === 0 ? "axisline" : "gridline" }, g); const t = svg("text", { x: L - 5, y: y(v) + 4, "text-anchor": "end" }, g); t.textContent = fmt(v); }
+  const yStep = W < 520 ? 24 : 12;
+  for (let o = Math.ceil((startO - 12) / yStep) * yStep; o <= x.invert(W - R); o += yStep) { const t = svg("text", { x: x(o), y: H - 5, "text-anchor": "middle" }, g); t.textContent = String(o / 12); }
+  svg("rect", { x: x(endO), y: T, width: Math.max(0, W - R - x(endO)), height: H - B - T, fill: "var(--page)", opacity: 0.6 }, g);
+  const n = curves.length - 1;
+  curves.forEach((c, i) => {
+    const isAsof = i === n - 1, isToday = i === n;
+    let d = "", prev = null;
+    for (const p of [...c.pc.keys()].sort()) { const o = mo(p); if (o < startO - 12) continue; d += `${prev !== null && o === prev + 1 ? "L" : "M"}${x(o).toFixed(1)},${y(c.pc.get(p)).toFixed(1)}`; prev = o; }
+    if (!d) return;
+    const age = (n - 1 - i) / Math.max(1, n - 1);
+    svg("path", { d, fill: "none", stroke: isToday ? "var(--muted)" : "var(--ink)", "stroke-width": isAsof ? 2.2 : isToday ? 1.4 : 1,
+      "stroke-dasharray": isToday ? "3 3" : null, opacity: isAsof || isToday ? 1 : 0.08 + 0.32 * (1 - age) }, g);
+  });
+  const lastO = Math.max(...[...curves[n - 1].pc.keys()].map(mo));
+  svg("line", { x1: x(endO), x2: x(endO), y1: T, y2: H - B, stroke: "var(--ink)", "stroke-width": 1 }, g);
+  const t = svg("text", { x: x(endO) + 4, y: T + 10, class: "ink" }, g); t.textContent = dateLabel(asof);
+  document.getElementById("fan-note").textContent = `Varje tunn linje är takten enligt den version som gällde vid ett månadsslut under de 36 månaderna före ${dateLabel(asof)} (äldre versioner ljusare). Tjock linje = versionen på datumet, streckad = dagens version. Spridningen mellan linjerna är revideringarna: det man trodde om samma månader har ändrats.`;
+  const lg = document.getElementById("fan-legend"); lg.replaceChildren(
+    h("span", {}, h("span", { class: "key" }), `version ${dateLabel(asof)}`),
+    h("span", {}, h("span", { class: "key ghost" }), "dagens version"),
+    h("span", {}, `${vintages.length - 1} månadsversioner · licens: ${(() => { const l = s.license.split("(")[0].split(":")[0].trim(); return l.length > 48 ? l.slice(0, 46) + "…" : l; })()}`));
+}
+
+function render() { drawIndex(); drawMultiples(); drawFan(); }
+
+slider.addEventListener("input", () => setAsof(d2s(t0 + +slider.value * DAY)));
+const stepMonth = (k) => { const d = new Date(Date.parse(asof)); const end = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + k + 1, 0)); setAsof(d2s(end)); };
+document.getElementById("back").onclick = () => stepMonth(-1);
+document.getElementById("fwd").onclick = () => stepMonth(1);
+document.getElementById("today").onclick = () => setAsof(TODAY);
+let timer = null;
+const playBtn = document.getElementById("play");
+playBtn.onclick = () => {
+  if (timer) { clearInterval(timer); timer = null; playBtn.textContent = "▶ Spela"; playBtn.setAttribute("aria-pressed", "false"); return; }
+  if (asof >= TODAY) setAsof(START);
+  playBtn.textContent = "❚❚ Paus"; playBtn.setAttribute("aria-pressed", "true");
+  timer = setInterval(() => { if (asof >= TODAY) { playBtn.click(); return; } stepMonth(1); }, 420);
+};
+onResize(render);
+setAsof(asof, false);
+</script>
+</body>
+</html>

@@ -40,3 +40,4 @@ CLAUDE.local.md
 
 # Per-worktree settings (scripts/new_track.sh)
 .env.local
+prototypes/hemsida/data/

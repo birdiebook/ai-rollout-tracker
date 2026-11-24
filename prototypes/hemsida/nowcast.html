@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nowcast N2 TSMC</title>
+<link rel="stylesheet" href="shared.css">
+<style>
+  .hero2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 14px; align-items: stretch; }
+  @media (max-width: 860px) { .hero2 { grid-template-columns: 1fr; } }
+  .bignum { font-size: clamp(34px, 5vw, 52px); font-weight: 700; letter-spacing: -0.03em; line-height: 1; font-variant-numeric: tabular-nums; }
+  .bignum small { font-size: 15px; font-weight: 500; color: var(--ink-2); letter-spacing: 0; }
+  .range { font-size: 15px; color: var(--ink-2); margin-top: 6px; font-variant-numeric: tabular-nums; }
+  .facts { display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; font-size: 14px; margin-top: 14px; }
+  .facts dt { color: var(--muted); } .facts dd { margin: 0; font-variant-numeric: tabular-nums; }
+  .ctrl { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; margin: 6px 0 10px; }
+  .ctrl .grp { display: flex; gap: 6px; align-items: center; }
+  .ctrl .lab { font-size: 12px; color: var(--muted); }
+  #fan svg, #dots svg, #cov svg, #pit svg, #crps svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .empty { border: 1px dashed var(--axis); border-radius: 12px; padding: 16px; color: var(--ink-2); font-size: 14px; }
+  .sw-model { background: var(--model); } .sw-base { background: var(--base); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <a class="brand" href="index.html">AI-utrullningen</a>
+    <nav aria-label="Prototyper">
+      <a href="index.html">Flödet</a>
+      <a href="gren.html">Gren G6 · tidsresa</a>
+      <a href="nowcast.html" aria-current="page">Nowcast N2</a>
+    </nav>
+    <button class="theme-btn" type="button" aria-label="Byt ljust/mörkt läge">Ljus/mörk</button>
+  </header>
+
+  <div style="padding:22px 0 8px">
+    <span class="kicker">L6 Halvledare och minne · nowcast N2</span>
+    <h1>TSMC:s månadsintäkt, innan den publiceras</h1>
+    <p class="lede" id="lede"></p>
+  </div>
+
+  <section class="hero2">
+    <div class="panel">
+      <div class="kicker" id="hero-kicker"></div>
+      <div class="bignum" id="bignum"></div>
+      <div class="range" id="range"></div>
+      <dl class="facts" id="facts"></dl>
+    </div>
+    <div class="panel">
+      <div class="kicker">Fördelningen som 20 lika sannolika utfall (kvantilprickdiagram)</div>
+      <div id="dots"></div>
+      <div class="note" id="dots-note"></div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>Prognos mot utfall, månad för månad</h2>
+    <div class="ctrl">
+      <div class="grp" role="group" aria-label="Modell"><span class="lab">Modell</span>
+        <button class="chip" data-model="B3" aria-pressed="true">Huvudmodell B3</button>
+        <button class="chip" data-model="B1" aria-pressed="false">Naiv baslinje B1</button></div>
+      <div class="grp" role="group" aria-label="Skala"><span class="lab">Visa</span>
+        <button class="chip" data-scale="level" aria-pressed="false">Nivå</button>
+        <button class="chip" data-scale="rel" aria-pressed="true">Avvikelse från prognosen</button></div>
+    </div>
+    <div class="legend" id="fan-legend"></div>
+    <div id="fan" style="margin-top:8px"></div>
+    <p class="note" id="fan-note" style="margin:8px 0 0"></p>
+  </section>
+
+  <section class="grid3">
+    <div class="panel">
+      <h3>Träffar intervallen?</h3>
+      <p class="note" style="margin:2px 0 8px">Andel utfall inom intervallet i hela backtesten. Streck = nominell nivå, grått band = vad slumpen ger (90 %).</p>
+      <div id="cov"></div>
+    </div>
+    <div class="panel">
+      <h3>Var hamnade utfallen i fördelningen?</h3>
+      <p class="note" style="margin:2px 0 8px" id="pit-note"></p>
+      <div id="pit"></div>
+    </div>
+    <div class="panel">
+      <h3>Precision per modell (CRPS, lägre = skarpare och träffsäkrare)</h3>
+      <p class="note" style="margin:2px 0 8px" id="crps-note"></p>
+      <div id="crps"></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Skarpt register</h2>
+    <div class="empty" id="live"></div>
+  </section>
+
+  <footer id="foot">Prototyp (spår W1). Backtesten är räknad med den registrerade koden (n2.run, intervals.score_frame) på dagens tabell: rullande prognosdag, bara data kända vid prognosdagen, felpoolen bara av utfall kända då. Inte investeringsrådgivning.</footer>
+</div>
+<div id="tip" role="status"></div>
+<script type="module">
+import { load, svg, h, lin, fmt, signed, monthLabel, dateLabel, tip, themeButton, onResize, readHash, writeHash } from "./shared.js";
+themeButton();
+const [nc, pr] = await Promise.all([load("nowcast_n2.json"), load("prognoser.json")]);
+const meta = pr.nowcasts.find((n) => n.id === "n2");
+const cal = meta.backtest_calibration;
+const hs = readHash();
+let model = hs.modell === "B1" ? "B1" : nc.champion, scale = hs.skala === "level" ? "level" : "rel";
+const rows = (m) => nc.rows.filter((r) => r.model === m);
+const mn = (x) => fmt(x / 1000, 1); // mn TWD -> mdr TWD
+
+document.getElementById("lede").textContent = `Huvudmodellen ${nc.champion} (TSMC:s kvartalsguidance utslagen per månad och korrigerad för hur utfallet brukar landa mot den) lämnar en prognos med intervall dag 5 i månaden efter, före TSMC:s publicering runt den 10:e. Nästa skarpa prognos: ${dateLabel(meta.next_origin)} för ${monthLabel(meta.next_period, true)}.`;
+
+// ---- hero: the latest backtest month, as an example of what a live forecast will look like
+function hero() {
+  const r = rows(nc.champion).at(-1);
+  document.getElementById("hero-kicker").innerHTML = `Exempel: ${monthLabel(r.period, true)} i backtesten <span class="badge">inte en skarp prognos</span>`;
+  document.getElementById("bignum").innerHTML = `${mn(r.f)} <small>mdr TWD</small>`;
+  document.getElementById("range").innerHTML = `80 %-intervall ${mn(r.lo80)}–${mn(r.hi80)} · 50 %: ${mn(r.lo50)}–${mn(r.hi50)}`;
+  const inside = r.hit80 ? "inom 80 %-intervallet" : "utanför 80 %-intervallet";
+  document.getElementById("facts").innerHTML = `
+    <dt>Prognosdag</dt><dd>${dateLabel(r.origin)}</dd>
+    <dt>Utfall</dt><dd><b>${mn(r.y)}</b> mdr TWD, publicerat ${dateLabel(r.outcome_known_from)}</dd>
+    <dt>Fel</dt><dd>${signed(r.e)} (100 × log prognos/utfall), ${inside}</dd>
+    <dt>Felpool</dt><dd>${r.n_pool} tidigare fel kända vid prognosdagen</dd>`;
+}
+
+// quantile dotplot: 20 quantiles (i-0.5)/20 interpolated between the 7 stored ones (linear in probability)
+function quantiles(r) {
+  return [[0.025, r.lo95], [0.10, r.lo80], [0.25, r.lo50], [0.5, r.f], [0.75, r.hi50], [0.90, r.hi80], [0.975, r.hi95]];
+}
+function qAt(qs, p) {
+  if (p <= qs[0][0]) return qs[0][1] - (qs[1][1] - qs[0][1]) * (qs[0][0] - p) / (qs[1][0] - qs[0][0]);
+  for (let i = 1; i < qs.length; i++) if (p <= qs[i][0]) { const [p0, v0] = qs[i - 1], [p1, v1] = qs[i]; return v0 + (v1 - v0) * (p - p0) / (p1 - p0); }
+  const n = qs.length; return qs[n - 1][1] + (qs[n - 1][1] - qs[n - 2][1]) * (p - qs[n - 1][0]) / (qs[n - 1][0] - qs[n - 2][0]);
+}
+function drawDots() {
+  const r = rows(nc.champion).at(-1), host = document.getElementById("dots"); host.replaceChildren();
+  const qs = quantiles(r), vals = Array.from({ length: 20 }, (_, i) => qAt(qs, (i + 0.5) / 20));
+  const W = Math.max(280, host.clientWidth), H = 150, L = 8, R = 8, B = 26;
+  const lo = Math.min(vals[0], r.y) * 0.985, hi = Math.max(vals[19], r.y) * 1.015, x = lin(lo, hi, L, W - R);
+  const s = svg("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": "Kvantilprickdiagram för prognosen" }, host);
+  const rad = Math.max(4, Math.min(11, (x(vals[15]) - x(vals[4])) / (2.1 * 4.5)));
+  const bins = new Map();
+  vals.forEach((v) => { const b = Math.round((x(v) - L) / (rad * 2.1)); const k = (bins.get(b) || 0); bins.set(b, k + 1);
+    svg("circle", { cx: L + b * rad * 2.1 + rad, cy: H - B - rad - k * rad * 2.1, r: rad, fill: "var(--model)", opacity: 0.9 }, s); });
+  svg("line", { x1: L, x2: W - R, y1: H - B + 2, y2: H - B + 2, class: "axisline" }, s);
+  const step = (hi - lo) > 200000 ? 50000 : 25000;
+  for (let v = Math.ceil(lo / step) * step; v <= hi; v += step) { const t = svg("text", { x: x(v), y: H - 8, "text-anchor": "middle" }, s); t.textContent = mn(v); }
+  svg("line", { x1: x(r.y), x2: x(r.y), y1: 6, y2: H - B + 6, stroke: "var(--ink)", "stroke-width": 2 }, s);
+  const t = svg("text", { x: x(r.y) + (x(r.y) > W - 110 ? -6 : 6), y: 16, class: "ink", "text-anchor": x(r.y) > W - 110 ? "end" : "start" }, s); t.textContent = `utfall ${mn(r.y)}`;
+  const below = vals.filter((v) => v < r.y).length;
+  document.getElementById("dots-note").textContent = `Varje prick är 5 % sannolikhet. ${below} av 20 prickar ligger under utfallet. Prickarna är interpolerade mellan sju lagrade kvantiler. Skala: mdr TWD.`;
+}
+
+// ---- fan: interval bars per month, outcome dots
+function drawFan() {
+  const host = document.getElementById("fan"); host.replaceChildren();
+  const all = rows(model), n = innerWidth < 560 ? 18 : 36, R0 = all.slice(-n);
+  const W = Math.max(300, host.clientWidth), H = innerWidth < 560 ? 260 : 300, L = 46, Rm = 8, T = 10, B = 24;
+  const val = (r, v) => (scale === "rel" ? 100 * Math.log(v / r.f) : v / 1000);
+  const ys = R0.flatMap((r) => [val(r, r.lo95), val(r, r.hi95), val(r, r.y)]);
+  let lo = Math.min(...ys), hi = Math.max(...ys); const pad = (hi - lo) * 0.06; lo -= pad; hi += pad;
+  const x = lin(-0.5, R0.length - 0.5, L, W - Rm), y = lin(lo, hi, H - B, T), bw = Math.max(3, ((W - L - Rm) / R0.length) * 0.62);
+  const s = svg("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": `Prognos och intervall mot utfall, ${model}` }, host);
+  const step = scale === "rel" ? (hi - lo > 40 ? 10 : 5) : (hi - lo > 300 ? 100 : 50);
+  for (let v = Math.ceil(lo / step) * step; v <= hi; v += step) {
+    svg("line", { x1: L, x2: W - Rm, y1: y(v), y2: y(v), class: scale === "rel" && v === 0 ? "axisline" : "gridline" }, s);
+    const t = svg("text", { x: L - 6, y: y(v) + 4, "text-anchor": "end" }, s); t.textContent = scale === "rel" ? (v > 0 ? "+" : "") + fmt(v) + " %" : fmt(v);
+  }
+  R0.forEach((r, i) => {
+    const cx = x(i);
+    [["95", "--model-95"], ["80", "--model-80"], ["50", "--model-50"]].forEach(([k, c]) => {
+      const a = y(val(r, r[`hi${k}`])), b = y(val(r, r[`lo${k}`]));
+      svg("rect", { x: cx - bw / 2, y: a, width: bw, height: Math.max(1, b - a), rx: Math.min(3, bw / 3), fill: `var(${c})` }, s);
+    });
+    svg("line", { x1: cx - bw / 2 - 1, x2: cx + bw / 2 + 1, y1: y(val(r, r.f)), y2: y(val(r, r.f)), stroke: "var(--model)", "stroke-width": 2 }, s);
+    svg("circle", { cx, cy: y(val(r, r.y)), r: 3.6, fill: r.hit80 ? "var(--ink)" : "var(--surface)", stroke: "var(--ink)", "stroke-width": 1.6 }, s);
+    if (r.period.endsWith("-01") || (n === 18 && r.period.endsWith("-07"))) {
+      const t = svg("text", { x: cx, y: H - 6, "text-anchor": "middle" }, s); t.textContent = r.period.endsWith("-01") ? r.period.slice(0, 4) : "jul";
+    }
+    const hit = svg("rect", { x: cx - (W - L - Rm) / R0.length / 2, y: T, width: (W - L - Rm) / R0.length, height: H - B - T, fill: "transparent" }, s);
+    hit.addEventListener("mousemove", (e) => tip(`<b>${monthLabel(r.period, true)}</b> · ${model}<br>Prognos ${mn(r.f)} (${dateLabel(r.origin)})<br>80 %: ${mn(r.lo80)}–${mn(r.hi80)}<br>Utfall <b>${mn(r.y)}</b> (${dateLabel(r.outcome_known_from)})<br>Fel ${signed(r.e)} · ${r.hit80 ? "inom" : "utanför"} 80 %<br><span class="t-muted">mdr TWD · felpool ${r.n_pool}</span>`, e));
+    hit.addEventListener("mouseleave", () => tip(null));
+  });
+  const lg = document.getElementById("fan-legend"); lg.replaceChildren(
+    h("span", {}, h("span", { class: "sw", style: "background:var(--model-50)" }), "50 %"),
+    h("span", {}, h("span", { class: "sw", style: "background:var(--model-80)" }), "80 %"),
+    h("span", {}, h("span", { class: "sw", style: "background:var(--model-95)" }), "95 %"),
+    h("span", {}, h("span", { class: "sw", style: "height:2px;background:var(--model)" }), "prognos"),
+    h("span", {}, "● utfall inom 80 %  ○ utanför"));
+  const hits = R0.filter((r) => r.hit80).length;
+  document.getElementById("fan-note").textContent = `${scale === "rel" ? "Utfallet i procent från prognosen; nollan är prognosen." : "Nivå i mdr TWD."} Senaste ${R0.length} månaderna: ${hits} av ${R0.length} utfall inom 80 %-intervallet. Ett fåtal månader säger lite om kalibreringen; se hela backtesten nedan.`;
+}
+
+// ---- calibration: coverage per level, models side by side
+function drawCov() {
+  const host = document.getElementById("cov"); host.replaceChildren();
+  const ms = cal.rows.filter((r) => [nc.champion, "B1", "B0"].includes(r.model));
+  const W = Math.max(240, host.clientWidth), rowH = 18, grpH = ms.length * rowH + 14, H = 3 * grpH + 18, L = 60, x = lin(0.2, 1, L, W - 30);
+  const s = svg("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": "Täckning per intervallnivå och modell" }, host);
+  ["50", "80", "95"].forEach((k, g) => {
+    const y0 = g * grpH;
+    const t = svg("text", { x: 0, y: y0 + 12, class: "ink" }, s); t.textContent = `${k} %`;
+    svg("line", { x1: x(+k / 100), x2: x(+k / 100), y1: y0 + 2, y2: y0 + ms.length * rowH + 4, stroke: "var(--ink-2)", "stroke-width": 1.5 }, s);
+    ms.forEach((r, i) => {
+      const cy = y0 + 10 + i * rowH, b = r[`band_${k}`];
+      const tl = svg("text", { x: 34, y: cy + 4 }, s); tl.textContent = r.model;
+      if (b && b[0] != null) svg("rect", { x: x(b[0]), y: cy - 5, width: x(b[1]) - x(b[0]), height: 10, rx: 3, fill: "var(--mid)" }, s);
+      const c = r[`coverage_${k}`];
+      svg("circle", { cx: x(c), cy, r: 5, fill: r.model === nc.champion ? "var(--model)" : "var(--base)", stroke: "var(--surface)", "stroke-width": 2 }, s);
+      const vt = svg("text", { x: W - 2, y: cy + 4, "text-anchor": "end", class: "ink2" }, s); vt.textContent = fmt(c * 100, 0);
+    });
+  });
+  [0.2, 0.6, 1].forEach((v) => { const t = svg("text", { x: x(v), y: H - 2, "text-anchor": "middle" }, s); t.textContent = `${fmt(v * 100)} %`; });
+}
+
+// ---- PIT histogram of the champion over the exported window (uniform = calibrated)
+function drawPit() {
+  const host = document.getElementById("pit"); host.replaceChildren();
+  const R0 = rows(nc.champion), bins = Array(10).fill(0); R0.forEach((r) => bins[Math.min(9, Math.floor(r.pit * 10))]++);
+  const W = Math.max(240, host.clientWidth), H = 150, L = 24, B = 22, T = 8, x = lin(0, 10, L, W - 6), y = lin(0, Math.max(...bins, R0.length / 10) * 1.15, H - B, T);
+  const s = svg("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": "PIT-histogram" }, host);
+  bins.forEach((c, i) => svg("rect", { x: x(i) + 1, y: y(c), width: x(1) - x(0) - 2, height: y(0) - y(c), rx: 2, fill: "var(--model)", opacity: 0.85 }, s));
+  svg("line", { x1: L, x2: W - 6, y1: y(R0.length / 10), y2: y(R0.length / 10), stroke: "var(--ink)", "stroke-dasharray": "4 3" }, s);
+  svg("line", { x1: L, x2: W - 6, y1: y(0), y2: y(0), class: "axisline" }, s);
+  [["0", 0], ["låg", 2.5], ["mitten", 5], ["hög", 7.5], ["1", 10]].forEach(([t, v]) => { const e = svg("text", { x: x(v), y: H - 6, "text-anchor": "middle" }, s); e.textContent = t; });
+  document.getElementById("pit-note").textContent = `Utfallets position i prognosfördelningen, ${R0.length} månader från ${monthLabel(R0[0].period)} (${nc.champion}). Jämnt fördelat (streckat) = kalibrerat; en topp i mitten = för breda intervall, toppar i kanterna = för smala.`;
+}
+
+// ---- CRPS per model (registered evaluation, full period)
+function drawCrps() {
+  const host = document.getElementById("crps"); host.replaceChildren();
+  const ms = [...cal.rows].sort((a, b) => a.crps - b.crps);
+  const W = Math.max(240, host.clientWidth), rowH = 24, H = ms.length * rowH + 22, L = 40, x = lin(0, Math.max(...ms.map((m) => m.crps)) * 1.15, L, W - 40);
+  const s = svg("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": "CRPS per modell" }, host);
+  ms.forEach((m, i) => {
+    const cy = i * rowH + 12, champ = m.model === nc.champion;
+    const t = svg("text", { x: 0, y: cy + 4, class: champ ? "ink" : "" }, s); t.textContent = m.model;
+    svg("line", { x1: L, x2: x(m.crps), y1: cy, y2: cy, stroke: champ ? "var(--model)" : "var(--base)", "stroke-width": 2 }, s);
+    svg("circle", { cx: x(m.crps), cy, r: 5, fill: champ ? "var(--model)" : "var(--base)", stroke: "var(--surface)", "stroke-width": 2 }, s);
+    const v = svg("text", { x: x(m.crps) + 9, y: cy + 4, class: "ink2" }, s); v.textContent = `${fmt(m.crps, 2)} (n ${m.n})`;
+  });
+  const t = svg("text", { x: L, y: H - 4 }, s); t.textContent = "0";
+  const mae = cal.champion_mae;
+  document.getElementById("crps-note").textContent = `Hela backtesten ${cal.first}–${cal.last}, olika antal månader per modell. ${mae ? `${nc.champion}: MAE ${fmt(mae.mae, 2)} (n ${mae.n}).` : ""} Skillnader mellan modeller testas i registret (Diebold–Mariano, Holm), inte här.`;
+}
+
+document.getElementById("live").innerHTML = `Inga skarpa prognoser ännu. Den första lämnas <b>${dateLabel(meta.next_origin)}</b> och committas till <code>forecasts/</code>; tidsstämpeln i git är beviset. Här visas sedan varje skarp prognos med intervall, utfall och länk till commit, och den här sidans backtest ersätts gradvis av det skarpa facit.`;
+
+document.querySelectorAll("[data-model]").forEach((b) => b.addEventListener("click", () => {
+  model = b.dataset.model; document.querySelectorAll("[data-model]").forEach((x) => x.setAttribute("aria-pressed", String(x === b))); writeHash({ modell: model }); drawFan();
+}));
+document.querySelectorAll("[data-scale]").forEach((b) => b.addEventListener("click", () => {
+  scale = b.dataset.scale; document.querySelectorAll("[data-scale]").forEach((x) => x.setAttribute("aria-pressed", String(x === b))); writeHash({ skala: scale }); drawFan();
+}));
+document.querySelectorAll("[data-model]").forEach((x) => x.setAttribute("aria-pressed", String(x.dataset.model === model)));
+document.querySelectorAll("[data-scale]").forEach((x) => x.setAttribute("aria-pressed", String(x.dataset.scale === scale)));
+const all = () => { hero(); drawDots(); drawFan(); drawCov(); drawPit(); drawCrps(); };
+all(); onResize(all);
+</script>
+</body>
+</html>
