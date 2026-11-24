@@ -205,6 +205,32 @@ def why_withheld(spec: catalog.Spec | None) -> str:
     return "inte godkänd för publicering i katalogen (publish=False)"
 
 
+def notices(key: str, ctx: Context) -> list[str]:
+    """Notices the terms of `key`'s sources require to be displayed with its data (Spec.notice), for a derived series
+    or a nowcast target those of its components."""
+    if key in NOWCAST_DERIVED:
+        keys = list(NOWCAST_DERIVED[key])
+    elif key in ctx.derived:
+        keys = list(ctx.derived[key][:2])
+    else:
+        spec = ctx.specs.get(key)
+        keys = [key, *(spec.components if spec else ())]
+    out: list[str] = []
+    for k in keys:
+        spec = ctx.specs.get(k)
+        if spec and spec.notice and spec.notice not in out:
+            out.append(spec.notice)
+    return out
+
+
+def site_notices(ctx: Context) -> list[str]:
+    """The notices of publishable series that have rows in the table: shown in the footer of every page (the Census
+    Data API's terms ask for its notice to be displayed prominently, review R13-2)."""
+    t = ctx.table
+    present = set(t["series"].unique()) if len(t) else set()
+    return sorted({s.notice for s in ctx.specs.values() if s.notice and s.publish and s.key in present})
+
+
 def series_meta(key: str, ctx: Context) -> dict:
     if key in ctx.derived:
         num, den = ctx.derived[key][:2]
@@ -626,7 +652,7 @@ def build_meta(rec: Record) -> dict:
     return {"built_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"), "git_sha": evaluation.git_sha(),
             "repo": repo_url(), "table_max_fetched_at": (str(pd.Timestamp(t["fetched_at"].max()).date())
                                                          if len(t) else None),
-            "record": rec.meta()}
+            "notices": site_notices(rec.ctx), "record": rec.meta()}
 
 
 def assemble(ctx: Context | None = None, snapshots_dir: Path | None = None, forecasts_dir: Path | None = None,

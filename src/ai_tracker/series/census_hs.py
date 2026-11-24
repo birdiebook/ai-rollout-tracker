@@ -47,8 +47,9 @@ LICENSE = ("US federal work, free under 17 U.S.C. § 105; the API's dataset meta
 NOTE = ("Census API (intltrade/imports/hs, GEN_VAL_MO = general imports), ej säsongsrensad. Kräver CENSUS_API_KEY: "
         "utan nyckeln hoppas hämtningen över och serien är undantagen från aktualitetskontrollen (keyed.py). "
         "known_from = FT-900:s kalender (månadsslut + 41 dagar, sena releaser i census_trade.LATE). Backfill = dagens "
-        "vintage. En månad utan post i svaret räknas som 0. HS-brott 2017-01 och 2022-01 skarvas inte. Katalogserie, "
-        "inte kärnserie (register 2026-11-24, M2).")
+        "vintage. En månad utan post mellan seriens första och sista post räknas som 0, inga nollor före eller efter "
+        "(rättning 2026-11-24 efter R13). HS-brott 2017-01 och 2022-01 skarvas inte. Census API:s notis visas med "
+        "serien (Spec.notice). Katalogserie, inte kärnserie (register 2026-11-24, M2).")
 
 
 def key(code: str, geo: str) -> str:
@@ -63,7 +64,7 @@ def _spec(code: str, geo: str) -> Spec:
         unit="MUSD, ej säsongsrensad", freq="M",
         source=f"US Census Bureau API, intltrade/imports/hs (I_COMMODITY {code}, CTY_CODE {cty}, GEN_VAL_MO)",
         fetch=partial(census_hs.fetch, cty, code, COMMODITIES, COUNTRIES), lag_days=LAG_DAYS, license=LICENSE,
-        revised=True, publish=True, question=question, note=NOTE)
+        revised=True, publish=True, question=question, note=NOTE, notice=NOTICE)
 
 
 SPECS = [_spec(c, g) for c in CODES for g in GEOS]

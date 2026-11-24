@@ -389,3 +389,19 @@ Johannes valde rekommendationerna:
   `CENSUS_API_KEY`. Utan nyckeln hoppas de över och fäller inte veckojobbet (`ai_tracker.keyed`).
 - Inga av serierna är kärnserier, och inga mått är räknade. Census API:s villkor kräver en notis på hemsidan när
   HS-serierna visas. Detaljer: [kallor/census_hs.md](kallor/census_hs.md).
+
+## 2026-11-24 – X10: rättning av M2 efter R13
+
+- **Nollregeln (R13-1):** en månad utan post räknas som 0 bara mellan seriens egen första och sista post, aldrig före
+  eller efter. Då kan en release mellan landanropet och världsanropet inte ge falska nollor. Tillägg i registret samma
+  dag. Inga värden ändras, eftersom HS-serierna inte har några rader.
+- **Census API:s notis (R13-2):** HS-serierna behåller `publish=True`. Notisen ligger i `Spec.notice` och visas med
+  seriens attribution på den nya sidan och i sidfoten på den gamla, när serien har rader. Webbsessionen behöver inte
+  ändra något, eftersom attributionen redan visas.
+- **Hämtningen (R13-3):** ett misslyckat anrop sparas i cachen, så en körning frågar API:t högst en gång per svar.
+  Timeout och 5xx efter två nya försök leder till ett anrop per år med samma form (guidens syntax). Ett API som
+  hänger kostar nu cirka 13 minuter per körning i stället för cirka 7 timmar.
+- **End-use-brottet 2018/2019 (R13-4)** och skottårsformuleringen (R13-5) är rättade i dokumentet och i `NOTE`.
+- **Första hämtningen med nyckel (R13-6) är inte gjord.** Sessionen hade ingen `CENSUS_API_KEY`. Listan är nu ett
+  kommando: `python -m ai_tracker.sources.census_hs check`. Rekommendation: kör det i en session med nyckeln före
+  nästa måndag, annars blir veckojobbet det första riktiga anropet.

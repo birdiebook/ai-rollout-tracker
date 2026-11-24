@@ -61,6 +61,9 @@ class Spec:
     # Derived from other catalog series (read from the observation table): refreshed after every other series,
     # and publish=True needs every component publishable.
     components: tuple[str, ...] = ()
+    # A notice the source's terms require to be displayed with the data (e.g. the Census Data API's), quoted in
+    # `license`. The site shows it with the series' attribution and in the footer once the series has rows.
+    notice: str = ""
 
 
 def _all() -> list[Spec]:
@@ -97,6 +100,8 @@ def validate(specs: list[Spec] | None = None) -> list[str]:
             errors.append(f"{s.key}: max_age_days must be positive")
         if (s.closed or s.max_age_days is not None) and not s.note.strip():
             errors.append(f"{s.key}: closed or max_age_days needs a reason in note")
+        if s.notice and s.notice not in s.license:
+            errors.append(f"{s.key}: notice must be quoted in license (the terms that require it)")
     keys = {**by_key(), **{s.key: s for s in specs}}  # components may live in other modules
     for s in specs:
         missing = [c for c in s.components if c not in keys]

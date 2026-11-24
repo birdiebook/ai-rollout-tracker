@@ -128,7 +128,9 @@ datatesterna.
   och dem ska kontrollen fånga.
 - **Serier som kräver en nyckel som saknas** (`ai_tracker.keyed`, i dag Census HS-serierna och `CENSUS_API_KEY`):
   hämtningen hoppas över (`SKIPPED`, ingenting skrivs) och serierna undantas från kontrollen tills nyckeln finns.
-  Med nyckeln gäller samma gränser som för andra serier.
+  Med nyckeln gäller samma gränser som för andra serier. Har en överhoppad serie redan rader, skrivs en varning.
+  Första gången nyckeln finns: kör `python -m ai_tracker.sources.census_hs check` (skriver inget i tabellen) och gå
+  igenom listan i [kallor/census_hs.md](kallor/census_hs.md).
 - **Exitkod:** 1 om ett datatest fallerar (cachen sparas inte), 2 om bara serier är för gamla. Med 2 sparar
   workflowet cachen, eftersom tabellen i sig är korrekt, och fäller sedan jobbet i steget *Fail on stale series*.
   Med `pipeline weekly <serier>` kontrolleras bara de serierna.

@@ -29,6 +29,7 @@ En rad per spår, fylls på efter varje körning. Tumreglerna justeras när siff
 | 2026-11-24 | 11 | W4 + W2 skelett, designsystem, CI | webb (SvelteKit, tokens, primitiver, CI) | ~29 | ~93 | ~291 | 41 vitest, 78 Playwright, axe, budgetar, `pages-next.yml`, en deploy |
 | 2026-11-24 | 13 | M2 Census-import per land (HS och end-use) | källa bakom nyckel + nyckelfri årsfil (sökning efter nyckelfri källa, metadata, xlsx) | ~35 | ~95 | – | 21 årsserier hämtade (end-use 21300/21301/21320 × 7 länder), 35 HS-månadsserier byggda men BLOCKED (`CENSUS_API_KEY`), `keyed.py` (SKIPPED i stället för FAILED), 23 tester |
 | 2026-11-24 | 13 | R13 granskning av M2 (Census HS och end-use) | granskning mot primärkällor (census.gov, API-metadata, guide, villkor) | ~60 | ~75 | – | GODKÄND MED ANMÄRKNINGAR: inget läckage, veckovägen utan nyckel bevisad på kopia av bastabellen, 10 av 10 årsrevisioner och Exhibit 7/13 kontrollerade, R13-1 – R13-5 (strikt xfail), 12 passerande tester |
+| 2026-11-24 | 13 | X10 rättning av M2 efter R13 | rättning (kod, register, dokument, ingen nyckel) | ~50 | ~65 | – | R13-1–R13-5 rättade (5 strikta xfail nu vanliga tester), R13-7–R13-9 också, delning per år vid timeout, `check`-kommando för första hämtningen, 14 nya tester; R13-6 blockerad (ingen nyckel), 210 årsrader omhämtade och identiska |
 
 ## Körning 1, sammanfattning (2026-11-23, orkestrerare)
 

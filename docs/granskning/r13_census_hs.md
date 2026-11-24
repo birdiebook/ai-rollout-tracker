@@ -260,3 +260,8 @@ Hela sviten (`PYTHONPATH=src python -m pytest -q -p no:cacheprovider`): 1 579 pa
 2 fallerade. De två är kända miljöfel: `test_freshness_as_of_last_fetch` (Arena-prisserierna saknas i basen, och M2:s
 21 årsserier finns bara i spårets `data/` tills de slås ihop med `datamerge`) och
 `test_committed_fixtures_are_the_current_synthetic_bundle` (registrets sha256 och kalenderdatum).
+
+Rättat i `auto14/x10-census-hs` (rättningsspår X10, 2026-11-24): R-1 (R13-1), R-2 (R13-2), R-3 (R13-3), R-4 (R13-4),
+R-5 (R13-5), R-7 och R-8. De fem strikta xfail-testen är vanliga tester. R-6 är inte gjord, eftersom sessionen inte hade
+`CENSUS_API_KEY`. Listan är nu kommandot `python -m ai_tracker.sources.census_hs check`, och ett anrop som får timeout
+delas per år. Regeln och effekten: tillägget 2026-11-24 i `docs/mattregister.md` och [kallor/census_hs.md](../kallor/census_hs.md).

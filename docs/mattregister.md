@@ -599,3 +599,39 @@ undantas från aktualitetskontrollen tills nyckeln finns (`ai_tracker.keyed`). V
 
 **Inga nyckelfria månadsdata per land:** Census nyckelfria end-use-sidor har månadsdata bara för hela världen
 (FT-900 Exhibit 8, säsongsrensad) och per land bara som årssummor. Därför är årsfilen den nyckelfria leveransen.
+
+### 2026-11-24 – M2: nollregeln, brottet i end-use-klassificeringen och Census-notisen (rättning efter granskning R13)
+
+Tillägg till posten "2026-11-24 – M2: import av servrar, datordelar och halvledare per land". Den posten skrivs inte
+om. Granskning: `docs/granskning/r13_census_hs.md`. Rättningsspår X10 (`auto14/x10-census-hs`). Inga HS-data har
+hämtats, eftersom ingen session har haft `CENSUS_API_KEY`. Ändringen görs alltså innan något värde i HS-serierna har
+setts.
+
+**Nollregeln för HS-serierna (R13-1).**
+- *Skäl.* Regeln var "en månad inom svarets period som saknar post räknas som 0". Koden fyllde nollor över båda svarens
+  gemensamma period, landanropet och världsanropet tillsammans. Om svaren slutar på olika månader, till exempel om
+  releasen sker mellan de två anropen, får alla 30 landserier en falsk nolla för den månad som bara världssvaret har.
+  Nollor efter seriens sista post döljer dessutom att en månad saknas.
+- *Ny regel.* En månad mellan seriens egen första och sista post som saknar post räknas som 0. Månader före den första
+  eller efter den sista posten fylls inte. De saknas tills en post kommer, och dateras då med den vanliga regeln, alltså
+  efter den senaste hämtningen som saknade perioden.
+- *Effekt.* Inga lagrade värden ändras, eftersom HS-serierna inte har några rader. En serie börjar vid sin första post i
+  stället för vid svarets första månad. Guiden stöder att en saknad post betyder ingen handel (204 = ingen handel).
+  Antalet månader utan post kontrolleras vid första hämtningen med nyckel
+  (`python -m ai_tracker.sources.census_hs check`). Ändras regeln efter att data har setts, loggas det här med datum
+  och motivering.
+
+**Kända brott, tillägg (R13-4).** Årsserierna `us_imp_eu{21300,21301,21320}_*_a` har ett brott i end-use-klassificeringen
+mellan 2018 och 2019. Census omklassificerade end-use-koderna från januari 2022 och lade in ändringen för 2019–2021 vid
+årsrevisionen 2022-06-07 (`notices/20220308_enduse_changes.pdf`). 2016–2018 följer alltså den äldre klassificeringen och
+2019–2025 den nya. För hela världen ändrades 2019 mellan årsrevisionerna 2021 och 2022 med +7 MUSD (datorer), −28 MUSD
+(datortillbehör) och −301 MUSD (halvledare, −0,56 %). Effekten per land går inte att mäta. Brottet skarvas inte, och
+inga värden ändras.
+
+**Publicering (R13-2).** HS-serierna har kvar `publish=True`. Census API:s villkor ber om en notis på en framträdande
+plats. Notisen ligger i `Spec.notice` och visas med seriens attribution (raden vid varje diagram och nedladdning) och i
+den gamla sidans sidfot när någon serie med notis har rader.
+
+**Hämtningen (R13-3, R13-6).** Ett misslyckat anrop sparas i processens cache, så en körning frågar API:t högst en gång
+per svar. Ett anrop som får timeout eller 429/5xx efter två nya försök delas upp i ett anrop per år med samma form
+(`time=from ÅÅÅÅ-01 to ÅÅÅÅ-12`, syntax enligt guiden). Data, datering och nollregel påverkas inte av uppdelningen.

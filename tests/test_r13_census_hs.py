@@ -1,7 +1,8 @@
 """Review R13 of track M2 (Census imports by country): docs/granskning/r13_census_hs.md.
 
-Passing tests pin the properties that hold (missing key, key hygiene, dating, request shape). Strict xfail tests mark
-the confirmed defects R13-1 ... R13-5 and turn into failures (XPASS) once the fix track has corrected them.
+Passing tests pin the properties that hold (missing key, key hygiene, dating, request shape). The tests of the
+confirmed defects R13-1 ... R13-5 were strict xfail; fix track X10 (auto14/x10-census-hs) corrected them, so they are
+ordinary tests now.
 Synthetic fixtures, no network. The dates and the observed redirect targets were read from census.gov and
 api.census.gov on 2026-11-24 (see the review doc).
 """
@@ -233,10 +234,9 @@ def test_world_rows_are_the_world_also_if_the_api_shows_cty_code():
     assert list(census_hs.series(census_hs.parse(rows), census_hs.WORLD, "8542")) == [5.0, 6.0]
 
 
-# ------------------------------------------------------------------ confirmed defects (strict xfail)
+# ------------------------------------------------------------------ confirmed defects (fixed in X10)
 
 
-@pytest.mark.xfail(strict=True, reason="R13-1: zero-fill spans the union of the country and world responses")
 def test_r13_1_a_month_only_in_the_other_response_is_not_a_zero(env):
     env["key"] = SECRET
     env["respond"] = lambda params: Fake(200, api_rows(params, end_named="2026-08", end_world="2026-09"))
@@ -248,7 +248,6 @@ def test_r13_1_a_month_only_in_the_other_response_is_not_a_zero(env):
     assert not ("2026-09" in idx and tw.iloc[idx.index("2026-09")] == 0.0)
 
 
-@pytest.mark.xfail(strict=True, reason="R13-2: the Census API notice is not in what the site shows (attribution)")
 def test_r13_2_site_attribution_carries_the_census_api_notice():
     from ai_tracker.site_bundle import export
     from ai_tracker.state.measures import Context
@@ -257,7 +256,6 @@ def test_r13_2_site_attribution_carries_the_census_api_notice():
     assert hs_series.NOTICE in block["attribution"] or hs_series.NOTICE in block.get("notice", "")
 
 
-@pytest.mark.xfail(strict=True, reason="R13-3: a failed request is repeated for each of the 35 series")
 def test_r13_3_a_failing_api_is_asked_once_per_run_not_once_per_series(env):
     env["key"] = SECRET
     env["respond"] = lambda params: Fake(302, location="https://api.census.gov/data/invalid_key.html")
@@ -267,12 +265,10 @@ def test_r13_3_a_failing_api_is_asked_once_per_run_not_once_per_series(env):
     assert len(env["calls"]) <= 2
 
 
-@pytest.mark.xfail(strict=True, reason="R13-4: end-use reclassification seam 2018|2019 is not documented")
 def test_r13_4_doc_names_the_end_use_reclassification_seam():
     text = DOC.read_text(encoding="utf-8")
     assert "2019–2021" in text or "2019-2021" in text
 
 
-@pytest.mark.xfail(strict=True, reason="R13-5: '9 juli efter ett skottår' is wrong (it is 9 July in a leap year)")
 def test_r13_5_doc_leap_year_wording():
     assert "9 juli efter ett skottår" not in DOC.read_text(encoding="utf-8")

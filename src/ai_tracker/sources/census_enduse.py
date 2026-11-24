@@ -48,9 +48,13 @@ def parse(content: bytes | pd.DataFrame, cty_code: str, end_use: str, desc: str 
     row = rows.iloc[0]
     if desc is not None and " ".join(str(row["COMM_DESC"]).split()).lower() != " ".join(desc.split()).lower():
         raise ValueError(f"enduse: {end_use} is {row['COMM_DESC']!r}, expected {desc!r}")
-    vals = pd.to_numeric(pd.Series({years[c]: row[c] for c in years}), errors="coerce") / 1e6
+    raw = pd.Series({years[c]: row[c] for c in years})
+    vals = pd.to_numeric(raw, errors="coerce") / 1e6
+    if vals.isna().any():  # an empty or non-numeric cell stops the fetch, as in the HS parser (review R13-9)
+        bad = {int(y): raw[y] for y in vals.index[vals.isna()]}
+        raise ValueError(f"enduse: country {cty_code}, end use {end_use}: non-numeric values {bad}")
     s = pd.Series(vals.to_numpy(dtype=float), index=pd.PeriodIndex([str(y) for y in vals.index], freq="Y-DEC"))
-    return s.dropna().sort_index()
+    return s.sort_index()
 
 
 _CACHE: dict[str, pd.DataFrame] = {}  # one download and one parse per process for all series
