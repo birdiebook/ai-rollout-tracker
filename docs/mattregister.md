@@ -565,3 +565,28 @@ historik från datasetets massuppladdning 2026-04-02 är daterad därefter. Inga
 | Gren | Kärnserier | Anmärkning |
 |---|---|---|
 | G1 | `g1_epoch_bench_frontier_<valda>`, `g1_epoch_train_compute_frontier`, `g1_epoch_eci_frontier`, `g1_arena_text_top` | ECI spärrad (bakåtfylld). Arena från 2024-01 |
+
+### 2026-11-24 – G2: pensionerade modeller i Arena-prisserierna (efter första bygget, före takträkning; granskning R8, rättning X5)
+
+Gäller bara de beskrivande serierna `g2_price_at_arena_capability` (A) och `g2_price_at_arena_capability_4o` (B),
+som inte är kärnserier (underkända i R8, `docs/granskning/r8_g2_arena.md`). Ändringen infördes efter första
+bygget, före all analys av takt, och den utlöstes av en nivåkontroll: `gemini/gemini-1.5-flash-001` satte minimum
+i A långt efter att modellen pensionerats.
+
+- **Regel:** en nyckel räknas inte för månad m om LiteLLM-filen vid månadsslut anger `deprecation_date` ≤
+  månadsslut. Bara filen vid månadsslut används. Ett datum som LiteLLM lägger till senare påverkar inte tidigare
+  månader. LiteLLM anger inte alltid pensionering, så en pensionerad modell utan datum räknas fortfarande.
+- **Motivering:** värdet ska vara det lägsta pris som förmågan går att köpa för. En pensionerad modell har inget
+  pris. Bland möjliga sätt att datera pensionering (LiteLLM:s datum vid månadsslut, utvecklarens avstängningsdatum,
+  att nyckeln tas bort ur LiteLLM) är det valda det enda som är ärligt daterat utan extra källor.
+- **Effekt (R8 punkt 3):** annan modell vid minimum i A 2025-05 – 2026-02 och 2026-08, i B 2026-01, 2026-02 och
+  2026-08. Andra värden 2026-01 – 02 (0,1375 i stället för 0,13125) och 2026-08 (0,1375 i stället för 0,09), i båda.
+  Halveringstiden med G2:s front (löpande minimum) är identisk med och utan regeln i alla månader, eftersom fronten
+  tar tillbaka priset för den pensionerade modellen.
+- **Öppen fråga (inte beslutad här):** ska samma regel gälla `g2_price_at_capability` och
+  `g2_price_at_capability_gpqa` (spår I6)? De följer i dag inte regeln, och `g2_price_at_capability_gpqa` är
+  registrerad kärnserie. Den ändras inte i rättningen. Rekommendation: ja, som en daterad registerändring
+  för båda I6-serierna efter en omkörning som redovisar effekten, eftersom två regler för pensionerade modeller i
+  samma gren inte ska finnas utan motivering. Effekten på kärnseriens takt blir troligen noll av samma skäl som
+  ovan (löpande minimum), men det ska visas och inte antas. Frågan hänger ihop med R8 R-6 (om G2:s front ska bortse
+  från pensionerade modeller), som också är öppen.

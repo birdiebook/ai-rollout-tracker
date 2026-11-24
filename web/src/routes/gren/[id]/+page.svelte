@@ -1,53 +1,187 @@
-<!-- PLACEHOLDER (W4). Owner in wave 1: W6 (branch page: index over time, core series as small multiples,
-     uncounted and withheld series as counted boxes). -->
+<!-- Branch page G1–G9 (owner: W6). Minimap, state now, index over time, the series as small multiples (pace or
+     level, link to /serie/<key>), not counted series with reason, withheld series as named boxes without values. -->
 <script lang="ts">
   import { resolve } from '$app/paths';
-  import { scaleLinear, scalePoint } from 'd3-scale';
-  import { Axis, ChartFrame, Glyph, Line, StatusBadge, fmt, periodLabel } from '$lib/design';
+  import { Glyph, StatusBadge, fmt, periodLabel, signed, stateStyle } from '$lib/design';
+  import { IndexHistory, Minimap, Multiples, UnitBoxes, WithheldBoxes } from '$lib/flow';
 
   let { data } = $props();
   const b = $derived(data.branch);
-  type H = { month: string; index: number | null; state: string | null };
-  const history = $derived(((b.history as H[] | undefined) ?? []).filter((h) => h.index !== null));
-  const counted = $derived((b.series_counted as { series: string; label: string }[] | undefined) ?? []);
-  const status = $derived(b.record.status === 'live' ? 'live' : 'recon');
+  const st = $derived(stateStyle(b.state));
+  const heldCounted = $derived(data.withheld.filter((w) => w.counted));
+  const nPub = $derived(data.counted.length);
 </script>
 
 <svelte:head><title>{b.code} {b.name} – AI-utrullningen</title></svelte:head>
 
-<p class="kicker"><a href={resolve('/flode')}>Flödet</a> / {b.code}</p>
-<h1>{b.code} {b.name}</h1>
-<p class="lede">{b.question} <Glyph state={b.state} /> <StatusBadge {status} /></p>
+<p class="kicker crumbs">
+  <a href={resolve('/flode')}>Flödet</a>
+  {#each data.leads as l (l.code)}
+    <span aria-hidden="true">/</span> <a href={resolve('/flode/[led]', { led: l.code })}>{l.code} {l.name}</a>
+  {/each}
+  <span aria-hidden="true">/</span> <span>{b.code}</span>
+</p>
+<Minimap leads={data.minimap} current={data.leads.map((l) => l.code)} branch={b.code} />
 
-{#if history.length > 1}
-  <section class="panel">
-    <ChartFrame
-      id="index"
-      title="Diffusionsindex över tid"
-      description="Index {fmt(history.at(-1)?.index, 2)} i {periodLabel(history.at(-1)?.month ?? '', true)}. Gränserna 0,33 och 0,67 skiljer tillstånden."
-      height={200}
-      table={{
-        columns: [{ key: 'm', label: 'Månad' }, { key: 'i', label: 'Index' }, { key: 's', label: 'Tillstånd' }],
-        rows: history.map((h) => ({ m: periodLabel(h.month), i: fmt(h.index, 2), s: h.state }))
-      }}
-      {status}
-    >
-      {#snippet children(d)}
-        {@const x = scalePoint<string>().domain(history.map((h) => h.month)).range([d.left, d.right])}
-        {@const y = scaleLinear().domain([0, 1]).range([d.bottom, d.top])}
-        <Axis scale={y} dims={d} orient="left" tickValues={[0, 0.33, 0.67, 1]} format={(v) => fmt(v, 2)} grid />
-        <Axis scale={x} dims={d} tickValues={history.filter((h) => h.month.endsWith('-01')).map((h) => h.month)} format={(v) => v.slice(0, 4)} />
-        <Line data={history} x={(h) => x(h.month) ?? 0} y={(h) => y(h.index ?? 0)} endDot />
-      {/snippet}
-    </ChartFrame>
-  </section>
-{/if}
+<header class="hero">
+  <h1>{b.code} {b.name}</h1>
+  <p class="lede">{b.question}</p>
+</header>
 
-{#if counted.length}
-  <section>
-    <h2>Räknade serier</h2>
-    <ul>
-      {#each counted as s (s.series)}<li><a href={resolve('/serie/[key]', { key: s.series })}>{s.label}</a></li>{/each}
+<section class="now panel" aria-labelledby="now-h">
+  <div class="state">
+    <h2 id="now-h" class="kicker">Läget {periodLabel(b.record.month, true)} <StatusBadge status={b.status} /></h2>
+    <div class="big" data-state={st.key}><Glyph state={b.state} size="1.15em" /></div>
+    <p class="idx">
+      <span class="num">{fmt(b.index, 2)}</span>
+      <span class="unit">diffusionsindex, 0–1</span>
+    </p>
+    {#if b.previous}
+      <p class="note">
+        Förra månaden ({periodLabel(b.previous.month)}): {fmt(b.previous.index, 2)}
+        <Glyph state={b.previous.state} />{#if b.delta_index !== null}, förändring {signed(b.delta_index, 2)}{/if}.
+      </p>
+    {/if}
+    {#if b.index === null}
+      <p class="note">Inget index: ingen serie har ett giltigt mått på beräkningsdagen.</p>
+    {:else if st.key === 'none'}
+      <p class="note">Med färre än tre räknade serier visas indexet men inget tillstånd.</p>
+    {/if}
+  </div>
+  <div class="units">
+    <h3 class="kicker">{b.n_series} {b.n_series === 1 ? 'serie räknas' : 'serier räknas'}{#if heldCounted.length}, varav {heldCounted.length} inhållna{/if}</h3>
+    {#if b.n_series > 0}
+      <UnitBoxes
+        label="Räknade serier och deras riktning"
+        items={data.counted.map((m) => ({ key: m.key, label: m.label, direction: m.direction }))}
+        withheld={heldCounted}
+        withheldAnon={Math.max(0, b.n_withheld_counted - heldCounted.length)}
+        href={(k) => `#s-${k}`}
+      />
+    {:else}
+      <p class="note">Ingen serie räknas den här månaden.</p>
+    {/if}
+    <ul class="legend" aria-hidden="true">
+      <li><span class="g acc">▲</span>ökar takten</li>
+      <li><span class="g stb">●</span>oförändrad takt</li>
+      <li><span class="g brk">▼</span>minskar takten</li>
+      {#if heldCounted.length}<li><span class="sw held"></span>inhållen, ingen egen riktning</li>{/if}
     </ul>
+    <p class="note">Index = (antal ▲ + ½ × antal ●) / antal räknade serier. Accelererar vid minst 0,67, bromsar in vid högst 0,33.</p>
+  </div>
+</section>
+
+<section class="panel">
+  <IndexHistory id="index" history={b.history} status={b.status} lo={data.thresholds.lo} hi={data.thresholds.hi} />
+</section>
+
+{#if nPub}
+  <section aria-labelledby="counted-h">
+    <h2 id="counted-h">Räknade serier</h2>
+    <p class="note">
+      Takt och riktning ur posten för {periodLabel(b.record.month, true)}. Punkten i slutet har riktningens färg; mätaren under visar
+      förändringen i takt mot seriens dödband.
+    </p>
+    <Multiples items={data.counted} label="Räknade serier" />
   </section>
 {/if}
+
+{#if data.notCounted.length}
+  <section aria-labelledby="nc-h">
+    <h2 id="nc-h">Registrerade men inte räknade</h2>
+    <p class="note">Kärnserier som inte har ett giltigt mått den här månaden. Skälet står på varje kort.</p>
+    <Multiples items={data.notCounted} label="Ej räknade serier" />
+  </section>
+{/if}
+
+{#if data.withheld.length}
+  <section id="inhallna" aria-labelledby="held-h">
+    <h2 id="held-h">Inhållna serier ({data.withheld.length})</h2>
+    <p class="note">
+      Serier som inte får publiceras visas med namn och skäl, aldrig med värden eller egen riktning. De som räknas ingår bara i
+      grenens index.
+    </p>
+    <WithheldBoxes items={data.withheld} />
+  </section>
+{/if}
+
+<p class="note">Måtten, dödbandet och tillståndsreglerna: <a href={resolve('/metod')}>Metod</a>.</p>
+
+<style>
+  .crumbs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 6px;
+    margin: 18px 0 10px;
+  }
+  .hero {
+    margin: 18px 0 8px;
+  }
+  .now {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 18px 28px;
+    margin-top: 14px;
+  }
+  @media (min-width: 861px) {
+    .now {
+      grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    }
+  }
+  .now h2.kicker,
+  .now h3.kicker {
+    font-size: var(--fs-small);
+    font-weight: 400;
+    margin: 0 0 6px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 10px;
+    align-items: center;
+  }
+  .big {
+    font-size: 28px;
+    font-weight: 680;
+    letter-spacing: -0.01em;
+    line-height: 1.2;
+  }
+  .idx {
+    margin: 4px 0 6px;
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .idx .num {
+    font-size: var(--fs-big);
+    font-weight: 680;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+  }
+  .idx .unit {
+    font-size: var(--fs-small);
+    color: var(--c-ink-2);
+  }
+  .note {
+    margin: 4px 0;
+  }
+  .units .legend {
+    margin: 10px 0 4px;
+  }
+  .g {
+    margin-right: 4px;
+  }
+  .g.acc {
+    color: var(--c-acc);
+  }
+  .g.stb {
+    color: var(--c-stb);
+  }
+  .g.brk {
+    color: var(--c-brk);
+  }
+  .sw.held {
+    border: 1px dashed var(--c-ink-2);
+    background: repeating-linear-gradient(135deg, var(--c-grid) 0 2px, transparent 2px 5px);
+  }
+</style>

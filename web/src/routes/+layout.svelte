@@ -5,6 +5,7 @@
   import { page } from '$app/state';
   import { resolve } from '$app/paths';
   import ThemeToggle from '$lib/components/ThemeToggle.svelte';
+  import TimeTravel from '$lib/timetravel/TimeTravel.svelte';
 
   let { data, children } = $props();
   const css = `<style>${tokensCss()}</style>`;
@@ -40,7 +41,7 @@
 {/if}
 
 <main id="main" class="wrap">
-  {@render children()}
+  <TimeTravel>{@render children()}</TimeTravel>
 </main>
 
 <footer class="wrap">

@@ -62,7 +62,7 @@ För varje (delmängd, publiceringsdatum):
   andra värden) tas med som egna tavlor, med den tabell som den senaste tidigare matchade filen använde. De lades
   till 2025-09-03.
 - Annars **datasetet** med titlad commit som belägg (`release`), och om ingen finns **bulkuppladdningen** med
-  belägg 2026-04-02 (`backfill`, censurerad).
+  belägg 2026-04-02 (`backfill`, censurerad). Omskrivna tavlor får en version per ändring (nästa avsnitt).
 
 Utfall för `text` (260 datasettavlor + 4 Space-tavlor): 136 från Spacen (2023-05-08 – 2025-08-29), 66 från datasetet
 med commit (2026-04-02 –) och 62 bara från bulkuppladdningen (2025-08-07 – 2026-03-31). För månaderna 2025-09 –
@@ -73,6 +73,34 @@ blockerad i sandlådan och har inga arkiverade versioner som vi kan belägga.
 **Pickle-filerna** läses med en begränsad unpickler (`arena.safe_load`): varje global som filen namnger ersätts av
 en ofarlig stub, så ingen kod ur filen körs (testat med en fil som försöker anropa `os.system`). Tabellerna byggs
 upp från de råa numpy-buffertarna.
+
+### Omskrivna tavlor: versioner per commit (rättning X5, 2026-11-24)
+
+Granskningen R8 (F-4a) fann att datasetet skrivs om på plats. Kontroll av alla commits som rör delmängdens fil
+(`git log -- <delmängd>/full-00000-of-00001.parquet`):
+
+- **2026-07-07:** 16 `text`- och 16 `text_style_control`-tavlor (2026-04-30 – 2026-07-02) laddades upp igen under
+  samma titel. Innehållet ändrades inte (jämfört med revisionen före, `a220136` och `2a01fee`).
+- **2026-07-29**, commit `b0e3f09` "Remove erroneously published variant rows from text" (ingen titel per tavla):
+  sex `text`-tavlor (2026-06-10, 07-14, 07-20, 07-21, 07-26, 07-27) hade upp till sex rader per modell. Toppen
+  sjönk med cirka 10 poäng, till exempel 2026-07-27 från 1 521,5 till 1 511,6. R8:s jämförelse (`a220136` mot
+  dagens version) fångade 2026-06-10 men inte de fem juli-tavlorna, eftersom de kom efter `a220136`.
+- **webdev 2026-04-14** har fem titlade commits, men bara två rör filen. Innehållet är lika.
+
+**Regel:** en tavla har en version per ändringspunkt. Ändringspunkter är senare titlade commits för tavlan och
+otitlade commits efter bulkuppladdningen (de kan röra alla tavlor). Varje version läses ur en sparad revision av
+filen (`arena.version_plan`, som väljer så få revisioner som möjligt, i dag 2 för `text`, 1 för stilkontroll och
+1 för webdev), dateras till den commit som inleder den och slås ihop med föregående version om raderna är lika.
+Raderna i HEAD dateras aldrig före den sista ändringspunkten. Kan en revision inte läsas, faller den tidigare
+versionen bort. Det skjuter bara upp när något blev känt och bakdaterar aldrig. En modell med flera rader i samma
+tavla får sin bästa rad, vilket inte ändrar toppen. Revisionerna cachas i `data/raw/arena/revisions/`.
+Antagande: en första titlad commit lägger bara till sin egen tavla. Det är kontrollerat för revisionerna 2026-07-03
+och 2026-09-26 (R8) och för 2026-04-03 (G12).
+
+**Effekt på serierna (omkört 2026-11-24):** ingen. Alla rader i `g1_arena_*` (51, 35, 44 och 12) är identiska före och
+efter, även `known_from`. Juli-tavlorna med variantrader var aldrig den senaste tavlan vid ett månadsslut (vid
+2026-07-31 var det 2026-07-30, som saknar variantrader), och 2026-06-25 ändrades inte. G1:s tillstånd vid alla
+månadsslut 2024-06 – 2026-10 och 2026-11-24 är oförändrat. Rättningen behövs för nästa omskrivning.
 
 ### Serier och mått
 

@@ -60,9 +60,11 @@ test('table view toggle shows the same numbers as a table', async ({ page }) => 
 });
 
 test('navigation links resolve under the base path', async ({ page }) => {
-  await page.goto('');
+  // Click only after hydration: a click before it is a plain request, and `vite preview` (not Pages) then drops the base.
+  await page.goto('', { waitUntil: 'networkidle' });
   await page.getByRole('navigation', { name: 'Huvudmeny' }).getByRole('link', { name: 'Flödet' }).click();
   await expect(page).toHaveURL(/\/flode\/$/);
+  await page.waitForLoadState('networkidle');
   await page.getByRole('link', { name: /G6/ }).first().click();
   await expect(page.locator('h1')).toContainText('G6');
 });

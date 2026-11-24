@@ -132,6 +132,33 @@ Varje sida i skelettet är en platshållare. Den är kopplad till laddarna och h
 6. Klart när `npm run check`, `npm test`, `npm run build`, `npm run budget`, `npm run external-hosts` och
    `npx playwright test` är gröna, och du har granskat skärmbilderna själv.
 
+## Tidsresa (W9)
+
+`as_of=ÅÅÅÅ-MM-DD` i URL:ens hash (samma nyckel som seriesidans permalänk) är det globala tillståndet. Komponenten
+`src/lib/timetravel/TimeTravel.svelte` ligger runt sidinnehållet i `+layout.svelte`. Den visar tidsreglaget (dag som
+upplösning, ±1 månad, Spela, I dag), bär `as_of` vidare i interna länkar och byter, när `as_of` är satt, sidans eget
+innehåll mot tidsresevyn för routen: `/` (läget), `/gren/[id]` och `/serie/[key]`. Sidor utan tidsresevy visar en ruta
+om det i stället för dagens data. Ett skript i `<head>` döljer dagens innehåll före första målningen när URL:en har
+`as_of`, så att senare kunskap aldrig syns under ett tidigare datum.
+
+**Läckagegränsen** är en enda fil: `src/lib/timetravel/gate.ts`. Vyerna får sin data bara därifrån:
+
+- versioner: bara rader med `known_from ≤ D` (`cutVersions`, samma uppspelning som `observations.as_of`);
+- poster (ränder, grenindex, postens mått per serie): ett månadsslut visas först från sitt månadsslut, eller från den
+  skarpa ögonblicksbildens datum om det är senare (`monthKnown`);
+- metadata: bara statiska katalogfält (vitlista `STATIC_SERIES_FIELDS`). Dagens mått, nivåer, radantal och listor kopieras aldrig.
+
+Varje resultat kontrolleras av `leaks()` innan det returneras, och ett fält med känd-dag efter D ger `LeakError` i stället
+för en vy. Dagens version visas bara i seriesidans revideringsvy, märkt "i dag" (`data-tt="compare"`).
+
+**Tester:** `web/fixtures/gen_timetravel_golden.py` spelar upp pipelinen *på* varje provdag (`vintages.encode(rows, D)`,
+`observations.as_of`, `site.data.Record(today=D)` med bara de ögonblicksbilder som fanns då) och skriver
+`timetravel_golden.json` (pytest `tests/test_web_timetravel.py` håller den aktuell). `timetravel.test.ts` visar att
+klippet av dagens paket ger samma sak, plus invarianter för var nionde dag 2009–2027. `tests/e2e/timetravel.spec.ts`
+prövar samma regel i webbläsaren (`data-known ≤ D`, tabellrader = uppspelningen, Pythons rubrikmening). Mot riktig data:
+`PYTHONPATH=src python web/fixtures/gen_timetravel_golden.py --real <bundle> <ut.json>` och sedan
+`TT_BUNDLE=<bundle> TT_GOLDEN=<ut.json> npx vitest run timetravel`.
+
 ## CI och publicering
 
 Pages har **en** publicering per repo. Därför publicerar ett enda jobb både den nuvarande och den nya sidan:
