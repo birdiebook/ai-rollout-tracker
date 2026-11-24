@@ -387,6 +387,7 @@ Johannes valde rekommendationerna:
 
 
 
+
 ## 2026-11-24 – Riktning efter steg 2: pengarna, makron och förväntningarna först
 
 Johannes valde rekommendationerna i [riktning.md](riktning.md):
@@ -433,6 +434,22 @@ delmängden är G4–G6 hela, medan G7 och G9 får färre än tre källfamiljer.
 Projektet byggs främst för Johannes och några vänner, inte för många användare. De fyra målgrupperna i [riktning.md](riktning.md) är en ribba för kvaliteten på förståelsen, inte en plan för spridning. Arbete som bara gäller spridning prioriteras inte: engelsk version, separata vyer per målgrupp, nedladdningar och kommersiell användning. Licensklassningen (K2) behålls, eftersom repot och sidan är publika och klassningen är billig.
 
 Tillägg samma dag: sidan är Johannes främsta sätt att ta in informationen och ska vara ambitiös. Den ska vara intressant och givande att utforska. Den nya sidan enligt `docs/steg3/hemsida_vision.md` fortsätter i full skala. Månadsbrevet ligger kvar som det är (automatiskt) men prioriteras inte. Varje nytt mått ska därför levereras så att sidan kan visa och förklara det.
+
+## 2026-11-24 – L1: källor för G8 v2 kartlagda (inget byggt)
+
+- **Förslag:** G8 v2 med fyra källfamiljer från tre utgivare: Indeeds AI-andel (finns), BLS CES (sysselsättningsgap
+  mellan exponerade och mindre exponerade branscher), BLS CPS (arbetslöshetsgap för unga akademiker) och JobTech
+  (annonser per yrke i Sverige). Arbetsproduktivitet från BLS är en valfri femte familj. Alla har kommersiell klass `ja`.
+- **Användningsmått** (RPS, Anthropic Economic Index, SCB TAB6388 och BTOS Q8) hör till G3 eller används som
+  exponeringsmått, inte som utfall i G8.
+- **BTOS** frågar sedan cykel 202622 (2026-10) om AI:s effekt på antalet anställda och nyanställda (Q9–Q10). Takt finns
+  tidigast 2027-10.
+- **BLOCKED:** RPS och NY Fed (värdarna nekas, licens okänd), QCEW, LEHD QWI och O*NET (värdarna nekas) samt
+  betalkällorna. CPS-mikrodata kräver Census-nyckeln. AIOE saknar licens (`okänd`).
+- **Öppen fråga för Johannes:** gäller pausen för Anthropics webbplatser också Anthropics dataset på Hugging Face
+  (öppen licens, annan värd)? Rekommendation: nej, med högst en hämtning per release och bara som exponeringsmått.
+- Inget är registrerat och inga utfall är lästa. Designen, med MDE skattad på förperioden före öppning, registreras i
+  byggspåret. Detaljer: [datakallor/g8_kandidater.md](datakallor/g8_kandidater.md).
 
 ## 2026-11-24 – Rättelse om index v2:s effekt
 
