@@ -391,3 +391,14 @@ inte är dokumenterade. Census M3 via ALFRED och LMArena med Space-filer är `ok
 Utfall på main `dceec75`: 488 serier, 341 `ja`, 34 `nej` (Cloudflare, PJM) och 113 `okänd`. I den kommersiellt rena
 delmängden är G4–G6 hela, medan G7 och G9 får färre än tre källfamiljer. Detaljer:
 [datakallor/licensniva.md](datakallor/licensniva.md).
+
+## 2026-11-24 – R10: granskning av licensnivån (K2)
+
+Granskningen R10 godkänner K2 med anmärkningar ([granskning/r10_licensniva.md](granskning/r10_licensniva.md)).
+Mekanismen är rätt byggd, men fyra fel gör en klass för tillåtande. R10-2: Arenas två prisserier är `ja`, fast de
+bygger på samma Space-filer som gör Arenas texttavlor `okänd`. R10-3: reglerna saknar restriktiva ord som
+"non-commercial", "all rights reserved" och "prohibited", så en text med både ett sådant ord och "CC BY 4.0" blir
+`ja`. R10-4: en kopia från FRED fångas inte av ALFRED-regeln. Dessa tre rättas innan K2 mergas. R10-1: F1:s sex
+poolade revideringsindex blir `ja`, fast de räknar Microsofts guidance från microsoft.com. Det rättas innan F1
+mergas. Alla rättningar är små. Tillsammans ändrar de bara Arenas två prisserier, till `okänd`, och inga
+kärnposter. Sju Microsoft-serier med bara SEC-rader är för restriktivt klassade (R10-6), men det är inte bråttom.
