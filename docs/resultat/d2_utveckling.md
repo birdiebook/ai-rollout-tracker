@@ -192,3 +192,62 @@ CRPS jämförs bara inom samma h och mål, och raderna skiljer sig mellan modell
   befordras.
 - **V_kedjas träningsrader överlappar** för h > 1, och för molnet har x_capex_cloud och RPO-årstakten bara funnits sedan
   2020Q4. Koefficienterna är skattade på 12–16 rader och är osäkra.
+
+## Skarp drift som skugga (från 2027-01-20)
+
+Enligt registerposten "2026-11-24 – D2: n i holdout-testet räknas i prognosdagar" görs inget holdout-test (n < 8 i
+alla horisontgrupper), och D2 går direkt in i det skarpa registret som skugga (F-E6). Koden är
+`src/ai_tracker/nowcast/horizon_live.py`, och rutinen körs av `pipeline live` i `nowcast.yml`.
+
+- **Prognosdag:** samma som N1 och N4 (kalenderkvartalets slut + 20 dagar), från **2027-01-20**. Fil:
+  `forecasts/d2/<kvartalet som just slutat>.json`, första `forecasts/d2/2026Q4.json`. Filen skrivs en gång och aldrig om.
+- **Holdouten förblir stängd.** `guard.check(family="D2", live=True)` släpper bara igenom en prognosdag från
+  `guard.LIVE_FROM["D2"]` = 2027-01-20. En prognosdag i holdouten (2025-07-01 – 2027-01-19) stoppas även i skarp
+  körning, så inga prognoser eller fel för holdoutens prognosdagar beräknas. Utvecklingskörningen är oförändrad.
+- **Innehåll:** för båda målen banan för h = 1–8 (målkvartal L + h) för alla modeller, huvudmodellen per h, V_kedja
+  som skugga, V_kedjas koefficienter, antal träningsrader och regressorer, B2:s källa per bolag och h, en logg över
+  indata och en lagrad felfördelning per modell och h (G-C, F-C7).
+- **Allt är känt på prognosdagen:** tabellen trunkeras till `known_from` ≤ prognosdagen innan något byggs, och varje
+  indata läses med `as_of`.
+
+### Huvudmodell per horisontgrupp
+
+Instruktionen är "bästa baslinje". Den fastställs här som den baslinje som har lägst medel-MAE över gruppens
+horisonter i utvecklingen ovan, på baslinjernas gemensamma rader. B2 finns bara för capex.
+
+| Mål | Grupp | Medel-MAE B0 | Medel-MAE B1 | Medel-MAE B2 | Huvudmodell |
+|---|---|---|---|---|---|
+| capex | h1–2 | 12,0 | 9,1 | 7,8 | B2 |
+| capex | h3–4 | 24,1 | 19,8 | 19,2 | B2 |
+| capex | h5–8 | 36,4 | 33,5 | 39,1 | B1 |
+| moln | h1–2 | 6,9 | 1,6 | – | B1 |
+| moln | h3–4 | 16,4 | 3,1 | – | B1 |
+| moln | h5–8 | 30,7 | 6,3 | – | B1 |
+
+Skillnaden mellan B2 och B1 i h3–4 (19,2 mot 19,8) är liten och kan vara slump. Valet följer regeln och ändras inte
+utan en ny post. Saknas huvudmodellen på en prognosdag används B1 och sedan B0, och filen anger det. Befordran av
+V_kedja kräver en ny registerpost, och det skarpa registret är facit (G-E).
+
+### Felpooler
+
+En pool per mål, modell och h. Den innehåller utvecklingens prognosdagar (≤ 2025-06-30) och de skarpa D2-filerna
+före prognosdagen. Ett fel kommer in först när dess utfall (första versionen) är känt på prognosdagen. Det gäller även
+utvecklingens fel vars utfall blev känt efter 2025-06-30. Holdouten definieras av prognosdag, så det är ingen
+holdout-utvärdering, och de felen redovisas aldrig som MAE. Under 8 fel finns ingen fördelning, och från 8 till 39
+används t. V_kedja har för få fel i början (högst 5 vid h = 1) och får fördelning först när skarpa utfall kommit in.
+
+### Scorecard och hemsida
+
+`forecasts/SCORECARD.md` har en D2-sektion med en rad per prognosdag, mål och h. Varje h poängsätts när utfallet för
+L + h kommer (första versionen). Ett definitionsbrott i molnet (F-B8) räknas inte. Per h redovisas n (prognosdagar med
+utfall), MAE och bias per modell samt huvudmodellens täckning och CRPS för den lagrade fördelningen. Prognossidan på
+hemsidan visar den senaste filen som en liten solfjäder per mål (utfall, huvudmodellens bana och 50-, 80- och
+95-procentsintervall) med en tabell över banorna.
+
+### Brasklapp om V_kedja
+
+En torrkörning 2026-11-24 med dagens tabell och prognosdagen 2027-01-20 (inte skarp, inget sparat) visade att
+RPO-årstakten i L ligger långt över allt i träningsraderna. För capex är koefficienten på RPO-takten negativ och stor
+för h ≥ 5, så V_kedjas capexbana faller kraftigt där. Det är den registrerade modellen, den är skugga, och det är en
+extrapolation utanför träningsdatan.
+

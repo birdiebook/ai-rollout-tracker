@@ -20,6 +20,9 @@ har en interaktiv session öppen. Koden finns i `src/ai_tracker/pipeline.py`, te
 - **N3** (Nvidias datacenterintäkter): räkenskapskvartalets slut + 14 dagar (Nvidias 52/53-veckorskalender), etikett =
   kalenderkvartalet för mittpunkten. Första: 2027-02-14 (2026Q4, nov–jan).
 - **N4** (molnintäkter) och **N6** (RPO-summa): kvartalsslut + 20 dagar, samma dag som N1. Första: 2027-01-20 (2026Q4).
+- **D2** (prognoser 1–8 kvartal för capex och molnintäkter, skugga): samma dag som N1 och N4, men först från
+  2027-01-20. Fil: `forecasts/d2/<kvartalet som just slutat>.json`, första `forecasts/d2/2026Q4.json`. Prognosdagen
+  2026-10-20 ligger i D2:s holdout och görs aldrig.
 - **N5** (BTOS): dagen före den schemalagda publiceringen enligt det schema som `census_btos` loggar vid varje hämtning
   (`data/raw/census_btos/schedule_log.parquet`). Utan loggat schema, inom ett finansieringsuppehåll eller i en
   ogranskad frågeregim görs ingen prognos. B1 kräver 7 tidigare publiceringar i regimen, så ingen fil skrivs i v3
@@ -56,6 +59,14 @@ starten. Försöket 21:19 tar en dag där det första fallerade (till exempel at
   träningsrader, faktorförändringar eller orsaken till att DF saknas). Ett fel i DF stoppar aldrig prognosen.
   Den första körningen utan cache skattar faktorerna på alla tidigare prognosdagar (cirka 2 sekunder per dag,
   några minuter för N2), sedan ligger de i `data/cache/factor/` i Actions-cachen.
+- **Horisontprognoser (D2) som skugga:** från 2027-01-20 skriver rutinen `forecasts/d2/<kvartal>.json` med banor för
+  h = 1–8 för båda målen (`capex_hyp4` och `rev_cloud3`), alla modeller (B0, B1, B2 för capex, V_kedja), huvudmodellen
+  per horisontgrupp (capex B2 för h1–4 och B1 för h5–8, molnet B1) och en lagrad felfördelning per modell och h där
+  poolen har minst 8 fel. D2:s holdout är stängd och utvärderas aldrig. `factor/guard.py` släpper bara igenom en
+  skarp körning (`live=True`) med prognosdag från `LIVE_FROM["D2"]` = 2027-01-20, och felpoolerna består bara av
+  utvecklingens prognosdagar (≤ 2025-06-30) och tidigare skarpa D2-filer. Scorecarden har en egen D2-sektion, där
+  varje h poängsätts när dess utfall (första versionen) kommer. Hemsidans prognossida visar en liten solfjäder per mål.
+  Körningen tar cirka 10 sekunder.
 - **Regim (C4) i ögonblicksbilden:** från 2026-11-30 har ögonblicksbilden sektionen `regime` (`ms` per block, `bocpd` per serie) med P(inbromsning)
   och rapporterat tillstånd per faktorblock och brottsflaggor per räknad kärnserie. Den är inte en del av grenarnas
   tillstånd. Reglerna för skifte och brott kedjas på förra månadens sektion. Den första (2026-11-30) startar från den
@@ -301,6 +312,7 @@ Lokalt (`PYTHONPATH=src`, `.env` med `SEC_USER_AGENT`):
 python -m ai_tracker.pipeline weekly [serier...]       # hämta + datatester + aktualitet
 python -m ai_tracker.pipeline due --today 2026-12-05    # vad som är aktuellt en viss dag (läser bara)
 python -m ai_tracker.pipeline live                      # skarpa prognoser som är aktuella i dag
+python -m ai_tracker.pipeline d2-live                   # bara D2 (prognosdag i dag, från 2027-01-20)
 python -m ai_tracker.pipeline scorecard                 # forecasts/SCORECARD.md
 python -m ai_tracker.letter --month 2026-11            # månadsbrev ur snapshots/2026-11.json
 python -m ai_tracker.quarterly --quarter 2027Q1         # kvartalsrapport ur snapshots/2027-01..03.json

@@ -3,6 +3,7 @@
 #   N1 (capex, 4 hyperscalers): quarter end + 20 days (20 Jan/Apr/Jul/Oct), target = the quarter just ended.
 #   N4 (cloud revenue) and N6 (RPO sum): the same day as N1. N3 (Nvidia data center): fiscal quarter end + 14 days.
 #   N5 (BTOS): the day before a publication in the logged BTOS schedule (data/raw/census_btos/schedule_log.parquet).
+#   D2 (horizons 1-8, shadow): N1's day from 2027-01-20, forecasts/d2/<quarter>.json (D2's holdout is never run).
 # Runs daily; the first step decides whether today is an origin and otherwise the job ends there. Weekend
 # origins are kept, never shifted. A missed origin is not made up later.
 # On an origin: restore the data cache, refresh the needed series, write forecasts/<nowcast>/<period>.json from

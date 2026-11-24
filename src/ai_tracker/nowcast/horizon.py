@@ -3,6 +3,8 @@ D2: prognoser 1-8 kvartal (förregistrering, F-E7)", with G-E, G-C/F-C7 and F-E6
 
     python -m ai_tracker.nowcast.horizon        development evaluation (origins <= 2025-06-30 only)
 
+Live (shadow, from 2027-01-20): nowcast/horizon_live.py, through `forecast(..., live=True)`.
+
 Registered, implemented here:
 - Targets: `capex_hyp4` and `rev_cloud3` (rev_aws + rev_google_cloud + rev_msft_cloud, first version where all three
   exist, built as in N4: quarterly.aggregate_rows). Outcome = the first vintage of the target quarter.
