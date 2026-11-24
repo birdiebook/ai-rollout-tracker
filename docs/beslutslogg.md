@@ -386,6 +386,7 @@ Johannes valde rekommendationerna:
   `g2_price_at_capability*`? Den rekommenderas som daterad registerändring efter en körning som visar effekten.
 
 
+
 ## 2026-11-24 – Riktning efter steg 2: pengarna, makron och förväntningarna först
 
 Johannes valde rekommendationerna i [riktning.md](riktning.md):
@@ -399,6 +400,18 @@ Johannes valde rekommendationerna i [riktning.md](riktning.md):
   åt båda hållen.
 - **Licensnivå:** sidan förblir icke-kommersiell. Varje serie klassas för kommersiell användning (ja, nej eller okänd)
   så att en kommersiellt ren delmängd alltid går att räkna fram. Nya spår väljer öppna licenser när det finns ett val.
+
+## 2026-11-24 – K2: klass för kommersiell användning per serie
+
+Beslutspunkt 3 genomförd. Varje serie har en klass för kommersiell användning, `ja`, `nej` eller `okänd`
+(`ai_tracker.licenses`), och klassen är oberoende av `publish`. `catalog.validate()` ger fel för en licenstext som
+ingen regel klassar, så en ny serie kan inte läggas till utan klass. Klassen bygger på dokumenterad licenstext och
+gissas aldrig. Härledda serier tar den mest restriktiva klassen av sina komponenter. Egna extraktioner ur dokument på
+sec.gov är `ja`. Microsofts kurerade serier är `okänd`, eftersom en del rader kommer från microsoft.com, vars villkor
+inte är dokumenterade. Census M3 via ALFRED och LMArena med Space-filer är `okänd`, och npm är `okänd`, inte `nej`.
+Utfall på main `dceec75`: 488 serier, 341 `ja`, 34 `nej` (Cloudflare, PJM) och 113 `okänd`. I den kommersiellt rena
+delmängden är G4–G6 hela, medan G7 och G9 får färre än tre källfamiljer. Detaljer:
+[datakallor/licensniva.md](datakallor/licensniva.md).
 
 ## 2026-11-24 – K1: diffusionsindex v2 med källfamiljer
 
@@ -429,6 +442,17 @@ Beslutet om index v2 motiverades bland annat med att v2 gör tillstånden mer f�
 
 Johannes förtydligade syftet. Projektet byggs för hans egen skull, för att ha bästa möjliga koll på hela AI-flödet lager för lager och se tidigt när något ändrar takt. Kopplingen till egna placeringar är indirekt och görs utanför repot. Repot är publikt och innehåller inga innehav. Följden är att körning 14 omprioriteras ([riktning.md](riktning.md), avsnitt 0 och 8). Först kommer stackens saknade lager (minne, nät, kraft och kylning, datacenterbolag), sedan finansiering, förmåga och kostnad, och Kina. G8 får lägre prioritet.
 
+## 2026-11-24 – R10: granskning av licensnivån (K2)
+
+Granskningen R10 godkänner K2 med anmärkningar ([granskning/r10_licensniva.md](granskning/r10_licensniva.md)).
+Mekanismen är rätt byggd, men fyra fel gör en klass för tillåtande. R10-2: Arenas två prisserier är `ja`, fast de
+bygger på samma Space-filer som gör Arenas texttavlor `okänd`. R10-3: reglerna saknar restriktiva ord som
+"non-commercial", "all rights reserved" och "prohibited", så en text med både ett sådant ord och "CC BY 4.0" blir
+`ja`. R10-4: en kopia från FRED fångas inte av ALFRED-regeln. Dessa tre rättas innan K2 mergas. R10-1: F1:s sex
+poolade revideringsindex blir `ja`, fast de räknar Microsofts guidance från microsoft.com. Det rättas innan F1
+mergas. Alla rättningar är små. Tillsammans ändrar de bara Arenas två prisserier, till `okänd`, och inga
+kärnposter. Sju Microsoft-serier med bara SEC-rader är för restriktivt klassade (R10-6), men det är inte bråttom.
+
 ## 2026-11-24 – R9: granskning av index v2 (K1)
 
 - **Dom: godkänd med anmärkningar** (`docs/granskning/r9_index_v2.md`). Registerposten kom före koden och före alla
@@ -438,6 +462,22 @@ Johannes förtydligade syftet. Projektet byggs för hans egen skull, för att ha
 - **Före eller vid mergen:** webbsessionen lägger till "för få källor" (S1). Fixturtestet fallerar i kataloger med den
   delade rå-cachen, och det fanns före K1 (S2). Registret får en daterad anteckning om att "försiktigare åt båda
   hållen" inte håller, utan regeländring (S3).
+
+## 2026-11-24 – X7: rättning av licensnivån efter R10
+
+Fynden R10-1 till R10-6 och R10-8 är rättade på grenen `auto14/x7-licensniva`. Katalogen på `dceec75` blir 488
+serier: 346 `ja`, 34 `nej` och 108 `okänd`. Arenas två prisserier blev `okänd` (R10-2), och sju Microsoft-nyckeltal med
+bara SEC-rader blev `ja` (R10-6). Inga kärnposter ändras. På körningens sex grenar ändras inget annat, utom att F1:s
+sex poolade revideringsindex blir `okänd` när F1 mergas (R10-1).
+- **R10-1 med deklarerade rader, inte nyckel-overrides.** En serie som nämner en kurerad fil utan att vara en extraktion
+  av den anger i `CURATED_READS` vilka bolags rader den läser. Den kurerade regeln räknas sedan på de raderna, så
+  klassen följer filen om villkoren för microsoft.com blir dokumenterade. Saknas uppgiften blir serien `okänd`, och
+  `validate` ger fel. `lab_rev_*` behövde ingen override: raderna kopplas till serien, så S-1-serien är `ja` och
+  nyhetsrummets två serier `okänd`, som förut.
+- **Restriktiva ord ger `okänd`, inte `nej`** (R10-3). Regeln ser inte vilken del av texten begränsningen gäller, så
+  klassen är inte bedömd.
+- R10-8 rättades också, eftersom felet var litet: en nyckel-override med okänd klass ger fel i `validate`.
+  Anteckningarna R10-7 och R10-9 till R10-12 är inte rättade.
 
 ## 2026-11-24 – X6: rättningar efter R9 (index v2)
 

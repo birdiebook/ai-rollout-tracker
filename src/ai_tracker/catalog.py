@@ -50,6 +50,7 @@ class Spec:
     fetch: Callable[[], pd.Series | pd.DataFrame] = field(repr=False)
     lag_days: int  # typical days after period end until published (conservative); ignored for release-dated rows
     license: str  # licence or terms, as checked in phase 1 ("unverified" until then)
+    # (its class for commercial use, ja/nej/okänd, comes from ai_tracker.licenses and is orthogonal to publish)
     revised: bool = False
     publish: bool = False  # may derived values be shown on the public dashboard? Only after the licence check
     question: str = ""  # one line: what this series tells us about its branch
@@ -104,6 +105,21 @@ def validate(specs: list[Spec] | None = None) -> list[str]:
             errors.append(f"{s.key}: unknown components {missing}")
         if s.publish and any(c in keys and not keys[c].publish for c in s.components):
             errors.append(f"{s.key}: publish=True needs every component publishable")
+    # Commercial-use class (ai_tracker.licenses): every series must be classified by a rule or an override, so a new
+    # series cannot be added without one. Orthogonal to publish. A missing licence is reported above.
+    from ai_tracker import licenses  # late: licenses imports this module
+
+    for s in specs:
+        if s.license.strip():
+            try:
+                licenses.verdict(s, keys)
+            except licenses.Unclassified as e:
+                errors.append(f"{s.key}: {e}")
+        # a source that names a curated file must say which rows the series reads (R10-1); the class is okänd until then
+        for name in licenses.undeclared_curated(s):
+            errors.append(f"{s.key}: source names curated/{name}, but ai_tracker.licenses does not know which rows the "
+                          f"series reads (start the source with 'Kurerad extraktion (curated/{name})', or add the key "
+                          f"to licenses.CURATED_READS or a key override)")
     return errors
 
 
