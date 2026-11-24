@@ -1,0 +1,106 @@
+/* Prototype tokens (docs/steg3/hemsida_vision.md, section 4). Neutral: direction colours are blue (more pace) and
+   orange (less pace) with a grey midpoint; never green/red, never good/bad. Every colour has a glyph + text twin. */
+:root {
+  color-scheme: light;
+  --page: #f9f9f7;
+  --surface: #fcfcfb;
+  --ink: #0b0b0b;
+  --ink-2: #52514e;
+  --muted: #6f6d67;
+  --grid: #e1e0d9;
+  --axis: #c3c2b7;
+  --ring: rgba(11, 11, 11, 0.10);
+  --acc: #2a78d6;      /* accelererar: more pace */
+  --brk: #d9661f;      /* bromsar in: less pace */
+  --stb: #8a8880;      /* stabil */
+  --mid: #f0efec;      /* diverging midpoint */
+  --model: #6250d6;    /* a model's forecast and its intervals */
+  --model-50: rgba(98, 80, 214, 0.42);
+  --model-80: rgba(98, 80, 214, 0.22);
+  --model-95: rgba(98, 80, 214, 0.10);
+  --base: #898781;     /* naive baseline */
+  --focus: #0b0b0b;
+  --font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --page: #0d0d0d; --surface: #1a1a19; --ink: #f0efec; --ink-2: #c3c2b7; --muted: #9a988f;
+    --grid: #2c2c2a; --axis: #383835; --ring: rgba(255, 255, 255, 0.10);
+    --acc: #3987e5; --brk: #d95926; --stb: #8f8d85; --mid: #383835;
+    --model: #9085e9; --model-50: rgba(144, 133, 233, 0.45); --model-80: rgba(144, 133, 233, 0.24);
+    --model-95: rgba(144, 133, 233, 0.11); --base: #898781; --focus: #f0efec;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page: #0d0d0d; --surface: #1a1a19; --ink: #f0efec; --ink-2: #c3c2b7; --muted: #9a988f;
+  --grid: #2c2c2a; --axis: #383835; --ring: rgba(255, 255, 255, 0.10);
+  --acc: #3987e5; --brk: #d95926; --stb: #8f8d85; --mid: #383835;
+  --model: #9085e9; --model-50: rgba(144, 133, 233, 0.45); --model-80: rgba(144, 133, 233, 0.24);
+  --model-95: rgba(144, 133, 233, 0.11); --base: #898781; --focus: #f0efec;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--page); color: var(--ink); font: 16px/1.5 var(--font); }
+a { color: inherit; text-underline-offset: 2px; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+.wrap { max-width: 1160px; margin: 0 auto; padding: 0 16px; }
+header.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 0;
+  border-bottom: 1px solid var(--grid); }
+header.top .brand { font-weight: 650; letter-spacing: -0.01em; text-decoration: none; }
+header.top nav { display: flex; gap: 14px; font-size: 14px; color: var(--ink-2); flex-wrap: wrap; }
+header.top nav a { text-decoration: none; }
+header.top nav a[aria-current="page"] { color: var(--ink); font-weight: 600; text-decoration: underline; }
+.theme-btn { border: 1px solid var(--ring); background: var(--surface); color: var(--ink-2); border-radius: 8px;
+  font: inherit; font-size: 13px; padding: 4px 9px; cursor: pointer; }
+
+.kicker { font-size: 13px; color: var(--ink-2); letter-spacing: 0.02em; }
+.badge { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--ink-2);
+  border: 1px dashed var(--axis); border-radius: 999px; padding: 2px 9px; white-space: nowrap; }
+.badge.live { border-style: solid; }
+h1 { font-size: clamp(26px, 4.2vw, 40px); line-height: 1.1; letter-spacing: -0.02em; margin: 6px 0 8px; font-weight: 680; }
+h2 { font-size: 20px; letter-spacing: -0.01em; margin: 0 0 4px; font-weight: 650; }
+h3 { font-size: 15px; margin: 0; font-weight: 620; }
+.lede { color: var(--ink-2); max-width: 62ch; margin: 0; }
+.note { font-size: 13px; color: var(--muted); }
+.panel { background: var(--surface); border: 1px solid var(--ring); border-radius: 14px; padding: 18px; }
+.grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+@media (max-width: 860px) { .grid3 { grid-template-columns: 1fr; } }
+section { margin: 28px 0; }
+
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--ink-2); align-items: center; }
+.legend .sw { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -1px; margin-right: 5px; }
+
+.glyph-acc { color: var(--acc); } .glyph-brk { color: var(--brk); } .glyph-stb { color: var(--stb); }
+
+svg text { fill: var(--muted); font: 11px var(--font); }
+svg .ink { fill: var(--ink); } svg .ink2 { fill: var(--ink-2); }
+svg .gridline { stroke: var(--grid); stroke-width: 1; }
+svg .axisline { stroke: var(--axis); stroke-width: 1; }
+
+#tip { position: fixed; pointer-events: none; z-index: 20; background: var(--surface); color: var(--ink);
+  border: 1px solid var(--ring); border-radius: 10px; padding: 8px 10px; font-size: 13px; line-height: 1.35;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.14); max-width: 280px; opacity: 0; transition: opacity 80ms; }
+#tip b { font-weight: 620; } #tip .t-muted { color: var(--muted); font-size: 12px; }
+
+button.chip, .chip { border: 1px solid var(--ring); background: var(--surface); color: var(--ink); border-radius: 999px;
+  padding: 5px 12px; font: inherit; font-size: 13px; cursor: pointer; min-height: 32px; }
+button.chip[aria-pressed="true"] { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+
+details.method { font-size: 13px; color: var(--ink-2); margin-top: 10px; }
+details.method summary { cursor: pointer; color: var(--ink); }
+table.data { border-collapse: collapse; font-size: 13px; width: 100%; }
+table.data th, table.data td { text-align: right; padding: 4px 8px; border-bottom: 1px solid var(--grid); white-space: nowrap; }
+table.data th:first-child, table.data td:first-child { text-align: left; }
+.scroll-x { overflow-x: auto; }
+footer { margin: 40px 0 30px; font-size: 12px; color: var(--muted); border-top: 1px solid var(--grid); padding-top: 12px; }
+
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+@media (max-width: 560px) {
+  header.top { flex-wrap: wrap; row-gap: 6px; }
+  header.top nav { order: 3; width: 100%; gap: 12px; font-size: 13px; }
+}
