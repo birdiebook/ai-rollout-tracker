@@ -363,3 +363,14 @@ Holdouten öppnades en gång (logg i `docs/holdout_logg.md`, sha före öppning 
   utanför grenarnas tillstånd. `shift` lagras som namnet på det nya tillståndet, så att hemsidan och kvartalsrapporten
   kan läsa det.
 - Resultaten är delvis kända i förväg (publicerade baslinjefel och bakåtfyllda serier, F-E5): `docs/resultat/holdout_c3_c4.md`.
+
+## 2026-11-24 – Ny hemsida, opublicerbara serier i index och G2-spår
+
+Johannes valde rekommendationerna:
+- **Ny hemsida** enligt `docs/steg3/hemsida_vision.md`: SvelteKit (statisk) med D3 och Observable Plot, DuckDB-WASM
+  bara i utforskningsläget. Python äger all data och licensgrinden (`site_bundle`). Den nya sidan byggs under `/next/`
+  och ersätter den gamla först efter paritetskontroll och granskningar.
+- **Serier med `publish=False`** (t.ex. PJM, npm, AWS, SWE-bench) får räknas i grenarnas publicerade index. Bara
+  riktningen syns, aldrig värden.
+- **G2:** ett spår bygger pris vid fast Arena-förmåga (referensmodeller i samma topplista, handgranskad
+  namnkoppling) med granskning, och registreras som kärnserie först efter granskningen.
