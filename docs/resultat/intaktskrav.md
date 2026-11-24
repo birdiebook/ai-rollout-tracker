@@ -18,6 +18,10 @@ Dokumentet beskriver. Det säger inget om huruvida investeringarna betalar sig, 
   kvartal), inte på värden.
 - Storleken på Microsofts omräkning (avsnittet om förbehåll) och känsligheten med `dep_ppe_hyp4` räknades efter
   registreringen. Känsligheten och bolagstabellen var registrerade som beskrivande tillägg.
+- Data: komponenterna hämtades till spårets egen tabell (known_from = inlämningsdatum), när den delade basen ännu var
+  tom. Basen fick sedan en datasnapshot. Dess rader för `capex_hyp4` och `rev_*` är identiska med spårets (samma
+  perioder, datum och värden), så siffrorna gäller också för basen ∪ spåret. Måtten räknades med
+  `state.branch.reconciliations` per 2026-11-24.
 
 ## Definitioner
 
