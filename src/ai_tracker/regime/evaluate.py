@@ -102,6 +102,8 @@ def association(ms_frame: pd.DataFrame, errors: dict[str, pd.DataFrame], start, 
             if g.empty or e.empty:
                 out[(target, block)] = {"n": 0, "rho": float("nan")}
                 continue
+            e = e.assign(origin=pd.to_datetime(e["origin"]).astype("datetime64[ns]"))
+            g = g.assign(date=pd.to_datetime(g["date"]).astype("datetime64[ns]"))
             m = pd.merge_asof(e.sort_values("origin"), g[["date", "p_slow"]], left_on="origin", right_on="date",
                               direction="backward").dropna(subset=["p_slow"])
             rho = float(stats.spearmanr(m["p_slow"], m["abs_error"]).statistic) if len(m) >= 3 else float("nan")
