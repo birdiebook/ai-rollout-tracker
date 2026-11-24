@@ -400,3 +400,7 @@ Projektet byggs främst för Johannes och några vänner, inte för många anvä
 
 Tillägg samma dag: sidan är Johannes främsta sätt att ta in informationen och ska vara ambitiös. Den ska vara intressant och givande att utforska. Den nya sidan enligt `docs/steg3/hemsida_vision.md` fortsätter i full skala. Månadsbrevet ligger kvar som det är (automatiskt) men prioriteras inte. Varje nytt mått ska därför levereras så att sidan kan visa och förklara det.
 
+## 2026-11-24 – Rättelse om index v2:s effekt
+
+Beslutet om index v2 motiverades bland annat med att v2 gör tillstånden mer försiktiga åt båda hållen. Backcasten på riktiga data (rekonstruktion, 2026-05 till 2026-10) visar att det inte stämmer genomgående. G8 blir "för få källor", men G6 blir "accelererar" i två månader där v1 sa "stabil", och G7 blir "bromsar in" i två månader. Skälet är att varje familj väger tungt när familjerna är få. Huvudskälet för beslutet, att indexet ska räkna oberoende källor, gäller fortfarande. Rekommendationen är att behålla v2. Johannes informeras.
+

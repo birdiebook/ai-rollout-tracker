@@ -94,8 +94,13 @@ delat med kostnaden i agentspår och de mänskliga flaskhalsarna (nycklar, licen
 - **Vad:** fältet `family` per kärnserie (samma källa och samma begrepp = en familj). Indexet v2 ger en röst per
   familj, och den rösten är medelvärdet av familjens riktningar. Tillstånd kräver minst 3 familjer. Ögonblicksbilden
   visar antalet serier och antalet familjer per gren.
-- **Effekt, väntad efter konstruktion:** G8 och G9 får "för få källor" och G7 ligger på gränsen. Ändringen gör
-  påståendena mer försiktiga åt båda hållen och väljer ingen riktning.
+- **Effekt, väntad efter konstruktion:** G8 och G9 får "för få källor" och G7 ligger på gränsen. Ändringen väljer
+  ingen riktning.
+- **Rättelse 2026-11-24, efter backcasten på riktiga data (rekonstruktion 2026-05 till 2026-10):** v2 är inte
+  genomgående mer försiktig. G8 blir "för få källor" som väntat. Men G6 blir "accelererar" i två månader där v1 sa
+  "stabil", eftersom importen och G.17 inte längre väger dubbelt. G7 blir "bromsar in" i två månader, eftersom de
+  sex delstaterna ur EIA nu bara väger en tredjedel. Med få familjer väger varje familj tungt, så indexet kan röra sig
+  mer. v2 mäter oberoende källor bättre, men den är inte mer försiktig.
 - **Varför först:** första skarpa ögonblicksbilden är 2026-11-30. Det skarpa registret ska inte börja med ett
   tillstånd som vilar på en enda källa. Att byta regel senare ger ett brott i registret.
 - **Ärlig not:** backcasten har redan setts. Ändringen motiveras av oberoende, inte av utfall, och loggas så.
