@@ -22,6 +22,11 @@ Dokumentet beskriver. Det säger inget om huruvida investeringarna betalar sig, 
   tom. Basen fick sedan en datasnapshot. Dess rader för `capex_hyp4` och `rev_*` är identiska med spårets (samma
   perioder, datum och värden), så siffrorna gäller också för basen ∪ spåret. Måtten räknades med
   `state.branch.reconciliations` per 2026-11-24.
+- Fel i den delade vyn, rättat i spåret: `observations.combine` jämförde nycklar som text, och `known_from` skrevs då
+  med klockslag i basen (där dagliga serier har klockslag) men utan i spåret. Spårets rader ersatte därför aldrig
+  basens, och vyn fick 477 dubblerade rader (`capex_hyp4` och `rev_*`). Nu jämförs tidsstämplar i ett fast format.
+  Dubbletterna hade samma värden, och alla fem kvoterna och deras mått blev identiska när de räknades om på den rättade
+  vyn.
 
 ## Definitioner
 

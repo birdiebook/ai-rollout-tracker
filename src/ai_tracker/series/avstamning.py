@@ -152,6 +152,7 @@ RECONS += [
 BY_KEY = {r.key: r for r in RECONS}
 KEYS = [r.key for r in RECONS]
 
+
 def _component_specs() -> dict[str, Spec]:
     return {s.key: s for mod in (_sec, _seg, _rpo, _fin, _dep) for s in mod.SPECS}
 
