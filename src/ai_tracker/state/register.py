@@ -51,7 +51,7 @@ FAMILIES: dict[str, dict[str, list[str]]] = {
            "g1_epoch_train_compute": ["g1_epoch_train_compute_frontier"],
            "g1_epoch_eci": ["g1_epoch_eci_frontier"],
            "g1_arena_text": ["g1_arena_text_top"]},
-    "G2": {"g2_price_at_capability": ["g2_price_at_capability_gpqa"]},
+    "G2": {"g2_price_at_capability_gpqa": ["g2_price_at_capability_gpqa"]},  # renamed 2026-11-24 (register)
     "G3": {"btos_ai_use": ["btos_ai_use_<aktiv regim>"],
            "eu_ai_ent": ["eu_ai_ent_eu27", "eu_ai_ent_se"],
            "g3_npm": ["g3_npm_{openai,anthropic_sdk,langchain,vercel_ai}_w"],

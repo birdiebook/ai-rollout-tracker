@@ -71,7 +71,7 @@ CORE = {
 # of two published series (Fed G.17), G9 a family of the two withheld arXiv series (counted, never named).
 FAMILIES = {
     "G1": {"g1_epoch_eci": ["g1_epoch_eci_frontier"]},
-    "G2": {"g2_price_at_capability": ["g2_price_at_capability_gpqa"]},
+    "G2": {"g2_price_at_capability_gpqa": ["g2_price_at_capability_gpqa"]},
     "G3": {"btos_ai_use": ["btos_ai_use_v3"], "g3_pypi": ["g3_pypi_openai_wed"], "g3_wiki": ["g3_wiki_chatgpt_en"]},
     "G4": {k: [k] for k in CORE["G4"]},
     "G5": {k: [k] for k in CORE["G5"]},

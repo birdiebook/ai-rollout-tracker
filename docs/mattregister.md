@@ -666,3 +666,14 @@ regelversionen och familjetabellen. Rekonstruerad historik räknas med båda reg
 **Framtida kärnserier** tilldelas en familj i samma registerpost som lägger till dem, i en tabell med kolumnerna
 `Gren | Källfamilj | Kärnserier`. En senare familjetabell ersätter grenens familjer, på samma sätt som en senare
 kärnserietabell ersätter grenens kärnserier.
+
+### 2026-11-24 – Diffusionsindex v2: familjenamnet i G2 byts (före beräkning)
+
+Familjen `g2_price_at_capability` i föregående post har samma namn som katalogserien för ECI-varianten
+(`g2_price_at_capability`, som inte är kärnserie). Namnet kan då läsas som den serien. Familjen heter i stället
+`g2_price_at_capability_gpqa`, efter sin enda serie, som de andra familjerna med en serie. Bara namnet ändras. Inga
+värden har räknats. Tabellen ersätter G2:s familjer enligt parserregeln.
+
+| Gren | Källfamilj | Kärnserier | Källa och begrepp |
+|---|---|---|---|
+| G2 | `g2_price_at_capability_gpqa` | `g2_price_at_capability_gpqa` | LiteLLM och Epoch, pris vid fast förmåga (GPQA Diamond) |

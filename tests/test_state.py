@@ -80,6 +80,10 @@ def test_every_core_entry_is_in_exactly_one_family():
         fam = R.entry_families(code)
         assert set(fam) == set(R.core_entries(code)) and set(fam.values()) == set(R.FAMILIES[code]), code
     assert len(set(R.entry_families("G8").values())) == 1  # nine Indeed countries: one family
+    keys = set(catalog.by_key()) | set(R.DERIVED)
+    for code, fams in R.FAMILIES.items():  # a family id never reads as another series' key
+        for fam, entries in fams.items():
+            assert fam not in keys or entries == [fam], (code, fam)
     assert len(set(R.entry_families("G7").values())) == 3 and len(R.FAMILIES["G6"]) == 7
 
 

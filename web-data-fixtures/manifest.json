@@ -35,9 +35,9 @@
   {
    "path": "branch/G2.json",
    "schema": "branch",
-   "bytes": 6812,
-   "gzip_bytes": 1549,
-   "sha256": "4e63869de4ccdb096d6828eb651af061e1eb1d4693d9e77e6936f60cc8fe8118"
+   "bytes": 6817,
+   "gzip_bytes": 1548,
+   "sha256": "e1d3cdc6e07d9b7f44ba400a25be804eec37025632bccdba22620f1989cfd039"
   },
   {
    "path": "branch/G3.json",
@@ -112,9 +112,9 @@
   {
    "path": "method.json",
    "schema": "method",
-   "bytes": 10457,
-   "gzip_bytes": 3047,
-   "sha256": "298896bdbc2efd257bd2de493664f3ab659b47ed84fa55f64f17513b7daf5471"
+   "bytes": 10462,
+   "gzip_bytes": 3050,
+   "sha256": "baa4bd2e952befb71f7d1748a801ff127b40ba1ab2684ed4a4e5d7d9dd74fade"
   },
   {
    "path": "nowcast/d2.json",
@@ -450,8 +450,8 @@
   {
    "group": "branch",
    "files": 9,
-   "bytes": 93140,
-   "gzip_bytes": 23847
+   "bytes": 93145,
+   "gzip_bytes": 23846
   },
   {
    "group": "flow.json",
@@ -474,8 +474,8 @@
   {
    "group": "method.json",
    "files": 1,
-   "bytes": 10457,
-   "gzip_bytes": 3047
+   "bytes": 10462,
+   "gzip_bytes": 3050
   },
   {
    "group": "nowcast",
@@ -522,8 +522,8 @@
  ],
  "totals": {
   "files": 60,
-  "bytes": 625208,
-  "gzip_bytes": 164103
+  "bytes": 625218,
+  "gzip_bytes": 164105
  },
  "budgets": {
   "per_file": [

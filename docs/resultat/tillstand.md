@@ -192,7 +192,8 @@ familjetabell och regel står i `docs/mattregister.md` ("2026-11-24 – Diffusio
 `state.register.FAMILIES` och `state.branch`.
 
 **Ordning (förregistrering):** registerposten committades först (`7ba72eb`), koden därefter (`d80d7e3`). Inget
-v2-värde har räknats på verklig data före registerposten. Under arbetet fanns ingen verklig observationstabell i
+v2-värde har räknats på verklig data före registerposten. En senare daterad post byter bara namnet på G2:s familj,
+eftersom det gamla namnet var en annan katalogseries nyckel. Under arbetet fanns ingen verklig observationstabell i
 basen, och spåret har inte tittat på några verkliga värden. Familjeindelningen bygger bara på katalogens metadata
 (källa, etikett och licens per kärnserie).
 
