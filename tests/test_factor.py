@@ -175,8 +175,8 @@ def test_poison_rows_after_origin_change_nothing(table):
     pd.testing.assert_frame_equal(clean.path, v.path)
 
 
-def test_holdout_guard_raises(table, tmp_path):
-    assert not guard.HOLDOUT_OPEN
+def test_holdout_guard_raises(table, tmp_path, monkeypatch):
+    monkeypatch.setattr(guard, "HOLDOUT_OPEN", False)  # the mechanism, as before the opening (holdout_logg.md)
     with pytest.raises(guard.HoldoutClosed):
         realtime.vintage(table, "2025-07-01", cache_dir=tmp_path)
     with pytest.raises(guard.HoldoutClosed):
@@ -192,7 +192,8 @@ def test_dev_table_drops_rows_known_after_dev_end():
     assert list(guard.dev_table(t)["period"]) == ["2025-05"]
 
 
-def test_df_run_refuses_holdout_origins():
+def test_df_run_refuses_holdout_origins(monkeypatch):
+    monkeypatch.setattr(guard, "HOLDOUT_OPEN", False)
     frame = pd.DataFrame({"origin": [TS("2025-06-05"), TS("2025-07-05")],
                           "outcome_known_from": [TS("2025-06-10"), TS("2025-06-20")],
                           "e_B0": [1.0, 2.0], "e_B1": [1.0, 2.0]},
@@ -279,7 +280,8 @@ def test_origin_before_sample_start_has_no_factor(table):
 
 
 @pytest.mark.real_data
-def test_real_table_holdout_guard_raises_before_any_estimate():
+def test_real_table_holdout_guard_raises_before_any_estimate(monkeypatch):
+    monkeypatch.setattr(guard, "HOLDOUT_OPEN", False)
     from ai_tracker import observations
     from conftest import real_table_exists
 

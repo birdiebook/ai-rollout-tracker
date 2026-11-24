@@ -12,7 +12,7 @@ import pandas as pd
 
 from ai_tracker.factor.guard import DEV_END, HOLDOUT_START, HoldoutClosed, dev_table  # noqa: F401
 
-HOLDOUT_OPEN = False  # set only by the orchestrator after the owner's approval (G-E), logged in docs/holdout_logg.md
+HOLDOUT_OPEN = True  # opened 2026-11-24 for C4 with C3, after the owner's approval (G-E), docs/holdout_logg.md
 
 
 def check(date, what: str = "regime") -> pd.Timestamp:

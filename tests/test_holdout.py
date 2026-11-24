@@ -22,6 +22,18 @@ from ai_tracker.state import snapshot as S
 TS = pd.Timestamp
 
 
+# ------------------------------------------------------------------ guards
+
+
+def test_c3_and_c4_open_d2_closed():
+    assert guard.HOLDOUT_OPEN and regime_guard.HOLDOUT_OPEN  # opened 2026-11-24, docs/holdout_logg.md
+    assert "D2" not in guard.OPEN_FAMILIES
+    guard.check("2026-10-20")
+    regime_guard.check("2026-10-31")
+    with pytest.raises(guard.HoldoutClosed):
+        guard.check("2025-07-20", family="D2")
+
+
 # ------------------------------------------------------------------ F-E6 on the holdout
 
 
