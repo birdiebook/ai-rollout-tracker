@@ -116,6 +116,61 @@ export interface Series {
   [k: string]: unknown;
 }
 
+export type IntervalLevel = '50' | '80' | '95';
+export type Pair = [number | null, number | null] | null;
+
+/** A committed live forecast file (forecasts/<n>/*.json, W3 schema nowcast#/$defs/forecast). */
+export interface LiveForecast {
+  period: string | null;
+  file: string;
+  value: number | null;
+  champion: string;
+  origin?: string;
+  registered_origin?: string;
+  variants?: Record<string, number | null>;
+  intervals?: Partial<Record<IntervalLevel, Pair>>;
+  [k: string]: unknown;
+}
+
+/** One forecast file against the first vintage of its outcome. Model columns are err_<m>, crps_<m>, pit_<m>,
+ *  hit_<level>_<m> (m includes "champion"), intervals interval_<level>. */
+export interface ScoreRow {
+  period: string;
+  status: string;
+  origin?: string | null;
+  champion?: string | null;
+  forecast?: number | null;
+  outcome?: number | null;
+  known_from?: string | null;
+  [k: string]: unknown;
+}
+
+/** Coverage with a binomial band per level (live: `coverage[]`; backtest: `backtest_calibration.rows[]`). */
+export interface CoverageRow {
+  variant?: string;
+  model?: string;
+  n: number;
+  crps?: number | null;
+  [k: string]: unknown;
+}
+
+export interface BacktestCalibration {
+  available: boolean;
+  rows: (CoverageRow & { model: string; calibrated?: boolean | null; pit_mean?: number | null; pit_var?: number | null; first?: string; last?: string })[];
+  n_periods?: number | null;
+  first?: string | null;
+  last?: string | null;
+  best_baseline?: string | null;
+  champion_mae?: { mae: number | null; n: number; first?: string; last?: string } | null;
+  error?: string | null;
+  [k: string]: unknown;
+}
+
+export interface SeriesValues {
+  periods: string[];
+  values: (number | null)[];
+}
+
 export interface Nowcast {
   id: string;
   label: string;
@@ -124,6 +179,64 @@ export interface Nowcast {
   next_origin: string | null;
   next_period: string | null;
   publishable?: boolean;
+  record?: RecordMeta;
+  target?: string | null;
+  target_label?: string | null;
+  unit?: string | null;
+  source?: string | null;
+  license?: string | null;
+  decimals?: number | null;
+  error_unit?: string | null;
+  frequency?: string | null;
+  origin_rule?: string | null;
+  results_doc?: string | null;
+  shadows?: string[];
+  variants?: { id: string; text: string }[];
+  forecasts?: LiveForecast[];
+  scorecard?: ScoreRow[];
+  summary?: { variant: string; n: number; mae?: number | null; bias?: number | null }[];
+  scorecard_error?: string | null;
+  coverage?: CoverageRow[];
+  interval_levels?: string[];
+  history?: SeriesValues | null;
+  backtest_calibration?: BacktestCalibration | null;
+  [k: string]: unknown;
+}
+
+/** nowcast/d2.json (W3 schema `horizons`): D2, 1–8 quarters ahead, a shadow. */
+export interface HorizonTarget {
+  id: string;
+  name: string;
+  target: string;
+  label: string;
+  unit: string;
+  publishable: boolean;
+  models: string[];
+  champion_by_group: Record<string, string>;
+  base: string | null;
+  fan: {
+    periods: string[];
+    champion: string[];
+    values: (number | null)[];
+    intervals: Partial<Record<IntervalLevel, { lo: (number | null)[]; hi: (number | null)[] }>>;
+  } | null;
+  paths: { h: number; quarter: string; champion: string; value: number | null; models: Record<string, number | null>; interval_80?: Pair }[] | null;
+  history: SeriesValues | null;
+  summary: ({ h: number; group: string; n: number; n_dist?: number; crps?: number | null } & Record<string, unknown>)[] | null;
+  [k: string]: unknown;
+}
+
+export interface Horizons {
+  record: RecordMeta;
+  first_live: string;
+  origin: string | null;
+  file: string | null;
+  next_origin: string | null;
+  next_period: string | null;
+  groups: Record<string, number[]>;
+  interval_levels: string[];
+  targets: HorizonTarget[];
+  error: string | null;
   [k: string]: unknown;
 }
 

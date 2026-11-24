@@ -3,7 +3,7 @@
 // Every document gets a structural check of the fields the pages rely on, and the manifest's schema major version
 // must match: a contract break stops the build (handleHttpError: 'fail'), like the Python data tests do.
 
-import type { Branch, Flow, Manifest, Method, Nowcast, Overview, Series, SeriesIndex } from './types';
+import type { Branch, Flow, Horizons, Manifest, Method, Nowcast, Overview, Series, SeriesIndex } from './types';
 import { BRANCH_CODES } from './types';
 
 /** Supported major version of the bundle schema (W3: schema/v1). */
@@ -47,6 +47,7 @@ const checks = {
   seriesIndex: ((d, p) => need(d, p, { series: 'array' })) as Check,
   series: ((d, p) => need(d, p, { key: 'string', label: 'string', license: 'object', levels: 'any' })) as Check,
   nowcast: ((d, p) => need(d, p, { id: 'string', title: 'string' })) as Check,
+  horizons: ((d, p) => need(d, p, { record: 'object', first_live: 'string', targets: 'array', groups: 'object' })) as Check,
   any: (() => undefined) as Check
 };
 
@@ -77,6 +78,8 @@ export function createBundle(read: Reader) {
     seriesIndex: () => get<SeriesIndex>('series/index.json', checks.seriesIndex),
     series: async (key: string) => get<Series>(`series/${safe(key)}.json`, checks.series),
     nowcast: async (id: string) => get<Nowcast>(`nowcast/${safe(id)}.json`, checks.nowcast),
+    /** D2 (1–8 quarters, shadow) has its own schema (`horizons`), so it is not a `nowcast()` document */
+    horizons: () => get<Horizons>('nowcast/d2.json', checks.horizons),
     /** ids for prerendering the dynamic routes */
     async entries() {
       const [idx, ov] = await Promise.all([this.seriesIndex(), this.overview()]);
