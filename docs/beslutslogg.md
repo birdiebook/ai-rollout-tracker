@@ -391,3 +391,14 @@ Johannes valde rekommendationerna:
   och Oracle saknar brutto per kvartal, så `ppe_gross_hyp4` finns inte.
 - **`dep_msft` är ingen ren avskrivningsserie.** Microsofts rad innehåller "other", och omklassificeringen 2026 räknade
   bara om kvartalen från 2024Q4. P2b och P3 bör använda `dep_ppe_*` där de räcker, och annars redovisa förbehållet.
+
+## 2026-11-24 – R14: granskning av P1 (avskrivningar)
+
+- **Godkänd med anmärkningar** (`docs/granskning/r14_avskrivningar.md`). Ombygget är identiskt rad för rad, 15
+  handkontroller mot R-sidorna stämmer, och alla `known_from` är inlämningsdatum.
+- **Fel (R-1):** Microsoft räknade om 2024Q3 genom sexmånaderstalet i 10-Q 2026-01-28 (6 716 mot 7 383), men
+  `dep_msft` behåller det gamla värdet. Fönstret FY2025 blir 30 101 i stället för 29 433, och årstakten 2025Q3 +10 % i
+  stället för +21 %. Det rättas innan `dep_msft` och `dep_hyp4` används för takt i P2b och P3. Bara kvartalen i FY2024
+  går inte att räkna om.
+- Noten för `dep_hyp4` ska säga vilka definitioner som summeras (R-2). `dep_ppe_hyp4` är bättre i definition men har
+  bara 9 kvartal.
