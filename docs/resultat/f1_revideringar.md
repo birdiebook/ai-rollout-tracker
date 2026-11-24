@@ -117,9 +117,17 @@ utfall kommer med 10-Q:n, några dagar efter 8-K:n 2026-11-17.
 
 ## Tester
 
-`tests/test_guidance_revisions.py`, 45 syntetiska tester utan nät: revideringens tecken och storlek, dödbandet,
+`tests/test_guidance_revisions.py`, 44 syntetiska tester utan nät: revideringens tecken och storlek, dödbandet,
 upprepning som oförändrad, nytt objekt mot revidering (TSMC och Nvidia), fönstret för samma händelse, riktningar och
 baser, definitionskod och definitionsbrott, indexets n ≥ 3, rullande fönster och stängningsversion, att inget dateras
 framåt, standardisering först efter 4 tidigare överraskningar, överraskningsindex med minst 2 bolag, TSMC:s B2-bas och
 guidance känd före utfallet, capex-summan av första versioner, as_of-trunkering med identiska värden (sex datum),
 TSMC-tolkningens godkända och avvisade former, katalogkontraktet och ögonblicksbildens avsnitt.
+
+Samma trunkeringskontroll på verklig data (sju datum 2021-06-30–2026-10-31): index, överraskningar och
+överraskningsindex är identiska, 0 avvikelser. Hela sviten: 1 469 passed, 124 skipped, 1 xfailed (main: 1 425 passed).
+Den kördes utan spårets egen tabell, eftersom testerna för verklig data annars körs på en ofullständig tabell och
+fallerar på serier som spåret inte har hämtat (till exempel `capex_hyp4`).
+
+**Vad som inte är kontrollerat:** TSMC-tolkningens omatchade kandidatmeningar lästes bara för 2016–2026. För 2004–2015
+kan det finnas uttalanden i andra ordalydelser som inte är kodade. De påverkar inte indexperioden.
