@@ -1,14 +1,12 @@
 """R8 review of the G2A Arena price series (docs/granskning/r8_g2_arena.md). Fixtures only, no network.
 
-Pins two properties the review relies on and marks one finding (dataset evidence date) as a strict xfail, so the
-test flips when the correction track fixes it.
+Pins two properties the review relies on; the third test (dataset evidence date, finding F-4a) was a strict xfail
+until correction track X5 fixed it (R-1).
 """
 
 from __future__ import annotations
 
 import pandas as pd
-import pytest
-
 from ai_tracker.series import arena_price as ap
 from ai_tracker.sources import arena
 
@@ -48,9 +46,6 @@ def test_series_value_is_month_end_price_even_when_a_later_board_adds_a_vintage(
     assert list(t["value"]) == [37.5, 1.75]  # 2024-02-05 price cut is not used for January
 
 
-@pytest.mark.xfail(strict=True, reason="R8: a board re-uploaded under the same title (2026-07-07 batch, 2026-06-10 "
-                   "rows changed) is dated by its FIRST commit although the values read are the latest; the evidence "
-                   "should be the last titled commit (or the first commit whose rows equal the values used)")
 def test_reuploaded_board_is_dated_by_the_commit_that_holds_the_values_used():
     log = ("2026-07-07T23:19:30+00:00|Update text for 2026-06-10\n"
            "2026-06-11T04:00:00+00:00|Update text for 2026-06-10\n")

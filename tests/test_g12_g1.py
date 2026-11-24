@@ -49,15 +49,16 @@ def test_monthly_never_before_publish_date_and_empty_month():
 
 # ------------------------------------------------------------------ arena: evidence logs
 
-def test_parse_dataset_log_takes_first_titled_commit_utc():
+def test_parse_dataset_log_takes_last_titled_commit_utc():
+    # X5 (R8 R-1): the current rows are those of the LAST titled upload; earlier uploads are versions of their own
     log = "\n".join([
         "2026-11-24T04:02:13+00:00|Update webdev for 2026-11-23",
-        "2026-04-03T00:50:26+00:00|Update text for 2026-04-02",
-        "2026-04-02T23:59:00-05:00|Update text for 2026-04-02",  # = 04-03 04:59 UTC, later than the first
+        "2026-04-03T23:50:00-04:00|Update text for 2026-04-02",  # = 04-04 03:50 UTC, the later upload
+        "2026-04-03T22:50:26+00:00|Update text for 2026-04-02",
         "2026-04-02T19:50:32+00:00|add historical data",
     ])
     ev = arena.parse_dataset_log(log)
-    assert ev[("text", "2026-04-02")] == pd.Timestamp("2026-04-03")
+    assert ev[("text", "2026-04-02")] == pd.Timestamp("2026-04-04")
     assert ev[("webdev", "2026-11-23")] == pd.Timestamp("2026-11-24")
     assert len(ev) == 2
 

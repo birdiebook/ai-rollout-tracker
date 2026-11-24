@@ -55,7 +55,8 @@ tröskeln. Gränsen är inklusiv, så referensen själv kvalificerar.
 - **Bästa variant per prissatt modell:** en nyckel får den högsta ratingen bland de Arena-namn som är kopplade
   till den och finns i tavlan. Exempel: resonemangsnivåer som `o3-mini` och `o3-mini-high` säljs under samma
   nyckel och samma pris per token. Samma regel som I6:s GPQA-variant.
-- **Rullande alias** (`deepseek-chat`, `deepseek-reasoner`) kopplas till varje modellversion de har serverat,
+- **Rullande alias** (`deepseek-chat`, `deepseek-reasoner`, och från rättningen X5 Geminis stabila
+  `gemini/gemini-1.5-flash` och `gemini/gemini-1.5-pro`, avsnitt 7) kopplas till varje modellversion de har serverat,
   med datum från när aliaset började peka på den. Vid månadsslut räknas bara den version som aliaset då
   serverade. Finns den inte i tavlan, har nyckeln ingen förmåga den månaden. Föregångarens rating används inte.
 - Alias som byter modell utan dokumenterade datum (till exempel `gpt-4o`, `chatgpt-4o-latest`, `-latest`,
@@ -89,7 +90,10 @@ LiteLLM tar inte bort poster när modeller pensioneras, men posten får fältet 
   vid minimum (Gemini 1.5 Flash 002 och 2.0 Flash-Lite Preview, samma nivå). I båda varianterna fick 2026-01 –
   2026-02 GPT-5 nano (0,1375 i stället för 0,13125 USD) och 2026-08 GPT-5 nano i stället för Mistral Small 3.2
   (pensionerad 2026-07-31; 0,1375 i stället för 0,09 USD). Övriga månader är oförändrade.
-- Regeln skulle också passa `g2_price_at_capability*`, men de serierna ändras inte i det här spåret.
+- Regeln skulle också passa `g2_price_at_capability*`, men de serierna ändras inte i det här spåret. Regeln är
+  registrerad som ändring 2026-11-24 i `docs/mattregister.md` och gäller bara Arena-prisserierna. Om I6-serierna ska
+  följa den är en öppen registerfråga (rättning X5).
+- LiteLLM anger inte alltid pensionering. En pensionerad modell utan `deprecation_date` räknas fortfarande.
 
 ## 3. Namnkoppling Arena → LiteLLM
 
@@ -101,6 +105,8 @@ alias finns bland de fasta nycklarna och att inget namn både är kopplat och li
 - **Två namnformer:** båda formerna står i samma rad, till exempel `gpt-5-high` och "GPT-5 (High)".
 - **Resonemangsnivåer** (`-high`, `-thinking-32k`, "(Max)", "(xHigh)") kopplas till modellens nyckel. Nyckeln får
   den bästa varianten i tavlan.
+- **Undantag från regeln att `-exp-` inte kopplas:** `gemini-2.5-pro-exp-03-25` kopplas till
+  `gemini/gemini-2.5-pro-preview-03-25`, eftersom Google anger att det är samma modell (R8, stickprov 17).
 - **Namnbyten i Arena**, belagda med tavlorna (inget överlapp): `gpt-4-turbo` (2024-01-09 – 01-25) blev
   `gpt-4-1106-preview` (från 2024-02-02), `gemini-1.5-{pro,flash}-api-0514` (till 2024-10-15) blev `-001` (från
   2024-10-23), `gemini-2.0-flash-lite-preview` blev `-02-05` och `gemini-2.0-flash` blev `-001`.
@@ -113,8 +119,10 @@ alias finns bland de fasta nycklarna och att inget namn både är kopplat och li
   `deepseek-v4-flash` som efterföljare. Aliasen räknas därför inte från 2026-04-23. Datumen före 2026 är från
   DeepSeeks versionsnyheter (api-docs.deepseek.com, blockerad i sandlådan, så de kunde inte läsas på nytt i dag).
   V2-0628 och Coder-V2-0724 dateras med datumet i versionsnamnet.
+- **Geminis stabila alias** (X5, R-5) behandlas som DeepSeeks: `gemini/gemini-1.5-flash` och
+  `gemini/gemini-1.5-pro` räknas som `-001` från 2024-05-24 till och med 2024-09-23, och inte därefter (avsnitt 7).
 - **Inte kopplade:** alias som byter modell (`chatgpt-4o-latest*`, `gpt-5-chat`, `*-chat-latest`,
-  `gpt-5.5-instant`, `gpt-4o`, `qwen-max`, `qwen-plus`, `mistral-medium`, `gemini/gemini-1.5-pro`), Geminis
+  `gpt-5.5-instant`, `gpt-4o`, `qwen-max`, `qwen-plus`, `mistral-medium`), Geminis
   experimentmodeller (gratis i AI Studio, och LiteLLM:s pris är inte Googles), Gemma (öppna vikter, LiteLLM:s
   `gemini/gemini-gemma-2-*`-pris har Vertex som källa), DeepSeeks `deepseek/deepseek-v3`, `-r1` och `-v3.2` (inga
   id:n i DeepSeeks API, och aliasen täcker dem) samt förhandsversioner vars släppta identitet inte är belagd.
@@ -157,6 +165,9 @@ regeln (till exempel Cohere och Amazon) ingår inte. Den begränsningen påverka
 | `g2_price_at_arena_capability` (A) | 2024-01 – 2026-10 | 34 | `release` |
 | `g2_price_at_arena_capability_4o` (B) | 2024-05 – 2026-10 | 30 | `release` |
 
+Efter X5 ändrades fyra värden (avsnitt 7): A 2024-06 6,00 → 0,525 och 2024-08 0,175 → 0,13125, B 2024-10 och
+2024-11 5,25 → 2,1875. `known_from` är oförändrat.
+
 Bygg med `python -m ai_tracker.observations g2_price_at_arena_capability g2_price_at_arena_capability_4o` (Arena
 cirka 150 s kall, LiteLLM cirka 35 s kall). Kod: `src/ai_tracker/series/arena_price.py` (tröskel, versioner,
 `coverage()`), `src/ai_tracker/sources/arena_map.py` (koppling), `litellm_prices.deprecations()`. Tester:
@@ -177,19 +188,33 @@ cirka 150 s kall, LiteLLM cirka 35 s kall). Kod: `src/ai_tracker/series/arena_pr
 | Period | A: modell vid minimum | B: modell vid minimum |
 |---|---|---|
 | 2024-01 – 02 | GPT-4 Turbo Preview (1106, 0125), 15 USD | – |
-| 2024-03 – 06 | Claude 3 Sonnet, Claude 3.5 Sonnet, 6 USD | GPT-4o (2024-05-13), 7,50 USD (bara referensen kvalificerar 2024-05 – 08) |
-| 2024-07 – 08 | DeepSeek V2-0628 (`deepseek-chat`), 0,175 USD | som ovan |
-| 2024-09 – 2025-04 | Gemini 1.5 Flash 001, 0,13125 USD | o1-mini 5,25, Gemini 1.5 Pro 002 5,25, DeepSeek-V3 (kampanjpris) 0,175, från 2025-02 Gemini 2.0 Flash-Lite Preview 0,13125 USD |
+| 2024-03 – 05 | Claude 3 Sonnet, 6 USD | GPT-4o (2024-05-13), 7,50 USD (bara referensen kvalificerar 2024-05 – 08) |
+| 2024-06 | Gemini 1.5 Flash via stabila aliaset, 0,525 USD (lanseringspris; före X5 6 USD) | som ovan |
+| 2024-07 | DeepSeek V2-0628 (`deepseek-chat`), 0,175 USD | som ovan |
+| 2024-08 | Gemini 1.5 Flash via aliaset, 0,13125 USD (prisrättning från 2024-08-12; före X5 0,175) | som ovan |
+| 2024-09 – 2025-04 | Gemini 1.5 Flash 001, 0,13125 USD | o1-mini 5,25 (2024-09), Gemini 1.5 Pro 002 2,1875 (2024-10 – 11, prisrättning; före X5 5,25), DeepSeek-V3 (kampanjpris) 0,175 (2024-12 – 2025-01), från 2025-02 Gemini 2.0 Flash-Lite Preview 0,13125 USD |
 | 2025-05 – 2025-12 | Gemini 1.5 Flash 002, sedan 2.0 Flash-Lite Preview, 0,13125 USD | Gemini 2.0 Flash-Lite Preview, 0,13125 USD |
 | 2026-01 – 02 | GPT-5 nano (high), 0,1375 USD | samma |
 | 2026-03 – 07 | Mistral Small 3.2 (2506), 0,09 USD | samma |
 | 2026-08 – 10 | GPT-5 nano (high), 0,1375 USD | samma |
 
-Alla priser ovan stämmer med utvecklarnas listpriser enligt LiteLLM:s `source`. Ett undantag kunde inte
-kontrolleras: Mistral Small 3.2 0,06/0,18 USD (`mistral.ai` är blockerad i sandlådan). Från 2025-09 är A och B i
-praktiken samma serie, eftersom samma billiga modeller klarar båda trösklarna.
+Priserna kontrollerades mot utvecklarnas prissidor i rättningen X5 (avsnitt 7.3). LiteLLM:s `source` är bara en
+länk och ingen kontroll. **A och B har samma värden från 2025-02**, eftersom samma billiga modeller klarar båda
+trösklarna.
+
+**Tröskeln binder inte från 2024-07 (A) och 2025-02 (B).** Nivåkontroll utan tröskel (lägsta pris bland alla
+kopplade och prissatta modeller i tavlan, data 2026-11-24 efter X5): värdet skiljer sig från seriens bara 2024-03 –
+06 i A och 2024-05 – 2025-01 i B. Därefter mäter serierna golvet i förstapartsprislistornas billigaste nivå
+("flash", "nano", "small"), inte priset vid en fast förmåga. Modellen vid minimum ligger 40–130 poäng över
+tröskeln i A och cirka 20–40 poäng i B.
+
+**Arenas osäkerhetsintervall används inte.** Tröskeln jämför punktskattningar (`rating`), inte `rating_lower` och
+`rating_upper`. I A 2024-03 ligger Claude 3 Haiku 5,6 poäng under tröskeln, väl inom intervallet.
 
 ## 5. Förslag till kärnserie (för granskning och registrering)
+
+**Underkänt i granskningen R8** (`docs/granskning/r8_g2_arena.md`). Ingen av varianterna är kärnserie. Förslaget
+nedan står kvar som det skrevs. Läget efter rättningen X5 finns i avsnitt 7.
 
 **Variant A (`g2_price_at_arena_capability`) föreslås som kärnserie**, och B redovisas som variant. Skälen gäller
 datering och täckning, inte serieförloppet:
@@ -217,3 +242,122 @@ datering och täckning, inte serieförloppet:
 5. **Kopplingen är gjord i dag.** Den avgör bara vilken nyckel som hör till vilket namn, och den använder inte
    priser eller ratingar. DeepSeeks datum kunde inte läsas på nytt i sandlådan.
 6. **Pris per token, inte per uppgift.** Resonemangsnivåer som "(Max)" använder fler tokens.
+
+## 7. Rättningar efter granskning R8 (spår X5, 2026-11-24)
+
+Rättningarna R-1 – R-5, R-7 och R-8 från `docs/granskning/r8_g2_arena.md`. Ingen ny kärnserie registreras. Tester:
+`tests/test_x5_arena_ratt.py` (fixturer, inget nät). Det tidigare strikta xfail-testet i `tests/test_r8_g2_arena.py`
+passerar nu.
+
+### 7.1 R-1: omskrivna Arena-tavlor
+
+En tavla har nu en version per commit som ändrade dess rader, och varje version dateras till sin commit (regeln i
+`docs/kallor/g1g2_nya.md`, "Omskrivna tavlor"). Utöver omladdningen 2026-07-07 (som inte ändrade något) hittades en
+otitlad omskrivning 2026-07-29 som tog bort variantrader ur sex `text`-tavlor. **Effekt på A och B: ingen.** Ingen av
+de ändrade tavlorna var den senaste vid ett månadsslut. Effekten på `g1_arena_*` är också noll.
+
+### 7.2 R-2: daterade prisrättningar
+
+`arena_price.PRICE_CORRECTIONS`. En rättning ersätter LiteLLM:s pris för en (nyckel, leverantör) bara i
+ögonblicksbilder daterade från det senare av datumet då priset ändrades och datumet då belägget publicerades, och
+bara så länge LiteLLM fortfarande visar det gamla priset. Inget bakdateras.
+
+| Nycklar | Gammalt (LiteLLM) | Nytt | Gäller från | Belägg |
+|---|---|---|---|---|
+| `gemini/gemini-1.5-pro-002`, `gemini/gemini-1.5-pro-001` | 3,50 / 10,50 | 1,25 / 5,00 | 2024-10-01 (publicerat 2024-09-24) | Googles inlägg "Updated production-ready Gemini models, reduced 1.5 Pro pricing, increased rate limits, and more" (developers.googleblog.com, 2024-09-24). Nivån är kontrollerad på Googles Vertex-prislista (cloud.google.com, läst 2026-11-24): 0,0003125 / 0,00125 USD per 1 000 tecken vid ≤ 128k, cirka 4 tecken per token |
+| `gemini/gemini-1.5-flash` (stabila aliaset), `gemini/gemini-1.5-flash-001` | 0,35 / 1,05 | 0,075 / 0,30 | 2024-08-12 (publicerat 2024-08-08) | Googles inlägg "Gemini 1.5 Flash price drop with tuning rollout complete, and more" (2024-08-08). Nivån finns på Vertex-prislistan (0,00001875 / 0,000075 USD per 1 000 tecken), och LiteLLM har själv den från 2024-09-15 (R8 A-2b) |
+
+- **Belägg:** URL, läsdatum och SHA-256 av det citerade avsnittet står i `arena_price.PRICE_EVIDENCE`. Själva texten
+  finns bara i `data/raw/price_checks/2026-11-24/quotes.json`.
+- **Begränsning:** Googles inlägg (developers.googleblog.com), Gemini API-dokumentationen (ai.google.dev), forumet
+  (discuss.ai.google.dev) och Vertex-dokumentationen (docs.cloud.google.com) nekas av proxyn. Titel och datum för
+  inläggen är därför tagna ur sökindex och inte lästa på sidan. Vertex-prislistan visar dagens pris och inte när det
+  började gälla.
+- **Utpriset för 1.5 Pro:** inlägget uppges i en forumtråd visa 2,50 USD för utdata, medan API-prislistan visade
+  5,00. Inläggets egen uppgift om en sänkning med 52 % för utdata (10,50 → 5,04) och Vertex-listan ger 5,00, som
+  används. Värdet blir 2,1875 i stället för 5,25.
+- **Inte rättat:** `gemini/gemini-1.5-pro` (aliaset) stod på 0,35 / 1,05 i LiteLLM 2024-06-21 – 06-30, alltså
+  Flash-priset. LiteLLM rättade det själv 2024-07-06. Det ger samma blandade pris som Flash-aliaset 2024-06 (0,525),
+  så månadens värde påverkas inte, och Flash vinner när priserna är lika.
+
+### 7.3 R-3: kontroll av varje pris vid minimum
+
+`arena_price.PRICE_CHECKS`, kontrollerat 2026-11-24. `table()` har kolumnen `price_check` per rad.
+
+| Nyckel (månader vid minimum i A/B) | Pris | Status | Kontroll |
+|---|---|---|---|
+| `gpt-4-1106-preview`, `gpt-4-0125-preview` (A 2024-01 – 02) | 10 / 30 | blockerad | OpenAI:s prissidor nekas av proxyn. Modellerna finns inte på OpenRouter i dag |
+| `claude-3-sonnet-20240229` (A 2024-03 – 05) | 3 / 15 | finns inte längre | platform.claude.com/docs pricing läst. Claude 3 Sonnet är pensionerad och listas inte |
+| `gemini/gemini-1.5-flash` (A 2024-06, 2024-08) | 0,35 / 1,05, sedan 0,075 / 0,30 | blockerad | Lanseringspriset går inte att kontrollera (ai.google.dev nekas, Vertex visar bara dagens pris). 0,075 / 0,30 = Vertex-listan |
+| `deepseek-chat`, `deepseek/deepseek-chat` (A 2024-07, B 2024-12 – 2025-01) | 0,14 / 0,28 | blockerad | api-docs.deepseek.com nekas |
+| `gemini/gemini-1.5-flash-001`, `-002` (A 2024-09 – 2025-08) | 0,075 / 0,30 | utvecklarens sida | Vertex-listan |
+| `gemini/gemini-1.5-pro-002` (B 2024-10 – 11) | 1,25 / 5,00 efter rättning | utvecklarens sida | Vertex-listan. Datum enligt 7.2 |
+| `gemini/gemini-2.0-flash-lite-preview-02-05` (A 2025-09 – 12, B 2025-02 – 12) | 0,075 / 0,30 | utvecklarens sida | Vertex-listan för Gemini 2.0 Flash-Lite (GA-modellen; förhandsversionen listas inte) |
+| `gpt-4o-2024-05-13` (B 2024-05 – 08) | 5 / 15 | blockerad | OpenAI nekas. OpenRouter (leverantör OpenAI) visar 5 / 15 i dag |
+| `o1-mini-2024-09-12` (B 2024-09) | 3 / 12 | blockerad | OpenAI nekas. Finns inte på OpenRouter i dag |
+| `gpt-5-nano-2025-08-07` (A och B 2026-01 – 02, 2026-08 – 10) | 0,05 / 0,40 | blockerad | OpenAI nekas. OpenRouter (leverantör OpenAI) visar 0,05 / 0,40 i dag |
+| `mistral/mistral-small-3-2-2506` (A och B 2026-03 – 07) | 0,06 / 0,18 | omstridd | Se 7.4 |
+
+Av 26 månader i B (2024-09 – 2026-10) har 13 ett pris vid minimum som stämmer med utvecklarens egen prislista i
+dag. De övriga 13 är overifierade, och 5 av dem är omstridda. OpenRouter är en andrahandskontroll och ersätter inte
+utvecklarens sida. Blockerade värdar har inte kringgåtts.
+
+### 7.4 R-4: Mistral Small 3.2
+
+Priset 0,06 / 0,18 gick inte att verifiera. mistral.ai, docs.mistral.ai och archive.org nekas av proxyn. OpenRouter
+listar 2026-11-24 bara tredjepartsvärdar för modellen (DeepInfra 0,075 / 0,20). Månaderna 2026-03 – 07 har därför
+`price_check = disputed` i A och B. Serierna med och utan nyckeln (`build(exclude_keys=...)`):
+
+| Månad | A och B med nyckeln | A och B utan nyckeln |
+|---|---|---|
+| 2026-01 – 02 | 0,1375 | 0,1375 |
+| 2026-03 – 07 | **0,09** | 0,1375 (GPT-5 nano) |
+| 2026-08 – 10 | 0,1375 | 0,1375 |
+
+Övriga månader är lika. Det lagrade värdet behåller nyckeln, och flaggan visar att det är osäkert.
+
+### 7.5 R-5: Geminis alias
+
+Geminis stabila alias behandlas som DeepSeeks rullande alias, i stället för att uteslutas. Före 2024-09-24 fanns
+bara en stabil version av 1.5 Flash och 1.5 Pro (`-001`, GA 2024-05-24), så aliaset kan bara ha serverat `-001`.
+Det räknas därför som `-001` från 2024-05-24 till och med 2024-09-23. Vad det pekade på efter `-002` används inte.
+Googles egen dokumentation om aliasen (ai.google.dev) nekas av proxyn, så slutdatumet är valt försiktigt: dagen före
+`-002`. Effekt: A 2024-06 blir 0,525 i stället för 6,00 och, med prisrättningen, 2024-08 0,13125 i stället för 0,175.
+B påverkas inte, eftersom 1.5 Flash inte når GPT-4o-nivån.
+
+### 7.6 Robusthet efter rättningen (R8 punkt 5, B från 2024-09)
+
+Halveringstiden räknas med tillståndsmotorns regel: första versionen per månad, löpande minimum, log-linjär
+regression över 24 månader. Med start 2024-09 finns 24 månader först 2026-08, så det finns tre värden. Det här är
+en känslighetsanalys för registerfrågan och inget resultat.
+
+| Fall | 2026-08 | 2026-09 | 2026-10 |
+|---|---|---|---|
+| B efter X5 | 6,4 | 8,9 | 12,8 |
+| B utan prisrättningarna (före R-2) | 5,6 | 7,3 | 11,0 |
+| B utan Mistral Small 3.2 | 7,7 | 11,9 | 20,9 |
+| B utan DeepSeek `deepseek-chat` | 5,5 | 7,0 | 9,0 |
+| B utan Gemini 1.5 Pro 002 | 5,6 | 7,3 | 11,0 |
+| B utan Gemini 2.0 Flash-Lite Preview | 6,1 | 8,1 | 10,9 |
+| B utan o1-mini | 6,2 | 8,9 | 12,8 |
+| B utan tröskel (alla kopplade och prissatta modeller) | 39,1 | 35,5 | 33,0 |
+| B, tröskel −10 eller +10 poäng | 6,4 | 8,9 | 12,8 |
+| B, tröskel −25 poäng | 28,1 | 35,5 | 33,0 |
+| B, tröskel +25 poäng | 5,6 | 7,2 | 10,7 |
+
+Fynd:
+
+1. **Serien är fortfarande en stegfunktion.** B har 6 nivåer och 7 steg på 26 månader. Varje steg är en enda
+   modells inträde, prisändring eller pensionering.
+2. **Ett enskilt prissteg flyttar takten med upp till 63 %.** Att ta bort en enda nyckel ger 9,0 – 20,9 månader
+   2026-10, mot 12,8. Det omstridda Mistral-priset ensamt ger 12,8 i stället för 20,9.
+3. **Tröskeln binder bara 2024-09 – 2025-01.** Utan tröskel blir halveringstiden 33 – 39 månader. Takten 2026-08 – 10
+   kommer alltså nästan helt från fallet 5,25 → 0,13 under de fem månader då tröskeln binder. Från 2027-01 ligger de
+   månaderna utanför fönstret. Då mäter B bara golvet från 2025-02: med Mistral-nyckeln ett enda steg (0,13125 →
+   0,09 i 2026-03), och utan den ingen takt alls, eftersom fronten är platt.
+4. **Tröskeln ±10 poäng ändrar inget**, men ±25 poäng flyttar takten mellan 10,7 och 33 månader.
+
+**Slutsats:** efter rättningen mäter B fortfarande golvet i förstapartslistornas billigaste nivå. Det enda som
+skiljer B från golvet är fem månader i början, och dess takt beror på enskilda prissteg. Villkoret i R8 R-9 ("en
+takt som inte beror på ett enskilt prissteg") är inte uppfyllt. **Rekommendation: registrera varken A eller B som
+kärnserie.** Behåll dem som beskrivande serier (`publish=True`, med flaggan `price_check`).
