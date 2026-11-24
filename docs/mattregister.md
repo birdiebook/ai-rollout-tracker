@@ -671,4 +671,6 @@ avskrivningarna ligger efter investeringarna. De beskriver och tar ingen ställn
   finns, med samma versionsregel.
 
 **Vad som setts före denna post:** P1:s resultat med antal kvartal och första och sista period per serie, och P1:s
-registerpost och källdokument. Inga kvoter, takter eller nivåer av komponenterna har räknats eller setts i detta spår.
+registerpost och källdokument. P1:s resultat nämner två enskilda belopp från handkontrollerna (Microsofts avskrivningsrad
+i Q4 FY2026 och Amazons avskrivningar på anläggningstillgångar 2025). Inga kvoter, takter eller nivåer av komponenterna
+har räknats eller setts i detta spår.
