@@ -31,6 +31,8 @@ export function routes(): { name: string; path: string }[] {
     { name: 'prognos-n5', path: 'prognoser/n5/' },
     { name: 'prognos-d2', path: 'prognoser/d2/' },
     ...liveForecastPages().slice(0, 1),
+    { name: 'avstamningar', path: 'avstamningar/' },
+    { name: 'regim', path: 'regim/' },
     { name: 'metod', path: 'metod/' },
     { name: 'katalog', path: '_katalog/' }
   ];
