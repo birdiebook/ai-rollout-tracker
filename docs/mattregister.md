@@ -627,3 +627,24 @@ avskrivningsraderna i kassaflödesanalysen i ett urval 10-K (R-sidorna visar ock
 skillnaden mellan kandidattaggar i överlappande perioder, MSFT-taggens täckning och storleken på omräkningarna (relativt),
 och Alphabets balansposter i instanserna 2018–2020 (nivåer, för kontrollen netto = brutto − ackumulerat). Inga
 kvartalsserier eller takter har räknats.
+
+### 2026-11-24 – P2a: nyttjandeperioder som katalogserier (extraktion, inte kärnserier)
+
+Låst före kodningen. Inga dokument var hämtade och inga värden lästa när posten skrevs. Regler i detalj:
+[`docs/kallor/nyttjandeperioder.md`](kallor/nyttjandeperioder.md), avsnittet "Kodningsregler".
+- **Vad:** den nyttjandeperiod (år) som Microsoft, Alphabet, Amazon, Meta, Oracle och CoreWeave anger för servrar och
+  nätverksutrustning i 10-K, 10-Q och 8-K (Item 2.02) från 2018, och varje ändrad uppskattning med effektivt datum,
+  gammal och ny period, klass och bolagets egen effekt (belopp, mått, period) när den anges.
+- **Serier:** `useful_life_servers_<bolag>_lo/_hi`, `useful_life_network_<bolag>_lo/_hi` och en serie per bredare
+  klass (`useful_life_<klass>_<bolag>_lo/_hi`). Kalenderkvartal, enhet år, gren G5. Värdet i ett kvartal är det som
+  ett dokument anger för kvartalet (policy vid balansdagen, eller ny period från kvartalet där ändringen gäller).
+- **known_from** = EDGAR:s `filingDate` för det tidigaste SEC-dokumentet som anger värdet. En ändring som meddelas
+  innan den gäller får known_from före periodens slut. Det är ett känt framtida värde, inte läckage.
+- **Glesa serier, stegfunktion.** Ingen ifyllning i observationstabellen. Den som använder serierna tar det senaste
+  kända värdet per kvartal och prognosdag (`useful_lives.in_effect`).
+- **Inte kärnserier.** De ingår inte i grenarnas tillstånd, diffusionsindex eller takter. Ingen takt räknas. N7 (P3)
+  registrerar själv hur perioderna används.
+- **Effekter** (bolagens egna belopp för en ändring) och ändringar för en del av en klass (`_SUBSET`) blir inga
+  katalogserier. De finns i `curated/useful_lives.csv` och i `useful_lives.changes()`.
+- **Publicering:** `publish=True`, eftersom det är siffror ur offentliga SEC-dokument med källhänvisning. Extraktionen
+  stickprovskontrolleras (`useful_lives_check`) och granskas sedan oberoende. Underkänns den sätts `publish=False`.

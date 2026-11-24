@@ -391,3 +391,16 @@ Johannes valde rekommendationerna:
   och Oracle saknar brutto per kvartal, så `ppe_gross_hyp4` finns inte.
 - **`dep_msft` är ingen ren avskrivningsserie.** Microsofts rad innehåller "other", och omklassificeringen 2026 räknade
   bara om kvartalen från 2024Q4. P2b och P3 bör använda `dep_ppe_*` där de räcker, och annars redovisa förbehållet.
+
+## 2026-11-24 – P2a: nyttjandeperioder för servrar som katalogserier
+
+- Spåret P2a har extraherat nyttjandeperioderna för servrar och nätverksutrustning hos Microsoft, Alphabet, Amazon,
+  Meta, Oracle och CoreWeave ur 10-K, 10-Q och 8-K 2018–2026: 305 rader med citatplats och SHA-256 (68 policyrader,
+  21 ändringar, 213 effekter med bolagens egna belopp och 3 klassbyten). Reglerna låstes före kodningen
+  (`docs/kallor/nyttjandeperioder.md`).
+- 30 katalogserier i G5, glesa stegvärden daterade med inlämningsdagen. De är inga kärnserier. N7 (P3) läser perioderna
+  så som de var kända på prognosdagen med `useful_lives.in_effect`.
+- Ändringar för en del av flottan (`_SUBSET`, bland annat alla Metas ändringar och Amazons förkortning 2025) blir inga
+  serier men finns i CSV:n och i `useful_lives.changes()`.
+- `publish=True` enligt registret. Kontrollen mot nyhämtade dokument gav 0 fel av 305. Den oberoende granskningen
+  avgör om det står kvar.
