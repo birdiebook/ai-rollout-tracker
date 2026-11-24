@@ -1,6 +1,6 @@
 # Status steg 2
 
-Uppdateras av orkestreraren vid varje milstolpe. Senast: 2026-11-24 04:00 UTC.
+Uppdateras av orkestreraren vid varje milstolpe. Senast: 2026-11-24 04:20 UTC.
 
 ## Läge
 
@@ -22,6 +22,11 @@ Uppdateras av orkestreraren vid varje milstolpe. Senast: 2026-11-24 04:00 UTC.
   därefter öppnas holdouten för C3 och C4 i en körning, **efter ditt godkännande**.
 - **Tidigare:** Datasnapshoten är klar och väntar på `DATA_KEY`. Avstämningarna (A5) och D2 är
   förregistrerade.
+
+## Miljö
+
+Miljön **ai-rollout-tracker** är klar: alla värdar, setup-skript och `SEC_USER_AGENT`. Den här sessionen kör där.
+Kvar för nya sessioner: `DATA_KEY` (punkt 2 nedan).
 
 ## Väntar på Johannes
 
