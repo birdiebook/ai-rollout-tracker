@@ -81,10 +81,13 @@ VARIANTS = ["B0", "B1", "V1", "B2", "B3"]
 MODELS = ["V1", "B2"]  # the registered Holm family for N2 (register change "B2: TSMC före 2017Q3 ..."), locked
 # Step 2 (register "C0 preciseras efter granskning R6", F-B9): the Holm family for N2 in step 2 is {B3, DF}. A member
 # that is not evaluated yet enters with p = 1. F-B10: B3 is compared with the best of B0, B1, the current champion
-# and B2 (the model B3 builds on).
+# and B2 (the model B3 builds on); B3 itself is never a candidate.
 STEP2_MODELS = ["B3", "DF"]
 STEP2_UNEVALUATED = {"DF": "not built yet (C3)"}
 STEP2_BUILDS_ON = {"B3": "B2"}
+# F-B10 "nuvarande huvudmodell" = the champion when step 2 was registered; fixed, so that a rerun after a promotion
+# never compares B3 with itself (review R7, R7-F2)
+CHAMPION_AT_STEP2 = "B2"
 # B2 may not be promoted before an independent review approves the extracted guidance values (register)
 # Review R2 (docs/granskning/r2_guidance.md) approved the TSMC guidance extraction on 2026-11-23.
 REVIEW_REQUIRED: dict[str, str] = {}
@@ -501,12 +504,12 @@ def evaluate(frame: pd.DataFrame) -> Result:
 def evaluate_step2(ev: pd.DataFrame, periods: dict, mae: dict, variants: list) -> dict:
     """Step-2 family {B3, DF} (F-B9, F-B10, F-B11), on the same months as evaluate().
 
-    Comparator for B3 = the best by full-period MAE of B0, B1, the current champion and B2 (the model B3 builds on);
-    DM of B3 against it on the full period, Holm over {B3, DF} with DF at p = 1 (not built). Passing needs Holm-p <
+    Comparator for B3 = the best by full-period MAE of B0, B1, the champion at step 2 (CHAMPION_AT_STEP2) and B2 (the
+    model B3 builds on); DM of B3 against it on the full period, Holm over {B3, DF} with DF at p = 1 (not built). Passing needs Holm-p <
     0.10 (full period, "as before for N2") and a lower MAE than every comparator candidate in the full period and from
     2023-01. A passing variant replaces the champion only if not in REVIEW_REQUIRED (it beats the champion by
     construction). The locked phase 3-4 family {V1, B2} is not recomputed."""
-    cands = list(dict.fromkeys(["B0", "B1", CHAMPION, STEP2_BUILDS_ON["B3"]]))
+    cands = [c for c in dict.fromkeys(["B0", "B1", CHAMPION_AT_STEP2, STEP2_BUILDS_ON["B3"]]) if c != "B3"]
     cands = [c for c in cands if c in variants]
     p, dm, comp = {}, {}, None
     if "B3" in variants and len(ev) >= 3:
@@ -529,7 +532,7 @@ def evaluate_step2(ev: pd.DataFrame, periods: dict, mae: dict, variants: list) -
              f"lower MAE than {'/'.join(cands)}, 2023+": per["2023+"]["mae_ok"]}
         checks["B3"] = [f"{'PASS' if ok_ else 'FAIL'}: {k}" for k, ok_ in c.items()]
         passed["B3"] = engine.passes(per)
-    d = engine.decide(passed, {v: mae["full"][v] for v in passed}, REVIEW_REQUIRED, CHAMPION)
+    d = engine.decide(passed, {v: mae["full"][v] for v in passed}, REVIEW_REQUIRED, CHAMPION_AT_STEP2)
     return {"candidates": cands, "comparator": comp, "dm": dm, "p": p, "holm": holm, "checks": checks,
             "passed": passed, "unevaluated": dict(STEP2_UNEVALUATED), "champion": d.champion,
             "conditional": d.conditional}
@@ -649,7 +652,12 @@ def main_backtest():
 
 FORECAST_DIR = evaluation.REPO / "forecasts" / "n2"
 # Set mechanically by the pre-registered promotion rule (evaluate(), docs/resultat/n2.md). B1 unless a model passes.
-CHAMPION = "B2"  # promoted 2026-11-23 by the registered rule after review R2 approved the TSMC guidance
+# B2 promoted 2026-11-23 by the registered rule after review R2 approved the TSMC guidance. B3 promoted 2026-11-24 by
+# the step-2 rule (evaluate_step2 against the fixed F-B10 comparator CHAMPION_AT_STEP2 = B2) after review R7
+# (docs/granskning/r7_b3_n2.md) and with Nvidia in the F-B3 group mean per the register entry 2026-11-24 "B3: Nvidia i
+# gruppmedlet för kvartalsintäkt": Holm-p 0.059 in {B3, DF}, MAE below B0/B1/B2 in both periods (docs/resultat/n2.md).
+# A decision taken is not changed by reruns.
+CHAMPION = "B3"
 
 
 def payload(fc: Forecast, table: pd.DataFrame, champion: str = CHAMPION, live_dir: Path | None = None) -> dict:

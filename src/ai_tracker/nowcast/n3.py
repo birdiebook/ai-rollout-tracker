@@ -119,6 +119,39 @@ def b2(info: engine.InfoSet, q: pd.Period, rec: quarterly.Record) -> None:
     rec.notes.update(b2_source="guidance", b2_guidance=float(guid[q]), b2_share=share, b2_share_quarter=str(L))
 
 
+# ------------------------------------------------------------------ B3 deviations (group "quarterly_revenue")
+
+B3_FROM = pd.Period("2017Q2", "Q-DEC")  # register 2026-11-24: only quarters reviewed by R5 (F-B14)
+
+
+def b3_deviations(table: pd.DataFrame) -> pd.DataFrame:
+    """Nvidia's deviations for the F-B3 group mean "quarterly_revenue" (b3.BUILDERS; register entry 2026-11-24
+    "B3: Nvidia i gruppmedlet för kvartalsintäkt", after review R7, finding R7-F1).
+
+    d_P = log(U_P / G_P), k = 1 (Nvidia's only position). G_P = `nvda_guid_rev_mid` for P as known at N3's origin
+    for P (fiscal quarter end + 14 days, F-B5): the guidance B2 for N3 uses. U_P = the first vintage of `rev_nvda`
+    (the guided quantity, total revenue), known from its own known_from. Only P >= 2017Q2. The outcome-known guard
+    is applied at the user's origin (b3.known). B2's data-center share only converts the guidance to N3's target and
+    plays no part in d. b3.ALL_POSITIONS puts these rows in the group mean at every position of the group."""
+    from ai_tracker.nowcast import b3  # local: b3 imports the builders by name
+
+    t = table[table["series"].isin([TOTAL, GUIDANCE])]
+    first = engine.first_vintages(t, TOTAL)
+    if first.empty or not (t["series"] == GUIDANCE).any():
+        return b3.empty()
+    guid_rows = t[t["series"] == GUIDANCE]
+    guidance = []
+    for q in first.index:
+        if q < B3_FROM:
+            continue
+        o = origin_for(q)
+        g = observations.as_of(GUIDANCE, o, guid_rows)
+        if q in g.index:
+            guidance.append((q, 1, o, float(g[q])))
+    outcomes = {str(q): (float(r.value), pd.Timestamp(r.known_from)) for q, r in first.iterrows()}
+    return b3.deviations("nvda", guidance, outcomes)
+
+
 SPEC = quarterly.Spec(
     nowcast="n3", label="N3", target=quarterly.Aggregate(TARGET), origin_for=origin_for,
     target_quarter=target_quarter, variants=VARIANTS, models=MODELS, family=FAMILY, review_required=REVIEW_REQUIRED,

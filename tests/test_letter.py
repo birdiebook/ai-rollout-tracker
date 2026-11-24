@@ -233,7 +233,8 @@ def test_nowcasts_new_forecast_and_new_outcome(env):
     outcome = ctx.table.loc[(ctx.table["series"] == "tsmc_revenue_m") & (ctx.table["period"] == "2026-09"), "value"]
     err = 100 * np.log(400.0 / float(outcome.iloc[0]))
     assert f"fel huvudmodell (B2) {L.n(err, 2, signed=True)}" in nc
-    assert "Huvudmodell: B2." in nc and "Utvärderade hittills: 1 av 1" in nc and "kan vara slump" in nc
+    # the current champion (B3 since step 2, after review R7); the file itself says B2
+    assert "Huvudmodell: B3." in nc and "Utvärderade hittills: 1 av 1" in nc and "kan vara slump" in nc
     assert "Nowcasts: 1 ny skarp prognos och 1 nytt utfall i oktober 2026." in text
 
 

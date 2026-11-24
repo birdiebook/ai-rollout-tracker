@@ -19,13 +19,16 @@ entry "C0 preciseras efter granskning R6", which adopts docs/granskning/r6_c0.md
 Fixed here where the text is silent (most conservative reading, docs/resultat/n1.md and n2.md):
 - A deviation exists only where B2 actually used guidance at o_{P,k} (B2 fell back to B1: no G, no d).
 - "Per position" also applies to the group mean: dbar_group at position k is formed from the group's deviations at
-  the same position k (TSMC's k = 1 is pooled with Nvidia's k = 1, its only position).
+  the same position k. Exception (register entry 2026-11-24 "B3: Nvidia i gruppmedlet för kvartalsintäkt", after
+  review R7, R7-F1): a company with a single position (ALL_POSITIONS, Nvidia) enters the group mean at every
+  position k with its k = 1 deviations, since TSMC's positions differ only by mid-quarter updates. Only Nvidia's
+  quarters from 2017Q2 (reviewed by R5) are built (n3.b3_deviations).
 - Leakage guard, applied at every origin: a deviation enters only if its outcome's known_from <= origin, and its
   guidance origin <= origin (implied, but checked).
 
 Pools: each nowcast builds the deviations of its own companies (n1.b3_deviations, n2.b3_deviations). A group mean
 needs every company of the group, so BUILDERS lists, per group, the functions that build its deviations from the
-observation table. N3's successor adds its Nvidia builder to "quarterly_revenue"; N2's pool then picks it up.
+observation table. N2's pool picks up Nvidia's builder (n3.b3_deviations) from "quarterly_revenue".
 """
 
 from __future__ import annotations
@@ -42,9 +45,14 @@ MIN_N = 4  # the company's own n_c must be >= MIN_N, else m = 0
 GROUPS = {"tsmc": "quarterly_revenue", "nvda": "quarterly_revenue", "meta": "fy_capex", "googl": "fy_capex"}
 # group -> "module:function" building that group's deviations from an observation table (see module docstring)
 BUILDERS = {
-    "quarterly_revenue": ["ai_tracker.nowcast.n2:b3_deviations"],  # N3 (Nvidia) adds its builder here
+    # Nvidia's builder added after review R7 (R7-F1; register 2026-11-24): F-B3's group covers every company with
+    # the same guided quantity and a known deviation
+    "quarterly_revenue": ["ai_tracker.nowcast.n2:b3_deviations", "ai_tracker.nowcast.n3:b3_deviations"],
     "fy_capex": ["ai_tracker.nowcast.n1:b3_deviations"],
 }
+# companies with one position per guided period: their k = 1 deviations enter the group mean at every position
+# (register 2026-11-24, R7-F1). Their own m is still estimated at k = 1 only.
+ALL_POSITIONS = {"nvda"}
 COLUMNS = ["company", "group", "period", "position", "guidance_origin", "guidance", "outcome", "outcome_known_from",
            "d"]
 
@@ -119,7 +127,9 @@ def known(pool: pd.DataFrame, origin) -> pd.DataFrame:
 def shift(pool: pd.DataFrame, company: str, position: int, origin) -> Shift:
     """m_{c,k} at `origin` (F-B1, F-B3) from the deviations known at the origin."""
     g = known(pool, origin)
-    g = g[(g["group"] == GROUPS[company]) & (g["position"] == int(position))]
+    g = g[g["group"] == GROUPS[company]]
+    single = g["company"].isin(ALL_POSITIONS)
+    g = g[(g["position"] == int(position)) | (single & (g["position"] == 1) & (g["company"] != company))]
     own = g.loc[g["company"] == company, "d"]
     n = int(len(own))
     means = g.groupby("company")["d"].mean()  # companies with >= 1 known deviation, the company itself included
