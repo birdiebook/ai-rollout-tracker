@@ -391,3 +391,13 @@ Johannes valde rekommendationerna:
   och Oracle saknar brutto per kvartal, så `ppe_gross_hyp4` finns inte.
 - **`dep_msft` är ingen ren avskrivningsserie.** Microsofts rad innehåller "other", och omklassificeringen 2026 räknade
   bara om kvartalen från 2024Q4. P2b och P3 bör använda `dep_ppe_*` där de räcker, och annars redovisa förbehållet.
+
+## 2026-11-24 – P2b: intäktskrav som avstämningar
+
+- Fem nya A5-avstämningar (`x_dep_rev`, `x_capcost_rev_r08`, `x_capcost_rev_r12`, `x_dep_capex`, `x_dep_rev_aws`),
+  registrerade före beräkningen. De räknas inte i något grenindex. Resultat: `docs/resultat/intaktskrav.md`.
+- **`dep_hyp4`, inte `dep_ppe_hyp4`,** valt på täckning (15 mot 9 kvartal). Den registrerade känsligheten visar att
+  valet spelar roll: takten 2026Q3 är +12,2 med `dep_hyp4` och +19,4 med `dep_ppe_hyp4`.
+- **Avkastningskravet** är ett registrerat intervall, 8–12 % på nettot av anläggningstillgångarna, och ingen skattning.
+- **Nämnaren** är totala intäkter, eftersom Meta saknar molnsegment. Bara AWS har en kvot på segmentnivå.
+
