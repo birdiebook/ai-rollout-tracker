@@ -65,7 +65,9 @@ LEADS_FALLBACK = {
 }
 # docs/mattregister.md, "2026-11-23 – A5" (used if the table cannot be parsed)
 RATIO_LEADS_FALLBACK = {"x_capex_cloud": ["L3", "L5"], "x_rpo_cover": ["L4", "L5"], "x_nvda_capex": ["L5", "L6"],
-                        "x_debt_capex": ["L5"], "x_capex_ocf": ["L5"]}
+                        "x_debt_capex": ["L5"], "x_capex_ocf": ["L5"],
+                        "x_dep_rev": ["L3", "L5"], "x_capcost_rev_r08": ["L3", "L5"],
+                        "x_capcost_rev_r12": ["L3", "L5"], "x_dep_capex": ["L5"], "x_dep_rev_aws": ["L3", "L5"]}
 
 
 class NoSnapshot(L.NoSnapshot):

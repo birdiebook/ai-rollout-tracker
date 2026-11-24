@@ -8,8 +8,17 @@ Derived quarterly ratios of catalog series, read from the observation table (not
     x_debt_capex   sum of debt_issued_hyp4 / sum of capex_hyp4, the 4 latest quarters             L5
     x_capex_ocf    capex_hyp4 / ocf_hyp4 x 100 (the existing capex_ocf_hyp4)                      L5
 
+Revenue requirement (register 2026-11-24 "A5: intäktskrav", track P2b), all x 100 and over the 4 latest quarters:
+
+    x_dep_rev          dep_hyp4 / (rev_msft + rev_googl + rev_amzn + rev_meta)                     L3-L5
+    x_capcost_rev_r08  (dep_hyp4 + 0.08 x ppe_net_hyp4 at the period's quarter end) / the same revenue L3-L5
+    x_capcost_rev_r12  as above with 0.12 (r is a registered assumption, not an estimate)          L3-L5
+    x_dep_capex        dep_hyp4 / capex_hyp4                                                       L5
+    x_dep_rev_aws      dep_aws / rev_aws                                                           L3-L5
+
 Vintages (leakage-critical). For a period p the inputs are (series, quarter) pairs: p itself for a same-quarter
-term, p-3..p for a 4-quarter sum. A stock (RPO) is the balance at p and is never summed. At every known_from d of
+term, p-3..p for a 4-quarter sum. A stock (RPO, net PP&E) is the balance at p and is never summed; a term may
+carry a fixed weight (the required return r on net PP&E). At every known_from d of
 any input, each input takes its latest vintage with known_from <= d; a version exists only when every input has
 one, and it is dated d (= the latest component used). A rolling sum therefore exists only once all four quarters
 are known on that date. A new row is emitted when the value changes. Rows take source "backfill" if any input
@@ -28,6 +37,7 @@ import pandas as pd
 
 from ai_tracker.catalog import Spec
 from ai_tracker.series import sec as _sec
+from ai_tracker.series import sec_avskrivningar as _dep
 from ai_tracker.series import sec_finansiering as _fin
 from ai_tracker.series import sec_rpo as _rpo
 from ai_tracker.series import sec_segments as _seg
@@ -41,6 +51,7 @@ LAG_DAYS = 25  # as the SEC components; known_from always comes from the compone
 class Term:
     series: str
     window: int = 1  # 1 = the period itself (also a stock: balance at the period end); 4 = sum of p-3..p
+    weight: float = 1.0  # fixed coefficient of every pair of the term (registered; e.g. r on net PP&E)
 
 
 @dataclass(frozen=True)
@@ -91,18 +102,70 @@ RECONS = [
           "med årsförändring i log, inte i procentenheter.",
           scale=100.0, unit="procent av OCF"),
 ]
+
+# ------------------------------------------------------------------ revenue requirement (register 2026-11-24, P2b)
+HYP4_REV4 = tuple(Term(f"rev_{c}", 4) for c in ("msft", "googl", "amzn", "meta"))
+DEP4 = Term("dep_hyp4", 4)
+REQUIRED_RETURNS = {"r08": 0.08, "r12": 0.12}  # registered range for r, an assumption, not an estimate
+
+
+def _sv(x: float) -> str:
+    return f"{x:.2f}".replace(".", ",")
+
+
+REQ_NOTE = ("Avskrivningar enligt kassaflödesanalysen (dep_hyp4, MSFT+GOOGL+AMZN+META) med bolagens olika "
+            "definitioner: Microsofts rad innehåller 'other' (kvartal till och med 2024Q3 på den gamla basen), Amazons "
+            "aktiverat innehåll och operationella leasingtillgångar och Metas amortering på immateriella tillgångar. Alla "
+            "anläggningstillgångar, inte bara AI-servrar; finansiell leasing ingår i nettot. Totala intäkter, även "
+            "verksamhet utan AI.")
+RECONS += [
+    Recon("x_dep_rev", "Avskrivningar i procent av intäkterna, de fyra senaste kvartalen",
+          (DEP4,), HYP4_REV4, "L3–L5",
+          "Hur stor del av intäkterna går till avskrivningar, och växer andelen?",
+          "Summa dep_hyp4 / summa rev_msft + rev_googl + rev_amzn + rev_meta över kvartalet och de tre föregående, "
+          "× 100. Totala intäkter, eftersom Meta saknar molnintäkter. " + REQ_NOTE,
+          scale=100.0, unit="procent av intäkterna"),
+    *[Recon(f"x_capcost_rev_{tag}",
+            f"Kapitalkostnad (avskrivningar + {r:.0%} på nettot av anläggningstillgångar) i procent av intäkterna"
+            .replace("%", " %"),
+            (DEP4, Term("ppe_net_hyp4", 1, weight=r)), HYP4_REV4, "L3–L5",
+            "Hur stor del av intäkterna krävs för att täcka avskrivningar och ett avkastningskrav på kapitalet?",
+            f"(Summa dep_hyp4 över fyra kvartal + {_sv(r)} × ppe_net_hyp4 vid periodens kvartalsslut) / summa "
+            "rev_msft + rev_googl + rev_amzn + rev_meta över samma fyra kvartal, × 100. Avkastningskravet "
+            f"r = {_sv(r)} är ett registrerat antagande (intervallet 0,08–0,12), ingen skattning. Bara kapitalet: "
+            "drift, el, personal och skatt ingår inte. ppe_net_hyp4 är en balans och summeras inte. " + REQ_NOTE,
+            scale=100.0, unit="procent av intäkterna")
+      for tag, r in REQUIRED_RETURNS.items()],
+    Recon("x_dep_capex", "Avskrivningar i procent av capex, de fyra senaste kvartalen",
+          (DEP4,), (Term("capex_hyp4", 4),), "L5",
+          "Hur långt ligger avskrivningarna efter investeringarna?",
+          "Summa dep_hyp4 / summa capex_hyp4 över kvartalet och de tre föregående, × 100. Capex är köp av "
+          "anläggningstillgångar i kassaflödet (utan finansiell leasing). " + REQ_NOTE,
+          scale=100.0, unit="procent av capex"),
+    Recon("x_dep_rev_aws", "AWS: avskrivningar i procent av intäkterna, de fyra senaste kvartalen",
+          (Term("dep_aws", 4),), (Term("rev_aws", 4),), "L3–L5",
+          "Hur stor del av AWS intäkter går till avskrivningar, och växer andelen?",
+          "Summa dep_aws / summa rev_aws över kvartalet och de tre föregående, × 100. Segmentets avskrivningar per "
+          "kvartal finns från 2024Q1, så serien är kort. Alla segmentets anläggningstillgångar, inte bara AI-servrar.",
+          scale=100.0, unit="procent av intäkterna"),
+]
 BY_KEY = {r.key: r for r in RECONS}
 KEYS = [r.key for r in RECONS]
 
-
 def _component_specs() -> dict[str, Spec]:
-    return {s.key: s for mod in (_sec, _seg, _rpo, _fin) for s in mod.SPECS}
+    return {s.key: s for mod in (_sec, _seg, _rpo, _fin, _dep) for s in mod.SPECS}
 
 
 def inputs_for(recon: Recon, period: pd.Period) -> tuple[list[tuple[str, str]], list[tuple[str, str]]]:
     """(series, period) pairs of the numerator and the denominator for `period`."""
+    num, den = weighted_inputs(recon, period)
+    return [k for k, _ in num], [k for k, _ in den]
+
+
+def weighted_inputs(recon: Recon, period: pd.Period):
+    """((series, period), weight) pairs of the numerator and the denominator for `period`."""
     def pairs(terms):
-        return [(t.series, str(period - k)) for t in terms for k in range(t.window)]
+        return [((t.series, str(period - k)), t.weight) for t in terms for k in range(t.window)]
     return pairs(recon.num), pairs(recon.den)
 
 
@@ -128,8 +191,8 @@ def derive(recon: Recon, rows: pd.DataFrame) -> pd.DataFrame:
     periods = sorted({p for (s, p) in vers if s == first})
     out = []
     for p in periods:
-        num, den = inputs_for(recon, pd.Period(p, freq="Q-DEC"))
-        need = num + den
+        num, den = weighted_inputs(recon, pd.Period(p, freq="Q-DEC"))
+        need = list(dict.fromkeys(k for k, _ in num + den))
         if any(k not in vers for k in need):
             continue
         dates = np.unique(np.concatenate([vers[k][0] for k in need]))
@@ -145,7 +208,7 @@ def derive(recon: Recon, rows: pd.DataFrame) -> pd.DataFrame:
                 vals[k], backfill = v[i], backfill or bool(bf[i])
             if not ok:
                 continue
-            n, m = sum(vals[k] for k in num), sum(vals[k] for k in den)
+            n, m = sum(w * vals[k] for k, w in num), sum(w * vals[k] for k, w in den)
             if not np.isfinite(n) or not np.isfinite(m) or m == 0:
                 continue
             value = recon.scale * n / m

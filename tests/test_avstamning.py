@@ -111,6 +111,63 @@ def test_rpo_is_a_balance_and_is_not_summed_capex_is_a_four_quarter_flow():
     assert got(d) == {("2025Q1", "2025-05-03"): 500.0 / 100.0}
 
 
+Q4 = ["2024Q2", "2024Q3", "2024Q4", "2025Q1"]
+FILED = ["2024-08-01", "2024-11-01", "2025-02-01", "2025-05-01"]
+
+
+def _revenue(values=(25.0, 25.0, 25.0, 25.0), skip=None):
+    """rev_<co> for the four companies, 2024Q2-2025Q1; company c files c days after FILED."""
+    out = []
+    for i, c in enumerate(("msft", "googl", "amzn", "meta")):
+        q = [(p, v, pd.Timestamp(f) + pd.Timedelta(days=i)) for p, v, f in zip(Q4, values, FILED)
+             if (c, p) != skip]
+        out.append(rows(f"rev_{c}", [x[0] for x in q], [x[1] for x in q], [x[2] for x in q]))
+    return pd.concat(out, ignore_index=True)
+
+
+def test_capital_cost_adds_r_times_the_net_ppe_balance_at_the_period_end_only():
+    dep = rows("dep_hyp4", Q4, [10.0, 10.0, 10.0, 10.0], FILED)
+    ppe = rows("ppe_net_hyp4", Q4, [900.0, 950.0, 1000.0, 1100.0], FILED)
+    ppe_rev = rows("ppe_net_hyp4", ["2024Q4"], [5000.0], ["2025-06-01"])  # restated earlier balance
+    t = pd.concat([dep, ppe, ppe_rev, _revenue()], ignore_index=True)
+    # revenue 4 quarters x 4 companies x 25 = 400; the last component (meta 2025Q1) files 2025-05-04
+    for key, r in (("x_capcost_rev_r08", 0.08), ("x_capcost_rev_r12", 0.12)):
+        d = A.derive(A.BY_KEY[key], t)
+        assert got(d) == {("2025Q1", "2025-05-04"): 100 * (40.0 + r * 1100.0) / 400.0}
+    assert got(A.derive(A.BY_KEY["x_dep_rev"], t)) == {("2025Q1", "2025-05-04"): 10.0}
+    num, den = A.weighted_inputs(A.BY_KEY["x_capcost_rev_r08"], pd.Period("2025Q1", "Q"))
+    assert num == [(("dep_hyp4", p), 1.0) for p in reversed(Q4)] + [(("ppe_net_hyp4", "2025Q1"), 0.08)]
+    assert len(den) == 16 and {w for _, w in den} == {1.0}
+
+
+def test_revenue_requirement_needs_every_company_and_quarter_and_follows_revisions():
+    dep = rows("dep_hyp4", Q4, [10.0, 10.0, 10.0, 10.0], FILED)
+    ppe = rows("ppe_net_hyp4", Q4, [1000.0] * 4, FILED)
+    rec = A.BY_KEY["x_capcost_rev_r12"]
+    # Meta's 2024Q3 revenue is missing: no version at all
+    assert A.derive(rec, pd.concat([dep, ppe, _revenue(skip=("meta", "2024Q3"))])).empty
+    # a revised oldest quarter of depreciation and a later ppe vintage of the period itself are new versions
+    late_dep = rows("dep_hyp4", ["2024Q2"], [14.0], ["2025-07-30"])
+    late_ppe = rows("ppe_net_hyp4", ["2025Q1"], [1500.0], ["2025-08-01"])
+    d = A.derive(rec, pd.concat([dep, ppe, late_dep, late_ppe, _revenue()]))
+    assert got(d) == {("2025Q1", "2025-05-04"): 100 * (40 + 120) / 400,
+                      ("2025Q1", "2025-07-30"): 100 * (44 + 120) / 400,
+                      ("2025Q1", "2025-08-01"): 100 * (44 + 180) / 400}
+    assert list(d["source"]) == ["derived"] * 3
+
+
+def test_capital_cost_is_the_depreciation_ratio_plus_r_times_ppe_over_revenue():
+    t = world()
+    dep = A.derive(A.BY_KEY["x_dep_rev"], t)
+    r08, r12 = (A.derive(A.BY_KEY[k], t) for k in ("x_capcost_rev_r08", "x_capcost_rev_r12"))
+    assert len(dep) and list(r08["known_from"]) == list(r12["known_from"])
+    for when in pd.to_datetime(["2023-06-30", "2025-12-31"]):
+        a, b, c = (observations.as_of(k, when, _table(df, k)) for k, df in
+                   (("x_dep_rev", dep), ("x_capcost_rev_r08", r08), ("x_capcost_rev_r12", r12)))
+        # linear in r: (c - a) / 0.12 == (b - a) / 0.08 = 100 x ppe / revenue, period by period
+        assert np.allclose((c - a) / 0.12, (b - a) / 0.08) and (b > a).all() and (c > b).all()
+
+
 def test_nvda_uses_the_same_calendar_quarter_label_as_its_component():
     capex = rows("capex_hyp4", ["2025Q3"], [100.0], ["2025-10-30"])
     nvda = rows("rev_nvda_datacenter", ["2025Q3", "2025Q2"], [50.0, 40.0], ["2025-11-19", "2025-08-27"])
@@ -178,13 +235,39 @@ def test_specs_are_derived_catalog_series_publishable_only_with_their_components
     assert any("unknown components" in e for e in catalog.validate([bad]))
 
 
-def test_rpo_capex_and_debt_terms_match_the_register():
+def _register_entry(heading: str) -> str:
     text = R.REGISTER_PATH.read_text(encoding="utf-8")
-    entry = text.split("### 2026-11-23 – A5")[1].split("\n### ")[0]
+    return text.split("### " + heading)[1].split("\n### ")[0]
+
+
+def test_rpo_capex_and_debt_terms_match_the_register():
+    entries = _register_entry("2026-11-23 – A5") + _register_entry("2026-11-24 – A5: intäktskrav")
     for key in A.KEYS:
-        assert f"`{key}`" in entry
+        assert f"`{key}`" in entries
     assert A.BY_KEY["x_debt_capex"].num == (A.Term("debt_issued_hyp4", 4),)
     assert A.BY_KEY["x_capex_cloud"].den == A.CLOUD and A.BY_KEY["x_capex_ocf"].scale == 100.0
+
+
+def test_revenue_requirement_terms_match_the_register():
+    entry = _register_entry("2026-11-24 – A5: intäktskrav")
+    new = ["x_dep_rev", "x_capcost_rev_r08", "x_capcost_rev_r12", "x_dep_capex", "x_dep_rev_aws"]
+    assert R.RECONCILIATIONS[-5:] == new and A.KEYS[-5:] == new
+    for key in new:
+        assert f"`{key}`" in entry
+    # registered choice from tag coverage: dep_hyp4 (not dep_ppe_hyp4); same four companies in the denominator
+    from ai_tracker.series import sec_avskrivningar as P1
+
+    assert A.DEP4 == A.Term("dep_hyp4", 4)
+    assert [t.series for t in A.HYP4_REV4] == [f"rev_{c}" for c in P1.HYP4] and {t.window for t in A.HYP4_REV4} == {4}
+    for key, r in (("x_capcost_rev_r08", 0.08), ("x_capcost_rev_r12", 0.12)):
+        rec = A.BY_KEY[key]
+        assert rec.num == (A.DEP4, A.Term("ppe_net_hyp4", 1, weight=r)) and rec.den == A.HYP4_REV4
+        assert f"{r:.2f}".replace(".", ",") in entry
+    assert A.BY_KEY["x_dep_capex"].num == (A.DEP4,) and A.BY_KEY["x_dep_capex"].den == (A.Term("capex_hyp4", 4),)
+    assert A.BY_KEY["x_dep_rev_aws"].num == (A.Term("dep_aws", 4),)
+    assert A.BY_KEY["x_dep_rev_aws"].den == (A.Term("rev_aws", 4),)
+    assert {A.BY_KEY[k].scale for k in new} == {100.0}
+    assert [A.BY_KEY[k].lead for k in new] == ["L3–L5", "L3–L5", "L3–L5", "L5", "L3–L5"]
 
 
 def test_refresh_runs_derived_series_after_their_components(monkeypatch):
