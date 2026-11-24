@@ -379,3 +379,13 @@ Johannes valde rekommendationerna:
   overifierat Mistral-pris. G2 har kvar en räknad kärnserie. Rättningsspåret X5 tar R-1–R-8. Viktigast är ett
   läckage i `arena.py`: omladdade tavlor (2026-07-07) var daterade till första commit, och det rör även G1:s
   `g1_arena_text_top`. B från 2024-09 prövas först efter rättningen och en ny granskning.
+
+## 2026-11-24 – M2: serverimport per land, årsfil nu och HS-serier bakom Census-nyckeln
+
+- Census har inga nyckelfria månadsdata per land och vara. Nyckelfritt finns årssummor per land och end-use-kod
+  (2016–2025). Spåret hämtar dem som 21 katalogserier i G6 (datorer, datordelar och halvledare från Taiwan, Mexiko,
+  Vietnam, Malaysia, Thailand, Kina och hela världen), daterade 10 juli efter årsrevisionen i juni.
+- Månadsserierna per HS-kod (8471, 8471.50, 8471.80, 8473.30, 8542) och land är byggda mot Census API men väntar på
+  `CENSUS_API_KEY`. Utan nyckeln hoppas de över och fäller inte veckojobbet (`ai_tracker.keyed`).
+- Inga av serierna är kärnserier, och inga mått är räknade. Census API:s villkor kräver en notis på hemsidan när
+  HS-serierna visas. Detaljer: [kallor/census_hs.md](kallor/census_hs.md).

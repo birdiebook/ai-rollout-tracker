@@ -223,7 +223,7 @@ lagras som revision, och det skulle bara gå för en serie för 0–9 anställda
 | Vad | Orsak | Vad som löser det |
 |---|---|---|
 | ~~G.17 från primärkälla~~ | löst i spår I7: `www.federalreserve.gov` är öppen | [fed_g17.md](fed_g17.md) |
-| HS 8471/8473/8542, M3 från primärkälla | `api.census.gov` kräver API-nyckel (gratis registrering) | Census API-nyckel (registreras inte av agenten) |
+| HS 8471/8473/8542, M3 från primärkälla | `api.census.gov` kräver API-nyckel (gratis registrering) | Census API-nyckel (registreras inte av agenten). HS-serierna är byggda bakom nyckeln i spår M2, se [census_hs.md](census_hs.md) |
 | BEA-vintages från primärkälla | BEA API kräver UserID | BEA-nyckel, eller ALFRED-vintages efter beslut |
 | `www.bls.gov`, `download.bls.gov` | HTTP 403 (behövdes inte i spåret) | – |
 
