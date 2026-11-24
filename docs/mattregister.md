@@ -541,3 +541,10 @@ För D2 räknas n i en horisontgrupp som antalet **olika prognosdagar**, inte an
 prognosdag är inte oberoende). Holdouten har 6 prognosdagar, så n < 8 i alla grupper. Enligt F-E6 görs då inget
 holdout-test, och V_kedja går in som skugga i det skarpa registret. Utvecklingen (`docs/resultat/d2_utveckling.md`) hade
 1–5 rader för V_kedja och avgör ingenting.
+
+### 2026-11-24 – D2 i skarp drift: huvudmodell per horisontgrupp
+
+D2 skrivs som skugga från 2027-01-20 (`forecasts/d2/<kvartal>.json`). Huvudmodellen per horisontgrupp är den baslinje
+(B0, B1 eller B2) som hade lägst medel-MAE över gruppens horisonter i utvecklingsperioden: capex B2 (h1–2, h3–4) och
+B1 (h5–8), moln B1 i alla grupper. Valet för capex h3–4 är knappt (19,2 mot 19,8). V_kedja är skugga överallt.
+Holdout-prognosdagarna (2025-07-01–2027-01-19) körs aldrig.
