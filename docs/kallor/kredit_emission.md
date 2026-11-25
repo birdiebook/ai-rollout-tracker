@@ -1,6 +1,6 @@
 # Källa: spread vid emission för AI-tunga emittenter (spår KR1)
 
-Spår KR1, körning 14, 2026-11-25. Kreditpriset för de bolag som bär AI-utbyggnaden, som spreaden mot statsobligationen
+Spår KR1, körning 14, 2026-11-25. Byggt och kontrollerat mot riktiga data samma dag. Kreditpriset för de bolag som bär AI-utbyggnaden, som spreaden mot statsobligationen
 när obligationen emitteras. Projektet har redan volymerna (`debt_issued_<bolag>`, `debt_repaid_<bolag>`, leasing,
 [finansiering.md](finansiering.md)), men inget pris. Spreaden vid emission är ett pris, och den står i de offentliga
 villkorsbilagorna (pricing term sheets) på EDGAR. Bara extraktion och katalogserier. Inga takter och inga jämförelser.
@@ -13,6 +13,20 @@ värden. Agenten känner till de stora emissionerna 2020–2025 ur allmän rappo
 2022–2025, Alphabet 2025) och villkorsbilagornas vanliga form, men hade inte läst något dokument i korpusen. Tolkningar
 som behövs under kodningen skrivs i ett eget avsnitt och skrivs inte in i reglerna i efterhand. Parsern skrivs efter
 låsningen, mot dokumenten. En ändring av parsern är ingen regeländring, men den syns i git.
+
+Kod: `src/ai_tracker/sources/credit_issuance_corpus.py` (korpus, radlista, plats och hash),
+`src/ai_tracker/sources/credit_terms.py` (parsern), `src/ai_tracker/sources/credit_issuance.py` (CSV, kontroll vid
+inläsning, serier, avstämning), `src/ai_tracker/series/credit_issuance.py` (katalogposter),
+`src/ai_tracker/credit_issuance_check.py` (självkontroll). Data: `curated/credit_issuance.csv` (committad, bara siffror
+och referenser). Tester: `tests/test_credit_issuance.py` (syntetiska villkorsbilagor, inget nät). Ordningen i git:
+reglerna och registerposten (2bac788), koden utan värden (675b2de), parserrättningar och självkontrollen (e5a6ad6),
+därefter de kodade värdena (f41fe76).
+
+    python -m ai_tracker.sources.credit_issuance_corpus     # hämtar korpusen, data/raw/credit_issuance_corpus/
+    python -m ai_tracker.sources.credit_issuance build      # tolkar villkorsbilagorna, skriver CSV:n och blocken
+    python -m ai_tracker.credit_issuance_check              # självkontroll mot nyhämtade dokument
+    python -m ai_tracker.credit_issuance_check --covers     # varje erbjudande mot det slutliga prospekttillägget
+    python -m ai_tracker.sources.credit_issuance coverage   # täckningsgrad mot debt_issued_<bolag>
 
 ## Kodningsregler (låsta 2026-11-25, före kodningen)
 
@@ -159,3 +173,142 @@ Parsern (en tranche per tabell och flera tranchar som kolumner), belopp i dollar
 vägningen, luckregeln, rörlig ränta och euro (med i volymen respektive utanför, utanför spreaden), dateringen (sen
 inlämning ger en ny version, ett kvartal som inte är slut ger inget värde), CSV-kontrollen och självkontrollen med
 falska dokument.
+
+## Tolkningar under kodningen (inte en del av de låsta reglerna)
+
+Följande fall täcktes inte uttryckligen av reglerna. Valet står här så att granskningen kan pröva det. Inget av dem
+ändrar en spreadserie, utom punkt 6, som ändrar ett belopp.
+
+1. **Tre layouter.** Amazon, Alphabet, Meta och Microsoft har en gemensam tabell där varje fält räknar upp trancherna
+   med namn ("2030 Notes: …"). Oracle har ett avsnitt per tranche. En sedel med rörlig ränta står ofta i ett eget
+   avsnitt i en annars gemensam tabell. Kolumner per tranche förekom inte, men parsern hanterar dem.
+2. **`col #j` i en gemensam tabell** är tranchens nummer bland namnen (från 0), inte en tabellkolumn. Blocket är
+   tabellen från den första till den sista rad som någon tranche använder. Ett avsnitt har eget block, och blocket
+   omfattar också raderna med prisdag och likviddag när de står utanför avsnittet.
+3. **Kanadensiska dollar** anger två spreadar, mot Government of Canada-kurvan och mot referensobligationen. Kolumnen
+   `benchmark` och dess avkastning gäller obligationen, så spreaden mot obligationen kodas (till exempel 51,6 bp i
+   stället för 50). Det gäller 13 rader i CAD, som inte ingår i någon serie.
+4. **Euro** anger spread både mot mid-swaps och mot den tyska statsobligationen. Mid-swaps kodas
+   (`benchmark_type` = `mid_swaps`, utan referensens avkastning). Pund anger spread mot en gilt, och yen en spread utan
+   namngiven referens (`other`). Ingen av dem ingår i någon serie.
+5. **Rörlig ränta:** `spread_bp` är marginalen över SOFR eller EURIBOR som den står ("plus 0.52% per annum" = 52).
+   Raderna ingår i volymen (USD) men inte i spreaden.
+6. **Oracles 3.950% Notes due 2051 (2021)** står som "$3,250,000,0000" i villkorsbilagan, alltså en nolla för mycket.
+   Det slutliga prospekttillägget (0001193125-21-091259, inlämnat samma dag) anger $3,250,000,000 och totalen
+   $15,000,000,000. Raden är kodad för hand med 3 250 (`method` = `manual`). known_from påverkas inte.
+7. **Omregistrerad FWP.** Alphabets FWP 2020-08-04 är samma villkorsbilaga som den 2020-08-03 ("re-filed solely
+   for…"). Den tidigare räknas, och den senare hoppas över.
+8. **Aktier.** Tre "Pricing Term Sheet" gäller aktier och obligatoriskt konvertibla preferensaktier (Oracle
+   2026-02-03, Alphabet 2026-06-03, Meta 2026-10-27). De kodas inte (regeln "Inte kodat").
+9. **Alla erbjudanden hade en FWP.** Därför är alla 39 källor FWP:er, och de slutliga prospekttilläggen används bara
+   i kontrollen (`--covers`).
+
+## Resultat
+
+### Korpus och rader
+
+- **Korpus:** 146 dokument från 2020-01-01 till 2026-11-25: 47 FWP, 43 424B2 och 56 424B5. Av FWP:erna har 39
+  slutliga villkor för obligationer, en är en omregistrering av en av dem (tolkning 7) och sju gäller annat
+  (pressmeddelanden och aktier, tolkning 8). Av prospekttilläggen är 47 preliminära och 52 slutliga (obligationer eller
+  aktier). Varje obligationserbjudande hade en FWP, och vart och ett har ett slutligt prospekttillägg (`--covers`).
+- **Rader:** 239 tranchar ur 39 villkorsbilagor. 238 med `method` = `parser` och en `manual` (tolkning 6).
+
+| Bolag | Dokument | Tranchar | USD fast ränta | USD rörlig | Annan valuta |
+|---|---|---|---|---|---|
+| Microsoft | 1 | 10 | 8 | 2 | – |
+| Alphabet | 13 | 79 | 32 | 3 | 44 (EUR 24, CAD 8, GBP 5, JPY 7) |
+| Amazon | 10 | 68 | 48 | 3 | 17 (EUR 8, CAD 5, GBP 4) |
+| Meta | 6 | 33 | 27 | – | 6 (EUR) |
+| Oracle | 9 | 49 | 47 | 2 | – |
+| CoreWeave | 0 | 0 | – | – | – |
+
+- 162 tranchar ingår i spreadserierna (USD, fast ränta, statsobligation som referens). 52 av dem har löptid 7–12 år.
+- **Annan valuta** (i miljoner av valutan, ingår i ingen serie): Alphabet 2025 EUR 13 250; 2026 EUR 15 000, CAD
+  14 500, GBP 5 500, JPY 576 500. Amazon 2026 EUR 14 500, CAD 14 000, GBP 4 250. Meta 2026 EUR 9 000.
+
+### Självkontroll
+
+Körd 2026-11-25 mot nyhämtade dokument (`credit_issuance_check`, alla rader): 239 kontrollerade, 0 fel, 0 flyttade,
+1 manuell. Blocket har lagrad hash, talen står i blocket, parsern ger samma värden, datumen stämmer med EDGAR, och
+avkastningen är referensens avkastning plus spreaden inom 1 bp för alla rader där alla tre står. Den manuella raden
+har beloppet utanför blocket, som noten säger.
+
+Kontrollen mot de slutliga prospekttilläggen (`--covers`): alla 39 erbjudanden har samma tranchar (valuta, belopp,
+kupong eller rörlig ränta, förfalloår) som omslaget på det slutliga 424B2 eller 424B5. Det är ett oberoende dokument,
+så kontrollen prövar också villkorsbilagan själv (den hittade nollan i tolkning 6).
+
+Kontrollen prövar inte semantiken: att rätt dokument är källan, valuta, referens och räntetyp. Det är för den
+oberoende granskningen.
+
+### Täckning mot XBRL (`debt_issued_<bolag>`)
+
+Belopp i USD-tranchar efter likviddag i bolagets räkenskapskvartal, mot `debt_issued` (senaste versionen), MUSD.
+Andel = villkorsbilagor / XBRL. 2026 har tre kvartal i XBRL. Det som ännu inte finns i XBRL (2026Q4) står i kolumnen
+"senare".
+
+| Bolag | År | Villkorsbilagor | XBRL | Andel | Senare | Skillnaden |
+|---|---|---|---|---|---|---|
+| Microsoft | 2023 | 0 | 17 846 | 0 | – | ingen registrerad obligation; taggen omfattar upplåning med löptid över tre månader (troligen företagscertifikat, ej verifierat) |
+| Microsoft | 2024 | 0 | 6 549 | 0 | – | som 2023 |
+| Microsoft | 2026 | 0 | 0 | – | 25 000 | emissionen 2026-10-29 kommer i 10-Q för 2026Q4 |
+| Alphabet | 2020 | 10 000 | 11 761 | 0,85 | – | annan upplåning i taggen (finansiering.md) |
+| Alphabet | 2021–2024 | 0 | 20 199 / 52 872 / 10 790 / 13 589 | 0 | – | ingen obligation; annan upplåning |
+| Alphabet | 2025 | 22 500 | 64 564 | 0,35 | – | euro (13 250 EUR) och annan upplåning |
+| Alphabet | 2026 | 45 000 | 85 222 | 0,53 | – | EUR, CAD, GBP och JPY ingår inte |
+| Amazon | 2020 / 2021 / 2022 | 10 000 / 18 500 / 21 000 | 10 525 / 19 003 / 21 166 | 0,95 / 0,97 / 0,99 | – | likvid mot nominellt och annan långfristig upplåning |
+| Amazon | 2025 | 15 000 | 15 673 | 0,96 | – | som ovan |
+| Amazon | 2026 | 62 000 | 115 100 | 0,54 | – | EUR, CAD och GBP ingår inte, och annan upplåning |
+| Meta | 2022 | 0 | 9 921 | 0 | – | obligationerna i augusti 2022 var 144A med registreringsrätt; utbytet registrerades 2022-11-29 (424B3, utanför korpusen) |
+| Meta | 2023 / 2024 / 2025 | 8 500 / 10 500 / 30 000 | 8 455 / 10 432 / 29 906 | 1,01 / 1,01 / 1,00 | – | likvid efter rabatt |
+| Meta | 2026 | 25 000 | 24 910 | 1,00 | 15 000 | november 2026 i 2026Q4 |
+| Oracle | 2020 / 2021 | 20 000 / 15 000 | 19 888 / 14 934 | 1,01 / 1,00 | – | likvid efter rabatt |
+| Oracle | 2022 | 7 000 | 28 280 | 0,25 | – | troligen terminslån för köpet av Cerner (ej verifierat) |
+| Oracle | 2023 | 5 250 | 5 214 | 1,01 | – | |
+| Oracle | 2024 | 6 250 | 11 837 | 0,53 | – | annan upplåning (ej verifierat) |
+| Oracle | 2025 | 25 750 | 25 591 | 1,01 | – | |
+| Oracle | 2026 | 25 000 | 28 213 | 0,89 | 10 000 | annan upplåning; november 2026 i Oracles kvartal sep–nov |
+| CoreWeave | 2024–2026 | 0 | 7 018 / 11 820 / 27 048 | 0 | – | lån och 144A-obligationer (se nedan) |
+
+Där bolaget bara har registrerade obligationer stämmer det: Meta 2023–2025 och Oracle 2020, 2021, 2023 och 2025 ligger
+på 1,00–1,01, Amazon på 0,95–0,99. Andelen över 1 är rabatt och kostnader (likviden är lägre än det nominella
+beloppet).
+
+### Det som inte syns
+
+- **CoreWeave** har inga registrerade obligationer. Obligationerna 2030 och 2031 (maj och juli 2025) erbjöds enligt
+  Rule 144A och Regulation S (8-K 2025-05-19, 0001193125-25-122115, och 2025-07-21, 0001193125-25-161520, kontrollerat
+  i texten). Den enda 424B5:an (2026-09-17) gäller aktier. CoreWeaves upplåning syns bara som volym (`debt_issued_crwv`).
+- **Meta 2022** (144A, se tabellen) och Metas finansiering av Hyperion 2025 (SPV, utanför balansräkningen) finns inte
+  i korpusen.
+- **Microsoft** har en enda registrerad emission sedan 2020 (2026-10-29, 25 000 MUSD). Serien `issuance_msft_q` får sin
+  första rad 2027-01-01 och står i `KNOWN_STALE` till dess. Microsoft får ingen egen spreadserie (ett kvartal).
+
+### Serier (hämtade 2026-11-25)
+
+| Serie | Rader | Kvartal |
+|---|---|---|
+| `issuance_googl_q` | 5 | 2020Q3–2026Q3 |
+| `issuance_amzn_q` | 7 | 2020Q2–2026Q3 |
+| `issuance_meta_q` | 4 | 2023Q2–2026Q2 |
+| `issuance_orcl_q` | 8 | 2020Q1–2026Q1 |
+| `issuance_msft_q` | 0 | första kvartalet 2026Q4, känt 2027-01-01 |
+| `spread_issue_ai_q` | 17 | 2020Q1–2026Q3 |
+| `spread_issue_ai_7_12y_q` | 17 | 2020Q1–2026Q3 |
+| `spread_issue_googl_q`, `_amzn_q`, `_meta_q`, `_orcl_q` | 5, 7, 4, 8 | som volymerna |
+
+Kvartalet 2026Q4 har tranchar från Meta, Microsoft och Oracle och blir känt 2027-01-01. Klass för kommersiell
+användning: `ja` för alla elva (den kurerade regeln, alla rader på sec.gov, och SEC:s villkor). Ingen ny regel behövdes
+i `licenses.py`. Alla har `publish=False`.
+
+### Kända begränsningar
+
+- **Den poolade spreaden är mest en emittent per kvartal.** 12 av 17 kvartal har en enda emittent, och Oracle
+  (BBB-betyg 2025–2026) ligger långt över Alphabet och Microsoft (AA+ och AAA). Den poolade serien visar därför till
+  stor del vem som kom till marknaden. Serierna per emittent är det renare måttet. Bandet 7–12 år har 1–6 tranchar per
+  kvartal. Med så korta och glesa serier kan en förändring mellan två kvartal vara slump.
+- **Bara den registrerade marknaden.** Privata placeringar, 144A, SPV, företagscertifikat, banklån och terminslån
+  saknas, och från 2025 en stor del av Alphabets och Amazons upplåning i annan valuta.
+- **Spreaden är priset på emissionsdagen**, mot den statsobligation som bolaget och bankerna valde. Den är inte en
+  marknadsspread för utestående obligationer.
+- **Inget marknadsindex att jämföra med** (licens, se ovan). Ett eget index av emissioner från andra bolag vore
+  möjligt med samma teknik, men är inte byggt.

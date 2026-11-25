@@ -777,3 +777,19 @@ republishing data"), npm och arXiv (`okänd`), och Microsofts capex-guidance ur 
   regeln bakom dem ändras, och fälten är tillägg (`docs/steg3/datakontrakt.md`, Ändringar).
 - Loggarna och registret har båda sidornas poster i tidsordning. `quarterly.py` har mains omskrivning med "för få
   källor" i tillståndsordningen.
+
+## 2026-11-25 – KR1: spread vid emission som katalogserier (extraktion ur villkorsbilagor)
+
+- **Byggt:** 239 tranchar ur 39 villkorsbilagor (FWP) från Microsoft, Alphabet, Amazon, Meta och Oracle 2020–2026, i
+  `curated/credit_issuance.csv`. Elva katalogserier i G5: `issuance_<bolag>_q` (fem bolag), `spread_issue_ai_q`,
+  `spread_issue_ai_7_12y_q` och spread per emittent för Alphabet, Amazon, Meta och Oracle. Inte kärnserier, och
+  `publish=False` tills extraktionsgranskningen har godkänt. Regler i registret före kodningen
+  (`docs/kallor/kredit_emission.md`).
+- **Kontroll:** självkontrollen mot nyhämtade dokument gav 0 fel av 239. Alla 39 erbjudanden har samma tranchar som
+  det slutliga prospekttillägget. Kontrollen hittade en nolla för mycket i Oracles villkorsbilaga 2021, och raden är
+  kodad för hand.
+- **Inget marknadsindex.** ICE BofA och Moody's på FRED förbjuder vidarespridning. CoreWeave har inga registrerade
+  obligationer (144A), och Metas obligationer 2022 var 144A.
+- **Rekommendation till Johannes:** låt granskningen pröva semantiken (källa, valuta, referens) innan serierna
+  publiceras. Läs spreaden per emittent, inte den poolade serien, som till stor del visar vilken emittent som kom till
+  marknaden.
