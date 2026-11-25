@@ -173,8 +173,10 @@ def write_inputs(root: Path, ctx: Context) -> dict:
     reports.mkdir(parents=True, exist_ok=True)
     (reports / "2026Q3.md").write_text("# Kvartalsrapport 2026Q3 (syntetisk)\n\nSyntetisk text för fixturer.\n",
                                        encoding="utf-8")
+    docs = root / "docs"  # the quarterly report's register, decision log and reviews: none in the synthetic world
+    docs.mkdir(parents=True, exist_ok=True)
     return {"snapshots_dir": snaps, "forecasts_dir": root / "forecasts", "letters_dir": letters,
-            "reports_dir": reports}
+            "reports_dir": reports, "docs_dir": docs}
 
 
 def _d2_file() -> dict:

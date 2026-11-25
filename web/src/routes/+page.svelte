@@ -34,6 +34,12 @@
   <a href={resolve('/manad/[manad]', { manad: s.record.month })}>Månadens berättelse, {periodLabel(s.record.month, true)} →</a>
   <span class="note">det som hände enligt den förregistrerade urvalsregeln, kort för kort</span>
 </p>
+{#if data.report}
+  <p class="report-entry">
+    <a href={resolve('/kvartal/[kvartal]', { kvartal: data.report.quarter })}>Kvartalsrapporten, {data.report.quarter_sv}{data.report.kind === 'rekonstruerad' ? ' (rekonstruerad)' : ''} →</a>
+    <span class="note">kedjan, flödena, prognoserna och regimen över kvartalet</span>
+  </p>
+{/if}
 
 <Chain start={s} />
 
@@ -104,6 +110,20 @@
     align-items: baseline;
   }
   .story-entry a {
+    font-weight: 600;
+  }
+  /* W14: the quarterly report's entry, right under the monthly story's and in the same form */
+  .story-entry:has(+ .report-entry) {
+    margin-bottom: 4px;
+  }
+  .report-entry {
+    margin: 0 0 18px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 12px;
+    align-items: baseline;
+  }
+  .report-entry a {
     font-weight: 600;
   }
 </style>

@@ -21,6 +21,7 @@ from ai_tracker.site import data as D
 from ai_tracker.site import flow as F
 from ai_tracker.site import probabilities as P
 from ai_tracker.site_bundle import gate as G
+from ai_tracker.site_bundle import report as RP
 from ai_tracker.site_bundle import story as ST
 from ai_tracker.site_bundle import vintages as V
 from ai_tracker.state import register as R
@@ -338,7 +339,7 @@ def letters_docs(letters_dir: Path, reports_dir: Path) -> dict[str, dict]:
 def assemble(ctx: Context | None = None, snapshots_dir: Path | None = None, forecasts_dir: Path | None = None,
              today=None, history_from: str = D.HISTORY_FROM, letters_dir: Path | None = None,
              reports_dir: Path | None = None, calibration: dict | None = None,
-             series: list[str] | None = None,
+             series: list[str] | None = None, docs_dir: Path | None = None,
              commits: Callable[[Path], dict | None] = file_commit) -> dict[str, dict]:
     """Every document of the bundle except the manifest: {relative path: JSON document}. `series` limits the
     per-series documents (default: every publishable series). `commits(path)` gives the commit that added a live
@@ -398,6 +399,7 @@ def assemble(ctx: Context | None = None, snapshots_dir: Path | None = None, fore
     docs["method.json"] = method_doc(ctx, rec)
     docs["withheld.json"] = {"withheld": m["withheld"], "n": len(m["withheld"])}
     docs.update(ST.docs(rec, nowcasts, lambda k: G.publishable(k, ctx), lambda k: D.series_meta(k, ctx)["label"]))
+    docs.update(RP.docs(rec, forecasts_dir, Path(docs_dir or config.REPO / "docs")))
     docs.update(letters_docs(Path(letters_dir or config.REPO / "docs" / "manadsbrev"),
                              Path(reports_dir or config.REPO / "docs" / "kvartalsrapport")))
 

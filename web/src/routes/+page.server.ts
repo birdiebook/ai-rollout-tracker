@@ -8,5 +8,9 @@ export async function load() {
   const [manifest, overview, flow, seriesIndex] = await Promise.all([b.manifest(), b.overview(), b.flow(), b.seriesIndex()]);
   const ids = overview.calendar.map((c) => c.id).filter((id) => id !== 'd2');
   const nowcasts = await Promise.all(ids.map((id) => b.nowcast(id)));
-  return { start: startData({ manifest, overview, flow, nowcasts, seriesIndex }) };
+  // W14: the entry to the latest quarterly report (its quarter and kind only)
+  const ri = await b.reportIndex();
+  const q = ri.quarters.at(-1) ?? null;
+  const report = q ? { quarter: q.quarter, quarter_sv: q.quarter_sv, kind: q.kind } : null;
+  return { start: startData({ manifest, overview, flow, nowcasts, seriesIndex }), report };
 }

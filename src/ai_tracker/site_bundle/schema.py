@@ -33,6 +33,8 @@ ROUTES: list[tuple[str, str]] = [
     ("withheld.json", "withheld"),
     ("story/index.json", "story_index"),
     ("story/*.json", "story"),
+    ("report/index.json", "report_index"),
+    ("report/*.json", "report"),
     ("letters.json", "letters"),
     ("letters/*.json", "publication"),
     ("reports/*.json", "publication"),

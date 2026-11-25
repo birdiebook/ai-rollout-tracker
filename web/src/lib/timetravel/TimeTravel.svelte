@@ -21,13 +21,14 @@
   // (R-W1: the same parser as readAsOf, prepaint.ts; the old regex missed e.g. "#as%5Fof=" and hid invalid days)
   const pre = PREPAINT_SCRIPT;
 
-  type ViewKind = 'start' | 'branch' | 'series' | 'story';
-  const ROUTES: Record<string, ViewKind> = { '/': 'start', '/gren/[id]': 'branch', '/serie/[key]': 'series', '/manad/[manad]': 'story' };
+  type ViewKind = 'start' | 'branch' | 'series' | 'story' | 'report';
+  const ROUTES: Record<string, ViewKind> = { '/': 'start', '/gren/[id]': 'branch', '/serie/[key]': 'series', '/manad/[manad]': 'story', '/kvartal/[kvartal]': 'report' };
   const LOADERS: Record<ViewKind, () => Promise<{ default: Component<any> }>> = {
     start: () => import('./views/StartOn.svelte'),
     branch: () => import('./views/BranchOn.svelte'),
     series: () => import('./views/SeriesOn.svelte'),
-    story: () => import('$lib/story/MonthOn.svelte')
+    story: () => import('$lib/story/MonthOn.svelte'),
+    report: () => import('$lib/report/QuarterOn.svelte')
   };
   const kind = $derived<ViewKind | null>(ROUTES[page.route.id ?? ''] ?? null);
   const site = $derived((page.data as { site?: { build?: { built?: string | null } } }).site);

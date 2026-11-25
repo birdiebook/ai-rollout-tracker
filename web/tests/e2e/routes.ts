@@ -37,6 +37,7 @@ export function routes(): { name: string; path: string }[] {
     { name: 'sok', path: 'sok/' },
     { name: 'katalog', path: '_katalog/' },
     ...storyRoutes(),
+    ...reportRoutes(),
     ...timeTravelRoutes(idx.series)
   ];
 }
@@ -49,6 +50,18 @@ export function storyRoutes(): { name: string; path: string }[] {
     { name: 'manad', path: `manad/${idx.latest}/` },
     ...(quiet ? [{ name: 'manad-lugn', path: `manad/${quiet.month}/` }] : []),
     { name: 'tt-manad', path: `manad/${idx.latest}/#as_of=${TT_DAY}` }
+  ];
+}
+
+/** W14: the latest quarterly report, the first one, and the latest under time travel (a day before it was known). */
+export function reportRoutes(): { name: string; path: string }[] {
+  const idx = JSON.parse(readFileSync('static/data/report/index.json', 'utf-8')) as { latest: string | null; quarters: { quarter: string }[] };
+  if (!idx.latest) return [];
+  const first = idx.quarters[0].quarter;
+  return [
+    { name: 'kvartal', path: `kvartal/${idx.latest}/` },
+    ...(first !== idx.latest ? [{ name: 'kvartal-forsta', path: `kvartal/${first}/` }] : []),
+    { name: 'tt-kvartal', path: `kvartal/${idx.latest}/#as_of=${TT_DAY}` }
   ];
 }
 

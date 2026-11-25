@@ -287,6 +287,13 @@ export async function describe(b: Bundle, ref: RouteRef): Promise<Described> {
       const title = `Månadens berättelse – ${st.month_sv ?? st.month}`;
       return page(c, `manad/${st.month}`, title, st.headline, spec(c, { kicker: 'Månadens berättelse', title: st.headline, subtitle: st.month_sv ?? st.month, status: st.status === 'live' ? 'live' : null, graphic: { kind: 'none' } }), true, 'Månadens berättelse');
     }
+    case '/kvartal/[kvartal]': {
+      // W14's page writes its own <title> and description; the share image names the quarter and its headline only
+      // (no figure: today's stripes would show later knowledge than the report day)
+      const rp = await b.report(p.kvartal);
+      const title = `Kvartalsrapporten – ${rp.quarter_sv}`;
+      return page(c, `kvartal/${rp.quarter}`, title, rp.headline, spec(c, { kicker: 'Kvartalsrapporten', title: rp.headline, subtitle: rp.quarter_sv + (rp.status === 'live' ? '' : ' (rekonstruerad)'), status: rp.status === 'live' ? 'live' : null, graphic: { kind: 'none' } }), true, 'Kvartalsrapporten');
+    }
     case '/sok': {
       const idx = await b.seriesIndex();
       const title = 'Sök och register';
@@ -326,6 +333,8 @@ export async function ogRoutes(b: Bundle): Promise<{ og: string; ref: RouteRef |
   ];
   for (const mo of ((await b.storyIndex()) as unknown as { months: { month: string }[] }).months)
     out.push({ og: `manad/${mo.month}`, ref: { routeId: '/manad/[manad]', params: { manad: mo.month } } });
+  for (const q of (await b.reportIndex()).quarters)
+    out.push({ og: `kvartal/${q.quarter}`, ref: { routeId: '/kvartal/[kvartal]', params: { kvartal: q.quarter } } });
   for (const cal of ov.calendar) {
     out.push({ og: `prognoser/${cal.id}`, ref: { routeId: '/prognoser/[id]/[[slug]]', params: { id: cal.id } } });
     if (cal.id === 'd2') continue;

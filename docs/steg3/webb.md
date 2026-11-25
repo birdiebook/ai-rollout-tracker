@@ -115,6 +115,7 @@ per sida.
 | `/next/metod/` | `src/routes/metod/` | W11 Utforskbar metod |
 | `/next/_katalog/` | `src/routes/_katalog/` | W2 (designsystemet) |
 | `/next/manad/[manad]/` | `src/routes/manad/[manad]/`, `src/lib/story/` | W13 Månadens berättelse |
+| `/next/kvartal/[kvartal]/` | `src/routes/kvartal/[kvartal]/`, `src/lib/report/` | W14 Kvartalsrapporten |
 
 Varje sida i skelettet är en platshållare. Den är kopplad till laddarna och har en kommentar högst upp som anger
 ägaren.
@@ -200,6 +201,21 @@ mellan korten när fokus är i berättelsen (WCAG 2.1.4), och länkarna till lä
 Tidsresa: routen är registrerad i `TimeTravel.svelte` (`MonthOn.svelte`). Med `as_of=D` visas månadens berättelse bara om
 den var känd D, annars en hänvisning till den senaste som var känd då. En länk med `data-tt-own` som själv anger `as_of`
 behåller den när ingen tidsresa är aktiv. Startsidans ingång är en rad under rubriken i `src/routes/+page.svelte`.
+
+## Kvartalsrapporten (W14)
+
+`/kvartal/<YYYYQn>/` förrenderas för varje kvartal i `report/index.json`. Texten och fakta kommer ur paketet
+(`site_bundle.report` på `ai_tracker.quarterly`). Sidan är en visuell essä i rapportens sex avsnitt, och varje avsnitt
+har levande figurer ur befintliga komponenter: ränderna (`StoryStripes`), kedjan som minikarta och ledkort med
+`IndexSpark`, `IndexHistory` för grenarna som rörde sig mest (rapportens egen ordning: störst indexförändring, sedan
+tillståndsbyten, högst fyra), `SpanChart` och `RatioChart` för avstämningarna, `ForecastDots` för utfall i kvartalet
+och prognosmålens nivåer som de var kända (`LevelChart` från `lib/series`), `RegimeMeter` per block, `DataTable` och
+`WithheldBoxes`. `src/lib/report/model.ts` klipper allt till rapportdagen med `gate.ts` (`cutStripes`, `branchOn`,
+`seriesOn`, `leaks`). Rekonstruerade kvartal har en streckad ruta och märket "rekonstruerad historik".
+
+Tidsresa: routen är registrerad i `TimeTravel.svelte` (`QuarterOn.svelte`). Med `as_of=D` visas rapporten bara om den
+var känd D, annars en hänvisning till den senaste som var känd då. Startsidans ingång är en rad under månadens
+berättelse i `src/routes/+page.svelte` (senaste kvartalet ur `report/index.json`, via `+page.server.ts`).
 
 ## CI och publicering
 

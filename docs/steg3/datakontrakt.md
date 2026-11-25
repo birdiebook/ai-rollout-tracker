@@ -53,6 +53,8 @@ Tester: `tests/test_site_bundle.py`.
 | `withheld.json` | `withheld` | alla serier med `publish=False`: nyckel, etikett, källa, licens, skäl, gren | `/metod`, `/data` |
 | `story/<YYYY-MM>.json` | `story` | månadens berättelse (W13, från version 1.1.0): korten som den förregistrerade urvalsregeln valde (måttregistret 2026-11-25), med text, fakta, länk och spår per kort | `/manad/<månad>` |
 | `story/index.json` | `story_index` | alla månader i berättelsen med antal kort per typ | `/manad/*`, startsidans ingång |
+| `report/<YYYYQn>.json` | `report` | kvartalsrapporten som data (W14, från version 1.3.0): kedjan L1–L9 över kvartalet, avstämningarna, skarpa prognoser mot utfall, regimen, data och metod, med genererade meningar | `/kvartal/<kvartal>` |
+| `report/index.json` | `report_index` | alla kvartal med typ (skarp eller rekonstruerad) och rapportdag, och det första kvartal som kan bli skarpt | `/kvartal/*`, startsidans ingång |
 | `letters.json` | `letters` | index över månadsbrev och kvartalsrapporter, nyast först | `/brev`, `/rapport` |
 | `letters/<YYYY-MM>.json`, `reports/<YYYYQn>.json` | `publication` | ett brev eller en rapport med Markdown | `/brev/*`, `/rapport/*` |
 | `schema/*.json` | – | kopior av schemana som Python validerade mot | typer i frontend |
@@ -143,6 +145,33 @@ dokument.
 
 Sidan klipper varje figur till `known` med tidsresans gräns (`web/src/lib/timetravel/gate.ts`) och vägrar bygga om något
 på sidan blev känt senare.
+
+### report/<YYYYQn>.json (W14)
+
+Byggs av `site_bundle.report` för varje helt kvartal i postens historik. Innehållet är `ai_tracker.quarterly`s egna
+fakta (`summary_facts`, `flow_facts`, `forecast_facts`, `regime_facts`, `data_facts`), samma funktioner som
+Markdown-rapporten renderar, matade med postens månader (`site.data.Record`: den skarpa ögonblicksbilden, annars
+rekonstruktionen vid månadsslutet, alltså det som ränderna visar). Inget räknas om: tillstånd, index, kvoternas mått,
+prognosfel, intervall och C4 kommer ur posten, de committade prognosfilerna och ögonblicksbilderna, och tabellen kapas
+vid kvartalets slut (`quarterly.make_inputs`).
+
+| Fält | Betydelse |
+|---|---|
+| `quarter`, `quarter_sv`, `title`, `kind`, `status` | kvartalet; `skarp` bara när alla tre månaderna har en skarp ögonblicksbild |
+| `start`, `end`, `known` | kvartalet och rapportdagen: dagen då kvartalets sista månadsläge blev känt (månadsslutet, eller ögonblicksbildens datum om det är senare). Inget i dokumentet blev känt senare |
+| `months`, `base` | kvartalets tre månader och jämförelsemånaden, med typ, känd-dag och ögonblicksbildens fil |
+| `recon_note` | varför kvartalet är rekonstruerat (`null` för ett skarpt). Den första skarpa kvartalsrapporten gäller 2027Q1 med den första ögonblicksbilden 2026-11-30 (`report/index.json` `first_live`) |
+| `headline`, `summary` | rubrikmeningen, sammanfattningens meningar, antal grenar per tillstånd, tillståndsbyten, grenar som bytte mer än en gång, största indexförändringar |
+| `branches[]` | per gren index och tillstånd vid varje månadsslut (`path`), förändring över kvartalet, serier som bytt riktning (`flips`) |
+| `chain[]` | L1–L9: grenar, kvoter som rör ledet och en mening (tillståndsbyten och avstämningar) |
+| `ratios[]`, `n_ratios_withheld` | avstämningarna vid kvartalets slut med postens mått och nivån före kvartalet |
+| `nowcasts[]`, `nowcast_news` | per nowcast skarpa filer med prognosdag till och med kvartalets slut, nya i kvartalet, utfall som blev kända i kvartalet med huvudmodellens lagrade intervall, rullande utvärdering per variant (MAE, bias, mot naiv baslinje, täckning med binomialband), byten av huvudmodell |
+| `regime` | C4 per block och månad som lagrat i de skarpa ögonblicksbilderna, skiften och brott (inhållna serier bara räknade) |
+| `data` | kärnserier in och ut, revideringar, guidance, inaktuella serier, granskningar och registerändringar daterade i kvartalet. BLOCKED-källor (dagens läge) och nya serier i ett rekonstruerat kvartal (dagens hämtdatum) tas inte med |
+| `withheld` | inhållna serier som sista månaden räknade eller mätte, bara namn |
+
+Sidan klipper varje figur (ränder, grenhistorik, kvotens och prognosmålets nivåer) till `known` med tidsresans gräns och
+vägrar bygga om något på sidan blev känt senare.
 
 ## 3. Status: skarp eller rekonstruerad
 
@@ -271,6 +300,7 @@ Budgetar (rå storlek och gzip, GitHub Pages serverar gzip). Bygget stoppas om e
 | `withheld.json` | 80 kB | 15 kB |
 | `letters/*`, `reports/*`, `letters.json` | 100–200 kB | 10–60 kB |
 | `story/*.json`, `story/index.json` | 60 kB | 12 kB |
+| `report/*.json` (`report/index.json` 60 kB / 12 kB) | 120 kB | 24 kB |
 | `schema/*.json` | 60 kB | 12 kB |
 | **Totalt** | **20 MB** | **4 MB** |
 | **Startsidan** (`overview.json` + `flow.json`) | | **100 kB** (visionens "≤ 100 kB data") |
