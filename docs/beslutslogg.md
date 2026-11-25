@@ -793,3 +793,17 @@ republishing data"), npm och arXiv (`okänd`), och Microsofts capex-guidance ur 
   Alla 26 textrader klarar kontrollen mot EDGAR.
 - **Rekommendation till Johannes:** låt extraktionsgranskningen pröva Baidus textserier innan de publiceras. Ingen
   serie föreslås som kärnserie nu. `capex_baba_v2` är den bästa kandidaten för G5.
+
+## 2026-11-25 – R21: granskning av CN1 (Kina via SEC)
+
+- **Dom: godkänd med anmärkningar** som katalogserier (`docs/granskning/r21-kina-sec.md`). En omräkning ur råkopiorna
+  ger samma 301 rader. 22 pressmeddelanden hämtades på nytt från sec.gov och är byte för byte lika med CN1:s kopior. 54
+  tal stämmer, också fyra omräknade jämförelsetal. Molnet stämmer exakt mot 20-F, Baidus capex mot companyfacts.
+  Inget läckage och inga fel värden.
+- **R21-2 (ska rättas):** att omräkningarna vid gränserna är under 1 % gäller DingTalk och T-Head, inte omorganisationen
+  2023 (+30 till +36 %) eller capex 2018 (−28 till −54 %). Det rättar CN1-posten ovan.
+- **R21-3:** den registrerade kontrollen mot companyfacts körs inte för Alibabas capex. R21 körde den: exakt för
+  FY2015–FY2020. **R21-4:** `capex_baba_v1` innehåller licensierade upphovsrätter till videoinnehåll. **R21-1:**
+  etiketten för `rev_baba_cloud_v4` säger 2025Q2, men serien börjar 2026Q2.
+- **Rekommendation till Johannes:** R21 har läst alla 26 textrader, och mått och kvartal stämmer. Baidus två textserier
+  kan få `publish=True` med en daterad ändring. Ingen serie blir kärnserie nu.
