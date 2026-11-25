@@ -24,8 +24,11 @@ referenser). Tester: `tests/test_guidance.py` (syntetiska fixturer, inget nät).
 - **Licens.** SEC-dokument är offentliga (sec.gov/privacy). Från pressmeddelanden och transkript publiceras bara
   siffror med källhänvisning, aldrig text. Den ordagranna meningen för varje capex-värde finns bara i
   `data/raw/guidance_capex_sentences/` (gitignorerad). I CSV:n finns SHA-256 av meningen och dess plats.
-  TSMC-serierna har `publish=True` med samma licens som `tsmc_revenue_m`. Capex-serierna har `publish=False` tills
-  granskningen är gjord.
+  TSMC-serierna har `publish=True` med samma licens som `tsmc_revenue_m`. Capex-serierna för Alphabet, Amazon och
+  Meta har `publish=True` från 2026-11-25 (ägarbeslut R11-4). Alla deras rader kommer från dokument på sec.gov, så de
+  har klassen `ja`, och extraktionen är granskad (R2, R5). Regeln står i koden: ett bolag publiceras när alla dess
+  rader har källa på sec.gov (`guidance_capex.published_companies`). Microsofts rader kommer från transkripten på
+  microsoft.com, vars villkor inte är dokumenterade (klass `okänd`), så Microsofts serier har kvar `publish=False`.
 
 ## TSMC (N2)
 

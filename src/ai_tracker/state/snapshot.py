@@ -7,8 +7,9 @@ existing file (opened with mode "x"): a snapshot is written once and never rewri
 The snapshot is public (committed to a public repo). A series whose values may not be shown (site.data.publishable,
 Spec.publish=False: PJM, npm, arXiv ...) keeps its key, family, validity, reason and direction in the record (the
 direction counts in a published index, beslutsloggen 2026-11-24), never a value: `withhold` drops `VALUE_FIELDS` from
-its measures, the break probability from its C4 row, and the curated guidance values from the expectations section
-(review L3-1, beslutsloggen 2026-11-25). Reconstructions (`compute`) keep everything: they stay in memory.
+its measures, the break probability from its C4 row, and the curated guidance values of a withheld company (and
+the aggregates over all companies) from the expectations section (review L3-1, beslutsloggen 2026-11-25; per company
+since the owner's decision R11-4 the same day). Reconstructions (`compute`) keep everything: they stay in memory.
 """
 
 from __future__ import annotations

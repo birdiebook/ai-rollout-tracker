@@ -74,12 +74,16 @@ def test_real_snapshot_carries_no_withheld_value(tmp_path):
             assert not set(S.VALUE_FIELDS) & set(m), m["series"]
     assert {"pjm_lf_peak_dom_h5", "pjm_lf_peak_rto_h5"} <= set(keys)  # PJM is class "nej" (licensniva.md)
     ex = doc[EX.SECTION]
-    if "error" not in ex and not EX.csv_public(lambda k: D.publishable(k, ctx)):
+    pub = lambda k: D.publishable(k, ctx)  # noqa: E731
+    if "error" not in ex and not EX.csv_public(pub):
+        # per company since the owner's decision R11-4 (2026-11-25): Microsoft's rows stay withheld
+        hidden = set(ex["values_withheld_companies"])
+        assert hidden == {c for c in EX.GC.COMPANIES if not EX.company_public(c, pub)}
         for b in ex["break_statements"]:
-            if EX.from_csv(b["company"]):
+            if EX.from_csv(b["company"]) and b["company"] in hidden:
                 assert not {"value", "prev_value", "size", "reason"} & set(b)
         for c in ex["surprise"]["companies"]:
-            if EX.from_csv(c["company"]):
+            if EX.from_csv(c["company"]) and c["company"] in hidden:
                 assert set(c) <= {"company", "measure", "period", "known_from", "guidance_known_from"}
 
 

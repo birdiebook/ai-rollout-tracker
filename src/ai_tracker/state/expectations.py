@@ -26,6 +26,7 @@ import numpy as np
 import pandas as pd
 
 from ai_tracker.series import guidance_revisions as GR
+from ai_tracker.sources import guidance_capex as GC
 from ai_tracker.state import register as R
 from ai_tracker.state.measures import percentile
 
@@ -188,11 +189,14 @@ def section(when, table: pd.DataFrame, csv: pd.DataFrame | None = None) -> dict:
 # Companies whose statements come from SEC series in the table (TSMC's 6-K, Nvidia's 8-K: GR.table_statements);
 # every other company's statements come from the curated CSV (GR.capex_statements).
 TABLE_COMPANIES = ("tsmc", "nvda")
-WITHHELD_NOTE = ("Värden ur curated/guidance_capex.csv står inte i den publika ögonblicksbilden så länge serierna som "
-                 "läser filen har publish=False (R11-4, granskning L3-1): för de bolagen och för revideringsindexet och "
-                 "överraskningsindexet bara bolag, period, definition och datum. TSMC och Nvidia (SEC) visas som förut.")
+WITHHELD_NOTE = ("Värden ur curated/guidance_capex.csv visas per bolag när bolagets serier får visas (ägarbeslut R11-4, "
+                 "2026-11-25: bolag vars alla rader kommer från sec.gov). För bolagen i values_withheld_companies står "
+                 "bara bolag, period, definition och datum. Revideringsindexet, medianen, antalen och sammansättningen "
+                 "läser alla bolags rader, också deras, och har bara period och datum. Överraskningsindexet har bara "
+                 "period och datum så länge dess serie inte får visas. TSMC och Nvidia (SEC) visas som förut.")
 _ID_FIELDS = ("period", "known_from", "companies")
 _SURPRISE_ID = ("company", "measure", "period", "known_from", "guidance_known_from")
+SURPRISE_INDEX_SERIES = ("f1_surprise_index", "f1_surprise_index_n")
 
 
 def from_csv(company) -> bool:
@@ -200,8 +204,16 @@ def from_csv(company) -> bool:
 
 
 def csv_public(publishable: Callable[[str], bool]) -> bool:
-    """True when every series that reads the curated CSV may be shown (the owner's decision R11-4)."""
+    """True when every series that reads the curated CSV may be shown: then nothing is withheld."""
     return all(publishable(k) for k in (*GR.CSV_BASED, *GR.csv_component_keys()))
+
+
+def company_public(company, publishable: Callable[[str], bool]) -> bool:
+    """True when the values of one CSV company may be shown: every guid_capex_* series of the company and the F1
+    series that read only its rows (GR.CSV_READS) are publishable (owner decision R11-4, 2026-11-25)."""
+    keys = GR.csv_component_keys((company,))
+    own = [k for k, reads in GR.CSV_READS.items() if reads == (company,)]
+    return bool(keys) and all(publishable(k) for k in (*keys, *own))
 
 
 def _ids(entry):
@@ -209,11 +221,19 @@ def _ids(entry):
 
 
 def withhold(section: dict, publishable: Callable[[str], bool]) -> dict:
-    """The section for the public record: no number that comes from the curated CSV while its series are withheld
-    (break statements, revision events and counts of the CSV companies, their surprises, the revision index and the
-    surprise index, which all read the CSV). TSMC's and Nvidia's statements and surprises are SEC series and stay."""
+    """The section for the public record. A CSV company's numbers are shown when the company is public
+    (`company_public`), else only its ids: break statements (the reason text quotes the figure), revision events,
+    counts and surprises. Everything pooled over every company's rows (the revision index and its numeric-only
+    sensitivity, the median, the counts, the composition of the main window) keeps only ids while any series that
+    reads the CSV is withheld, and the surprise index while its own series is. TSMC's and Nvidia's statements and
+    surprises are SEC series and stay."""
     if not isinstance(section, dict) or "error" in section or csv_public(publishable):
         return section
+    hidden = {c for c in GC.COMPANIES if not company_public(c, publishable)}
+
+    def withheld(company) -> bool:
+        return from_csv(company) and (company in hidden or company not in GC.COMPANIES)
+
     s = copy.deepcopy(section)
     for part in ("revisions", "revisions_numeric_only"):
         for entry in (s.get(part) or {}).values():
@@ -223,18 +243,19 @@ def withhold(section: dict, publishable: Callable[[str], bool]) -> dict:
         s["composition_main_window"] = {k: v for k, v in s["composition_main_window"].items() if k == "period"}
     # the reason text of a CSV break quotes the company's figure (GR.DEFINITION_BREAKS): the ref points to it
     s["break_statements"] = [{k: v for k, v in b.items() if k not in ("value", "prev_value", "size", "reason")}
-                             if from_csv(b.get("company")) else b for b in s.get("break_statements") or []]
+                             if withheld(b.get("company")) else b for b in s.get("break_statements") or []]
     s["events_recent"] = [{k: v for k, v in e.items() if k not in ("size", "direction")}
-                          if from_csv(e.get("company")) else e for e in s.get("events_recent") or []]
+                          if withheld(e.get("company")) else e for e in s.get("events_recent") or []]
     s["events_per_company_year"] = {c: v for c, v in (s.get("events_per_company_year") or {}).items()
-                                    if not from_csv(c)}
+                                    if not withheld(c)}
     sur = s.get("surprise")
     if isinstance(sur, dict):
-        sur["companies"] = [{k: v for k, v in c.items() if k in _SURPRISE_ID} if from_csv(c.get("company")) else c
+        sur["companies"] = [{k: v for k, v in c.items() if k in _SURPRISE_ID} if withheld(c.get("company")) else c
                             for c in sur.get("companies") or []]
-        if isinstance(sur.get("index"), dict):
+        if isinstance(sur.get("index"), dict) and not all(publishable(k) for k in SURPRISE_INDEX_SERIES):
             sur["index"] = {k: _ids(v) for k, v in sur["index"].items()}
     s["values_withheld"] = WITHHELD_NOTE
+    s["values_withheld_companies"] = sorted(hidden)
     return s
 
 

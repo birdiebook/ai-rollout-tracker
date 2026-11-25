@@ -44,8 +44,11 @@ Sensitivity (R11-7): TSMC in US$ from 2017Q3, U = the quarter's US$ revenue in t
 (tsmc_usd_revenue), G = the US$ midpoint known the day before; s(NT$) - s(US$) is the FX part, 100 x ln(realised
 rate / assumed rate). Not in the surprise index.
 
-Publication (R11-4): every series that reads the curated CSV lists the guid_capex_* series as components, so the
-catalog keeps it publish=False as long as they are.
+Publication (R11-4, owner decision 2026-11-25): every series that reads the curated CSV lists the guid_capex_* series
+of the companies whose rows it reads as components and is published only when they all are. The guid_capex_* series of
+Alphabet, Amazon and Meta are published (all their rows on sec.gov); Microsoft's are not (microsoft.com). Meta's and
+Alphabet's surprises read only their own company's rows (CSV_READS), so they are published; the revision series pool
+every company's rows, Microsoft's too, and stay withheld, as does the surprise index (see CSV_READS).
 """
 
 from __future__ import annotations
@@ -660,8 +663,8 @@ SERIES = {
                             "Antal z i kvartalets senaste version. Aktualitet: gräns 199 dagar."),
 }
 KEYS = list(SERIES)
-# Series that read the curated CSV (R11-4): they list the guid_capex_* series as components and follow their
-# publish flag, because they reveal the same values (G = U x exp(-s/100) for Meta and Alphabet).
+# Series that read the curated CSV (R11-4): they list the guid_capex_* series of the companies they read as components
+# and follow their publish flag, because they reveal the same values (G = U x exp(-s/100) for Meta and Alphabet).
 CSV_BASED = ("f1_rev_index_4q", "f1_rev_index_q", "f1_rev_n_4q", "f1_rev_n_q", "f1_rev_median_4q", "f1_rev_median_q",
              "f1_surprise_meta_capex", "f1_surprise_googl_capex", "f1_surprise_index", "f1_surprise_index_n")
 # Series that are sparse by construction (warehouse no_gaps check): a period without enough events or components has
@@ -676,19 +679,41 @@ KNOWN_GAPS = {
 }
 
 
+# Rows of the curated CSV that a CSV_BASED series reads: the companies; a series not listed reads every row (pooled).
+# Meta's and Alphabet's surprises read only their own rows: capex_surprises selects the company's rows, standardize
+# divides by the company's own earlier surprises, and _series keeps the company's rows (tests/test_agarbeslut.py fails
+# if another company's rows change them). As licenses.CURATED_READS. The revision series pool every row, Microsoft's
+# too. The surprise index reads only Meta's and Alphabet's rows as well, but as an index across companies it stays on
+# the pooled gate (owner decision 2026-11-25 covered the guid_capex_* series and the two company surprises).
+CSV_READS: dict[str, tuple[str, ...]] = {f"f1_surprise_{c}_capex": (c,) for c in CAPEX_SURPRISE}
+
+
 @lru_cache(maxsize=1)
-def csv_component_keys() -> tuple[str, ...]:
-    """Catalog keys of the guid_capex_* series built from the curated CSV (sources.guidance_capex.specs)."""
-    return tuple(s.key for s in guidance_capex.specs())
+def csv_component_specs() -> tuple[Spec, ...]:
+    """The guid_capex_* series built from the curated CSV (sources.guidance_capex.specs)."""
+    return tuple(guidance_capex.specs())
+
+
+def csv_company(key: str) -> str:
+    """The company of a guid_capex_<company>_* key."""
+    return key.removeprefix("guid_capex_").split("_", 1)[0]
+
+
+def csv_component_keys(companies: tuple[str, ...] | None = None) -> tuple[str, ...]:
+    """Catalog keys of the guid_capex_* series, of `companies` only when given."""
+    return tuple(s.key for s in csv_component_specs() if companies is None or csv_company(s.key) in companies)
 
 
 def _spec(key: str) -> Spec:
     _kind, branch, label, unit, freq, lag, max_age, question, note = SERIES[key]
     if key in CSV_BASED:
-        comps = COMPONENTS + csv_component_keys()
-        publish = False  # follows guid_capex_* (publish=False until the owner decides, R11-4)
-        note += (" Bygger på curated/guidance_capex.csv och följer därför guid_capex_*:s publish-flagga "
-                 "(R11-4).")
+        reads = CSV_READS.get(key)
+        gate = csv_component_keys(reads)
+        comps = COMPONENTS + gate
+        publish = bool(gate) and all(s.publish for s in csv_component_specs() if s.key in gate)
+        whose = "alla bolags rader" if reads is None else "bara bolagets egna rader"
+        note += (f" Bygger på curated/guidance_capex.csv ({whose}) och följer därför publish-flaggan för "
+                 f"guid_capex_*-serierna {'för alla bolag' if reads is None else 'för ' + '/'.join(reads)} (R11-4).")
     else:
         comps, publish = COMPONENTS, True
     return Spec(key=key, branch=branch, label=label, unit=unit, freq=freq, source=SOURCE, fetch=_fetch(key),

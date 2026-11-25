@@ -19,7 +19,7 @@ Tabellerna nedan är genererade med `--markdown` på katalogen efter integration
 - **Den kommersiellt rena delmängden är bara `ja`.** `okänd` räknas inte som `ja`.
 - **`publish` och klassen är oberoende.** `publish` styr vad den icke-kommersiella sidan visar. `publish=True` med
   `nej` är tillåtet, t.ex. Cloudflare Radar (CC BY-NC). `publish=False` med `ja` är också tillåtet, t.ex.
-  capex-guidance som väntar på granskning.
+  standardfelen för Census BTOS (`btos_ai_*_se`). Capex-guidancen var ett exempel tills ägarbeslutet 2026-11-25.
 - **Varje serie måste ha en klass.** `catalog.validate()` ger fel för en licenstext som ingen regel eller override
   klassar. En ny serie kan alltså inte läggas till utan klass.
 
@@ -87,9 +87,15 @@ I tur och ordning, och det första som gäller avgör:
   De räknar alla rader i `guidance_capex.csv`, också Microsofts från microsoft.com. Det står i `CURATED_READS`, och
   likaså att överraskningen för Meta och Alphabet bara läser bolagens egna rader (`ja`), och att TSMC:s och Nvidias
   inte läser filen alls (R10-1). Det gäller också känsligheten i US$ (`f1_surprise_tsmc_usd`, X8), som läser TSMC:s
-  6-K och är `ja`. Efter X8 har de tio F1-serier som läser filen alla `guid_capex_*` som komponenter (R11-4). Därför
-  blir också överraskningarna för Meta och Alphabet `okänd`, via Microsofts rader. `ja` är TSMC:s, Nvidias och US$-
-  känsligheten.
+  6-K och är `ja`. Efter X8 hade de tio F1-serier som läser filen alla `guid_capex_*` som komponenter (R11-4), och
+  därför blev också överraskningarna för Meta och Alphabet `okänd`, via Microsofts rader. **Ägarbeslut 2026-11-25:**
+  Metas och Alphabets överraskningar listar nu bara bolagets egna `guid_capex_*` (`guidance_revisions.CSV_READS`,
+  bevisat med ett test som ändrar de andra bolagens rader), så de är `ja` och publiceras. Revideringsserierna och
+  överraskningsindexet listar fortfarande alla bolags serier och är `okänd`. `guid_capex_*` för Alphabet, Amazon och
+  Meta publiceras, eftersom klassen är `ja`, och Microsofts gör det inte (`publish` följer klassen,
+  [kallor/guidance.md](../kallor/guidance.md)). Tabellerna nedan är från före beslutet: två serier har bytt från
+  `okänd` till `ja`, och `us_gdp_contrib_final_sales_computers` (BEA, `ja`) har tillkommit. Kör om rapporten vid nästa
+  integration.
 - **Körning 13:s nya serier är `ja`, utom de tio F1-serier som läser den kurerade filen.** Avskrivningar och PP&E (P1),
   avstämningarna för intäktskravet (P2b) och TSMC:s capex-utsikt och US$-intäkt (F1) kommer från sec.gov.
   Nyttjandeperioderna (P2a) är en egen extraktion, och alla rader i `curated/useful_lives.csv` har källa på sec.gov.

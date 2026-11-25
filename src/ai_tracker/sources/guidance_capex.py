@@ -15,6 +15,12 @@ direction_code: +2 increase significantly/meaningfully, +1 increase, 0 roughly f
 decrease, -2 decrease significantly; direction_base says against what: qoq (vs the previous quarter), yoy (vs the
 same period a year earlier), prior_fy (the fiscal year vs the previous fiscal year), growth_vs_prior (the growth
 rate vs the previous year's growth rate). Definitions: DEFINITIONS below, documented in docs/kallor/guidance.md.
+
+Publication (owner decision R11-4, 2026-11-25): a company's series are published when every row of the company comes
+from a document on sec.gov, which is what gives them the licence class "ja" (ai_tracker.licenses, curated rule).
+Alphabet, Amazon and Meta qualify; Microsoft's rows come from microsoft.com (class "okänd") and stay withheld. A new
+row from another host withholds that company's series again. A new company needs a change to COMPANIES (and a review
+of its extraction) first. tests/test_agarbeslut.py checks that publish equals class "ja" for every series.
 """
 
 from __future__ import annotations
@@ -23,6 +29,8 @@ import csv
 import hashlib
 import re
 from pathlib import Path
+
+from urllib.parse import urlparse
 
 import pandas as pd
 
@@ -189,6 +197,19 @@ def series_frame(df: pd.DataFrame, company: str, horizon: str, measure: str, bas
     return res.drop_duplicates(["period", "known_from"], keep="last").reset_index(drop=True)
 
 
+SEC_HOSTS = frozenset({"www.sec.gov", "sec.gov"})  # as ai_tracker.licenses.SEC_HOSTS (a test checks they agree)
+
+
+def published_companies(df: pd.DataFrame) -> set[str]:
+    """Companies whose every row has its source_url on sec.gov: their series are published (R11-4, module doc)."""
+    out = set()
+    for company, urls in df.groupby("company")["source_url"]:
+        hosts = {urlparse(str(u).strip()).netloc.lower() for u in urls}
+        if hosts and hosts <= SEC_HOSTS:
+            out.add(company)
+    return out
+
+
 def specs(path: Path | None = None) -> list:
     """One Spec per (company, horizon, measure) present in the curated CSV."""
     from ai_tracker.catalog import Spec
@@ -197,6 +218,7 @@ def specs(path: Path | None = None) -> list:
     if not path.exists():
         return []
     df = load(path)
+    shown = published_companies(df)
     out = []
     names = {"msft": "Microsoft", "googl": "Alphabet", "amzn": "Amazon", "meta": "Meta"}
     hz_label = {"Q": "kvartal", "FY": "räkenskapsår (MSFT: juli–juni, period = året då det slutar)", "CY": "kalenderår"}
@@ -224,7 +246,11 @@ def specs(path: Path | None = None) -> list:
                        "egna sidor", fetch=fetch, lag_days=LAG[freq],
                 license="SEC EDGAR: public information (sec.gov/privacy). Bolagssidor: bara extraherade siffror "
                         "med källhänvisning, aldrig text",
-                revised=True, publish=False,
+                revised=True, publish=company in shown,
                 question="Vad sa bolaget att capex skulle bli (baslinje B2 för N1)?",
-                note=f"Definition(er): {defs}. Agentextraherat, stickprovsgranskat. Se docs/kallor/guidance.md."))
+                note=f"Definition(er): {defs}. Agentextraherat, stickprovsgranskat. "
+                     + ("Publiceras: bolagets alla rader kommer från sec.gov (ägarbeslut R11-4, 2026-11-25). "
+                        if company in shown else
+                        "Visas inte: bolagets rader kommer inte alla från sec.gov (R11-4). ")
+                     + "Se docs/kallor/guidance.md."))
     return out

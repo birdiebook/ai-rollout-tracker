@@ -397,8 +397,10 @@ källor"), och med få familjer väger varje familj tungt, så indexet kan röra
 av bolagens egen guidance (oförändrad räknas som en halv), över fyra kvartal och med minst tre revideringar. Över 0,5
 betyder fler höjningar än sänkningar. Överraskningen är utfallet mot bolagets guidance i log ×100, och
 överraskningsindexet är medel av standardiserade överraskningar (z) över minst två bolag. Förbehåll: få händelser per
-kvartal (n står bredvid), ingen takt, och serierna som läser `curated/guidance_capex.csv` har `publish=False` tills
-ägaren beslutar (R11-4). Avsnittet finns i ögonblicksbilden men inte i paketet än.
+kvartal (n står bredvid), ingen takt. Från 2026-11-25 (ägarbeslut R11-4) visas värdena ur `curated/guidance_capex.csv`
+per bolag: Alphabet, Amazon och Meta (alla rader från sec.gov) med värden, Microsoft (microsoft.com) bara med period
+och datum. Revideringsindexet och överraskningsindexet har bara period och datum, eftersom deras serier har
+`publish=False`. Avsnittet finns i ögonblicksbilden men inte i paketet än.
 
 **Intäktskravet (`x_dep_rev`, `x_capcost_rev_r08`, `x_capcost_rev_r12`, `x_dep_capex`, `x_dep_rev_aws`).**
 Avskrivningar, och avskrivningar plus 8 eller 12 % på det bokförda nettot, som procent av intäkterna för MSFT, GOOGL,
