@@ -34,6 +34,7 @@ FLOAT_RE = re.compile(r"(?i)\bSOFR\b|EURIBOR|SONIA|CORRA|floating\s+rate")
 KEY_RE = re.compile(r"(?<![\w-])((?:\d{4})(?:\s+[A-Z][A-Za-z-]*)*\s+Notes)\s*:?(?=\s)")
 HEADING_RE = re.compile(r"^(?:\d+\.\d+\s?%\s+(?:[A-Z][\w-]*\s+)*Notes\s+due\s+\d{4}|Floating\s+Rate\s+Notes\s+due\s+\d{4})"
                         r"(?:\s*\(.*\))?$")
+NAME_RE = re.compile(r"(Floating\s+Rate\s+Notes\s+due\s+\d{4}|\d+\.\d+\s?%\s+(?:[A-Z][\w-]*\s+)*Notes\s+due\s+\d{4})\s*$")
 CONTINUATION_RE = re.compile(r"^\S.{0,60}?\bNotes?\s*:")
 PAGE_RE = re.compile(r"^\d{1,3}$|^-\s*\d{1,3}\s*-$")
 
@@ -51,10 +52,12 @@ LABELS: list[tuple[str, str, str]] = [
     ("maturity", r"maturity", r"par call|call date|yield"),
     ("coupon", r"^coupon|^interest rate|coupon \(interest", r"payment|determination|period|reset|record|basis"),
     ("trade", r"trade date|pricing date", r"$^"),
+    ("title", r"^title", r"$^"),
     ("settle", r"^settlement(?: date)?\b", r"trading|clearing|system"),
 ]
 USED = ("principal", "maturity", "coupon", "price", "yield", "spread", "spread_ms", "benchmark", "benchmark_yield",
         "trade", "settle")
+SECTION_USED = USED + ("title",)  # a section's own Title row names the tranche
 
 
 @dataclass
@@ -140,6 +143,11 @@ def money(s: str | None) -> tuple[str, float] | None:
 def spread_bp(s: str | None) -> float | None:
     """Spread as stated: 'T + 45 bps', '+45 basis points', '0.250% (+25 basis points)', '+0.45%' (-> 45)."""
     s = s or ""
+    # Canadian dollar term sheets state two spreads, against the Government of Canada curve and against the benchmark
+    # bond; the benchmark column holds the bond, so its spread is the one taken (interpretation 3 in the doc)
+    m = re.search(r"(?i)\+?\s*(\d+(?:\.\d+)?)\s*bps\s+versus\s+the\s+applicable\s+benchmark", s)
+    if m:
+        return float(m.group(1))
     for pat, scale in ((r"T\s*\+\s*(\d+(?:\.\d+)?)", 1), (r"\+\s*(\d+(?:\.\d+)?)\s*(?:bps|bp|basis\s+points)\b", 1),
                        (r"(\d+(?:\.\d+)?)\s*(?:bps|bp|basis\s+points)\b", 1), (r"\+?\s*(\d+\.\d+)\s?%", 100)):
         m = re.search(pat, s, re.I)
@@ -202,9 +210,11 @@ def keys_of(fs: list[Field]) -> list[str]:
 
 
 def starts_with_key(value: str, keys: list[str]) -> bool:
-    """A keyed value begins with a tranche key; other values only mention one ("the 2028 Notes")."""
+    """A keyed value begins with a tranche key, or with "In the case of the <key>" (Amazon's floating rate coupons);
+    other values only mention one ("the 2028 Notes")."""
     v = value.lstrip()
-    return any(v.startswith(k) for k in keys)
+    return any(v.startswith(k) or re.match(rf"(?i)in\s+the\s+case\s+of\s+(?:the\s+)?{re.escape(k)}\b", v)
+               for k in keys)
 
 
 SECTION_TITLE_RE = re.compile(r"^(?:Fixed|Floating)\s+Rate\s+Notes$")
@@ -216,6 +226,15 @@ def _general(fs: list[Field], t: Tranche) -> None:
         if f.name in ("trade", "settle") and f.name not in t.values:
             t.values[f.name] = f.value
             t.lines.update(range(f.a, f.b + 1))
+
+
+def section_start(doc_lines: list[str], a: int, floor: int) -> int | None:
+    """The heading of the section whose principal field is on line a: the nearest line above it (after `floor`) that
+    is not a label | value row or a page number ("4.450% Notes due 2030 (...)", "Floating Rate Notes")."""
+    for i in range(a - 1, floor, -1):
+        if " | " not in doc_lines[i] and not PAGE_RE.match(doc_lines[i]):
+            return i
+    return None
 
 
 def tranches(doc_lines: list[str]) -> tuple[str, list[Tranche]]:
@@ -244,15 +263,15 @@ def tranches(doc_lines: list[str]) -> tuple[str, list[Tranche]]:
     stops = sorted(set(heads) | {i for i, line in enumerate(doc_lines) if SECTION_TITLE_RE.match(line)}
                    | {g.a for g in principal})
     for n, f in enumerate(unkeyed):
-        prev = max([g.a for g in principal if g.a < f.a] or [-1])
-        h = max([i for i in heads if prev < i < f.a] or [None], key=lambda x: -1 if x is None else x)
+        prev = max([g.b for g in fs if g.name == "principal" and g.a < f.a] or [-1])
+        h = section_start(doc_lines, f.a, prev)
         start = h if h is not None else f.a
         end = min([x for x in stops if x > f.a] or [len(doc_lines)])
         t = Tranche(doc_lines[h] if h is not None else f"section {f.a}", None, heading=h)
         if h is not None:
             t.lines.add(h)
         for g in fs:
-            if start <= g.a < end and g.name in USED and g.name not in t.values:
+            if start <= g.a < end and g.name in SECTION_USED and g.name not in t.values:
                 t.values[g.name] = g.value
                 t.lines.update(range(g.a, g.b + 1))
         order.append((f.a, 0, t))
@@ -282,6 +301,11 @@ def header_date(doc_lines: list[str]) -> str | None:
 
 def security_name(doc_lines: list[str], t: Tranche, coupon: float | None, maturity: str | None) -> str:
     if t.heading is not None:
+        title = t.values.get("title")
+        for text in ([title] if title else []) + [doc_lines[t.heading]]:
+            m = NAME_RE.search(re.sub(r"\s*\(.*\)\s*$", "", text).strip())
+            if m:
+                return m.group(1)
         return re.sub(r"\s*\(.*\)$", "", doc_lines[t.heading]).strip()
     year = maturity[:4] if maturity else None
     for line in doc_lines[:40]:
