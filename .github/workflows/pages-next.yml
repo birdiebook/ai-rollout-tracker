@@ -55,7 +55,7 @@ jobs:
     timeout-minutes: 30
     env:
       PYTHONPATH: src
-      BASE_PATH: /next
+      BASE_PATH: /ai-rollout-tracker/next  # project site: Pages serves the repo under /<repo>/
       BUNDLE: ${{ inputs.bundle || 'fixtures' }}
     steps:
       - uses: actions/checkout@v4
