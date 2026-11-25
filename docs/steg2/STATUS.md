@@ -1,8 +1,26 @@
 # Status steg 2
 
-Uppdateras av orkestreraren vid varje milstolpe. Senast: 2026-11-25 (integrationen av körning 14).
+Uppdateras av orkestreraren vid varje milstolpe. Senast: 2026-11-25 (integrationen av KL1, körning 15).
 
 ## Läge
+
+### Körning 15: KL1 Kreditlagret, en följd fråga (2026-11-25)
+
+- **Status:** KL1 är byggd, granskad (R26) och rättad (X23), och integrerad på grenen `auto15/integration15` med
+  main. 53 katalogserier `kl_*` med `publish=False` och klassen `ja`. Ingen kärnserie, och inget grentillstånd ändras.
+  Data är inlagd i den delade basen ur X23:s arbetskopia.
+- **Frågan:** ändras finansieringens pris och tillgång i de yttre lagren (Oracle, CoreWeave, Nebius, IREN), och följer
+  investeringstakten med? Det inre lagret (Microsoft, Alphabet, Amazon, Meta) är jämförelsen. Registret har posten
+  "KL1" och två tillägg (KL1 och X23).
+- **Läs:** [resultat/kreditlagret.md](../resultat/kreditlagret.md). Varje månad:
+  `python -m ai_tracker.followed kreditlagret --as-of <dag>`. Källor: [kallor/kreditlagret.md](../kallor/kreditlagret.md).
+  Granskning: [granskning/r26_kreditlagret.md](../granskning/r26_kreditlagret.md).
+- **Förbehåll:** läsningarna per 2026-11-25 gäller kvartal som var sedda före registerposten. Den första läsningen på
+  osedda data kommer med Oracle omkring 2026-12-11. Yttre lagret kan avgöras först med 2026Q4 (februari 2027). X23:s
+  58 nya och 6 rättade rader var inte oberoende granskade vid integrationen. Självkontrollen mot nyhämtade
+  SEC-dokument stoppades av HTTP 429 (mot cachen 458 av 458).
+- **Väntar på ägarbeslut:** ska läsregeln läsa åt båda hållen? Rekommendation: låt regeln vara till den första
+  läsningen på osedda data. Ett byte kräver en ny daterad registerpost före den läsningen.
 
 ### Körning 14 (2026-11-25)
 

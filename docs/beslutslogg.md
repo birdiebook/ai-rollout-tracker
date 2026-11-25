@@ -1270,3 +1270,30 @@ Johannes svarade "kör på dina rekommendationer" på tre rekommendationer samma
 - **Rekommendation till Johannes:** låt en oberoende granskning läsa de 58 nya och de 6 ändrade raderna (SpaceX,
   Anthropics motparter, Meta, CoreWeave) innan beloppen används för beslut. Den första läsningen på osedda kvartal
   kommer med Oracles inlämning omkring 2026-12-11.
+
+## 2026-11-25 – KL1 integrerad (körning 15)
+
+- `auto15/x23-kreditlagret` (KL1 med granskningen R26 och rättningen X23) är mergad på `auto15/integration15` från
+  main (c829d9d). Bara registret, beslutsloggen, kalibreringen och slutet av datakontraktet krockade. Båda sidornas
+  poster står i tidsordning, och ett skript har kontrollerat rad för rad att ingen rad saknas eller står två gånger.
+  Alla poster från körning 14 är äldre än KL1:s registerpost (4bcb077, 21:06:54 UTC). Den står oändrad, och efter den
+  kommer KL1:s tillägg (60af26f) och X23:s tillägg (599b24e).
+- **Licenser.** På den sammanslagna katalogen saknade KL1:s två källor en grupp med länk till källdokumentet, så
+  testet från körning 14 föll. Båda grupperna länkar nu till `kallor/kreditlagret.md`, och ett nytt test kräver att
+  just de 53 `kl_*`-serierna hamnar där. `catalog.validate` klassar alla 858 serier. Tabellerna i
+  `datakallor/licensniva.md` är genererade om. Bara de två nya raderna och antalen för G5 ändras.
+- **Data.** X23:s data är inlagd i basen: 53 `kl_*`-serier tillagda, inga ersatta eller uppdaterade, +1 870 rader
+  (784 959 → 786 829) och +54 rader i hämtloggen. En andra körning gav "nothing to merge". KL1:s och R26:s
+  arbetskopior är inte inlagda, eftersom X23 räknade om samma serier. Datakontrollerna är gröna på hela basen. De tre
+  SEC-dokumenten för SpaceX låg bara i X23:s egen cache och är kopierade till den delade cachen. Med den sammanslagna
+  koden byggs `curated/kreditlagret.csv` (458 rader) och `kreditlagret_skipped.csv` (753 rader) om byte för byte ur
+  cachen, utan nätanrop.
+- **Torrkörningar** i arbetsytan, inte i `snapshots/`: ögonblicksbilden 2026-11-30, brevet för 2026-11, det verkliga
+  paketet och den gamla sidan. Inget `kl_*`-värde och inget värde för en inhållen serie når dem. Bilden och brevet
+  nämner ingen `kl_*`-serie. Paketets `withheld.json` och metodsidan listar de 53 nycklarna med etikett, källa och
+  skäl, som för andra inhållna serier. Brevets antal nya inhållna serier ökar från 174 till 227, alltså med de 53, utan
+  namn.
+- **Inte ändrat:** publiceringsflaggor, kärnserier, grentillstånd, index v2 och läsregeln.
+- **Öppet:** en oberoende granskning av X23:s 58 nya och 6 rättade rader, självkontrollen mot nyhämtade SEC-dokument
+  (stoppad av HTTP 429) och Johannes beslut om läsregeln ska läsa åt båda hållen. Granskningen och beslutet bör vara
+  klara före Oracles inlämning omkring 2026-12-11.

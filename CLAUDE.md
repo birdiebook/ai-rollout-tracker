@@ -86,6 +86,9 @@ Se `docs/plan.md`, avsnitt 8. Uppdatera här när en fas är klar.
   och Kina-gapet i G1 (Q2). T1 prövade tillståndsregeln (`python -m ai_tracker.state evaluate`): tillstånden beskriver,
   men att de förutsäger är inte visat (Holm-p 0,37). Månadsgränsen i Arena rättad (en tavla från månadens sista dag
   räknas i sin månad, också i `arena_price`)
+- **KL1 Kreditlagret** ✅ (följd fråga, `docs/resultat/kreditlagret.md`): skuld och investeringstakt i de yttre lagren
+  mot de inre. Rapport `python -m ai_tracker.followed kreditlagret --as-of D`, 53 `kl_*` med `publish=False`. Första
+  läsningen på osedda data kommer med Oracle omkring 2026-12-11
 - Drift: `docs/drift.md` (veckohämtning, skarpa prognoser N2 dag 5 och N1 kvartal + 20 dagar, ögonblicksbild vid månadsslut)
 
 ## Tekniska konventioner
