@@ -1632,3 +1632,73 @@ omräkningarna (relativt), vilka inlämningar som räknar om, och texten om skä
 4. **Coherent, ingen omräkning 2026-11-04.** Coherent flyttade affärsenheter från Industrial till Datacenter &
    Communications från FY2027 och skriver att tidigare perioder inte räknats om eftersom effekten inte är väsentlig. Det
    går inte att upptäcka i datat och ger ingen ny nyckel. Det står som förbehåll i källdokumentet.
+
+### 2026-11-25 – S1: Aristas kontraktsskulder, Q4 över ett basbyte och aktualitetsgränsen (rättning efter R17)
+
+Rättning efter granskning R17 av spår S1 (`docs/granskning/r17-nat-servrar.md`, gren `auto14k/r17-nat-servrar`), i
+spår X14 (gren `auto14k/x14-nat-servrar`). Posterna "S1: nät, optik och servrar som katalogserier" och "S1: tillägg
+efter första bygget" skrivs inte om. Alla 42 serier är fortfarande katalogserier, så inget här ändrar indexet eller
+tillståndsreglerna.
+
+1. **Aristas kontraktsskulder, taggordningen (R17-1).** Posten sa: `ContractWithCustomerLiabilityCurrent` +
+   `ContractWithCustomerLiabilityNoncurrent` ur samma inlämning, och i inlämningar från 2018-04-01 tas en del som saknas
+   från `DeferredRevenueCurrent` respektive `DeferredRevenueNoncurrent`. I 10-Q 2018-11-05 (0001596532-18-000233) är
+   `ContractWithCustomerLiabilityCurrent` (10,9 MUSD) en annan post: "As of September 30, 2018, $10.9 million of our
+   contract liabilities was included in 'Other current liabilities'". Balansräkningens rader är "Deferred revenue
+   318,850" och "Deferred revenue, non-current 211,005", taggade `DeferredRevenueCurrent` och
+   `DeferredRevenueNoncurrent`. **Ny regel:** i inlämningar från 2018-04-01 har `DeferredRevenueCurrent` och
+   `DeferredRevenueNoncurrent` företräde framför `ContractWithCustomerLiability*` för samma balansdag i samma inlämning.
+   Annars gäller `ContractWithCustomerLiabilityCurrent` och `...Noncurrent`, som förut. Bland inlämningarna från
+   2018-04-01 finns `DeferredRevenue*` bara i tre 10-Q (2018-05-04, 2018-08-08 och 2018-11-05). Väntad effekt: bara
+   2018Q3 ändras (529,9 i stället för 221,9). 2018Q1 och 2018Q2 tog redan dessa taggar, eftersom
+   `ContractWithCustomerLiability*` saknas för de balansdagarna.
+2. **Aristas kontraktsskulder börjar 2018Q1 (R17-3).** Posten behandlade balansen 2017-12-31 som ASC 606. Arista bytte
+   till ASC 606 2018-01-01 med den modifierade retroaktiva metoden och flyttade 16,5 MUSD förutbetalda intäkter till
+   övriga skulder per 2018-01-01 (10-Q 2018-11-05). Jämförelsetalet 2017-12-31 är alltså ASC 605. **Ny regel:**
+   `deferred_rev_anet` börjar med balansen 2018-03-31, den första ASC 606-balansen vid ett kvartalsslut.
+   Öppningsbalansen 2018-01-01 ligger inte vid ett kvartalsslut och används inte. Effekt: 2017Q4 utgår.
+3. **Q4 över ett basbyte i segment- och produktrader (R17-2).** Dells 10-K 2022-03-24 lägger ISG på en ny bas (FY2021
+   räknas om från 32 588 till 33 002), men 9M FY2022 i arkivet är då den gamla basen (24 771, 10-Q 2021-12-03). 10-Q
+   2022-12-05 räknar om 9M till 25 147. `sec.py` parar helåret med den 9M som fanns när helåret lämnades in, så första
+   versionen av 2021Q4 blev 34 366 − 24 771 = 9 595, ett värde på ingen bas. Varje omräkning är under 2 %, så
+   brottskontrollen ser inget. **Regel:** i en segment- eller produktrad används inte ett kvartal som räknas som
+   differens av två perioder med samma start (i praktiken Q4 = helår − 9M, eftersom 10-Q har kvartalet direkt), när
+   alla tre villkoren gäller:
+   - inlämningen med det avslutande värdet räknar om ett tidigare inlämnat värde av samma rad (samma start och slut)
+     med mer än `sec.TOL` (0,5 MUSD),
+   - basen (9M) är inlämnad före den, och
+   - basens egen inlämning räknade inte om något tidigare inlämnat värde av raden med mer än `sec.TOL`.
+
+   Kvartalet väntar då på ett par på samma bas. Med `sec.py`:s parning kommer det när helåret lämnas in igen efter att
+   9M har räknats om, alltså i nästa 10-K. Om basens inlämning själv räknar om något, låg den nya basen redan i
+   10-Q:na, och 10-K:t för bara omräkningen vidare till tidigare helår. Så ser Dells ASC 606 (10-K 2019-03-29), HPE:s
+   Server FY2025 (10-K 2025-12-18) och Ciscos årliga omklassningar (10-K 2020-09-03 och 2021-09-09) ut, och de
+   påverkas inte. Omräkningarna jämförs inom definitionsregimen, alltså i samma fakta som serien byggs av. Väntad
+   effekt: första versionerna av `rev_dell_isg` 2021Q4 (9 595) och `rev_dell_servers_networking` 2021Q4 (4 797) utgår,
+   och kvartalen får 9 219 och 4 720 från 10-K 2023-03-30. Inga andra rader ändras.
+   **Gräns:** ett 10-K som inför en andra ändring utöver en som redan finns i 10-Q:na upptäcks inte. Totala intäkter
+   (`rev_<co>`) följer `sec.py` som förut. R17:s sökning fann ingen blandad Q4 där: Super Micros 2017Q2 använder en 9M
+   som lämnades in samma dag som 10-K:t (2019-05-17).
+4. **Aktualitetsgränsen (R17 N-4).** Största observerade avstånd i regeln för aktualitetsgränsen räknades bara över
+   kvartal där det första värdet kom högst 100 dagar efter räkenskapskvartalets slut. Filtret undantar jämförelsetal i
+   senare dokument och Super Micros sena 10-K för FY2017 (686 dagar) och FY2024 (240 dagar). Gränserna (178–212 dagar)
+   ändras inte.
+5. **Rättelse av fakta (R17 N-2).** `rev_csco_infra_platforms` läser inlämningar från 10-Q 2017-11-21 (första kvartal
+   2016Q3), inte från 2018-11-20 som tabellen i posten säger.
+
+Dokumentationen rättas utan ändrade regler: EMC-fusionen i Dells ISG (R17-4), ordalydelsen för Aristas åtaganden
+2016–2017 (R17-5) och att HPE:s RPO är förutbetalda intäkter (R17-6). Det står i noterna och i
+`docs/kallor/sec_stack_nat.md`.
+
+**Vad som setts före denna post:** granskningsrapporten R17 med dess värden. Ur den delade rå-cachen, med S1:s kod och
+utan nät: Aristas taggade kontraktsskulder och förutbetalda intäkter per inlämning 2017–2019 (belopp och datum), och
+en sökning i alla S1:s segment- och produktrader och totaler efter Q4-rader ur ett 10-K som räknar om tidigare värden.
+Den visade helår, 9M före och efter 10-K:t och de två Q4-värdena för de åtta fallen, och vilka 10-Q mellan
+föregående 10-K och 10-K:t som räknade om något. I alla segmentfall utom Dell 2022-03-24 räknade 10-Q:na, och basens
+egen inlämning, om jämförelsetalen. Därför står det tredje villkoret i punkt 3. Utan det hade granskningens regel också
+hållit tillbaka fem Q4-rader på en konsekvent bas: Dells ISG och Servers and networking 2018Q4 i ett år, och
+`rev_hpe_server_fy24` 2025Q3 och `rev_csco_infra_platforms` 2020Q2 och 2021Q2 för gott. Ciscos 10-K 2021-09-09, som
+lämnar in FY2020 igen, räknar också om, och hålet 2020Q2 hade kortat den serien till tre kvartal. Ur S1:s tabell
+syntes Dells ISG och Servers and networking 2016Q1–2017Q2 och Aristas åtaganden och kontraktsskulder 2015Q4–2018Q4.
+Textblock i cachade instanser lästes för Aristas åtaganden 2016–2018, HPE:s RPO 2022–2026 och EMC-fusionen. Inga
+takter räknades.
