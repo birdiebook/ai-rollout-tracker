@@ -1753,3 +1753,28 @@ ordagrant citat och dess SHA-256. Citatet sparas bara under `data/raw`.
   1,0. Den bekräftar plats, hash, tal och datum, inte semantiken.
 - **SEC.** Den generiska klientidentiteten ur `.env`, en begäran i taget, 0,3 sekunder mellan dokument i loopar, och
   stopp vid 403 eller 429.
+
+### 2026-11-25 – KL1 (tillägg): plats, månadsdatum och kupongserierna
+
+Tillägg till posten "2026-11-25 – KL1", avsnittet "Kodningsregler för steg 2". Skrivet efter att korpusen hämtats och
+innan någon rad kodats eller någon serie räknats. **Sett före tillägget:** kandidatraderna i Anthropics 424B4 och dess
+avsnitt om kreditfaciliteten, konvertiblerna och tabellen över avtalsenliga förpliktelser, och skuldtabellen i
+CoreWeaves 10-Q för 2026Q3, med värden. Tillägget ändrar inget mått och ingen läsregel. Det säger hur platsen och de två
+kupongserierna genomförs.
+
+1. **Plats över flera rader.** Anthropics prospekt bryter stycken i radlistan, så en mening kan stå på flera rader. Då är
+   platsen `lines #a-#b`, från meningens första till sista rad, och SHA-256 räknas med `block_hash` av raderna. En
+   tabellrad är alltid en rad (`line #k`).
+2. **Datum som bara anger månad** ("In September 2026", "Mar 2028") kodas som `ÅÅÅÅ-MM`. Ett spann ("Dec 2026 - Jul
+   2030") kodas inte som förfallodag.
+3. **CoreWeaves skuldtabell** (noten "Debt", tabellen "The total debt obligations are as follows") kodas av en
+   deterministisk tolkning: en rad per instrumentrad, med `rate_pct` (kolumnen "Effective Interest Rates", hela procent
+   som det står), `outstanding` (kolumnen för innevarande balansdag, MUSD) och `maturity` (månad). Delsummor och rader
+   som börjar med "Less" eller "Total" kodas inte. Agenten läser varje tabell som kodas.
+4. **`kl_coupon_out_<bolag>_q`** = principalvägt medel av `rate_pct` över instrumenten med både ränta och utestående
+   belopp > 0 på balansdagen. Konvertibler ingår, eftersom serien är kostnaden för hela skuldstocken. Täckningen (andel
+   av utestående med ränta) står i rapporten. Räntorna är avrundade till hela procent, så medlet har ett
+   avrundningsbrus på upp till ±0,5 procentenheter.
+5. **`kl_coupon_new_<bolag>_q`** = principalvägt medel av `coupon_pct` för nya lån med fast ränta efter kvartalet för
+   `issue_date`. Konvertibler ingår inte, eftersom deras kupong också prissätter optionen på aktien. De och lån med
+   rörlig ränta (marginal över SOFR) står kvar som tabellrader.
