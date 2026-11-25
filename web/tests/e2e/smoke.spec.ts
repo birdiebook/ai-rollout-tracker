@@ -53,10 +53,9 @@ test('theme toggle switches and remembers the theme', async ({ page }) => {
 test('table view toggle shows the same numbers as a table', async ({ page }) => {
   await page.goto('');
   await page.waitForLoadState('networkidle');
-  const btn = page.locator('#stripes').getByRole('button', { name: 'Visa tabell' });
-  await btn.click();
+  await page.locator('#stripes summary').click();
   await expect(page.locator('#stripes-table table')).toBeVisible();
-  await expect(page.locator('#stripes-chart')).toBeHidden();
+  await expect(page.locator('#stripes-chart')).toBeVisible(); // WX2: the table opens under the chart
 });
 
 test('navigation links resolve under the base path', async ({ page }) => {

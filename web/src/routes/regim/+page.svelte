@@ -4,10 +4,11 @@
      Neutral: a regime shift is a description, not an alarm. -->
 <script lang="ts">
   import { resolve } from '$app/paths';
-  import { StatusBadge, dateLabel, fmt, periodLabel } from '$lib/design';
+  import { StatusBadge, Term, dataUrl, dateLabel, fmt, periodLabel, setChartData } from '$lib/design';
   import { HOLDOUT, HoldoutStrip, RULES, RegimeMeter, RegimeTimeline, headline, timelineMonths, type RegimeLane } from '$lib/regime';
 
   let { data } = $props();
+  setChartData(() => dataUrl('regime.json'));
   const lanes = $derived<RegimeLane[]>(
     data.lanes.length
       ? data.lanes
@@ -22,7 +23,7 @@
 
 <header class="hero">
   <p class="kicker">
-    Regim och strukturbrott (C4)
+    Regim och strukturbrott
     {#if data.isLive}<StatusBadge status="live" />{:else}<span class="pending">skarpt från {dateLabel(data.firstLive)}</span>{/if}
   </p>
   <h1>Har något fundamentalt ändrats?</h1>
@@ -37,8 +38,10 @@
 <section aria-labelledby="now-h" class="panel">
   <h2 id="now-h">Läget per block</h2>
   <p class="note">
-    P(inbromsning) ur en Markov-switching-modell med två tillstånd (MSIH(2)) på faktorn för varje block. Skifte rapporteras
-    när sannolikheten är minst {fmt(RULES.shiftAtLeast, 1)} {inARow} månader i rad, och tillbaka när den är högst
+    Modellen uppskattar varje månad sannolikheten att blocket ligger i en period med lägre takt, P(inbromsning). Den är en
+    Markov-switching-modell med två tillstånd (<Term id="msih">MSIH(2)</Term>) på faktorn för varje block. Strukturbrott i enskilda serier
+    skattas med <Term id="bocpd">BOCPD</Term>. Skifte rapporteras
+    till inbromsning när sannolikheten är minst {fmt(RULES.shiftAtLeast, 1)} {inARow} månader i rad, och till expansion när den är högst
     {fmt(RULES.backAtMost, 1)} {inARow} månader i rad. Däremellan behålls tillståndet.
   </p>
   <div class="meters">
@@ -75,8 +78,8 @@
   <h2 id="ho-h">Vad holdouten visade</h2>
   <p class="kicker"><span class="pending">holdout, beskrivande, inte skarp</span> öppnad en gång {dateLabel(HOLDOUT.opened)} · specifikation {HOLDOUT.spec} ({HOLDOUT.spec_commit})</p>
   <p class="lede">
-    C4 prövades en gång på {HOLDOUT.n_days} månadsslut, {periodLabel(HOLDOUT.first)}–{periodLabel(HOLDOUT.last)}, beräknade i
-    realtid med samma kod som nu körs skarpt. C4 är beskrivande: den befordras inte och styr ingen prognos.
+    Regimmodellen prövades en gång på {HOLDOUT.n_days} månadsslut, {periodLabel(HOLDOUT.first)}–{periodLabel(HOLDOUT.last)}, beräknade i
+    realtid med samma kod som nu körs skarpt. Den är beskrivande: den befordras inte och styr ingen prognos.
   </p>
   <div class="panel">
     <HoldoutStrip links={data.holdoutLinks} />
@@ -90,7 +93,7 @@
       <table class="nums">
         <caption class="visually-hidden">Holdouten per block</caption>
         <thead>
-          <tr><th scope="col">Block</th><th scope="col">Skiften till inbromsning</th><th scope="col">Skiften tillbaka</th><th scope="col">Månader i inbromsning</th><th scope="col">Omklassat i efterhand</th></tr>
+          <tr><th scope="col">Block</th><th scope="col">Skiften till inbromsning</th><th scope="col">Skiften till expansion</th><th scope="col">Månader i inbromsning</th><th scope="col">Omklassat i efterhand</th></tr>
         </thead>
         <tbody>
           {#each HOLDOUT.blocks as b (b.block)}
@@ -138,7 +141,7 @@
 <section aria-labelledby="m-h" class="panel">
   <h2 id="m-h">Metoden i korthet</h2>
   <dl class="method">
-    <div><dt>Regim</dt><dd>MSIH(2): två tillstånd med eget medel och egen varians på den månatliga faktorn för "capex och leverantörsled" och för "efterfrågan" (faktormodellen C3). Skattas om varje månad med expanderande fönster. Tillståndet med lägre medel kallas inbromsning.</dd></div>
+    <div><dt>Regim</dt><dd>MSIH(2): två tillstånd med eget medel och egen varians på den månatliga faktorn för "capex och leverantörsled" och för "efterfrågan" (ur faktormodellen). Skattas om varje månad med expanderande fönster. Tillståndet med lägre medel kallas inbromsning.</dd></div>
     <div><dt>Skifte</dt><dd>P(inbromsning) ≥ {fmt(RULES.shiftAtLeast, 1)} {inARow} månader i rad ger inbromsning, ≤ {fmt(RULES.backAtMost, 1)} {inARow} månader i rad ger expansion. En månad utan värde bryter följden.</dd></div>
     <div><dt>Strukturbrott</dt><dd>Bayesiansk online-changepoint (BOCPD) per räknad kärnserie på takten, hazard {RULES.hazard.M} per månad ({RULES.hazard.Q} per kvartal, {RULES.hazard.A} per år). Brott när P(körlängd ≤ {RULES.runLength}) ≥ {fmt(RULES.breakAtLeast, 1)}. Brott i inhållna serier räknas men visas utan namn.</dd></div>
     <div><dt>Registrerat</dt><dd>Måttregistret, G-D (trösklarna kommer därifrån; regime.json bär dem inte). Specifikation {data.spec_version ?? HOLDOUT.spec}. Skarpt från {dateLabel(data.firstLive)}.</dd></div>

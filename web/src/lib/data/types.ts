@@ -129,7 +129,15 @@ export interface LiveForecast {
   registered_origin?: string;
   variants?: Record<string, number | null>;
   intervals?: Partial<Record<IntervalLevel, Pair>>;
+  /** the commit that added the file, its timestamp (bundle 1.2.0); null: built without git history */
+  commit?: Commit | null;
   [k: string]: unknown;
+}
+
+/** A commit that added a live forecast file: full sha and the committer date in UTC ("YYYY-MM-DDTHH:MM:SSZ"). */
+export interface Commit {
+  sha: string;
+  date: string;
 }
 
 /** One forecast file against the first vintage of its outcome. Model columns are err_<m>, crps_<m>, pit_<m>,
@@ -231,6 +239,7 @@ export interface Horizons {
   first_live: string;
   origin: string | null;
   file: string | null;
+  commit?: Commit | null;
   next_origin: string | null;
   next_period: string | null;
   groups: Record<string, number[]>;
@@ -291,3 +300,301 @@ export interface Regime {
 
 export const BRANCH_CODES = ['G1', 'G2', 'G3', 'G4', 'G5', 'G6', 'G7', 'G8', 'G9'] as const;
 export type BranchCode = (typeof BRANCH_CODES)[number];
+
+// ---------- story/<YYYY-MM>.json and story/index.json (W13, schema story / story_index) ----------
+
+export type StoryEventType = 'K1' | 'K2' | 'K3' | 'K4' | 'K5' | 'K6';
+export type StoryCardType = 'K0' | StoryEventType | 'K9';
+export type PerType = Record<StoryEventType, number>;
+
+export interface StoryRule {
+  register: string;
+  entry: string;
+  cap: number;
+  type_caps: Record<string, number>;
+  high: number;
+  low: number;
+  order: StoryEventType[];
+}
+
+export interface StoryLink {
+  kind: 'start' | 'branch' | 'series' | 'nowcast' | 'regime' | 'method';
+  id: string | null;
+  slug: string | null;
+  label: string;
+}
+
+export interface StoryTrack {
+  field: 'pace' | 'change_percentile' | 'pace_percentile';
+  months: string[];
+  values: (number | null)[];
+}
+
+export interface StoryCard {
+  type: StoryCardType;
+  type_label: string;
+  id: string;
+  rank: number;
+  status: 'live' | 'reconstructed';
+  title: string;
+  text: string;
+  direction: -1 | 0 | 1 | null;
+  link: StoryLink;
+  facts: Record<string, any>;
+  track: StoryTrack | null;
+}
+
+export interface Story {
+  month: string;
+  month_sv: string;
+  kind: 'skarp' | 'rekonstruerad';
+  status: 'live' | 'reconstructed';
+  /** the day the month's record became known; nothing in the document is known later */
+  known: string;
+  previous: string | null;
+  rule: StoryRule;
+  headline: string;
+  n_events: number;
+  types: PerType;
+  qualified: PerType;
+  omitted: PerType;
+  withheld: PerType;
+  cards: StoryCard[];
+  /** R-W3a (register 2026-11-25): candidates dropped as the same quantity as a shown card */
+  duplicates?: PerType;
+  /** R-W3c: the cards struck by a cap, in the rule's order */
+  omitted_cards?: { type: string; id: string; label: string; direction: -1 | 0 | 1 | null }[];
+  /** R-W3b: per K5/K6, series tested, hits expected from chance (n/10) and how many met the condition */
+  chance?: { K5: StoryChance; K6: StoryChance } | null;
+}
+
+export interface StoryChance {
+  n: number;
+  expected: number;
+  met: number;
+}
+
+export interface StoryIndexEntry {
+  month: string;
+  month_sv: string;
+  kind: 'skarp' | 'rekonstruerad';
+  known: string;
+  n_events: number;
+  types: PerType;
+  headline: string;
+}
+
+export interface StoryIndex {
+  rule: StoryRule;
+  latest: string | null;
+  months: StoryIndexEntry[];
+}
+
+// ---------- report/<YYYYQn>.json and report/index.json (W14, schema report / report_index, bundle 1.3.0) ----------
+
+export interface ReportMonthRef {
+  month: string;
+  month_sv: string;
+  kind: 'skarp' | 'rekonstruerad';
+  /** the day the month's record became known */
+  known: string;
+  file: string | null;
+}
+
+export interface ReportCell {
+  month: string;
+  kind: 'skarp' | 'rekonstruerad';
+  index: number | null;
+  state: StateName | null;
+  n_series: number | null;
+  n_up: number | null;
+  n_neutral: number | null;
+  n_down: number | null;
+}
+
+export interface ReportBranch {
+  code: string;
+  name: string;
+  /** the comparison month (when there is one) and the quarter's three months */
+  path: ReportCell[];
+  delta_index: number | null;
+  from: StateName | null;
+  to: StateName | null;
+  state_changed: boolean | null;
+  flips: number | null;
+}
+
+export interface ReportLead {
+  lead: string;
+  name: string;
+  branches: string[];
+  ratios: string[];
+  n_ratios_withheld: number;
+  text: string;
+}
+
+export interface ReportRatio {
+  key: string;
+  label: string;
+  leads: string[];
+  latest_period: string | null;
+  known_from: string | null;
+  level: number | null;
+  pace: number | null;
+  pace_unit: string | null;
+  change_in_pace: number | null;
+  pace_percentile: number | null;
+  change_percentile: number | null;
+  n_pace: number | null;
+  direction: -1 | 0 | 1 | null;
+  valid: boolean | null;
+  base_level: number | null;
+  base_period: string | null;
+  text: string;
+}
+
+export interface ReportOutcome {
+  period: string;
+  origin: string | null;
+  file: string | null;
+  slug: string | null;
+  champion: string | null;
+  forecast: number | null;
+  outcome: number | null;
+  known_from: string;
+  err_champion: number | null;
+  errors: Record<string, number | null>;
+  intervals: Record<string, [number | null, number | null]> | null;
+}
+
+export interface ReportMetric {
+  variant: string;
+  role: 'champion' | 'baseline' | 'guidance' | 'variant';
+  n: number;
+  mae: number | null;
+  bias: number | null;
+  delta_mae: number | null;
+  coverage: Record<string, { rate: number | null; lo: number | null; hi: number | null; n: number } | null>;
+}
+
+export interface ReportNowcast {
+  id: string;
+  label: string;
+  title: string;
+  publishable: boolean;
+  target: string | null;
+  unit: string | null;
+  decimals: number;
+  error_unit: string;
+  origin_rule: string;
+  champion: string | null;
+  n_files: number;
+  new: { period: string | null; origin: string; file: string; champion: string | null; value: number | null; variants: Record<string, number | null> | null }[];
+  outcomes: ReportOutcome[];
+  n_outcomes: number;
+  n_scored: number;
+  n_files_scored: number;
+  metrics: ReportMetric[];
+  changes: { origin: string; file: string; from: string | null; to: string | null }[];
+  decisions: string[];
+  text: string;
+}
+
+export interface ReportRegimeCell {
+  month: string;
+  present: boolean;
+  p_slow?: number | null;
+  state?: string | null;
+  shift?: string | null;
+  reason?: string | null;
+}
+
+export interface ReportRegime {
+  available: boolean;
+  months: string[];
+  blocks: { block: string; label: string; cells: ReportRegimeCell[] }[] | null;
+  shifts: { block: string; label: string; shift: string; month: string }[];
+  breaks: { month: string; branch: string | null; series: string; label: string; latest_period: string | null; p_recent: number | null }[] | null;
+  n_breaks: number;
+  n_breaks_withheld: number;
+  missing: string[];
+  text: string;
+}
+
+export interface ReportNamed {
+  key: string;
+  label: string;
+  n?: number;
+  branch?: string;
+}
+
+export interface ReportData {
+  added: ReportNamed[] | null;
+  gone: ReportNamed[] | null;
+  new_series: ReportNamed[] | null;
+  n_revised: number;
+  n_notable: number;
+  n_revised_series: number;
+  revised: ReportNamed[];
+  n_guidance: number;
+  n_stale: number;
+  stale: ReportNamed[];
+  n_missing: number;
+  reviews: { date: string; title: string; file: string }[];
+  register: { date: string; title: string }[];
+  n_withheld: number;
+  sentences: string[];
+}
+
+export interface Report {
+  quarter: string;
+  quarter_sv: string;
+  title: string;
+  kind: 'skarp' | 'rekonstruerad';
+  status: 'live' | 'reconstructed';
+  start: string;
+  end: string;
+  /** the report day: the last month's record became known; nothing in the document is known later */
+  known: string;
+  months: ReportMonthRef[];
+  base: ReportMonthRef | null;
+  recon_note: string | null;
+  headline: string;
+  summary: {
+    headline: string;
+    sentences: string[];
+    counts: Record<string, number>;
+    n_with_state: number;
+    changed: { code: string; name: string; from: StateName | null; to: StateName | null }[];
+    repeated: { code: string; steps: { month: string; state: StateName | null }[] }[];
+    moved: { code: string; delta_index: number | null }[];
+    groups: { state: StateName | null; codes: string[] }[];
+  };
+  branches: ReportBranch[];
+  chain: ReportLead[];
+  ratios: ReportRatio[];
+  n_ratios_withheld: number;
+  nowcasts: ReportNowcast[];
+  nowcast_news: { n_new: number; n_outcomes: number; n_d2: number; error: string | null; text: string };
+  regime: ReportRegime;
+  data: ReportData;
+  withheld: WithheldDoc['withheld'];
+  source: { module: string; markdown: string };
+}
+
+export interface ReportIndexEntry {
+  quarter: string;
+  quarter_sv: string;
+  title: string;
+  kind: 'skarp' | 'rekonstruerad';
+  status: 'live' | 'reconstructed';
+  known: string;
+  headline: string;
+}
+
+export interface ReportIndex {
+  latest: string | null;
+  /** the first quarter whose three months can all have a live snapshot; every earlier quarter is reconstructed */
+  first_live: string;
+  quarters: ReportIndexEntry[];
+}

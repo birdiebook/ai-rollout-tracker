@@ -53,7 +53,7 @@ DERIVED_META = {
 # Registered variants (docs/mattregister.md sections 3 and 4, B2 entries), in Swedish for the nowcast page.
 NOWCAST_INFO = {
     "n1": {
-        "title": "Capex för de fyra största hyperscalers",
+        "title": "Capex för de fyra största molnbolagen",
         "frequency": "kvartal",
         "origin_rule": "kvartalets slut + 20 dagar, före den första rapporten",
         "results_doc": "docs/resultat/n1.md",
@@ -63,8 +63,8 @@ NOWCAST_INFO = {
             "V1": "B1 + bridge (OLS) på import från Taiwan och datacenterbyggande",
             "V2": "som V1, med ridge",
             "B2": "bolagens guidance (Meta, Alphabet), annars B1",
-            "B3": "B2 korrigerad för bolagens systematiska avvikelse mot sin guidance (spår C2)",
-            "DF": "B1 + OLS på faktormodellens förändring (C3, skugga)",
+            "B3": "B2 korrigerad för bolagens systematiska avvikelse mot sin egen guidance",
+            "DF": "B1 + OLS på faktormodellens förändring (skuggvariant)",
         },
     },
     "n2": {
@@ -77,8 +77,8 @@ NOWCAST_INFO = {
             "B1": "säsongsnaiv tillväxt",
             "V1": "B1 + ridge på import från Taiwan",
             "B2": "TSMC:s kvartalsguidance utslagen per månad",
-            "B3": "B2 korrigerad för systematisk avvikelse mot guidance (spår C2, huvudmodell efter granskning R7)",
-            "DF": "B2 + OLS på faktormodellens förändring (C3, skugga)",
+            "B3": "B2 korrigerad för TSMC:s systematiska avvikelse mot sin egen guidance",
+            "DF": "B2 + OLS på faktormodellens förändring (skuggvariant)",
         },
     },
     "n3": {
@@ -90,7 +90,7 @@ NOWCAST_INFO = {
             "B0": "slumpvandring: förra kvartalet",
             "B1": "drift: förra kvartalet × medel av de fyra senaste kvartalens tillväxt",
             "B2": "Nvidias intäktsguidance (mittpunkt) × senast kända datacenterandel (villkorad: granskning R5)",
-            "DF": "B1 + OLS på faktormodellens förändring (C3, skugga)",
+            "DF": "B1 + OLS på faktormodellens förändring (skuggvariant)",
         },
     },
     "n4": {
@@ -105,7 +105,7 @@ NOWCAST_INFO = {
             "B0": "slumpvandring: förra kvartalet",
             "B1": "drift: förra kvartalet × medel av de fyra senaste kvartalens tillväxt",
             "V1": "B1 + OLS på senast kända kvartalstillväxt i RPO-summan",
-            "DF": "B1 + OLS på faktormodellens förändring (C3, skugga)",
+            "DF": "B1 + OLS på faktormodellens förändring (skuggvariant)",
         },
     },
     "n5": {

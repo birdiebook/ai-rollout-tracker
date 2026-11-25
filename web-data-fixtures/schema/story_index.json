@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://birdiebook.github.io/ai-rollout-tracker/schema/v1/story_index.json",
+  "title": "story/index.json: every month of the monthly story, oldest first",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["rule", "latest", "months"],
+  "properties": {
+    "rule": {"$ref": "story.json#/$defs/rule"},
+    "latest": {"oneOf": [{"$ref": "common.json#/$defs/month"}, {"type": "null"}]},
+    "months": {"type": "array", "items": {
+      "type": "object", "additionalProperties": false,
+      "required": ["month", "month_sv", "kind", "known", "n_events", "types", "headline"],
+      "properties": {
+        "month": {"$ref": "common.json#/$defs/month"}, "month_sv": {"type": "string"},
+        "kind": {"$ref": "common.json#/$defs/kind"}, "known": {"$ref": "common.json#/$defs/date"},
+        "n_events": {"type": "integer", "minimum": 0}, "types": {"$ref": "story.json#/$defs/per_type"},
+        "headline": {"type": "string"}
+      }
+    }}
+  }
+}

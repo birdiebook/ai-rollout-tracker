@@ -2,7 +2,7 @@
      generated from flow.json (model.ts); nothing is written by hand. Tally and changes are pictures of the same counts. -->
 <script lang="ts">
   import { resolve } from '$app/paths';
-  import { StatusBadge, dateLabel, fmt, periodLabel, stateStyle } from '$lib/design';
+  import { Deferred, StatusBadge, Term, dateLabel, fmt, periodLabel, stateStyle } from '$lib/design';
   import type { StartData } from './model';
 
   let { start }: { start: StartData } = $props();
@@ -18,14 +18,24 @@
 
 <header class="hero">
   <p class="kicker">
-    <span>Läget {periodLabel(start.record.month, true)}</span>
-    <StatusBadge {status} />
-    {#if status === 'recon' && start.record.first_live_date}
-      <span class="note">första skarpa ögonblicksbilden {dateLabel(start.record.first_live_date)}</span>
+    {#if status === 'recon'}
+      <!-- R-W3: a reconstructed month must not read as a live one; the status is the kicker itself, not a grey tag -->
+      <StatusBadge {status} prominent label="Rekonstruerat läge {periodLabel(start.record.month, true)}" />
+      {#if start.record.first_live_date}<span class="first">skarpt från {dateLabel(start.record.first_live_date)}</span>{/if}
+    {:else}
+      <span>Läget {periodLabel(start.record.month, true)}</span>
+      <StatusBadge {status} />
     {/if}
   </p>
   <h1 data-testid="headline">{h.sentence}</h1>
+  {#if status === 'recon'}
+    <p class="recon" data-testid="recon-note">
+      Räknat i efterhand med dagens kod på data som var kända vid månadsslutet, inte sparat då. En rekonstruktion kan se
+      säkrare ut än det som gick att se i realtid. <Term id="rekonstruerad">Mer om rekonstruerade månader</Term>
+    </p>
+  {/if}
 
+  <Deferred>
   <ul class="tally" aria-label="Grenar per tillstånd">
     {#each tally as t (t.s)}
       {@const st = stateStyle(t.s)}
@@ -51,7 +61,7 @@
               <b>{c.code}</b> {c.name}
               <span class="move">
                 <span aria-hidden="true" style:color={a.color}>{a.glyph}</span>
-                {a.word} → <span aria-hidden="true" style:color={b.color}>{b.glyph}</span>
+                {a.word} <span aria-hidden="true">→</span><span class="visually-hidden">till</span> <span aria-hidden="true" style:color={b.color}>{b.glyph}</span>
                 {b.word}
               </span>
             </a>
@@ -69,6 +79,7 @@
       {fmt(start.facts.n_withheld)} som räknas men hålls inne av licensskäl{#if start.facts.fetched}. Data hämtad till och med {dateLabel(start.facts.fetched)}{/if}.
     </p>
   {/if}
+  </Deferred>
 </header>
 
 <style>
@@ -85,6 +96,17 @@
   h1 {
     max-width: 28ch;
     margin: 10px 0 14px;
+  }
+  .first {
+    color: var(--c-ink-2);
+  }
+  .recon {
+    margin: -6px 0 14px;
+    max-width: 70ch;
+    font-size: var(--fs-small);
+    color: var(--c-ink-2);
+    border-left: 2px dashed var(--c-ink-2);
+    padding-left: 10px;
   }
   .tally {
     list-style: none;

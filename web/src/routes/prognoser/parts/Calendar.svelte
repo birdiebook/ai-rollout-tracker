@@ -28,6 +28,7 @@
 <ChartFrame
   id="kalender"
   title="Kalendern: nästa skarpa prognos"
+  headingLevel={2}
   {description}
   height={cal.length * rowH + 30}
   margin={{ top: 4, right: 18, bottom: 24, left: 46 }}

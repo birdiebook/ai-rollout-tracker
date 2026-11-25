@@ -72,7 +72,8 @@
       "additionalProperties": false,
       "properties": {
         "counts": {"type": "object", "additionalProperties": {"type": "integer"}, "description": "Rows per source type (release, fetch, revision, backfill, derived)."},
-        "backfill_last_known": {"$ref": "common.json#/$defs/date_or_null", "description": "Backfilled rows carry today's vintage: time travel before this date shows reconstructed history."}
+        "backfill_last_known": {"$ref": "common.json#/$defs/date_or_null", "description": "The latest known_from (a rule: period end + lag) among the backfilled rows known on the build day."},
+        "backfill_fetched": {"$ref": "common.json#/$defs/date_or_null", "description": "From 1.2.0. The latest fetched_at day (rounded up) among the same backfilled rows. Backfilled rows carry the vintage of this day: time travel before max(backfill_last_known, backfill_fetched) shows reconstructed history."}
       }
     },
     "versions": {"anyOf": [{"$ref": "#/$defs/versions"}, {"type": "null"}]}

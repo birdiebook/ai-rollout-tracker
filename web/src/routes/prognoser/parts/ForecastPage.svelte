@@ -14,7 +14,7 @@
   const row = $derived(liveRows(nc).find((x) => x.slug === slug)!);
   const f = $derived(valueFmt(nc));
   const unit = $derived(nc.unit ?? '');
-  const proof = $derived(proofLinks(site.repo, site.sha, row.file));
+  const proof = $derived(proofLinks(site.repo, site.sha, row.file, row.commit));
   const ids = $derived((nc.variants ?? []).map((v) => v.id));
   const num = (x: unknown) => (typeof x === 'number' ? x : null);
 </script>
@@ -30,16 +30,25 @@
   {f(row.intervals['80']?.[0])}–{f(row.intervals['80']?.[1])}.
   {#if row.scored}Utfallet blev {f(row.outcome)}, {row.inside['80'] ? 'inom' : 'utanför'} 80 %-intervallet.{:else if row.outcome !== null}Utfallet {f(row.outcome)} var känt vid prognosdagen och räknas inte.{:else}Utfallet är inte publicerat ännu.{/if}
 </p>
-<p class="tags"><KindTag kind="skarp" /> <RoleTag role="champion" id={row.champion} /></p>
+<p class="tags"><KindTag kind={row.verified ? 'skarp' : 'overifierad'} /> <RoleTag role="champion" id={row.champion} /></p>
 
 <section class="proof panel" aria-labelledby="h-proof">
   <h2 id="h-proof">Beviset: tidsstämpeln i git</h2>
-  <p>
-    Prognosen ligger i <code>{row.file}</code>. Den committades före utfallet och skrivs aldrig om; den första commiten i
-    filens historik är tidsstämpeln.
-  </p>
+  {#if row.commit}
+    <p data-commit={row.commit.sha}>
+      Prognosen ligger i <code>{row.file}</code>, committad {dateLabel(row.commit.date.slice(0, 10))} kl. {row.commit.date.slice(11, 16)} UTC
+      ({#if proof?.commit}<a href={proof.commit} rel="external"><code>{row.commit.sha.slice(0, 7)}</code></a>{:else}<code>{row.commit.sha.slice(0, 7)}</code>{/if}).
+      {#if row.verified}{#if row.outcomeKnown}Det är före utfallet, som publicerades {dateLabel(row.outcomeKnown)}.{/if} Filen skrivs aldrig om; commiten som lade till den är tidsstämpeln.{:else}Commiten ligger inte före utfallet, så prognosen räknas inte som skarp.{/if}
+    </p>
+  {:else}
+    <p>
+      Prognosen ligger i <code>{row.file}</code>, men bygget hittade inte commiten som lade till filen (byggt utan
+      git-historik). Tidsstämpeln är därför inte verifierad, och prognosen visas inte som skarp förrän den är det.
+    </p>
+  {/if}
   {#if proof}
     <p class="links">
+      {#if proof.commit}<a href={proof.commit} rel="external">Commiten som lade till filen</a>{/if}
       <a href={proof.history} rel="external">Filens commit-historik på GitHub</a>
       <a href={proof.file} rel="external">Filen {proof.ref === 'main' ? 'på main' : `vid commit ${proof.ref.slice(0, 7)}`}</a>
     </p>

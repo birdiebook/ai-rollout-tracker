@@ -2,7 +2,8 @@
      data, the chain L1→L9 as the spine, three question cards, the state stripes and the ways on. Components and the
      view model live in $lib/start/; data comes only through the typed loaders (+page.server.ts). -->
 <script lang="ts">
-  import { dateLabel, fmt, periodLabel } from '$lib/design';
+  import { resolve } from '$app/paths';
+  import { dataUrl, dateLabel, fmt, periodLabel, setChartData } from '$lib/design';
   import Calibration from '$lib/start/Calibration.svelte';
   import CalendarChart from '$lib/start/CalendarChart.svelte';
   import Chain from '$lib/start/Chain.svelte';
@@ -16,6 +17,7 @@
   import { moveCounts, upcoming } from '$lib/start/model';
 
   let { data } = $props();
+  setChartData(() => dataUrl('overview.json'));
   const s = $derived(data.start);
   const moves = $derived(moveCounts(s.branches));
   const next = $derived(upcoming(s.calendar)[0] ?? null);
@@ -28,6 +30,17 @@
 </svelte:head>
 
 <Hero start={s} />
+
+<p class="story-entry">
+  <a href={resolve('/manad/[manad]', { manad: s.record.month })}>Månadens berättelse, {periodLabel(s.record.month, true)} <span aria-hidden="true">→</span></a>
+  <span class="note">det som hände enligt den förregistrerade urvalsregeln, kort för kort</span>
+</p>
+{#if data.report}
+  <p class="report-entry">
+    <a href={resolve('/kvartal/[kvartal]', { kvartal: data.report.quarter })}>Kvartalsrapporten, {data.report.quarter_sv}{data.report.kind === 'rekonstruerad' ? ' (rekonstruerad)' : ''} <span aria-hidden="true">→</span></a>
+    <span class="note">kedjan, flödena, prognoserna och regimen över kvartalet</span>
+  </p>
+{/if}
 
 <Chain start={s} />
 
@@ -89,5 +102,29 @@
   }
   .intro {
     margin: 0 0 10px;
+  }
+  .story-entry {
+    margin: 6px 0 18px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 12px;
+    align-items: baseline;
+  }
+  .story-entry a {
+    font-weight: 600;
+  }
+  /* W14: the quarterly report's entry, right under the monthly story's and in the same form */
+  .story-entry:has(+ .report-entry) {
+    margin-bottom: 4px;
+  }
+  .report-entry {
+    margin: 0 0 18px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 12px;
+    align-items: baseline;
+  }
+  .report-entry a {
+    font-weight: 600;
   }
 </style>

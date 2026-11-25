@@ -23,3 +23,20 @@ describe('Swedish formatting', () => {
     expect(ordinalMonth(monthOrdinal('2023-06'))).toBe('2023-06');
   });
 });
+
+describe('fast sv-SE formatting (R-W2 P1)', () => {
+  it('agrees with Intl.NumberFormat for random numbers, ties and carries', async () => {
+    const { intlFormat, fmt } = await import('./format');
+    let seed = 7;
+    const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+    const xs: number[] = [0, 0.5, 0.05, 9.95, 99.5, 999.5, 0.0005, 0.0775, 3809.9395, 123456789.5, 1234, 999999.995];
+    for (let t = 0; t < 20000; t++) {
+      const mag = 10 ** (Math.floor(rnd() * 12) - 4);
+      let a = rnd() * mag;
+      if (t % 7 === 0) a = Math.round(a * 1000) / 1000 + 0.0005;
+      if (t % 11 === 0) a = Math.round(a);
+      xs.push(a);
+    }
+    for (const a of xs) for (const d of [0, 1, 2, 3]) expect(fmt(a, d), `${a} ${d}`).toBe(intlFormat(a, d));
+  });
+});

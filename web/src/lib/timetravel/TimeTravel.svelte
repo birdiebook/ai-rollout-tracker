@@ -4,27 +4,31 @@
      showing today's data under a past date. Internal links carry `as_of` along (pointerdown/keydown/click, capture
      phase, before SvelteKit's router reads the href). -->
 <script lang="ts">
-  import { onMount, type Component, type Snippet } from 'svelte';
+  import { onMount, tick, type Component, type Snippet } from 'svelte';
   import { afterNavigate } from '$app/navigation';
   import { page } from '$app/state';
   import { resolve } from '$app/paths';
   import { dateLabel } from '$lib/design';
   import TimeBar from './TimeBar.svelte';
   import { tt } from './store.svelte';
+  import { PREPAINT_SCRIPT } from './prepaint';
   import { carryHref, readAsOf } from './url';
 
   let { children }: { children: Snippet } = $props();
 
   // before first paint: a URL with as_of hides today's content until the time-travel view replaces it, so later
   // knowledge never flashes under a past date (without JS nothing runs and the prerendered page shows as usual)
-  const pre = `<script>try{if(/(^#|&)as_of=\\d{4}-\\d{2}-\\d{2}/.test(location.hash))document.documentElement.setAttribute('data-tt','')}catch(e){}<\/script>`;
+  // (R-W1: the same parser as readAsOf, prepaint.ts; the old regex missed e.g. "#as%5Fof=" and hid invalid days)
+  const pre = PREPAINT_SCRIPT;
 
-  type ViewKind = 'start' | 'branch' | 'series';
-  const ROUTES: Record<string, ViewKind> = { '/': 'start', '/gren/[id]': 'branch', '/serie/[key]': 'series' };
+  type ViewKind = 'start' | 'branch' | 'series' | 'story' | 'report';
+  const ROUTES: Record<string, ViewKind> = { '/': 'start', '/gren/[id]': 'branch', '/serie/[key]': 'series', '/manad/[manad]': 'story', '/kvartal/[kvartal]': 'report' };
   const LOADERS: Record<ViewKind, () => Promise<{ default: Component<any> }>> = {
     start: () => import('./views/StartOn.svelte'),
     branch: () => import('./views/BranchOn.svelte'),
-    series: () => import('./views/SeriesOn.svelte')
+    series: () => import('./views/SeriesOn.svelte'),
+    story: () => import('$lib/story/MonthOn.svelte'),
+    report: () => import('$lib/report/QuarterOn.svelte')
   };
   const kind = $derived<ViewKind | null>(ROUTES[page.route.id ?? ''] ?? null);
   const site = $derived((page.data as { site?: { build?: { built?: string | null } } }).site);
@@ -46,6 +50,12 @@
       .catch((e) => (viewError = String(e)));
   });
 
+  // R-W2: the button disappears with the view; focus goes to the page (main) instead of being dropped on <body>
+  async function showToday() {
+    tt.set(null);
+    await tick();
+    document.getElementById('main')?.focus();
+  }
   function carry(e: Event) {
     if (e instanceof KeyboardEvent && e.key !== 'Enter') return;
     if (e instanceof MouseEvent && e.type !== 'click' && e.button > 1) return;
@@ -54,6 +64,8 @@
     const cur = a.getAttribute('href') ?? '';
     const raw = a.dataset.ttSet === cur ? (a.dataset.ttHref ?? cur) : cur;
     const day = readAsOf(location.hash);
+    // a link marked data-tt-own names its own as_of (the monthly story, W13): it opens time travel when none is active
+    if (day === null && a.hasAttribute('data-tt-own') && readAsOf(new URL(raw, location.href).hash)) return;
     if (raw.startsWith('#')) {
       // an in-page anchor would replace the hash and drop as_of: scroll to it ourselves while travelling
       if (day && e.type === 'click' && raw.length > 1) {
@@ -109,7 +121,7 @@
           Den visar bara dagens kunskap, och därför visas den inte under datumet {dateLabel(tt.effective)}. Tidsresan finns för
           <a href={resolve('/')}>läget</a>, grensidorna och seriesidorna.
         </p>
-        <p><button type="button" class="chip" onclick={() => tt.set(null)}>Visa sidan som i dag</button></p>
+        <p><button type="button" class="chip" onclick={showToday}>Visa sidan som i dag</button></p>
       </section>
     {:else if viewError}
       <p class="note" role="alert">Kunde inte ladda tidsresan: {viewError}</p>

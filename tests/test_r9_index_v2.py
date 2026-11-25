@@ -516,18 +516,18 @@ def test_cli_show_due_and_backcast_compare(tmp_path, tmp_table):
     assert any(x.startswith("| G8 | 2026-10 |") and "| för få källor | 1 |" in x for x in lines)
 
 
-# ------------------------------------------------------------------ 5. bundle 1.1.0 and the web
+# ------------------------------------------------------------------ 5. bundle 1.4.0 and the web
 
 
-def test_state_enum_has_both_few_states_and_the_bundle_is_1_1():
+def test_state_enum_has_both_few_states_and_the_bundle_is_1_4():
     from ai_tracker import site_bundle
 
     common = json.loads((Path(SY.__file__).parent / "schema" / "common.json").read_text(encoding="utf-8"))
     states = common["$defs"]["state"]["enum"]
     assert R.STATE_FEW_FAMILIES in states and R.STATE_FEW in states and states == E.STATES
-    assert site_bundle.VERSION == "1.1.0"
+    assert site_bundle.VERSION == "1.4.0"  # index v2 after main's 1.3.0 (W14), a minor: additive
     man = json.loads((config.REPO / "web-data-fixtures" / "manifest.json").read_text(encoding="utf-8"))
-    assert man["version"] == "1.1.0"
+    assert man["version"] == "1.4.0"
 
 
 def _schedule(path: Path) -> Path:

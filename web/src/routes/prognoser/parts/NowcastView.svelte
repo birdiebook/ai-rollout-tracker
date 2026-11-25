@@ -2,7 +2,7 @@
 <script lang="ts">
   import { resolve } from '$app/paths';
   import { DataTable, dateLabel, signed } from '$lib/design';
-  import type { Nowcast } from '$lib/data';
+  import type { Commit, Nowcast } from '$lib/data';
   import BandsOverTime from './BandsOverTime.svelte';
   import BacktestCalibration from './BacktestCalibration.svelte';
   import Facit from './Facit.svelte';
@@ -34,7 +34,7 @@
     ].join(' ')
   );
   const results = $derived(repoFile(site.repo, nc.results_doc));
-  const proof = (file: string) => proofLinks(site.repo, site.sha, file);
+  const proof = (file: string, commit?: Commit | null) => proofLinks(site.repo, site.sha, file, commit);
 </script>
 
 <svelte:head><title>{nc.label} {nc.title} – Prognoser – AI-utrullningen</title></svelte:head>
@@ -53,9 +53,9 @@
   <h2 id="h-fore"><span class="actno">1</span> Före: {latest ? 'den senaste skarpa prognosen' : 'nästa skarpa prognos'}</h2>
   <div class="hero">
     {#if latest}
-      {@const pr = proof(latest.file)}
+      {@const pr = proof(latest.file, latest.commit)}
       <div class="panel">
-        <p class="kicker">{periodShort(latest.period, true)} · <KindTag kind="skarp" /></p>
+        <p class="kicker">{periodShort(latest.period, true)} · <KindTag kind={latest.verified ? 'skarp' : 'overifierad'} /></p>
         <p class="big num">{f(latest.value)} <small>{unit}</small></p>
         <p class="range num">
           80 %: {f(latest.intervals['80']?.[0])}–{f(latest.intervals['80']?.[1])} · 50 %: {f(latest.intervals['50']?.[0])}–{f(latest.intervals['50']?.[1])}
@@ -73,10 +73,11 @@
           {/if}
           <dt>Bevis</dt>
           <dd>
-            <code>{latest.file}</code>{#if pr}: <a href={pr.history} rel="external">commit-historik</a>{/if}
+            <code>{latest.file}</code>{#if latest.commit}, committad {dateLabel(latest.commit.date.slice(0, 10))}
+              ({#if pr?.commit}<a href={pr.commit} rel="external"><code>{latest.commit.sha.slice(0, 7)}</code></a>{:else}<code>{latest.commit.sha.slice(0, 7)}</code>{/if}){:else}, väntar på verifiering (ingen commit i bygget){/if}{#if pr}: <a href={pr.history} rel="external">commit-historik</a>{/if}
           </dd>
         </dl>
-        <p><a href={resolve('/prognoser/[id]/[[slug]]', { id: nc.id, slug: latest.slug })}>Prognosens egen sida →</a></p>
+        <p><a href={resolve('/prognoser/[id]/[[slug]]', { id: nc.id, slug: latest.slug })}>Prognosens egen sida <span aria-hidden="true">→</span></a></p>
       </div>
       <div class="panel">
         <ForecastDots id="dots" row={latest} {unit} format={f} source={srcLine} license={lic} />

@@ -3,7 +3,12 @@
   import { scaleLinear, scalePoint } from 'd3-scale';
   import { Axis, Band, ChartFrame, Line, QuantileDots, StripeCell } from '../index';
 
-  let { dots = [] as number[], outcome = undefined as number | undefined } = $props();
+  let {
+    dots = [] as number[],
+    outcome = undefined as number | undefined,
+    nRows = 3,
+    dataHref = undefined as string | undefined
+  } = $props();
   const data = [
     { m: '2026-01', v: 1, lo: 0, hi: 2 },
     { m: '2026-02', v: 2, lo: 1, hi: 3 },
@@ -18,7 +23,8 @@
   height={160}
   source="test"
   license="CC0"
-  table={{ columns: [{ key: 'm', label: 'Månad' }, { key: 'v', label: 'Värde' }], rows: data.map((d) => ({ m: d.m, v: String(d.v) })) }}
+  {dataHref}
+  table={{ columns: [{ key: 'm', label: 'Månad' }, { key: 'v', label: 'Värde' }], rows: Array.from({ length: nRows }, (_, i) => ({ m: `r${i + 1}`, v: String(i + 1) })) }}
 >
   {#snippet children(d)}
     {@const x = scalePoint<string>().domain(data.map((r) => r.m)).range([d.left, d.right])}

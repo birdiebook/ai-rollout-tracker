@@ -141,9 +141,18 @@ export function sampleDates(v: Versions | null | undefined, k = 24): string[] {
   return [...out];
 }
 
-/** Time travel to a date before the last backfilled row shows reconstructed history (datakontrakt 5.6). */
-export function reconstructedOn(backfillLastKnown: string | null | undefined, date: string | Date): boolean {
-  return !!backfillLastKnown && toDay(date) < backfillLastKnown;
+/** The day before which time travel shows reconstructed history (datakontrakt 5.6): backfilled rows carry the
+ *  vintage of the day they were fetched, so the boundary is the later of the last backfilled known_from (a rule day)
+ *  and that fetch day (rows.backfill_fetched, from bundle 1.2.0). null: nothing is backfilled. */
+export function backfillUntil(rows: { backfill_last_known?: string | null; backfill_fetched?: string | null } | null | undefined): string | null {
+  const a = rows?.backfill_last_known ?? null;
+  const b = rows?.backfill_fetched ?? null;
+  return a && b ? (a > b ? a : b) : (a ?? b);
+}
+
+/** Time travel to a date before the backfill boundary (backfillUntil) shows reconstructed history. */
+export function reconstructedOn(boundary: string | null | undefined, date: string | Date): boolean {
+  return !!boundary && toDay(date) < boundary;
 }
 
 /** The day a revision view opens on when no date is given: the version current one year before the latest version

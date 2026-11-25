@@ -4,6 +4,7 @@
 // percentiles, coverage and intervals come from the bundle; this file only selects, orders and words them.
 
 import type { CalendarEntry, Flow, Manifest, Nowcast, Overview, RecordMeta, SeriesIndex } from '$lib/data';
+import { fmt } from '$lib/design/format';
 
 /** Months of index history in each lead's sparkline (vision 3.1: "diffusionsindex 24 månader bakåt"). */
 export const SPARK_MONTHS = 24;
@@ -394,7 +395,7 @@ export function startData(input: {
 
 // ---------- generated sentences for the charts (also their accessible descriptions, vision 4.3) ----------
 
-const f2 = (x: number | null) => (x === null ? '–' : new Intl.NumberFormat('sv-SE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(x));
+const f2 = (x: number | null) => fmt(x, 2); // fmt avoids Intl's start-up cost (R-W2 P1)
 
 /** Q1: where the branches are now, and the largest move since last month. */
 export function nowDescription(branches: BranchView[], monthLabel: string, prevLabel: string | null): string {

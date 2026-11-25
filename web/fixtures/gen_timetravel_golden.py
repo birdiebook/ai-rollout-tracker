@@ -12,6 +12,9 @@ For every probe day D this replays the pipeline on D itself, not the bundle:
             SHA-256 over the rows (period|day|value). vitest checks that cutVersions(today's versions, D) gives the
             same digest. For monthly and coarser series also observations.as_of(key, D) on the raw rows (the
             replay of the table itself), as a digest over (period|value).
+- backfilled: whether D is before the backfill boundary, from the raw rows: max(latest known_from, latest
+            fetched_at day rounded up) of the rows with source "backfill" known on the build day (datakontrakt 5.6,
+            RW1-X 3a: backfilled rows carry the vintage of their fetch day). vitest checks seriesOn(doc, D).backfilled.
 
 Usage:
     PYTHONPATH=src python web/fixtures/gen_timetravel_golden.py                 # fixtures -> timetravel_golden.json
@@ -66,6 +69,15 @@ def versions_digest(enc: dict | None) -> dict | None:
             "last_known": enc["last_known"], "sha": digest(lines)}
 
 
+def backfilled_on(rows: pd.DataFrame, day: str, today: pd.Timestamp) -> bool:
+    """D before the day the backfilled rows' vintage became known: their latest known_from, or their fetch day."""
+    b = rows[(rows["source"] == "backfill") & (rows["known_from"] <= today)]
+    if b.empty:
+        return False
+    until = max(pd.Timestamp(b["known_from"].max()).normalize(), pd.to_datetime(b["fetched_at"]).max().ceil("D"))
+    return pd.Timestamp(day) < until
+
+
 def asof_digest(key: str, day: str, rows: pd.DataFrame) -> dict:
     s = observations.as_of(key, pd.Timestamp(day), rows).dropna()
     lines = [f"{p}|{num(V._r(v))}" for p, v in sorted((str(p), v) for p, v in s.items())]
@@ -117,6 +129,7 @@ def golden(ctx, snapshots_dir: Path, bundle: Path, probes: list[str], history_fr
     series_docs = {f.stem: json.loads(f.read_text(encoding="utf-8")) for f in sorted((bundle / "series").glob("*.json"))
                    if f.name != "index.json"}
     first_month = overview["stripes"]["months"][0]
+    today = pd.Timestamp(json.loads((bundle / "manifest.json").read_text(encoding="utf-8"))["today"])
     out_probes = []
     with tempfile.TemporaryDirectory() as tmp:
         for i, day in enumerate(probes):
@@ -164,6 +177,7 @@ def golden(ctx, snapshots_dir: Path, bundle: Path, probes: list[str], history_fr
                 entry = {"versions": versions_digest(V.encode(rows, pd.Timestamp(day), agg=agg if freq == "D" else None))}
                 if freq != "D":
                     entry["as_of"] = asof_digest(key, day, rows)
+                entry["backfilled"] = backfilled_on(rows, day, today)
                 vs[key] = entry
             probe["series"] = vs
             out_probes.append(probe)

@@ -60,6 +60,15 @@ En rad per spår, fylls på efter varje körning. Tumreglerna justeras när siff
 | 2026-11-24 | 13 | X10 rättning av M2 efter R13 | rättning (kod, register, dokument, ingen nyckel) | ~50 | ~65 | – | R13-1–R13-5 rättade (5 strikta xfail nu vanliga tester), R13-7–R13-9 också, delning per år vid timeout, `check`-kommando för första hämtningen, 14 nya tester; R13-6 blockerad (ingen nyckel), 210 årsrader omhämtade och identiska |
 | 2026-11-24 | 13 | X8 rättning F1 efter R11 | rättning (data, kod, register, två känsligheter, ny tolkning) | ~80 | ~100 | – | 3 CSV-rader verifierade mot källan, brottet flyttat (0,67 → 0,62), stängningsversion, cache, publiceringsgrind, US$-intäkt TSMC (40 kvartal), grannkontroll 81 dokument, 12 nya tester, 6 xfail → pass |
 | 2026-11-24 | 13 | Integration körning 13 | integration (11 mergar, uppföljning över spår, data, dokument, grindar) | ~50 | ~230 | – | 11 mergar utan förlorad loggpost, K2 klassar 633 serier, P2b omräknat, N7 omkört (beslut oförändrat), 112 serier in i basen, backcast v1/v2, läsanvisningar; webbens vitest röd av paket 1.1.0 (20 tester, ägs av webbsessionen) |
+| 2026-11-24 | 13 | W9 tidsresa | webb + läckagegräns | ~56 | ~110 | ~342 | globalt as_of, en grind (gate.ts), golden mot Python-replay, uppspelning |
+| 2026-11-24 | 13 | W10 avstämningar och regim | webb (sidor) | ~36 | ~121 | ~312 | /avstamningar, /regim, bidragsdiagram, holdoutresultat, konstanter testade mot Python |
+| 2026-11-24 | 13 | W11 utforskbar metod | webb (interaktiv) | ~48 | ~123 | ~344 | dödband, intervall, as_of, Holm-stege; golden mot Python-motorn |
+| 2026-11-25 | 13 | W12 navigering och delning | webb (layout, sök, delningsbilder) | ~105 (två pass, kvotstopp) | ~180 | ~380 | ⌘K-sök, djuplänkar, 421 delningsbilder, citeringsrad; hittade basvägsfelet |
+| 2026-11-25 | 14 | R-W1 licens och läckage | granskning (adversariell) | ~43 | ~103 | ~274 | licens OK; 5 tidsreseläckor rättade; backfill-gräns fel; härledbar riktning för inhållna |
+| 2026-11-25 | 14 | W13 månadens berättelse | regel + Python + webb | ~59 | ~120 | ~390 | regel låst före körning (1ca59b8), story.py, /manad/*, scrollytelling |
+| 2026-11-25 | 14 | RW1-X rättning | rättning (schema, CI, scan) | ~43 | ~132 | ~285 | backfill_fetched, commit per skarp prognos, scan-build, tidlös citering |
+| 2026-11-25 | 14 | R-W3 neutralitet | granskning | ~20 | ~98 | ~230 | speglingstest symmetriskt; 3 mallasymmetrier rättade; 4 krav före byte av huvudsida |
+| 2026-11-25 | 14 | R-W2 tillgänglighet | granskning + rättning | ~56 | ~116 | ~270 | axe 0 i 54 körningar; 4 tangentbordsfel rättade; LCP 0,8 s; TBT kvar (P1) |
 
 ## Körning 1, sammanfattning (2026-11-23, orkestrerare)
 
@@ -87,3 +96,7 @@ En rad per spår, fylls på efter varje körning. Tumreglerna justeras när siff
 - Parallella webbspår krockade på förhandsvisningsporten 4173. Playwright testade då tyst ett annat spårs bygge. Ge varje
   spår en egen `PW_PORT`.
 - Granskningsspåren hittar fortfarande verkliga fel (R8: Arena-läckaget). Behåll en granskning per ny serie som ska räknas.
+- Kvotgränsen nåddes med fem samtidiga spår. Spåret som stoppades kunde återupptas med SendMessage när kvoten var tillbaka,
+  utan att något arbete gick förlorat. Med webbspår är 3–4 samtidiga spår per 5-timmarsfönster rimligt.
+- Basvägsfelet (`/next` i stället för `/<repo>/next` på en projektsida) syntes inte i några lokala tester. Testa en gång
+  mot den publicerade adressen efter första publiceringen.

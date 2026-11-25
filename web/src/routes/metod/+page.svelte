@@ -3,7 +3,7 @@
      licences. Registered values are always drawn and labelled "registrerat"; the reader's changes are "utforskning".
      The explorer's engine ($lib/method/engine.ts) is golden-tested against the Python engine. -->
 <script lang="ts">
-  import { fmt } from '$lib/design';
+  import { GLOSSARY, Term, dataUrl, fmt, setChartData } from '$lib/design';
   import AsOfExplorer from '$lib/method/AsOfExplorer.svelte';
   import CalibrationExplorer from '$lib/method/CalibrationExplorer.svelte';
   import DeadbandExplorer from '$lib/method/DeadbandExplorer.svelte';
@@ -13,6 +13,7 @@
   import BacktestCalibration from '../prognoser/parts/BacktestCalibration.svelte';
 
   let { data } = $props();
+  setChartData(() => dataUrl('method.json'));
   const status = $derived(data.record.status === 'live' ? ('live' as const) : ('recon' as const));
   const r = $derived(data.rules);
   const parts = [
@@ -20,7 +21,8 @@
     ['intervall', 'Intervall och kalibrering'],
     ['as-of', 'as_of och known_from'],
     ['forregistrering', 'Förregistrering'],
-    ['kallor', 'Källor och licenser']
+    ['kallor', 'Källor och licenser'],
+    ['ordlista', 'Ordlista']
   ];
 </script>
 
@@ -42,7 +44,7 @@
 <section id="diffusion" aria-labelledby="h-diffusion">
   <h2 id="h-diffusion">1. Diffusionsindex: dra i dödbandet</h2>
   <p class="lede">
-    Varje kärnserie får en riktning: ▲ om förändringen i takt är större än {fmt(r.deadband_sd, 2)} av seriens egen standardavvikelse,
+    Varje kärnserie får en riktning: ▲ om förändringen i takt är större än {fmt(r.deadband_sd, 2)} av seriens egen standardavvikelse (<Term id="dodband">dödbandet</Term>),
     ▼ om den är mindre än −{fmt(r.deadband_sd, 2)}, annars ●. Indexet är (antal ▲ + hälften av ●) / antal serier. Grenen
     accelererar vid index ≥ {fmt(r.accelerating_at_least, 2)} och bromsar in vid ≤ {fmt(r.braking_at_most, 2)}. Med färre än
     {r.min_series} serier visas inget tillstånd. Dödbandet låstes innan någon takt räknades: dra i det och se varför valet
@@ -62,7 +64,7 @@
   <IntervalExplorer />
   <h3 class="sub">Kalibrering: för smalt, för brett, lagom</h3>
   <p class="note">
-    Täckningen jämförs med slumpbandet: även ett perfekt kalibrerat 80 %-intervall träffar inte exakt 64 av 80. PIT visar var i
+    Täckningen jämförs med <Term id="slumpband">slumpbandet</Term>: även ett perfekt kalibrerat 80 %-intervall träffar inte exakt 64 av 80. <Term id="pit">PIT</Term> visar var i
     fördelningen utfallet hamnade; jämnt fördelat betyder att hela fördelningen stämmer, inte bara en nivå.
   </p>
   <CalibrationExplorer />
@@ -91,7 +93,7 @@
   <h2 id="h-prereg">4. Förregistrering, holdout och befordringsregeln</h2>
   <p class="lede">
     Reglerna skrivs först och datan körs sedan. En ny modell blir huvudmodell bara om den slår jämförelsemodellen med marginal
-    som tål många försök: Holm-justerat p under 0,10 och lägre MAE i båda perioderna. Annars följer den med som skugga.
+    som tål många försök: <Term id="holm">Holm-justerat</Term> p under 0,10 (justerat för att många varianter prövas) och lägre MAE i båda perioderna. Annars följer den med som skugga.
   </p>
   <PromotionFigure registerFile={data.register.file} registerSha={data.register.sha256} registerHref={data.registerHref} />
 </section>
@@ -102,6 +104,16 @@
     {data.sources.length} källfamiljer. Länkarna går till källornas egna sidor och villkor; sidan hämtar aldrig något därifrån.
   </p>
   <SourcesList sources={data.sources} counts={data.counts} />
+</section>
+
+<section id="ordlista" aria-labelledby="h-ordlista">
+  <h2 id="h-ordlista">6. Ordlista</h2>
+  <p class="lede">Orden som sidorna använder, förklarade en gång. Länkarna med prickad understrykning på andra sidor går hit.</p>
+  <dl class="glossary">
+    {#each GLOSSARY as g (g.id)}
+      <div id="ord-{g.id}"><dt>{g.term}</dt><dd>{g.text}</dd></div>
+    {/each}
+  </dl>
 </section>
 
 <style>
@@ -160,5 +172,24 @@
   }
   code {
     font-size: 0.92em;
+  }
+  .glossary {
+    display: grid;
+    gap: 10px;
+    margin: 12px 0 0;
+    max-width: 80ch;
+  }
+  .glossary > div {
+    scroll-margin-top: 16px;
+  }
+  .glossary dt {
+    font-weight: 620;
+  }
+  .glossary dd {
+    margin: 2px 0 0;
+    color: var(--c-ink-2);
+  }
+  .glossary > div:target dt {
+    text-decoration: underline;
   }
 </style>

@@ -4,7 +4,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { resolve } from '$app/paths';
-  import { DIRECTIONS, Glyph, dateLabel, fmt, periodLabel, signed } from '$lib/design';
+  import { DIRECTIONS, DataTable, Glyph, dateLabel, fmt, periodLabel, signed, type TableSpec } from '$lib/design';
   import type { Branch, Overview, SeriesIndexEntry } from '$lib/data';
   import type { SeriesDoc } from '$lib/series/types';
   import { periodText } from '$lib/series/period';
@@ -45,7 +45,9 @@
       : []
   );
   const measured = $derived(series.filter((x) => x.now));
-  const notMeasured = $derived(series.filter((x) => !x.now));
+  // R-W1: only core series that had a version on the day; a series counted only today (a later selection) or not yet
+  // published would name later knowledge
+  const notMeasured = $derived(series.filter((x) => !x.now && !x.s.empty && x.s.meta.core));
   const spark = (s: (typeof series)[number]['s']) => {
     const h = s.history;
     if (!h) return { d: '', dots: [] as { x: number; y: number; dir: number | null }[], zero: 0 };
@@ -57,6 +59,46 @@
     const Y = (v: number) => 44 - ((v - lo) / (hi - lo || 1)) * 38;
     return { d: pts.map((p, k) => `${k ? 'L' : 'M'}${X(p.i).toFixed(1)},${Y(p.v).toFixed(1)}`).join(''), dots: [{ x: X(pts.at(-1)!.i), y: Y(pts.at(-1)!.v), dir: pts.at(-1)!.dir }], zero: Y(0) };
   };
+  // R-W2 B2: the spark's numbers, for the accessible name and the shared table
+  const points = (s: (typeof series)[number]['s']) => {
+    const h = s.history;
+    if (!h) return [] as { m: string; v: number; dir: number | null }[];
+    return h.months
+      .map((m, i) => ({ m, v: h.pace?.[i] ?? null, dir: h.direction?.[i] ?? null }))
+      .filter((p) => months.includes(p.m) && p.v !== null) as { m: string; v: number; dir: number | null }[];
+  };
+  const DIR_WORD: Record<string, string> = { '1': 'ökar takten', '0': 'oförändrad takt', '-1': 'minskar takten' };
+  function sparkLabel(s: (typeof series)[number]['s'], month: string): string {
+    const p = points(s);
+    if (!p.length) return `Postens takt för ${s.meta.label}: inga mått fram till ${periodLabel(month)}.`;
+    const vs = p.map((x) => x.v);
+    const dirs = p.map((x) => x.dir).filter((d) => d !== null);
+    const changes = dirs.reduce((a, d, i) => a + (i > 0 && d !== dirs[i - 1] ? 1 : 0), 0);
+    const last = p.at(-1)!;
+    return (
+      `Postens takt för ${s.meta.label} vid ${p.length} månadsslut, ${periodLabel(p[0].m)}–${periodLabel(last.m)}: ` +
+      `lägst ${signed(Math.min(...vs), 1)}, högst ${signed(Math.max(...vs), 1)}, senast ${signed(last.v, 1)}` +
+      (last.dir !== null ? ` (${DIR_WORD[String(last.dir)]})` : '') +
+      `. Riktningen bytte ${changes} ${changes === 1 ? 'gång' : 'gånger'}.`
+    );
+  }
+  let tableOpen = $state(false);
+  const sparkTable = $derived.by((): TableSpec | null => {
+    if (!tableOpen || !b) return null;
+    const list = measured.map((x) => ({ key: x.s.meta.key, label: x.s.meta.label, p: new Map(points(x.s).map((q) => [q.m, q])) }));
+    const ms = months.filter((m) => list.some((l) => l.p.has(m)));
+    return {
+      caption: `Postens takt per månadsslut och serie fram till ${periodLabel(b.month ?? '')} (▲ ökar, ● oförändrad, ▼ minskar takten)`,
+      columns: [{ key: 'm', label: 'Månad' }, ...list.map((l) => ({ key: l.key, label: l.label, align: 'right' as const }))],
+      rows: ms.map((m) => ({
+        m: periodLabel(m),
+        ...Object.fromEntries(list.map((l) => {
+          const q = l.p.get(m);
+          return [l.key, q ? `${signed(q.v, 1)}${q.dir === null ? '' : ' ' + (q.dir === 1 ? '▲' : q.dir === -1 ? '▼' : '●')}` : null];
+        }))
+      }))
+    };
+  });
 </script>
 
 <svelte:head><title>{params.id} som den var känd {day} – AI-utrullningen</title></svelte:head>
@@ -107,7 +149,7 @@
               <p class="dir">
                 {#if now?.counted && now.direction !== null && now.direction !== undefined}<Glyph direction={now.direction} />{:else if now?.counted}<span class="note">räknas, ingen riktning</span>{:else}<span class="note">mäts, räknas inte</span>{/if}
               </p>
-              <svg viewBox="0 0 240 48" width="100%" height="48" preserveAspectRatio="xMinYMid meet" role="img" aria-label="Postens takt för {s.meta.label} vid varje månadsslut fram till {periodLabel(b.month)}">
+              <svg viewBox="0 0 240 48" width="100%" height="48" preserveAspectRatio="xMinYMid meet" role="img" aria-label={sparkLabel(s, b.month)}>
                 {#if sp.d}
                   <line x1="4" x2="236" y1={sp.zero} y2={sp.zero} stroke="var(--c-axis)" stroke-width="1" />
                   <path d={sp.d} fill="none" stroke="var(--c-ink-2)" stroke-width="1.5" />
@@ -121,6 +163,10 @@
             </li>
           {/each}
         </ul>
+        <details class="tt-table" bind:open={tableOpen} data-tt="spark-table">
+          <summary class="chip">Tabell: takten per månadsslut för {measured.length} {measured.length === 1 ? 'serie' : 'serier'}</summary>
+          {#if sparkTable}<DataTable table={sparkTable} />{/if}
+        </details>
       {:else}
         <p class="note">Inga publicerbara serier mättes vid det här månadsslutet.</p>
       {/if}
@@ -180,5 +226,11 @@
   .dir,
   .card .note {
     margin: 0;
+  }
+  .tt-table {
+    margin-top: 12px;
+  }
+  .tt-table > summary {
+    font-size: 12px;
   }
 </style>

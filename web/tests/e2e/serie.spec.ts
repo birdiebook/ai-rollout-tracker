@@ -51,7 +51,7 @@ test('as_of in the URL shows exactly what was known that day, never later versio
     await expect(page.locator('#rev-versions svg[role="img"]')).toBeVisible();
     const known = replay(v, day);
     // the table of the revision view lists one row per period known that day, with that day's value
-    await page.locator('#rev-versions').getByRole('button', { name: 'Visa tabell' }).click();
+    await page.locator('#rev-versions summary').click();
     const rows = page.locator('#rev-versions-table tbody tr');
     await expect(rows).toHaveCount(known.size);
     const header = await page.locator('#rev-versions-table thead').innerText();
@@ -69,7 +69,7 @@ test('window, scale and table state; the permalink restores the view', async ({ 
   await page.reload();
   await page.waitForLoadState('networkidle');
   await expect(page.getByRole('group', { name: 'Tidsfönster' }).getByRole('button', { name: '5 år' })).toHaveAttribute('aria-pressed', 'true');
-  await page.locator('#level').getByRole('button', { name: 'Visa tabell' }).click();
+  await page.locator('#level summary').click();
   await expect(page.locator('#level-table table')).toBeVisible();
 });
 

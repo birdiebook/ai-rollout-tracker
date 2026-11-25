@@ -1367,3 +1367,109 @@ den gamla sidans sidfot när någon serie med notis har rader.
 **Hämtningen (R13-3, R13-6).** Ett misslyckat anrop sparas i processens cache, så en körning frågar API:t högst en gång
 per svar. Ett anrop som får timeout eller 429/5xx efter två nya försök delas upp i ett anrop per år med samma form
 (`time=from ÅÅÅÅ-01 to ÅÅÅÅ-12`, syntax enligt guiden). Data, datering och nollregel påverkas inte av uppdelningen.
+
+### 2026-11-25 – W13: urvalsregel för månadens berättelse (före körning på verklig data)
+
+Månadens berättelse på hemsidan (`/next/manad/<YYYY-MM>`, visionen avsnitt 3.4) är en följd av kort som väljs med
+regeln nedan, inte med redaktionellt omdöme. Regeln skrivs innan den körts på verklig data. Under utvecklingen har den
+bara körts på det syntetiska fixturpaketet. Regeln väljer och ordnar. Den beräknar inga nya mått: allt den läser finns
+redan i posten, prognosfilerna eller C4-sektionen.
+
+**Indata för månad M (och inget annat):**
+
+- **Posten för M:** den skarpa ögonblicksbilden `snapshots/M.json` om den finns, annars rekonstruktionen vid M:s
+  månadsslut med samma kod (`site.data.Record`), märkt *rekonstruerad*.
+- **Jämförelseposten** för M−1 enligt samma regel. Saknas den (M är historikens första månad, eller M−1 är en lucka
+  efter den första skarpa ögonblicksbilden) görs ingen jämförelse, och korten K1, K5 och K6 kan inte uppstå.
+- **De committade prognosfilerna** i `forecasts/` (N1–N6) och scorecarden mot utfallets första version.
+- **C4-sektionen** i M:s skarpa ögonblicksbild. Rekonstruerade månader har ingen sådan, så där uppstår inte K2 och K4.
+- **Känd-dag** för M: månadsslutet, eller den skarpa ögonblicksbildens datum om det är senare. Inget värde med
+  `known_from` efter känd-dagen används. Sidan kontrollerar det med tidsresans gräns (`web/src/lib/timetravel/gate.ts`).
+- **Licens:** bara serier och mål som är publicerbara (`site.data.publishable`) får egna kort. Inhållna serier som
+  uppfyller ett villkor räknas per korttyp, men de namnges inte och deras värden visas inte. Grenens tillstånd (K1)
+  räknar med dem, som registrerat.
+
+**Korttyperna och villkoren:**
+
+| Typ | Kort | Villkor (alla måste gälla) |
+|---|---|---|
+| K0 | Läget | Visas alltid, först. Antal grenar per tillstånd i M och, om jämförelse finns, antal grenar med högre, lägre och oförändrat index mot M−1 (avrundat till två decimaler). Räknas inte mot taket |
+| K1 | Tillståndsskifte | En gren vars tillstånd i M (accelererar, stabil, bromsar in, för få serier) skiljer sig från dess tillstånd i M−1 |
+| K2 | Regimskifte | C4 rapporterar i M ett skifte för ett block (fältet `shift` satt för M), i någon riktning |
+| K3 | Nytt skarpt utfall | En committad prognosfil med prognosdag ≤ känd-dagen vars utfall (första versionen) har `known_from` i M, alltså från M:s första dag till och med känd-dagen. Målet ska vara publicerbart |
+| K4 | Strukturbrott | C4 rapporterar i M ett brott (BOCPD, G-D) för en publicerbar kärnserie |
+| K5 | Kärnserie i extrem percentil | En räknad, giltig och publicerbar kärnserie i M:s post vars percentil för förändring i takt är ≥ 95 (övre zonen) eller ≤ 5 (nedre zonen), och som i M−1:s post inte låg i samma zon. Låg den i motsatt zon, saknade percentil eller räknades inte i M−1 gäller villkoret |
+| K6 | Avstämning i extrem percentil | En publicerbar avstämning (A5) vars percentil för takt i M är ≥ 95 eller ≤ 5, och som i M−1 inte låg i samma zon (samma tolkning som K5) |
+| K9 | Inga utslag | Visas när inget kort K1–K6 uppfyller sitt villkor. Kortet räknar upp de sex villkoren och säger att inget av dem uppfylldes i M (och, när jämförelse saknas, att K1, K5 och K6 inte kunde prövas). Det väljer inga ersättare |
+
+Percentilerna är registrets (avsnitt 1: seriens egen historik fram till beräkningsdagen, 0–100, lika värden räknas
+till hälften). För K5 används förändringen i takt, eftersom det är den som ger seriens riktning i diffusionsindex
+(avsnitt 2). För K6 används takten, eftersom avstämningarna inte har någon riktning i ett index (A5) och takten är deras
+huvudmått. Vid fördubblings- och halveringstid (G1, G2) betyder en hög percentil för förändringen en längre tid. Kortet
+anger då riktningen med registrets tecken (kortare tid = accelererar).
+
+**Ordning och tak:**
+
+1. K0 först. Sedan korttyperna i ordningen K1, K2, K3, K4, K5, K6.
+2. Inom typen:
+   - K1: absolut indexförändring mot M−1, störst först (saknat index räknas som förändringen 0), sedan grenkod.
+   - K2: blockens ordning i C4-sektionen.
+   - K3: utfallets läge mot huvudmodellens lagrade centrala intervall: utanför 95 % före utanför 80 %, före utanför
+     50 %, före inom 50 % (gränserna räknas som innanför). Sedan huvudmodellens absoluta fel, störst först, sedan
+     prognosens id (n1–n6) och period. Saknas lagrade intervall räknas läget som okänt och sorteras sist inom typen.
+   - K4: sannolikheten för kort körlängd (`p_recent`), störst först, sedan seriens nyckel.
+   - K5 och K6: avståndet |percentil − 50|, störst först, sedan seriens nyckel.
+3. **Tak per typ:** K4 högst 3, K5 högst 3, K6 högst 2. K1, K2 och K3 har inget eget tak.
+4. **Tak totalt:** högst 8 kort av typerna K1–K6 per månad. Över taket stryks kort från slutet av ordningen. Antalet
+   kort som uppfyllde villkoren men ströks (per typ, på grund av typens tak eller det totala taket) visas på sidan.
+
+**Neutralitet:**
+
+- Varje villkor och varje ordning är symmetrisk kring det neutrala: percentil 50 (≥ 95 och ≤ 5), tvåsidiga intervall,
+  absolut indexförändring och skiften i båda riktningarna. Ingen ordning använder tecknet. Lika värden avgörs med kod
+  eller nyckel, aldrig med riktning.
+- Texten genereras ur data med registrets ord (accelererar, stabil, bromsar in, högre, lägre, över, under) och siffror.
+  Inga värderande ord och inga larmord. Ett test prövar alla genererade texter mot månadsbrevets lista
+  (`letter.BANNED_WORDS`) och en lista med larmord (larm, varning, kris, rekord, dramatisk, kollaps, ras, rusar,
+  chock, oroväckande, alarmerande).
+- Färg betyder bara riktning (visionen 4.4). Skarp eller rekonstruerad märks på varje månad och kort.
+
+**Determinism:** inget klockslag och ingen slump. Samma post, prognosfiler och C4-sektion ger samma kort i samma
+ordning, byte för byte.
+
+**Utanför regeln:** revideringar, nya serier och nya prognoser utan utfall blir inga kort. De visas på serie- och
+prognossidorna och i månadsbrevet. En ändring av regeln (trösklar, typer, ordning eller tak) görs som ett nytt daterat
+avsnitt här, och den gäller då för alla månader, även de som redan visats.
+
+#### 2026-11-25 – Ändring av W13 (R-W3a–c): dubbletter, slumpnivå och strukna kort
+
+Motivering: granskningen R-W3 (`docs/granskning/rw3_neutralitet.md`, punkt 3) visade att samma storhet kan visas två
+gånger samma månad (K5 för `capex_ocf_hyp4` och K6 för `x_capex_ocf` i oktober 2026), att K5 ger ungefär lika många
+utslag som slumpen skulle ge, och att läsaren inte kan se vilka kort taket strök. Ändringen skrivs innan den
+implementeras. Den gäller för alla månader, även de som redan visats. Trösklar, korttyper, ordning och tak ändras inte.
+
+1. **R-W3a, dubbletter.** En avstämning vars definition i A5-tabellen är "befintlig `<kärnserie>`" (i dag bara
+   `x_capex_ocf` = `capex_ocf_hyp4`) blir inget eget K6-kort när den kärnserien har ett K5-kort som visas samma
+   månad. K5-kortet får i stället en mening om avstämningen: dess percentil för takt och om den ligger i en ytterzon.
+   Prövningen görs när K1–K5 har valts (efter K5:s tak och det totala taket) och före K6:s tak, så att en struken
+   dubblett inte tar någon plats. Den räknas som "uppfyllde villkoret" och redovisas i Om urvalet som "ströks som
+   dubblett", inte som struken av taket. Har kärnserien inget visat K5-kort gäller K6 som förut. Regeln läser ingen
+   riktning.
+2. **R-W3b, slumpnivå.** När jämförelse finns anger Om urvalet för K5 och K6 hur många utslag som väntas av en slump:
+   med N prövade serier ligger i snitt N/10 i en ytterzon (≤ 5 eller ≥ 95) om percentilerna är jämnt fördelade. N är
+   för K5 de räknade och giltiga kärnserierna med percentil för förändring i takt i M, och för K6 avstämningarna med
+   percentil för takt i M, publicerbara eller inte. Bredvid står hur många som uppfyllde villkoret (också inhållna
+   och dubbletter). Kravet att serien inte låg i samma zon månaden innan gör att slumpens antal för själva villkoret
+   är något lägre än N/10, och sidan säger det. Siffran väljer inte bort några kort.
+3. **R-W3c, de som ströks.** Kort som uppfyllde villkoren men ströks av typens tak eller det totala taket listas i Om
+   urvalet i regelns ordning, med typ, namn (gren eller serie, med grenkod för K5) och riktning med glyf (▲ eller ▼,
+   ingen glyf när kortet saknar riktning), utan figur och utan färg. Inhållna serier namnges fortfarande inte.
+4. **Texter (följer av R-W3 punkt 4 och 5).** Interna koder står inte i läsartexten: "(A5)", "(G-D, C4)" och
+   "(BOCPD, G-D)" ersätts med vanliga ord och en länk till metoden. K5-texten börjar med en mening i klartext om
+   percentilen ("Förändringen i takt är högre än i 98 % av seriens egen historik", nedre zonen "lägre än i …").
+   K6:s fält `direction` anger zonen (+1 övre, −1 nedre) och ritas i bläckfärg med ▲/▼ och orden "kvotens takt högt
+   i egen historik" eller "lågt i egen historik", eftersom avstämningarna saknar riktning i ett index (A5). Blått och
+   orange betyder därmed bara riktning i ett diffusionsindex. Tillägg samma dag under implementeringen: K1-rubriken
+   skrivs "från X till Y" i stället för med en pil, eftersom rubrikerna också blir länktexter i sidans avsnittslista.
+5. **Rekonstruerat.** På månadssidan står statusen (rekonstruerad eller skarp) i rubrikraden, i samma storlek som
+   månadsnamnet, och för rekonstruerade månader en mening om vad det betyder. Det ändrar inget urval.

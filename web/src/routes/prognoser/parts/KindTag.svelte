@@ -1,12 +1,14 @@
-<!-- Forecast kind (W8): a committed live forecast (solid), a backtest or a shadow run (dashed). Complements the
+<!-- Forecast kind (W8): a committed live forecast (solid), a backtest, a shadow run or a file whose commit the build
+     could not find ("overifierad", RW1-X 4a: never shown as live) (dashed). Complements the
      design system's StatusBadge, which names record status; this one names what kind of forecast a number is. -->
 <script lang="ts">
-  let { kind }: { kind: 'skarp' | 'backtest' | 'skugga' | 'väntar' } = $props();
+  let { kind }: { kind: 'skarp' | 'backtest' | 'skugga' | 'väntar' | 'overifierad' } = $props();
   const WORD = {
     skarp: 'skarp prognos, committad',
     backtest: 'backtest, inte en skarp prognos',
     skugga: 'skuggprognos, inte huvudmodell',
-    väntar: 'ingen skarp prognos ännu'
+    väntar: 'ingen skarp prognos ännu',
+    overifierad: 'väntar på verifiering: ingen commit i bygget'
   };
 </script>
 

@@ -1,37 +1,49 @@
-<!-- Site shell (W4): tokens, header with navigation and theme toggle, testdata banner, footer. Pages own their main. -->
+<!-- Site shell (W4): tokens, header with navigation and theme toggle, testdata banner, footer. Pages own their main.
+     W12: navigation, search (⌘K), share tags and the citation line are components in $lib/nav. -->
 <script lang="ts">
   import '$lib/design/base.css';
   import { tokensCss } from '$lib/design/tokens';
-  import { page } from '$app/state';
   import { resolve } from '$app/paths';
   import ThemeToggle from '$lib/components/ThemeToggle.svelte';
   import TimeTravel from '$lib/timetravel/TimeTravel.svelte';
+  import MainNav from '$lib/nav/MainNav.svelte';
+  import PageMeta from '$lib/nav/PageMeta.svelte';
+  import SearchButton from '$lib/nav/SearchButton.svelte';
+  import ShareCite from '$lib/nav/ShareCite.svelte';
+  import { tt } from '$lib/timetravel/store.svelte';
+  import { dateLabel } from '$lib/design';
+  import { hydrationDone } from '$lib/design/charts/lazy';
+  import { onMount } from 'svelte';
 
   let { data, children } = $props();
   const css = `<style>${tokensCss()}</style>`;
-  const nav = [
-    { href: resolve('/'), label: 'Läget', match: (p: string) => p === resolve('/') },
-    { href: resolve('/flode'), label: 'Flödet', match: (p: string) => p.startsWith(resolve('/flode')) || p.startsWith(resolve('/gren')) },
-    { href: resolve('/prognoser'), label: 'Prognoser', match: (p: string) => p.startsWith(resolve('/prognoser')) },
-    { href: resolve('/metod'), label: 'Metod', match: (p: string) => p.startsWith(resolve('/metod')) }
-  ];
-  const path = $derived(page.url.pathname.replace(/\/?$/, '/'));
+  onMount(hydrationDone); // the root mounts last: every chart of the first hydration has queued itself (R-W2 P1)
+
+  // R-W2: the hash carries view state (as_of, fonster, avsnitt …). A plain "#main" would replace it, so with JS the
+  // skip link moves focus itself and leaves the URL alone (without JS the href works as usual).
+  function skip(e: MouseEvent) {
+    const main = document.getElementById('main');
+    if (!main) return;
+    e.preventDefault();
+    main.scrollIntoView({ block: 'start' });
+    main.focus({ preventScroll: true });
+  }
 </script>
 
 <svelte:head>
   <!-- eslint-disable-next-line svelte/no-at-html-tags -- generated from tokens.ts at build time, no user input -->
   {@html css}
 </svelte:head>
+<PageMeta meta={data.meta} />
 
-<a class="skip" href="#main">Hoppa till innehållet</a>
+<a class="skip" href="#main" onclick={skip}>Hoppa till innehållet</a>
 <header class="top wrap">
   <a class="brand" href={resolve('/')}>AI-utrullningen</a>
-  <nav aria-label="Huvudmeny">
-    {#each nav as n (n.href)}
-      <a href={n.href} aria-current={n.match(path) ? 'page' : undefined}>{n.label}</a>
-    {/each}
-  </nav>
-  <ThemeToggle />
+  <MainNav />
+  <div class="tools">
+    <SearchButton />
+    <ThemeToggle />
+  </div>
 </header>
 
 {#if data.site.testdata}
@@ -40,22 +52,31 @@
   </div>
 {/if}
 
-<main id="main" class="wrap">
+<main id="main" class="wrap" tabindex="-1">
   <TimeTravel>{@render children()}</TimeTravel>
+  <ShareCite cite={data.meta.cite} url={data.meta.url} />
 </main>
 
 <footer class="wrap">
   <p>
     Byggd från site_bundle (schema {data.site.schemaVersion}){#if data.site.build.sha}, commit
-      <code>{data.site.build.sha.slice(0, 7)}</code>{/if}. Underlag: {data.site.record.label}.
+      <code>{data.site.build.sha.slice(0, 7)}</code>{/if}. Underlag:
+    <!-- R-W1: under time travel the footer must not name today's record (hidden before paint, replaced after) -->
+    {#if tt.active}<span data-tt="footer">tidsresa, posten som var känd den {dateLabel(tt.effective)}</span>{:else}<span class="tt-hide">{data.site.record.label}</span>{/if}.
     Ny sida under uppbyggnad; den nuvarande finns kvar tills paritet är kontrollerad.
   </p>
 </footer>
 
 <style>
+  :global(html[data-tt]) .tt-hide {
+    visibility: hidden;
+  }
   .skip {
     position: absolute;
     left: -9999px;
+  }
+  main:focus {
+    outline: none;
   }
   .skip:focus {
     left: 16px;
@@ -80,28 +101,18 @@
     letter-spacing: -0.01em;
     text-decoration: none;
   }
-  nav {
+  header.top :global(.main-nav) {
     order: 3;
     width: 100%;
-    display: flex;
-    gap: 4px 14px;
-    flex-wrap: wrap;
     font-size: var(--fs-small);
-    color: var(--c-ink-2);
   }
-  nav a {
-    text-decoration: none;
-    display: inline-flex;
+  .tools {
+    display: flex;
     align-items: center;
-    min-height: var(--hit);
+    gap: 8px;
   }
-  nav a[aria-current='page'] {
-    color: var(--c-ink);
-    font-weight: 600;
-    text-decoration: underline;
-  }
-  @media (min-width: 561px) {
-    nav {
+  @media (min-width: 641px) {
+    header.top :global(.main-nav) {
       order: 0;
       width: auto;
       font-size: 14px;

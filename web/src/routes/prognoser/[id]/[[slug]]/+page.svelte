@@ -3,11 +3,13 @@
      and after (calibration: live, honest about small n, and the backtest, always marked). D2 has its own view, and
      every live forecast its own permanent page. -->
 <script lang="ts">
+  import { dataUrl, setChartData } from '$lib/design';
   import NowcastView from '../../parts/NowcastView.svelte';
   import HorizonsView from '../../parts/HorizonsView.svelte';
   import ForecastPage from '../../parts/ForecastPage.svelte';
 
   let { data } = $props();
+  setChartData(() => dataUrl(`nowcast/${data.kind === 'd2' ? 'd2' : data.nc.id}.json`));
 </script>
 
 {#if data.kind === 'd2'}

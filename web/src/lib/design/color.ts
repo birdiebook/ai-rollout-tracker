@@ -1,6 +1,6 @@
 // Colour checks used by the token tests (and available to chart code): WCAG 2 contrast, OKLab distance (x100) and
 // colour-vision-deficiency simulation (Machado et al. 2009, severity 1). The numbers match the dataviz skill's
-// validator that docs/steg3/hemsida_vision.md section 4.4 quotes (CVD dE 26.1 light / 26.8 dark for blue/orange).
+// validator that docs/steg3/hemsida_vision.md section 4.4 quotes (CVD dE 26.7 light / 27.5 dark for blue/orange, R-W3 colours).
 
 type RGB = [number, number, number];
 

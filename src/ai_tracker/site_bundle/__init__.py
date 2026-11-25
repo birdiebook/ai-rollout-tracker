@@ -6,6 +6,7 @@ bundle of static JSON files.
     python -m ai_tracker.site_bundle fixtures [--out web-data-fixtures]   # synthetic bundle (committed)
     python -m ai_tracker.site_bundle validate DIR                          # schema + licence scan + versions
     python -m ai_tracker.site_bundle sizes DIR                             # size report from the manifest
+    python -m ai_tracker.site_bundle scan-build web/build [--src web/src]  # licence scan of the built site
 
 Layout of the bundle (one JSON Schema per document type in schema/, copied into the bundle):
 
@@ -21,6 +22,11 @@ Layout of the bundle (one JSON Schema per document type in schema/, copied into 
     regime.json              C4 regime section from the live snapshots
     method.json              register summary: rules, core series per branch, leads, nowcast variants, sources
     withheld.json            withheld series: names and reasons only
+    story/<YYYY-MM>.json     the monthly story: cards selected by the pre-registered rule (W13, site_bundle.story)
+    story/index.json         every month of the story with its card counts
+    report/<YYYYQn>.json     the quarterly report as data: chain, reconciliations, nowcasts, regime (W14,
+                             site_bundle.report on ai_tracker.quarterly)
+    report/index.json        every quarter of the report with its kind and the day it became known
     letters.json             index of the monthly letters and quarterly reports
     letters/<YYYY-MM>.json, reports/<YYYYQn>.json   the Markdown of each
 
@@ -28,4 +34,4 @@ Python owns all data and the licence gate (site_bundle.gate, which reuses site.d
 only this bundle, never the observation table.
 """
 
-VERSION = "1.1.0"  # 1.1.0: index v2 (source families) fields, state "för få källor"
+VERSION = "1.4.0"  # 1.4.0: index v2 (source families) rule behind index/state, state "för få källor"

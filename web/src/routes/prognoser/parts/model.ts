@@ -2,7 +2,7 @@
 // documents (nowcast/n<k>.json, nowcast/d2.json), so the sentences, the charts and the tables agree and can be tested
 // without a DOM. Nothing is computed that the pipeline already computes: errors, CRPS, PIT, hits and coverage are
 // read from the scorecard; only counts and simple fallbacks (an outcome inside a stored interval) are derived.
-import type { CalendarEntry, IntervalLevel, LiveForecast, Nowcast, Pair, ScoreRow } from '$lib/data';
+import type { CalendarEntry, Commit, IntervalLevel, LiveForecast, Nowcast, Pair, ScoreRow } from '$lib/data';
 import { dateLabel, fmt, periodLabel } from '$lib/design';
 
 export const LEVELS: IntervalLevel[] = ['50', '80', '95'];
@@ -85,6 +85,16 @@ export interface LiveRow {
   inside: Partial<Record<IntervalLevel, boolean>>;
   pit: number | null;
   crps: number | null;
+  /** the commit that added the file (its timestamp); null: waiting for verification, never shown as live */
+  commit: Commit | null;
+  /** the file has its commit, dated before the outcome became known (when it is known) */
+  verified: boolean;
+}
+
+/** The commit exists and its UTC day is before the day the outcome became known (no outcome yet: the commit exists). */
+export function committedBefore(c: Commit | null, outcomeKnown: string | null): boolean {
+  if (!c) return false;
+  return !outcomeKnown || c.date.slice(0, 10) < outcomeKnown.slice(0, 10);
 }
 
 export function inInterval(x: number | null, iv: Pair | undefined): boolean | null {
@@ -127,7 +137,9 @@ export function liveRows(nc: Nowcast): LiveRow[] {
         err: scored ? num(s?.err_champion) : null,
         inside,
         pit: num(s?.pit_champion),
-        crps: num(s?.crps_champion)
+        crps: num(s?.crps_champion),
+        commit: validCommit(f.commit),
+        verified: committedBefore(validCommit(f.commit), (s?.known_from as string | null | undefined) ?? null)
       };
     })
     .sort((a, b) => (a.period < b.period ? -1 : a.period > b.period ? 1 : 0));
@@ -153,16 +165,24 @@ export function pitBins(values: number[], bins = 10): number[] {
 /** Error of a model in a scorecard row (err_<model>), or null. */
 export const errOf = (s: ScoreRow | null, model: string): number | null => num(s?.[`err_${model}`]);
 
-/** GitHub links that prove a forecast's timestamp: the file's commit history (its first commit is the timestamp) and
- *  the file as it was at the build commit. Only for a github.com repository. */
-export function proofLinks(repo: string | null | undefined, sha: string | null | undefined, file: string) {
+/** A commit as the bundle gives it (sha of 40 hex characters, UTC date), or null when it is malformed or missing. */
+export function validCommit(c: Commit | null | undefined): Commit | null {
+  return c && /^[0-9a-f]{40}$/.test(c.sha) && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/.test(c.date) ? c : null;
+}
+
+/** GitHub links that prove a forecast's timestamp: the commit that added the file (RW1-X 4a: its date is the
+ *  timestamp), the file's commit history, and the file as it was at that commit (else at the build commit). Only for a
+ *  github.com repository. */
+export function proofLinks(repo: string | null | undefined, sha: string | null | undefined, file: string, commit?: Commit | null) {
   if (!repo || !/^https:\/\/github\.com\/[\w.-]+\/[\w.-]+\/?$/.test(repo)) return null;
   const r = repo.replace(/\/$/, '');
-  const ref = sha && /^[0-9a-f]{7,40}$/.test(sha) ? sha : 'main';
+  const c = validCommit(commit);
+  const ref = c ? c.sha : sha && /^[0-9a-f]{7,40}$/.test(sha) ? sha : 'main';
   return {
     history: `${r}/commits/main/${file}`,
     file: `${r}/blob/${ref}/${file}`,
-    ref
+    ref,
+    commit: c ? `${r}/commit/${c.sha}` : null
   };
 }
 

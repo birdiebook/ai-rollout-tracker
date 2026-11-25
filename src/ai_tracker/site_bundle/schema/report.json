@@ -1,0 +1,230 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://birdiebook.github.io/ai-rollout-tracker/schema/v1/report.json",
+  "title": "report/<YYYYQn>.json: the quarterly report (ai_tracker.quarterly) as data, from the record's months (W14, from 1.3.0)",
+  "description": "Everything in the document was known on `known` (the quarter's last month-end record). A quarter without three live snapshots is reconstructed (kind rekonstruerad) and says so in recon_note.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["quarter", "quarter_sv", "title", "kind", "status", "start", "end", "known", "months", "base",
+               "recon_note", "headline", "summary", "branches", "chain", "ratios", "n_ratios_withheld", "nowcasts",
+               "nowcast_news", "regime", "data", "withheld", "source"],
+  "properties": {
+    "quarter": {"$ref": "#/$defs/quarter"},
+    "quarter_sv": {"type": "string"},
+    "title": {"type": "string"},
+    "kind": {"$ref": "common.json#/$defs/kind", "description": "skarp only when all three months are live snapshots."},
+    "status": {"enum": ["live", "reconstructed"]},
+    "start": {"$ref": "common.json#/$defs/date"},
+    "end": {"$ref": "common.json#/$defs/date"},
+    "known": {"$ref": "common.json#/$defs/date", "description": "The report day: the last month's record became known (month end, or the live snapshot's date if later). Nothing in the document is known later."},
+    "months": {"type": "array", "minItems": 3, "maxItems": 3, "items": {"$ref": "#/$defs/month_ref"}},
+    "base": {"oneOf": [{"$ref": "#/$defs/month_ref"}, {"type": "null"}], "description": "The month before the quarter (comparison point)."},
+    "recon_note": {"type": ["string", "null"], "description": "Why the quarter is reconstructed; null for a live quarter."},
+    "headline": {"type": "string"},
+    "summary": {"$ref": "#/$defs/summary"},
+    "branches": {"type": "array", "items": {"$ref": "#/$defs/branch"}},
+    "chain": {"type": "array", "items": {"$ref": "#/$defs/lead"}},
+    "ratios": {"type": "array", "items": {"$ref": "#/$defs/ratio"}},
+    "n_ratios_withheld": {"type": "integer", "minimum": 0},
+    "nowcasts": {"type": "array", "items": {"$ref": "#/$defs/nowcast"}},
+    "nowcast_news": {
+      "type": "object", "additionalProperties": false, "required": ["n_new", "n_outcomes", "n_d2", "error", "text"],
+      "properties": {"n_new": {"type": "integer"}, "n_outcomes": {"type": "integer"}, "n_d2": {"type": "integer"},
+                     "error": {"type": ["string", "null"]}, "text": {"type": "string"}}
+    },
+    "regime": {"$ref": "#/$defs/regime"},
+    "data": {"$ref": "#/$defs/data"},
+    "withheld": {"$ref": "common.json#/$defs/withheld_list", "description": "Withheld series the last month counted or measured: names only."},
+    "source": {
+      "type": "object", "additionalProperties": false, "required": ["module", "markdown"],
+      "properties": {"module": {"type": "string"}, "markdown": {"type": "string"}}
+    }
+  },
+  "$defs": {
+    "quarter": {"type": "string", "pattern": "^\\d{4}Q[1-4]$"},
+    "state": {"oneOf": [{"$ref": "common.json#/$defs/state"}, {"type": "null"}]},
+    "month_ref": {
+      "type": "object", "additionalProperties": false, "required": ["month", "month_sv", "kind", "known", "file"],
+      "properties": {
+        "month": {"$ref": "common.json#/$defs/month"}, "month_sv": {"type": "string"},
+        "kind": {"$ref": "common.json#/$defs/kind"}, "known": {"$ref": "common.json#/$defs/date"},
+        "file": {"type": ["string", "null"], "description": "snapshots/<YYYY-MM>.json for a live month"}
+      }
+    },
+    "summary": {
+      "type": "object", "additionalProperties": false,
+      "required": ["headline", "sentences", "counts", "n_with_state", "changed", "repeated", "moved", "groups"],
+      "properties": {
+        "headline": {"type": "string"},
+        "sentences": {"type": "array", "items": {"type": "string"}},
+        "counts": {"type": "object", "additionalProperties": {"type": "integer"}},
+        "n_with_state": {"type": "integer"},
+        "changed": {"type": "array", "items": {
+          "type": "object", "additionalProperties": false, "required": ["code", "name", "from", "to"],
+          "properties": {"code": {"$ref": "common.json#/$defs/branch_code"}, "name": {"type": "string"},
+                         "from": {"$ref": "#/$defs/state"}, "to": {"$ref": "#/$defs/state"}}}},
+        "repeated": {"type": "array", "items": {
+          "type": "object", "additionalProperties": false, "required": ["code", "steps"],
+          "properties": {"code": {"$ref": "common.json#/$defs/branch_code"}, "steps": {"type": "array", "items": {
+            "type": "object", "additionalProperties": false, "required": ["month", "state"],
+            "properties": {"month": {"$ref": "common.json#/$defs/month"}, "state": {"$ref": "#/$defs/state"}}}}}}},
+        "moved": {"type": "array", "items": {
+          "type": "object", "additionalProperties": false, "required": ["code", "delta_index"],
+          "properties": {"code": {"$ref": "common.json#/$defs/branch_code"}, "delta_index": {"$ref": "common.json#/$defs/num"}}}},
+        "groups": {"type": "array", "items": {
+          "type": "object", "additionalProperties": false, "required": ["state", "codes"],
+          "properties": {"state": {"$ref": "#/$defs/state"}, "codes": {"type": "array", "items": {"$ref": "common.json#/$defs/branch_code"}}}}}
+      }
+    },
+    "cell": {
+      "type": "object", "additionalProperties": false,
+      "required": ["month", "kind", "index", "state", "n_series", "n_up", "n_neutral", "n_down"],
+      "properties": {
+        "month": {"$ref": "common.json#/$defs/month"}, "kind": {"$ref": "common.json#/$defs/kind"},
+        "index": {"$ref": "common.json#/$defs/num"}, "state": {"$ref": "#/$defs/state"},
+        "n_series": {"$ref": "common.json#/$defs/int_or_null"}, "n_up": {"$ref": "common.json#/$defs/int_or_null"},
+        "n_neutral": {"$ref": "common.json#/$defs/int_or_null"}, "n_down": {"$ref": "common.json#/$defs/int_or_null"}
+      }
+    },
+    "branch": {
+      "type": "object", "additionalProperties": false,
+      "required": ["code", "name", "path", "delta_index", "from", "to", "state_changed", "flips"],
+      "properties": {
+        "code": {"$ref": "common.json#/$defs/branch_code"}, "name": {"type": "string"},
+        "path": {"type": "array", "items": {"$ref": "#/$defs/cell"}, "description": "The comparison month (when there is one) and the quarter's three months."},
+        "delta_index": {"$ref": "common.json#/$defs/num"}, "from": {"$ref": "#/$defs/state"}, "to": {"$ref": "#/$defs/state"},
+        "state_changed": {"type": ["boolean", "null"]},
+        "flips": {"$ref": "common.json#/$defs/int_or_null", "description": "Counted series whose direction differs between the comparison month and the quarter's last month."}
+      }
+    },
+    "lead": {
+      "type": "object", "additionalProperties": false, "required": ["lead", "name", "branches", "ratios", "n_ratios_withheld", "text"],
+      "properties": {
+        "lead": {"$ref": "common.json#/$defs/lead_code"}, "name": {"type": "string"},
+        "branches": {"type": "array", "items": {"$ref": "common.json#/$defs/branch_code"}},
+        "ratios": {"type": "array", "items": {"$ref": "common.json#/$defs/series_key"}},
+        "n_ratios_withheld": {"type": "integer", "minimum": 0}, "text": {"type": "string"}
+      }
+    },
+    "ratio": {
+      "type": "object", "additionalProperties": false,
+      "required": ["key", "label", "leads", "latest_period", "known_from", "level", "pace", "pace_unit", "change_in_pace",
+                   "pace_percentile", "change_percentile", "n_pace", "direction", "valid", "base_level", "base_period", "text"],
+      "properties": {
+        "key": {"$ref": "common.json#/$defs/series_key"}, "label": {"type": "string"},
+        "leads": {"type": "array", "items": {"$ref": "common.json#/$defs/lead_code"}},
+        "latest_period": {"type": ["string", "null"]}, "known_from": {"$ref": "common.json#/$defs/date_or_null"},
+        "level": {"$ref": "common.json#/$defs/num"}, "pace": {"$ref": "common.json#/$defs/num"},
+        "pace_unit": {"type": ["string", "null"]}, "change_in_pace": {"$ref": "common.json#/$defs/num"},
+        "pace_percentile": {"$ref": "common.json#/$defs/num"}, "change_percentile": {"$ref": "common.json#/$defs/num"},
+        "n_pace": {"$ref": "common.json#/$defs/int_or_null"},
+        "direction": {"$ref": "common.json#/$defs/direction"}, "valid": {"type": ["boolean", "null"]},
+        "base_level": {"$ref": "common.json#/$defs/num"}, "base_period": {"type": ["string", "null"]},
+        "text": {"type": "string"}
+      }
+    },
+    "nowcast": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "label", "title", "publishable", "target", "unit", "decimals", "error_unit", "origin_rule",
+                   "champion", "n_files", "new", "outcomes", "n_outcomes", "n_scored", "n_files_scored", "metrics",
+                   "changes", "decisions", "text"],
+      "properties": {
+        "id": {"type": "string"}, "label": {"type": "string"}, "title": {"type": "string"},
+        "publishable": {"type": "boolean"},
+        "target": {"oneOf": [{"$ref": "common.json#/$defs/series_key"}, {"type": "null"}], "description": "null when the target is withheld"},
+        "unit": {"type": ["string", "null"]}, "decimals": {"type": "integer"}, "error_unit": {"type": "string"},
+        "origin_rule": {"type": "string"}, "champion": {"type": ["string", "null"]},
+        "n_files": {"type": "integer", "description": "live files with origin on or before the quarter's end"},
+        "new": {"type": "array", "items": {
+          "type": "object", "additionalProperties": false, "required": ["period", "origin", "file", "champion", "value", "variants"],
+          "properties": {"period": {"type": ["string", "null"]}, "origin": {"$ref": "common.json#/$defs/date"},
+                         "file": {"type": "string"}, "champion": {"type": ["string", "null"]},
+                         "value": {"$ref": "common.json#/$defs/num"},
+                         "variants": {"type": ["object", "null"], "additionalProperties": {"$ref": "common.json#/$defs/num"}}}}},
+        "outcomes": {"type": "array", "description": "Outcomes that became known in the quarter (first vintage), with the champion's stored intervals.", "items": {
+          "type": "object", "additionalProperties": false,
+          "required": ["period", "origin", "file", "slug", "champion", "forecast", "outcome", "known_from", "err_champion", "errors", "intervals"],
+          "properties": {"period": {"type": "string"}, "origin": {"$ref": "common.json#/$defs/date_or_null"},
+                         "file": {"type": ["string", "null"]}, "slug": {"type": ["string", "null"]},
+                         "champion": {"type": ["string", "null"]}, "forecast": {"$ref": "common.json#/$defs/num"},
+                         "outcome": {"$ref": "common.json#/$defs/num"}, "known_from": {"$ref": "common.json#/$defs/date"},
+                         "err_champion": {"$ref": "common.json#/$defs/num"},
+                         "errors": {"type": "object", "additionalProperties": {"$ref": "common.json#/$defs/num"}},
+                         "intervals": {"$ref": "common.json#/$defs/intervals"}}}},
+        "n_outcomes": {"type": "integer"}, "n_scored": {"type": "integer"}, "n_files_scored": {"type": "integer"},
+        "metrics": {"type": "array", "items": {
+          "type": "object", "additionalProperties": false, "required": ["variant", "role", "n", "mae", "bias", "delta_mae", "coverage"],
+          "properties": {"variant": {"type": "string"}, "role": {"enum": ["champion", "baseline", "guidance", "variant"]},
+                         "n": {"type": "integer"}, "mae": {"$ref": "common.json#/$defs/num"},
+                         "bias": {"$ref": "common.json#/$defs/num"}, "delta_mae": {"$ref": "common.json#/$defs/num"},
+                         "coverage": {"type": "object", "additionalProperties": {"oneOf": [{"type": "null"}, {
+                           "type": "object", "additionalProperties": false, "required": ["rate", "lo", "hi", "n"],
+                           "properties": {"rate": {"$ref": "common.json#/$defs/num"}, "lo": {"$ref": "common.json#/$defs/num"},
+                                          "hi": {"$ref": "common.json#/$defs/num"}, "n": {"type": "integer"}}}]}}}}},
+        "changes": {"type": "array", "items": {
+          "type": "object", "additionalProperties": false, "required": ["origin", "file", "from", "to"],
+          "properties": {"origin": {"$ref": "common.json#/$defs/date"}, "file": {"type": "string"},
+                         "from": {"type": ["string", "null"]}, "to": {"type": ["string", "null"]}}}},
+        "decisions": {"type": "array", "items": {"type": "string"}, "description": "Dated decision log and register entries in the quarter that name the target and a champion."},
+        "text": {"type": "string"}
+      }
+    },
+    "regime_cell": {
+      "type": "object", "additionalProperties": false, "required": ["month", "present"],
+      "properties": {"month": {"$ref": "common.json#/$defs/month"}, "present": {"type": "boolean"},
+                     "p_slow": {"$ref": "common.json#/$defs/num"}, "state": {"type": ["string", "null"]},
+                     "shift": {"type": ["string", "null"]}, "reason": {"type": ["string", "null"]}}
+    },
+    "regime": {
+      "type": "object", "additionalProperties": false,
+      "required": ["available", "months", "blocks", "shifts", "breaks", "n_breaks", "n_breaks_withheld", "missing", "text"],
+      "properties": {
+        "available": {"type": "boolean"},
+        "months": {"type": "array", "items": {"$ref": "common.json#/$defs/month"}},
+        "blocks": {"oneOf": [{"type": "null"}, {"type": "array", "items": {
+          "type": "object", "additionalProperties": false, "required": ["block", "label", "cells"],
+          "properties": {"block": {"type": "string"}, "label": {"type": "string"},
+                         "cells": {"type": "array", "items": {"$ref": "#/$defs/regime_cell"}}}}}]},
+        "shifts": {"type": "array", "items": {
+          "type": "object", "additionalProperties": false, "required": ["block", "label", "shift", "month"],
+          "properties": {"block": {"type": "string"}, "label": {"type": "string"}, "shift": {"type": "string"},
+                         "month": {"$ref": "common.json#/$defs/month"}}}},
+        "breaks": {"oneOf": [{"type": "null"}, {"type": "array", "items": {
+          "type": "object", "additionalProperties": false, "required": ["month", "branch", "series", "label", "latest_period", "p_recent"],
+          "properties": {"month": {"$ref": "common.json#/$defs/month"}, "branch": {"type": ["string", "null"]},
+                         "series": {"$ref": "common.json#/$defs/series_key"}, "label": {"type": "string"},
+                         "latest_period": {"type": ["string", "null"]}, "p_recent": {"$ref": "common.json#/$defs/num"}}}}]},
+        "n_breaks": {"type": "integer"}, "n_breaks_withheld": {"type": "integer"},
+        "missing": {"type": "array", "items": {"$ref": "common.json#/$defs/month"}},
+        "text": {"type": "string"}
+      }
+    },
+    "named": {
+      "type": "object", "additionalProperties": false, "required": ["key", "label"],
+      "properties": {"key": {"$ref": "common.json#/$defs/series_key"}, "label": {"type": "string"},
+                     "n": {"type": "integer"}, "branch": {"type": "string"}}
+    },
+    "named_list": {"oneOf": [{"type": "null"}, {"type": "array", "items": {"$ref": "#/$defs/named"}}]},
+    "data": {
+      "type": "object", "additionalProperties": false,
+      "required": ["added", "gone", "new_series", "n_revised", "n_notable", "n_revised_series", "revised", "n_guidance",
+                   "n_stale", "stale", "n_missing", "reviews", "register", "n_withheld", "sentences"],
+      "properties": {
+        "added": {"$ref": "#/$defs/named_list"}, "gone": {"$ref": "#/$defs/named_list"},
+        "new_series": {"$ref": "#/$defs/named_list", "description": "null in a reconstructed report (today's fetch days say nothing about the quarter)"},
+        "n_revised": {"type": "integer"}, "n_notable": {"type": "integer"}, "n_revised_series": {"type": "integer"},
+        "revised": {"type": "array", "items": {"$ref": "#/$defs/named"}},
+        "n_guidance": {"type": "integer"}, "n_stale": {"type": "integer"},
+        "stale": {"type": "array", "items": {"$ref": "#/$defs/named"}}, "n_missing": {"type": "integer"},
+        "reviews": {"type": "array", "items": {
+          "type": "object", "additionalProperties": false, "required": ["date", "title", "file"],
+          "properties": {"date": {"$ref": "common.json#/$defs/date"}, "title": {"type": "string"}, "file": {"type": "string"}}}},
+        "register": {"type": "array", "items": {
+          "type": "object", "additionalProperties": false, "required": ["date", "title"],
+          "properties": {"date": {"$ref": "common.json#/$defs/date"}, "title": {"type": "string"}}}},
+        "n_withheld": {"type": "integer"},
+        "sentences": {"type": "array", "items": {"type": "string"}}
+      }
+    }
+  }
+}

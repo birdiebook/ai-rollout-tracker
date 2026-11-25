@@ -3,11 +3,12 @@
      are not counted in any branch index (register A5); the page says so at the top and on every ratio. -->
 <script lang="ts">
   import { resolve } from '$app/paths';
-  import { StatusBadge, periodLabel } from '$lib/design';
+  import { StatusBadge, dataUrl, periodLabel, setChartData } from '$lib/design';
   import { SpanChart } from '$lib/flow';
   import { ReconOverview, ReconSection } from '$lib/regime';
 
   let { data } = $props();
+  setChartData(() => dataUrl('flow.json'));
 </script>
 
 <svelte:head><title>Avstämningar – AI-utrullningen</title></svelte:head>

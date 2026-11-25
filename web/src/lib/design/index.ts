@@ -4,3 +4,5 @@ export * from './format';
 export * from './state';
 export * from './color';
 export * from './charts';
+export * from './glossary';
+export { default as Term } from './Term.svelte';

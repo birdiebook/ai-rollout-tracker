@@ -12,6 +12,8 @@ export { default as Legend } from './Legend.svelte';
 export { default as TableToggle } from './TableToggle.svelte';
 export { default as DataTable } from './DataTable.svelte';
 export { default as StatusBadge } from './StatusBadge.svelte';
+export { default as Deferred } from './Deferred.svelte';
 export * from './types';
+export { PRERENDER_CELLS, chartData, dataUrl, setChartData } from './chartData';
 export * from './quantiles';
 export { provideTooltip, useTooltip, TooltipState, type TooltipContent } from './tooltip.svelte';

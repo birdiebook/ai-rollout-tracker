@@ -8,6 +8,7 @@
   import type { Overview } from '$lib/data';
   import RevisionExplorer from '$lib/series/RevisionExplorer.svelte';
   import { defaultLog, logAllowed } from '$lib/series/chart';
+  import { backfillUntil } from '$lib/series/versions';
   import { freqLabel, periodText } from '$lib/series/period';
   import { num } from '$lib/series/text';
   import type { SeriesDoc } from '$lib/series/types';
@@ -58,7 +59,7 @@
       {#if branchHref}<a href={branchHref}>{s.meta.branch} {s.meta.branch_name ?? ''}</a>{:else}{s.meta.branch}{/if} · {freqLabel(s.meta.freq)} · <code>{s.meta.key}</code> · tidsresa till {dateLabel(day)}
     {/snippet}
     {#snippet extra()}
-      {#if s.backfilled}<p class="note"><StatusBadge status="recon" /> Historiken fram till {dateLabel(doc!.rows?.backfill_last_known ?? '')} är bakåtfylld med dagens version: värdena före den dagen är rekonstruerade, inte de som publicerades då.</p>{/if}
+      {#if s.backfilled}{@const r = doc!.rows}<p class="note" data-backfill-until={backfillUntil(r)}><StatusBadge status="recon" /> Historiken fram till {dateLabel(r?.backfill_last_known ?? '')} är bakåtfylld med dagens version{#if r?.backfill_fetched && r.backfill_fetched > (r.backfill_last_known ?? '')}, hämtad {dateLabel(r.backfill_fetched)}: värdena före hämtdagen är rekonstruerade, inte de som publicerades då{:else}: värdena före den dagen är rekonstruerade, inte de som publicerades då{/if}.</p>{/if}
     {/snippet}
   </Head>
 
@@ -70,7 +71,8 @@
         <p class="note">{periodText(last.period, true)}, känt från {dateLabel(last.known)}</p>
       {:else}
         <p class="big">–</p>
-        <p class="note">Inget var publicerat ännu{doc.versions ? `; första version ${dateLabel(doc.versions.first_known)}` : ''}.</p>
+        <!-- R-W1: the day of the first version is later knowledge and is not shown -->
+        <p class="note">Inget var publicerat ännu.</p>
       {/if}
     </div>
     <div class="panel fig" data-known={m?.known ?? ''}>
@@ -112,7 +114,7 @@
       <h2 id="tt-rev-h">Revideringar sedan dess: då mot i dag</h2>
       <p class="note">Här, och bara här, visas också dagens version (streckad) för jämförelse. Versionsknapparna flyttar tidsresans datum.</p>
       <div class="panel">
-        <RevisionExplorer versions={doc.versions} bind:day={() => day, (d) => tt.set(d)} unit={s.meta.unit} {log} backfillLastKnown={doc.rows?.backfill_last_known} source={s.meta.source} license={s.meta.license?.short} />
+        <RevisionExplorer versions={doc.versions} bind:day={() => day, (d) => tt.set(d)} unit={s.meta.unit} {log} backfill={doc.rows} source={s.meta.source} license={s.meta.license?.short} />
       </div>
     </section>
   {/if}

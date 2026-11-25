@@ -51,6 +51,10 @@ Tester: `tests/test_site_bundle.py`.
 | `regime.json` | `regime` | C4 ur de skarpa ögonblicksbilderna: P(inbromsning) per block och månad, skiften, strukturbrott | `/regim` |
 | `method.json` | `method` | registrets regler, tillståndsnamn, kärnserier per gren, leden, nowcastvarianter, källor och licenser, registrets SHA-256 | `/metod` |
 | `withheld.json` | `withheld` | alla serier med `publish=False`: nyckel, etikett, källa, licens, skäl, gren | `/metod`, `/data` |
+| `story/<YYYY-MM>.json` | `story` | månadens berättelse (W13, från version 1.1.0): korten som den förregistrerade urvalsregeln valde (måttregistret 2026-11-25), med text, fakta, länk och spår per kort | `/manad/<månad>` |
+| `story/index.json` | `story_index` | alla månader i berättelsen med antal kort per typ | `/manad/*`, startsidans ingång |
+| `report/<YYYYQn>.json` | `report` | kvartalsrapporten som data (W14, från version 1.3.0): kedjan L1–L9 över kvartalet, avstämningarna, skarpa prognoser mot utfall, regimen, data och metod, med genererade meningar | `/kvartal/<kvartal>` |
+| `report/index.json` | `report_index` | alla kvartal med typ (skarp eller rekonstruerad) och rapportdag, och det första kvartal som kan bli skarpt | `/kvartal/*`, startsidans ingång |
 | `letters.json` | `letters` | index över månadsbrev och kvartalsrapporter, nyast först | `/brev`, `/rapport` |
 | `letters/<YYYY-MM>.json`, `reports/<YYYYQn>.json` | `publication` | ett brev eller en rapport med Markdown | `/brev/*`, `/rapport/*` |
 | `schema/*.json` | – | kopior av schemana som Python validerade mot | typer i frontend |
@@ -100,7 +104,7 @@ Tester: `tests/test_site_bundle.py`.
 | `measure_as_of`, `measure`, `measure_path` | måttet per postens datum (ur ögonblicksbilden när serien finns där) och dess bana |
 | `measure_history` | postens mått varje månadsslut i ränderna, kolumnform: `months`, `kind`, `counted`, `latest_period`, `known_from`, `pace`, `change_in_pace`, `pace_percentile`, `change_percentile`, `direction`, `valid`. Bara för serier som någon gren mätte |
 | `levels` | senaste versionen av varje period som var känd byggdagen (`as_of`), i seriens egen frekvens |
-| `rows.counts`, `rows.backfill_last_known` | antal rader per typ (`release`, `fetch`, `revision`, `backfill`, `derived`); senaste `known_from` för bakåtfyllda rader |
+| `rows.counts`, `rows.backfill_last_known`, `rows.backfill_fetched` | antal rader per typ (`release`, `fetch`, `revision`, `backfill`, `derived`); senaste `known_from` för bakåtfyllda rader; senaste hämtdag (`fetched_at`, avrundad uppåt till hel dag) för samma rader (från 1.2.0, avsnitt 5.6) |
 | `versions` | tidsresan, avsnitt 5 |
 
 ### nowcast/n<k>.json
@@ -108,12 +112,66 @@ Tester: `tests/test_site_bundle.py`.
 `publishable` (alltid `true` i dag; ett inhållet mål skulle bara behålla regeln och namnet), `id`, `title`, `target`,
 `target_label`, `unit`, `source`, `license`, `decimals`, `error_unit`, `frequency`, `origin_rule`, `results_doc`,
 `champion`, `shadows`, `variants[]` (`id`, `text`), `next_origin`, `next_period`, `forecasts[]` (skarpa filer:
-`period`, `origin`, `value`, `variants`, `intervals` 50/80/95 för huvudmodellen, `file`; aldrig `inputs`),
+`period`, `origin`, `value`, `variants`, `intervals` 50/80/95 för huvudmodellen, `file`, `commit`; aldrig `inputs`),
 `scorecard[]` (en rad per fil mot första versionen av utfallet: `forecast`, `outcome`, `err_<modell>`,
 `crps_<modell>`, `pit_<modell>`, `hit_<nivå>_<modell>`, `interval_<nivå>`), `summary[]` (MAE och bias per variant),
 `coverage[]` (skarp täckning med binomialband), `history` (målets senaste nivåer), `backtest_calibration` (täckning
 per nivå med band, Holm, CRPS, PIT och huvudmodellens MAE i backtesten, beräknad vid bygget och alltid märkt som
 backtest).
+
+**`commit` (från 1.2.0, R-W1 4a).** `{sha, date}` för den commit som lade till filen (`git log --diff-filter=A
+--format=%H%x09%cI -- <fil>`, första raden, alltså det senaste tillägget), med datumet i UTC
+(`YYYY-MM-DDTHH:MM:SSZ`). Det är prognosens tidsstämpel, och prognossidan länkar exakt den commiten
+(`commit/<sha>`). `null` betyder att bygget saknade git-historiken (till exempel en grund klon). Sidan visar då filen
+som "väntar på verifiering", aldrig som skarp. Båda Pages-workflows checkar ut med `fetch-depth: 0`. Bygget stoppas
+(`export.CommitError`) om en poängsatt fil committades samma dag som eller efter utfallets `known_from`.
+`nowcast/d2.json` har samma fält för sin senaste fil (`commit` bredvid `file`).
+
+### story/<YYYY-MM>.json (W13)
+
+Byggs av `site_bundle.story` för varje månad i posten. `select` är regeln: en ren funktion av månadens post, förra
+månadens post, avstämningarna (A5) för båda, de skarpa prognosfilernas scorecard och C4-sektionen. Samma indata ger samma
+dokument.
+
+| Fält | Betydelse |
+|---|---|
+| `month`, `month_sv`, `kind`, `status` | månaden och om posten är skarp eller rekonstruerad |
+| `known` | dagen månadens post blev känd (månadsslutet, eller den skarpa ögonblicksbildens datum om det är senare). Inget i dokumentet blev känt senare |
+| `previous` | jämförelsemånaden, `null` utan jämförelse |
+| `rule` | registrets avsnitt, tak (8), tak per typ, zonerna (≤ 5, ≥ 95) och typordningen |
+| `headline`, `n_events`, `types` | rubrikmeningen och antal kort per typ K1–K6 |
+| `qualified`, `omitted`, `withheld` | per typ: publicerbara kandidater före taken, de som ströks av taken, och inhållna serier som uppfyllde villkoret (räknas, namnges aldrig) |
+| `cards[]` | `type` (K0–K6, K9), `type_label`, `id`, `rank`, `status`, `title`, `text`, `direction` (bara riktning, för färgen), `link` (`kind`: start, branch, series, nowcast, regime, method), `facts` (schema per typ) och `track` (postens värde per månadsslut för kortets serie, K4–K6) |
+
+Sidan klipper varje figur till `known` med tidsresans gräns (`web/src/lib/timetravel/gate.ts`) och vägrar bygga om något
+på sidan blev känt senare.
+
+### report/<YYYYQn>.json (W14)
+
+Byggs av `site_bundle.report` för varje helt kvartal i postens historik. Innehållet är `ai_tracker.quarterly`s egna
+fakta (`summary_facts`, `flow_facts`, `forecast_facts`, `regime_facts`, `data_facts`), samma funktioner som
+Markdown-rapporten renderar, matade med postens månader (`site.data.Record`: den skarpa ögonblicksbilden, annars
+rekonstruktionen vid månadsslutet, alltså det som ränderna visar). Inget räknas om: tillstånd, index, kvoternas mått,
+prognosfel, intervall och C4 kommer ur posten, de committade prognosfilerna och ögonblicksbilderna, och tabellen kapas
+vid kvartalets slut (`quarterly.make_inputs`).
+
+| Fält | Betydelse |
+|---|---|
+| `quarter`, `quarter_sv`, `title`, `kind`, `status` | kvartalet; `skarp` bara när alla tre månaderna har en skarp ögonblicksbild |
+| `start`, `end`, `known` | kvartalet och rapportdagen: dagen då kvartalets sista månadsläge blev känt (månadsslutet, eller ögonblicksbildens datum om det är senare). Inget i dokumentet blev känt senare |
+| `months`, `base` | kvartalets tre månader och jämförelsemånaden, med typ, känd-dag och ögonblicksbildens fil |
+| `recon_note` | varför kvartalet är rekonstruerat (`null` för ett skarpt). Den första skarpa kvartalsrapporten gäller 2027Q1 med den första ögonblicksbilden 2026-11-30 (`report/index.json` `first_live`) |
+| `headline`, `summary` | rubrikmeningen, sammanfattningens meningar, antal grenar per tillstånd, tillståndsbyten, grenar som bytte mer än en gång, största indexförändringar |
+| `branches[]` | per gren index och tillstånd vid varje månadsslut (`path`), förändring över kvartalet, serier som bytt riktning (`flips`) |
+| `chain[]` | L1–L9: grenar, kvoter som rör ledet och en mening (tillståndsbyten och avstämningar) |
+| `ratios[]`, `n_ratios_withheld` | avstämningarna vid kvartalets slut med postens mått och nivån före kvartalet |
+| `nowcasts[]`, `nowcast_news` | per nowcast skarpa filer med prognosdag till och med kvartalets slut, nya i kvartalet, utfall som blev kända i kvartalet med huvudmodellens lagrade intervall, rullande utvärdering per variant (MAE, bias, mot naiv baslinje, täckning med binomialband), byten av huvudmodell |
+| `regime` | C4 per block och månad som lagrat i de skarpa ögonblicksbilderna, skiften och brott (inhållna serier bara räknade) |
+| `data` | kärnserier in och ut, revideringar, guidance, inaktuella serier, granskningar och registerändringar daterade i kvartalet. BLOCKED-källor (dagens läge) och nya serier i ett rekonstruerat kvartal (dagens hämtdatum) tas inte med |
+| `withheld` | inhållna serier som sista månaden räknade eller mätte, bara namn |
+
+Sidan klipper varje figur (ränder, grenhistorik, kvotens och prognosmålets nivåer) till `known` med tidsresans gräns och
+vägrar bygga om något på sidan blev känt senare.
 
 ## 3. Status: skarp eller rekonstruerad
 
@@ -132,6 +190,14 @@ rekonstrueras med samma kod per månadsslut och märks `rekonstruerad`. En måna
   katalogserier, härledda serier och nowcastmål som inte är publicerbara) får bara stå i en lista under nyckeln
   `withheld`, och en sådan post får bara ha fälten i `withheld_entry`, utan tal. Nyckeln som ordkant i en sträng,
   som objektnyckel eller som filnamn räknas som läcka och stoppar bygget.
+- **Den byggda sidan** (`python -m ai_tracker.site_bundle scan-build web/build --src web/src`, R-W1 1b, ett steg i
+  `pages-next.yml` efter bygget): grinden ovan ser bara paketet, men frontend har också data som skrivits in för hand
+  i `web/src` (`holdout.ts`, `reconciliations.json`, `rules.json`). Skanningen läser bygget: `data/` med
+  `gate.scan`, `**/__data.json` (SvelteKits laddata, devalue) efter uppackning med samma regel, `**/*.html` med
+  varje `withheld:[…]` bortklippt (inga inhållna nycklar i resten; etiketter får stå i markeringen, eftersom sidorna
+  namnger inhållna serier med skäl), samt `_app/**/*.{js,json,css}` och alla källfiler under `web/src` (inga
+  inhållna nycklar och inga inhållna etiketter alls). En planterad nyckel i en konstant stoppar bygget
+  (`tests/test_site_bundle_rw1x.py`).
 - **Tester:** skanningen hittar alla planterade läckor (sträng, etikett, objektnyckel, tal i en inhållen post, filnamn).
   I fixturvärlden har de två inhållna serierna värden kring 7·10⁶ och 6·10⁶, och testet kontrollerar att inget tal i
   paketet, i någon avrundning, är ett av deras värden. En skarp prognosfils `inputs` (som namnger en inhållen serie)
@@ -177,8 +243,21 @@ Regler (testade):
 5. **Storleksskydd:** en serie med fler än 6 000 versioner får sina äldsta versioner hopslagna: allt som var känt
    före en brytdag ersätts av versionen som gällde brytdagen, daterad brytdagen (senare, aldrig tidigare).
    `collapsed_before` anger brytdagen, och tidsresa före den visar inget för serien. Ingen serie behöver det i dag.
-6. **Bakåtfylld historik** har dagens version (`source="backfill"`). `rows.backfill_last_known` anger senaste
-   `known_from` bland de bakåtfyllda raderna, och tidsresa till ett datum före det ska märkas rekonstruerad.
+6. **Bakåtfylld historik** (`source="backfill"`) har versionen från dagen raderna hämtades, inte från dagen
+   perioderna först publicerades. Deras `known_from` är en regel (periodslut plus fördröjning) och säger därför inte
+   när värdet blev känt i den form det har. `rows.backfill_last_known` anger senaste `known_from` bland de
+   bakåtfyllda raderna och `rows.backfill_fetched` (från 1.2.0) den senaste hämtdagen för samma rader, avrundad uppåt
+   till hel dag. Tidsresa till ett datum före `max(backfill_last_known, backfill_fetched)` märks rekonstruerad
+   (`versions.ts` `backfillUntil`), och noten anger båda dagarna. Före rättningen R-W1 3a användes bara regeldagen.
+   Då visades till exempel `us_elec_sales_com_*` (regeldag 2013-01-29, hämtad 2026-11-23) omärkta under en
+   tidsresa till 2020. I det riktiga paketet 2026-11-25 har 105 publicerade serier bakåtfyllnad, och för 43 av dem
+   ligger hämtningen mer än 7 dagar efter regeldagen (18 mer än 30 dagar, 17 mer än 180). Testerna:
+   `tests/test_site_bundle_rw1x.py` (Python, även mot den riktiga tabellen), `timetravel.test.ts` (varje
+   bakåtfylld serie i paketet, fixturer eller `TT_BUNDLE`), golden-filen (`backfilled` per prov-dag) och
+   `rw1.spec.ts` (sidan märker fallet i webbläsaren).
+   Samma regel gäller grenposterna: en serie som bakåtfylls efter den första skarpa ögonblicksbilden ändrar inga
+   skarpa månader (de läses ur ögonblicksbilderna), och rekonstruerade månader före dess `backfill_fetched` märks
+   rekonstruerade.
 
 `measure_history` kompletterar versionerna för mått: den visar vad posten (skarp eller rekonstruerad) sa om serien
 varje månadsslut, så att tidsresan för takt och riktning läser pipelinens siffror i stället för att räkna om.
@@ -220,6 +299,8 @@ Budgetar (rå storlek och gzip, GitHub Pages serverar gzip). Bygget stoppas om e
 | `manifest.json` | 300 kB | 60 kB |
 | `withheld.json` | 80 kB | 15 kB |
 | `letters/*`, `reports/*`, `letters.json` | 100–200 kB | 10–60 kB |
+| `story/*.json`, `story/index.json` | 60 kB | 12 kB |
+| `report/*.json` (`report/index.json` 60 kB / 12 kB) | 120 kB | 24 kB |
 | `schema/*.json` | 60 kB | 12 kB |
 | **Totalt** | **20 MB** | **4 MB** |
 | **Startsidan** (`overview.json` + `flow.json`) | | **100 kB** (visionens "≤ 100 kB data") |
@@ -270,9 +351,15 @@ så en kontraktsändring utan nya fixturer stoppar pytest.
 
 ## Ändringar
 
-### 2026-11-24 – 1.1.0: diffusionsindex v2 med källfamiljer (spår K1)
+Versionerna 1.1.0–1.3.0 kom från webbsessionen och beskrivs i avsnitten ovan: 1.1.0 `story/` (W13), 1.2.0
+`rows.backfill_fetched` och `commit` per skarp prognos (RW1-X), 1.3.0 `report/` (W14). Spår K1 skrev sin ändring som
+1.1.0 på sin egen gren innan main hade gått vidare. Vid mergen 2026-11-25 fick den numret 1.4.0.
 
-Bara tillägg. Inga fält är borttagna eller har bytt typ.
+### 2026-11-24 – 1.4.0: diffusionsindex v2 med källfamiljer (spår K1, numrerad vid mergen 2026-11-25)
+
+En minor. Bara tillägg, och inga fält är borttagna eller har bytt typ. `index` och `state` har kvar sina namn. Det
+som ändras är regeln bakom dem, och den anges i `rule_version`. Ett paket 1.3.0 läses alltså som förut av en frontend
+för 1.x, som bara saknar de nya fälten och tillståndet nedan.
 - `index` och `state` är den officiella regeln. Från ögonblicksbilden 2026-11-30 är det v2: en röst per källfamilj
   (`docs/mattregister.md`, 2026-11-24). `rule_version` anger regeln. En post skriven före v2 saknar fältet i
   ögonblicksbilden och får `"v1"` i paketet.

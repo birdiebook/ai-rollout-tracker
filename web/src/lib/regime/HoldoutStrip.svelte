@@ -67,7 +67,7 @@
       {#if 'shift_back_month' in b}
         {@const sx = cx(b.shift_back_month) - w / 2}
         <line x1={sx} x2={sx} y1={top - 14} y2={top + CELL_H + 4} stroke="var(--c-ink)" stroke-width="2" />
-        <text class="small" x={sx + 4} y={top - 4}>→ tillbaka till expansion</text>
+        <text class="small" x={sx + 4} y={top - 4}>→ skifte till expansion</text>
       {/if}
     {/each}
     {@const btop = d.top + HOLDOUT.blocks.length * LANE + 10}

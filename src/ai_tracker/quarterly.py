@@ -147,20 +147,30 @@ def gather(quarter, ctx: Context, snapshots_dir: Path | None = None, forecasts_d
         raise ValueError(f"{q} has not ended (quarter end {end.date()}, today {today.date()} UTC)")
     mm = [_month(m, snaps, ctx, True) for m in months]
     base = _month(months[0] - 1, snaps, ctx, len(ctx.table) > 0) if len(ctx.table) else None
-    kind = LIVE if all(m.kind == LIVE for m in mm) else RECON
-    last = mm[-1]
-    cut = L.cut_context(ctx, end, last.doc.get("table_max_fetched_at") if last.kind == LIVE else None)
     regime = []
     for f in sorted(snaps.glob("[0-9][0-9][0-9][0-9]-[0-9][0-9].json")):
         if f.stem <= str(months[-1]):
             sec = (json.loads(f.read_text(encoding="utf-8")) or {}).get("regime")
             if sec:
                 regime.append((f.stem, sec))
+    return make_inputs(q, mm, base, ctx, forecasts_dir, docs_dir, regime)
+
+
+def make_inputs(quarter, months: list[Month], base: Month | None, ctx: Context, forecasts_dir: Path | None = None,
+                docs_dir: Path | None = None, regime: list[tuple[str, dict]] | None = None) -> Inputs:
+    """Inputs from the quarter's three months (live snapshots or reconstructions) and the month before. `gather`
+    reads them from the snapshot files; the site bundle (site_bundle.report) passes the record's months."""
+    q = pd.Period(quarter, freq="Q")
+    start, end = q.start_time.normalize(), q.end_time.normalize()
+    mm = list(months)
+    kind = LIVE if all(m.kind == LIVE for m in mm) else RECON
+    last = mm[-1]
+    cut = L.cut_context(ctx, end, last.doc.get("table_max_fetched_at") if last.kind == LIVE else None)
     prev = base.doc if base else None
     linp = L.Inputs(last.month, last.date, last.kind, last.doc, prev, base.kind if base else None, cut,
                     Path(forecasts_dir or config.REPO / "forecasts"), last.file)
     return Inputs(q, start, end, kind, mm, base, cut, Path(forecasts_dir or config.REPO / "forecasts"),
-                  Path(docs_dir or DOCS), regime, linp)
+                  Path(docs_dir or DOCS), [(m, sec) for m, sec in (regime or []) if m <= mm[-1].month], linp)
 
 
 # ------------------------------------------------------------------ helpers
@@ -283,21 +293,46 @@ def _flips(code: str, a: Month | None, b: Month) -> int:
                and m.get("direction") != pa[k].get("direction"))
 
 
-def summary(inp: Inputs, nowcast_news: str, regime_news: str) -> list[str]:
-    path = [inp.base, *inp.months]
+def summary_facts(inp: Inputs) -> dict:
+    """The summary as data (the Markdown section and the site's report document both read this): the state path of
+    every branch over the comparison month and the quarter's three months, the branches whose state differed at the
+    quarter's end, those that changed more than once, the largest index moves and the states at the quarter's end."""
+    path = [m for m in [inp.base, *inp.months] if m is not None]
     last = inp.months[-1]
-    lines = ["## Sammanfattning", ""]
-    changed, moved, seqs = [], [], []
+    changed, moved, seqs, rows = [], [], [], []
     for code, bname in catalog.BRANCHES.items():
         a, b = bstate(inp.base, code), bstate(last, code)
         if a and a.get("state") != b.get("state"):
-            changed.append(f"{code} {bname} {a.get('state')} → {b.get('state')}")
-        if a.get("index") is not None and b.get("index") is not None and round(b["index"] - a["index"], 2) != 0:
-            moved.append((-abs(b["index"] - a["index"]), code, b["index"] - a["index"]))
-        steps = [(m.month, bstate(m, code).get("state")) for m in path if m is not None]
+            changed.append({"code": code, "name": bname, "from": a.get("state"), "to": b.get("state")})
+        delta = None
+        if a.get("index") is not None and b.get("index") is not None:
+            delta = b["index"] - a["index"]
+            if round(delta, 2) != 0:
+                moved.append((-abs(delta), code, delta))
+        steps = [(m.month, bstate(m, code).get("state")) for m in path]
         k = sum(1 for (_, s0), (_, s1) in zip(steps, steps[1:]) if s0 != s1)
         if k >= 2:
-            seqs.append(f"{code} " + " → ".join(f"{s} ({mo})" for mo, s in steps))
+            seqs.append({"code": code, "steps": steps})
+        rows.append({"code": code, "name": bname, "cells": [bstate(m, code) for m in path], "delta": delta,
+                     "has_base": bool(a), "from": a.get("state") if a else None, "to": b.get("state"),
+                     "state_changed": bool(a) and a.get("state") != b.get("state"),
+                     "flips": _flips(code, inp.base, last) if inp.base else None})
+    moved.sort()
+    groups: dict[str, list[str]] = {}
+    for code in catalog.BRANCHES:
+        groups.setdefault(bstate(last, code).get("state") or R.STATE_FEW, []).append(code)
+    order = [R.STATE_ACCEL, R.STATE_STABLE, R.STATE_BRAKE, R.STATE_FEW_FAMILIES, R.STATE_FEW]
+    ordered = [(st, groups[st]) for st in order if st in groups] + [(st, v) for st, v in groups.items() if st not in order]
+    return {"path": path, "changed": changed, "seqs": seqs, "moved": [(c, d) for _, c, d in moved[:3]],
+            "groups": ordered, "rows": rows}
+
+
+def summary(inp: Inputs, nowcast_news: str, regime_news: str) -> list[str]:
+    f = summary_facts(inp)
+    path, last = f["path"], inp.months[-1]
+    lines = ["## Sammanfattning", ""]
+    changed = [f"{c['code']} {c['name']} {c['from']} → {c['to']}" for c in f["changed"]]
+    seqs = [f"{x['code']} " + " → ".join(f"{s} ({mo})" for mo, s in x["steps"]) for x in f["seqs"]]
     if inp.base is None:
         lines.append("- Ingen månad före kvartalet att jämföra med.")
     elif changed:
@@ -307,34 +342,24 @@ def summary(inp: Inputs, nowcast_news: str, regime_news: str) -> list[str]:
         lines.append(f"- Inget tillstånd vid kvartalets slut skilde sig från {mlabel(inp.base)}.")
     if seqs:
         lines.append("- Grenar som bytte tillstånd mer än en gång under kvartalet: " + "; ".join(seqs) + ".")
-    moved.sort()
-    if moved:
+    if f["moved"]:
         lines.append("- Störst indexförändring över kvartalet: "
-                     + ", ".join(f"{c} {n(d, 2, signed=True)}" for _, c, d in moved[:3]) + ".")
+                     + ", ".join(f"{c} {n(d, 2, signed=True)}" for c, d in f["moved"]) + ".")
     elif inp.base is not None:
         lines.append("- Inget index ändrades över kvartalet (avrundat till två decimaler).")
-    groups: dict[str, list[str]] = {}
-    for code in catalog.BRANCHES:
-        groups.setdefault(bstate(last, code).get("state") or R.STATE_FEW, []).append(code)
-    order = [R.STATE_ACCEL, R.STATE_STABLE, R.STATE_BRAKE, R.STATE_FEW_FAMILIES, R.STATE_FEW]
-    parts = [f"{st} {', '.join(groups[st])}" for st in order if st in groups]
-    parts += [f"{st} {', '.join(v)}" for st, v in groups.items() if st not in order]
+    parts = [f"{st} {', '.join(codes)}" for st, codes in f["groups"]]
     lines.append(f"- Läget vid kvartalets slut, {mlabel(last)}: " + "; ".join(parts) + ".")
     lines += [f"- {nowcast_news}", f"- {regime_news}", ""]
-    head = ["Gren", *[mlabel(m) for m in path if m is not None], "Över kvartalet", "Serier som bytt riktning"]
+    head = ["Gren", *[mlabel(m) for m in path], "Över kvartalet", "Serier som bytt riktning"]
     rows = []
-    for code, bname in catalog.BRANCHES.items():
-        a, b = bstate(inp.base, code), bstate(last, code)
-        if a.get("index") is not None and b.get("index") is not None:
-            over = n(b["index"] - a["index"], 2, signed=True)
-        else:
-            over = "–"
-        if a and a.get("state") != b.get("state"):
-            over += f"; {a.get('state')} → {b.get('state')}"
-        elif a:
+    for r in f["rows"]:
+        over = n(r["delta"], 2, signed=True) if r["delta"] is not None else "–"
+        if r["state_changed"]:
+            over += f"; {r['from']} → {r['to']}"
+        elif r["has_base"]:
             over += "; samma tillstånd"
-        rows.append([f"{code} {bname}", *[state_cell(bstate(m, code)) for m in path if m is not None], over,
-                     n(_flips(code, inp.base, last), 0) if inp.base else "–"])
+        rows.append([f"{r['code']} {r['name']}", *[state_cell(c) for c in r["cells"]], over,
+                     n(r["flips"], 0) if r["flips"] is not None else "–"])
     lines += ["Diffusionsindex och tillstånd vid varje månadsslut (index; tillstånd). Sista kolumnen: räknade serier "
               "vars riktning skilde sig mellan jämförelsemånaden och kvartalets sista månad.", ""]
     return lines + table(head, rows)
@@ -343,7 +368,9 @@ def summary(inp: Inputs, nowcast_news: str, regime_news: str) -> list[str]:
 # ------------------------------------------------------------------ 2. flow
 
 
-def ratio_rows(keys: list[str], inp: Inputs, rl: dict[str, list[str]]) -> tuple[list[list[str]], int]:
+def ratio_facts(keys: list[str], inp: Inputs, rl: dict[str, list[str]]) -> tuple[list[dict], int]:
+    """The registered ratios among `keys` at the quarter's end, as stored in the last month's record: the measure
+    (`m`, the record's dict) and the comparison month's level. Withheld ratios are only counted."""
     cur = {m["series"]: m for m in (inp.months[-1].doc.get("reconciliations") or {}).get("series", [])}
     old = {m["series"]: m for m in ((inp.base.doc if inp.base else {}).get("reconciliations") or {}).get("series", [])}
     rows, withheld = [], 0
@@ -355,32 +382,63 @@ def ratio_rows(keys: list[str], inp: Inputs, rl: dict[str, list[str]]) -> tuple[
             withheld += 1
             continue
         o = old.get(key) or {}
-        lvl0, lvl1 = o.get("level"), m.get("level")
-        since = "–"
-        if lvl0 is not None and lvl1 is not None:
-            since = f"{L.value_text(lvl0)} ({o.get('latest_period') or '–'})"
-        rows.append([f"{name(key, inp)} (`{key}`)", "–".join(rl.get(key, [])) or "–",
-                     str(m.get("latest_period") or "–"), L.value_text(lvl1), L.pace_text(m), L.change_text(m), since])
+        has_base = o.get("level") is not None and m.get("level") is not None
+        rows.append({"key": key, "label": name(key, inp), "leads": list(rl.get(key, [])), "m": m,
+                     "base_level": o.get("level") if has_base else None,
+                     "base_period": (o.get("latest_period") or None) if has_base else None})
     return rows, withheld
 
 
-def flow(inp: Inputs) -> list[str]:
+def ratio_rows(keys: list[str], inp: Inputs, rl: dict[str, list[str]]) -> tuple[list[list[str]], int]:
+    facts, withheld = ratio_facts(keys, inp, rl)
+    rows = []
+    for r in facts:
+        m = r["m"]
+        since = "–"
+        if r["base_level"] is not None:
+            since = f"{L.value_text(r['base_level'])} ({r['base_period'] or '–'})"
+        rows.append([f"{r['label']} (`{r['key']}`)", "–".join(r["leads"]) or "–",
+                     str(m.get("latest_period") or "–"), L.value_text(m.get("level")), L.pace_text(m),
+                     L.change_text(m), since])
+    return rows, withheld
+
+
+def flow_facts(inp: Inputs) -> list[dict]:
+    """Per lead L1–L9 (docs/steg2/plan.md): its branches with their state and index at every month end of the path,
+    and the registered ratios that touch the lead."""
     ld, rl = leads(inp), ratio_leads(inp)
+    path = [m for m in [inp.base, *inp.months] if m is not None]
+    out = []
+    for lead, (lname, branches) in ld.items():
+        bs = []
+        for code in branches:
+            states = [bstate(m, code) for m in path]
+            bs.append({"code": code, "name": catalog.BRANCHES.get(code, ""),
+                       "index": [s.get("index") for s in states],
+                       "state": [s.get("state") or R.STATE_FEW for s in states]})
+        keys = [k for k, ls in rl.items() if lead in ls]
+        ratios, withheld = ratio_facts(keys, inp, rl)
+        out.append({"lead": lead, "name": lname, "branches": bs, "keys": keys, "ratios": ratios,
+                    "withheld": withheld})
+    return out
+
+
+def flow(inp: Inputs) -> list[str]:
+    rl = ratio_leads(inp)
     lines = ["## Flödet", "",
              "Leden L1–L9 enligt planen (`docs/steg2/plan.md`, avsnitt 2): grenarnas tillstånd över kvartalet och de "
              "härledda kvoterna mellan leden (avstämningar, A5 i `docs/mattregister.md`). Kvoternas takt är "
              "årsförändringen i log(kvot) ×100. De räknas inte i något diffusionsindex.", ""]
-    path = [m for m in [inp.base, *inp.months] if m is not None]
-    for lead, (lname, branches) in ld.items():
-        bl = ", ".join(branches) if branches else "ingen egen gren"
+    for f in flow_facts(inp):
+        lead, lname = f["lead"], f["name"]
+        bl = ", ".join(b["code"] for b in f["branches"]) if f["branches"] else "ingen egen gren"
         lines += [f"### {lead} {lname} ({bl})", ""]
-        for code in branches:
-            states = [bstate(m, code) for m in path]
-            idx = " → ".join(n(s.get("index"), 2) if s.get("index") is not None else "–" for s in states)
-            sts = [s.get("state") or R.STATE_FEW for s in states]
+        for b in f["branches"]:
+            idx = " → ".join(n(i, 2) if i is not None else "–" for i in b["index"])
+            sts = b["state"]
             st = f"{sts[-1]} hela perioden" if len(set(sts)) == 1 else " → ".join(sts)
-            lines.append(f"- {code} {catalog.BRANCHES.get(code, '')}: {st} (index {idx}).")
-        keys = [k for k, ls in rl.items() if lead in ls]
+            lines.append(f"- {b['code']} {b['name']}: {st} (index {idx}).")
+        keys = f["keys"]
         rows, withheld = ratio_rows(keys, inp, rl)
         if rows:
             lines += ["- Avstämningar vid kvartalets slut:", ""]
@@ -420,7 +478,9 @@ def champion_decisions(label: str, inp: Inputs) -> list[str]:
     return out
 
 
-def _metrics(scored: pd.DataFrame, variants, champion_col: bool = True) -> list[list[str]]:
+def metrics_facts(scored: pd.DataFrame, variants, champion_col: bool = True) -> list[dict]:
+    """The rolling evaluation of the scored rows per variant: n, MAE, bias, MAE minus the naive baseline's MAE, and
+    the coverage of the champion's stored intervals with the binomial 90 % band."""
     base = scored[f"err_{BASELINE}"].dropna() if f"err_{BASELINE}" in scored else pd.Series(dtype=float)
     base_mae = base.abs().mean() if len(base) else None
     keys = [intervals.level_key(x) for x in intervals.LEVELS]
@@ -430,54 +490,100 @@ def _metrics(scored: pd.DataFrame, variants, champion_col: bool = True) -> list[
         if not len(e):
             continue
         mae = e.abs().mean()
-        delta = n(mae - base_mae, 2, signed=True) if base_mae is not None and v != BASELINE else "–"
-        cov = []
+        cov = {}
         for k, lv in zip(keys, intervals.LEVELS):
             col = f"hit_{k}_{v}"
             hits = scored[col].dropna() if col in scored else pd.Series(dtype=float)
             if len(hits):
                 lo, hi = intervals.binomial_band(len(hits), lv)
-                cov.append(f"{n(hits.mean(), 2)} [{n(lo, 2)}–{n(hi, 2)}]")
+                cov[k] = {"rate": float(hits.mean()), "lo": float(lo), "hi": float(hi), "n": int(len(hits))}
             else:
-                cov.append("–")
-        tag = {BASELINE: " (naiv baslinje)", GUIDANCE: " (bolagens guidance)"}.get(v, "")
-        rows.append([("huvudmodell" if v == "champion" else v) + tag, n(len(e), 0), n(mae, 2), n(e.mean(), 2, signed=True),
-                     delta, *cov])
+                cov[k] = None
+        rows.append({"variant": v, "role": {BASELINE: "baseline", GUIDANCE: "guidance"}.get(v, "champion" if v == "champion" else "variant"),
+                     "n": int(len(e)), "mae": float(mae), "bias": float(e.mean()),
+                     "delta_mae": float(mae - base_mae) if base_mae is not None and v != BASELINE else None,
+                     "coverage": cov})
     return rows
 
 
-def forecasts(inp: Inputs) -> tuple[list[str], str]:
+def _metrics(scored: pd.DataFrame, variants, champion_col: bool = True) -> list[list[str]]:
+    keys = [intervals.level_key(x) for x in intervals.LEVELS]
+    rows = []
+    for r in metrics_facts(scored, variants, champion_col):
+        v = r["variant"]
+        delta = n(r["delta_mae"], 2, signed=True) if r["delta_mae"] is not None else "–"
+        cov = [f"{n(c['rate'], 2)} [{n(c['lo'], 2)}–{n(c['hi'], 2)}]" if c else "–" for c in (r["coverage"][k] for k in keys)]
+        tag = {BASELINE: " (naiv baslinje)", GUIDANCE: " (bolagens guidance)"}.get(v, "")
+        rows.append([("huvudmodell" if v == "champion" else v) + tag, n(r["n"], 0), n(r["mae"], 2),
+                     n(r["bias"], 2, signed=True), delta, *cov])
+    return rows
+
+
+def forecast_facts(inp: Inputs) -> dict:
+    """Per nowcast: the committed live files with origin on or before the quarter's end, the new ones in the quarter,
+    the outcomes that became known in the quarter, the rolling evaluation of all outcomes known at the quarter's end
+    (pipeline.score on the table cut to the quarter's end), and the champion changes (files, decision log, register)."""
     try:
         scores = pipeline.score(inp.forecasts, inp.ctx.table)
         error = None
     except Exception as e:  # noqa: BLE001 - the report still says that the scorecard failed
         scores, error = {}, f"{type(e).__name__}: {e}"
-    lines = ["## Prognoser", "",
-             f"Skarpa prognoser (`forecasts/<nowcast>/`) med prognosdag till och med {inp.end.date()}, mot första "
-             f"publicerade utfall kända till och med samma dag. Baslinjer: {BASELINE} (naiv) för alla mål och {GUIDANCE} "
-             f"(bolagens guidance) där målet har den. Täckning = andel utfall inom huvudmodellens lagrade intervall "
-             f"[binomialt 90 %-band] ({intervals.REGISTER_REF}).", ""]
+    out = []
     n_new = n_out = 0
     for sub, (label, target, variants) in pipeline.NOWCASTS.items():
         info = D.NOWCAST_INFO.get(sub, {})
-        show = publishable(target, inp)
-        lines += [f"### {label} {info.get('title', '')} (`{target}`)" if show else f"### {label} {info.get('title', '')}",
-                  ""]
         files = []
         for f in sorted((inp.forecasts / sub).glob("*.json")):
             d = json.loads(f.read_text(encoding="utf-8"))
             if pd.Timestamp(d["origin"]) <= inp.end:
                 files.append((pd.Timestamp(d["origin"]), d, f"forecasts/{sub}/{f.name}"))
-        code_champion = D.NOWCAST_MODULES[sub][2]
-        if files:
-            lines.append(f"Huvudmodell i den senaste skarpa prognosen till och med kvartalets slut: {files[-1][1]['champion']}. "
-                         f"Prognosdag: {info.get('origin_rule', '–')}.")
-        else:
-            lines.append(f"Inga skarpa prognoser med prognosdag till och med {inp.end.date()}. Registrerad huvudmodell "
-                         f"i koden: {code_champion}. Prognosdag: {info.get('origin_rule', '–')}.")
-        lines.append("")
         new = [x for x in files if x[0] >= inp.start]
         n_new += len(new)
+        df = scores.get(sub)
+        scored = fresh = None
+        n_files_scored = 0
+        if not error and files and df is not None and len(df):
+            df = df[df["origin"].isin({str(o.date()) for o, _d, _p in files})]
+            n_files_scored = len(df)
+            scored = df[df["status"] == "utfall"]
+            fresh = scored[pd.to_datetime(scored["known_from"]).between(inp.start, inp.end)] if len(scored) else scored
+            n_out += len(fresh)
+        changes = []
+        prev = None
+        for origin, d, p in files:
+            if prev is not None and d.get("champion") != prev[1].get("champion") and origin >= inp.start:
+                changes.append({"origin": str(origin.date()), "file": p, "from": prev[1].get("champion"),
+                                "to": d.get("champion")})
+            prev = (origin, d)
+        out.append({"sub": sub, "label": label, "target": target, "variants": list(variants),
+                    "title": info.get("title", ""), "origin_rule": info.get("origin_rule", "–"),
+                    "show": publishable(target, inp), "code_champion": D.NOWCAST_MODULES[sub][2], "files": files,
+                    "new": new, "scored": scored, "fresh": fresh, "n_files_scored": n_files_scored,
+                    "metrics": metrics_facts(scored, variants) if scored is not None and len(scored) else [],
+                    "changes": changes, "decisions": champion_decisions(label, inp)})
+    d2 = sorted((inp.forecasts / "d2").glob("**/*.json")) if (inp.forecasts / "d2").is_dir() else []
+    return {"error": error, "nowcasts": out, "n_new": n_new, "n_out": n_out, "n_d2": len(d2)}
+
+
+def forecasts(inp: Inputs) -> tuple[list[str], str]:
+    f = forecast_facts(inp)
+    error = f["error"]
+    lines = ["## Prognoser", "",
+             f"Skarpa prognoser (`forecasts/<nowcast>/`) med prognosdag till och med {inp.end.date()}, mot första "
+             f"publicerade utfall kända till och med samma dag. Baslinjer: {BASELINE} (naiv) för alla mål och {GUIDANCE} "
+             f"(bolagens guidance) där målet har den. Täckning = andel utfall inom huvudmodellens lagrade intervall "
+             f"[binomialt 90 %-band] ({intervals.REGISTER_REF}).", ""]
+    for x in f["nowcasts"]:
+        label, target, variants, show, files = x["label"], x["target"], x["variants"], x["show"], x["files"]
+        lines += [f"### {label} {x['title']} (`{target}`)" if show else f"### {label} {x['title']}", ""]
+        if files:
+            lines.append(f"Huvudmodell i den senaste skarpa prognosen till och med kvartalets slut: {files[-1][1]['champion']}. "
+                         f"Prognosdag: {x['origin_rule']}.")
+        else:
+            lines.append(f"Inga skarpa prognoser med prognosdag till och med {inp.end.date()}. Registrerad huvudmodell "
+                         f"i koden: {x['code_champion']}. Prognosdag: {x['origin_rule']}.")
+        lines.append("")
+        new = x["new"]
         if new:
             lines += [f"Nya skarpa prognoser i kvartalet ({len(new)}):", ""]
             for origin, d, p in new:
@@ -493,16 +599,12 @@ def forecasts(inp: Inputs) -> tuple[list[str], str]:
             lines.append("")
         elif files:
             lines += ["Ingen ny skarp prognos med prognosdag i kvartalet.", ""]
-        df = scores.get(sub)
+        scored, fresh = x["scored"], x["fresh"]
         if error:
             lines += [f"Scorecarden kunde inte beräknas: {error}.", ""]
-        elif files and df is not None and len(df):
-            df = df[df["origin"].isin({str(o.date()) for o, _d, _p in files})]
-            scored = df[df["status"] == "utfall"]
-            fresh = scored[pd.to_datetime(scored["known_from"]).between(inp.start, inp.end)] if len(scored) else scored
-            n_out += len(fresh)
+        elif scored is not None:
             if len(fresh):
-                lines += [f"Utfall som blev kända i kvartalet (fel = {_err_unit(sub)}; positivt = prognosen låg över "
+                lines += [f"Utfall som blev kända i kvartalet (fel = {_err_unit(x['sub'])}; positivt = prognosen låg över "
                           "utfallet):", ""]
                 for r in fresh.to_dict("records"):
                     errs = ", ".join(f"{v} {n(r.get(f'err_{v}'), 2, signed=True)}" for v in variants
@@ -514,39 +616,33 @@ def forecasts(inp: Inputs) -> tuple[list[str], str]:
             else:
                 lines += ["Inga nya utfall i kvartalet.", ""]
             if len(scored):
-                keys = [intervals.level_key(x) for x in intervals.LEVELS]
-                lines += [f"Rullande utvärdering, alla {len(scored)} utfall av {len(df)} prognoser kända till och med "
-                          f"{inp.end.date()} (fel = {_err_unit(sub)}):", ""]
+                keys = [intervals.level_key(v) for v in intervals.LEVELS]
+                lines += [f"Rullande utvärdering, alla {len(scored)} utfall av {x['n_files_scored']} prognoser kända till och med "
+                          f"{inp.end.date()} (fel = {_err_unit(x['sub'])}):", ""]
                 lines += table(["Variant", "n", "MAE", "Bias", f"MAE − MAE {BASELINE}",
                                 *[f"Täckning {k} %" for k in keys]], _metrics(scored, variants))
                 lines += [f"Med {L._plural(len(scored), 'utfall', 'utfall')} kan skillnaderna mellan varianterna och "
                           f"mot baslinjen vara slump. Täckningen blir meningsfull först efter många utfall.", ""]
             else:
-                lines += [f"Utvärderade hittills: 0 av {len(df)}.", ""]
-        changes = []
-        prev = None
-        for origin, d, p in files:
-            if prev is not None and d.get("champion") != prev[1].get("champion") and origin >= inp.start:
-                changes.append(f"från prognosdag {origin.date()} (`{p}`): {prev[1].get('champion')} → "
-                               f"{d.get('champion')}")
-            prev = (origin, d)
-        docs = champion_decisions(label, inp)
+                lines += [f"Utvärderade hittills: 0 av {x['n_files_scored']}.", ""]
+        changes = [f"från prognosdag {c['origin']} (`{c['file']}`): {c['from']} → {c['to']}" for c in x["changes"]]
+        docs = x["decisions"]
         if changes or docs:
             lines.append("Byte av huvudmodell:")
             lines.append("")
             lines += [f"- I prognosfilerna {c}." for c in changes]
-            lines += [f"- Beslut {x}" for x in docs]
+            lines += [f"- Beslut {d}" for d in docs]
             lines.append("")
         else:
             lines += ["Inget byte av huvudmodell i kvartalet (prognosfilerna, beslutsloggen och registret).", ""]
-    d2 = sorted((inp.forecasts / "d2").glob("**/*.json")) if (inp.forecasts / "d2").is_dir() else []
+    nd2 = f["n_d2"]
     lines += ["### D2 Prognoser 1–8 kvartal", "",
-              (f"{L._plural(len(d2), 'skarp prognosfil', 'skarpa prognosfiler')} i `forecasts/d2/`. " if d2 else
+              (f"{L._plural(nd2, 'skarp prognosfil', 'skarpa prognosfiler')} i `forecasts/d2/`. " if nd2 else
                "Inga skarpa prognosfiler för D2 (`forecasts/d2/`). ") +
               "Med 6 prognosdagar i holdouten görs inget test, och V_kedja går in som skugga (registret 2026-11-24). "
               "Utvecklingsresultat: `docs/resultat/d2_utveckling.md`.", ""]
-    news = (f"Prognoser: {L._plural(n_new, 'ny skarp prognos', 'nya skarpa prognoser')} och "
-            f"{L._plural(n_out, 'nytt utfall', 'nya utfall')} i kvartalet.")
+    news = (f"Prognoser: {L._plural(f['n_new'], 'ny skarp prognos', 'nya skarpa prognoser')} och "
+            f"{L._plural(f['n_out'], 'nytt utfall', 'nya utfall')} i kvartalet.")
     return lines, news
 
 
@@ -575,25 +671,19 @@ def _p(x) -> float:
         return float("nan")
 
 
-def regime(inp: Inputs) -> tuple[list[str], str]:
+def regime_facts(inp: Inputs) -> dict:
+    """C4 as stored in the live snapshots of the quarter (F-D1: never recomputed): P(inbromsning) and the reported
+    state per block and month, the reported shifts (F-D2) and breaks (F-D4) in the quarter. The reporting rules are
+    applied to the stored sequence only when a snapshot does not store the reported state itself."""
     from ai_tracker.regime import realtime as rt  # lazy: the factor model is only needed with a regime section
 
-    lines = ["## Regim", ""]
     qmonths = [m.month for m in inp.months]
     in_q = [month for month, _ in inp.regime if month in qmonths]
+    out = {"months": qmonths, "available": bool(in_q), "blocks": None, "shifts": [], "breaks": None, "n_breaks": 0,
+           "n_hidden": 0, "missing": [mo for mo in qmonths if mo not in in_q]}
     if not in_q:
-        lines += ["Ögonblicksbilderna för kvartalet har inget regimavsnitt (C4). Regimmodellen ansluts till "
-                  "ögonblicksbilden först när holdouten är öppnad (`docs/steg2/c4_spec.md`, avsnitt 1), och ett "
-                  "rekonstruerat månadsläge har inget. Ingen sannolikhet för inbromsning och inget strukturbrott "
-                  "redovisas för kvartalet, och inget räknas om här.", ""]
-        return lines, "Regim: inget regimavsnitt i kvartalets ögonblicksbilder."
+        return out
     ms_f, b_f = _regime_frames(inp)
-    lines += ["Markov-switching per faktorblock (C3:s utjämnade faktorbana) och BOCPD per räknad kärnserie, lagrade i "
-              "varje skarp ögonblicksbild och aldrig omräknade (F-D1). Rapporterat skifte (F-D2): två månader i följd "
-              "med P(inbromsning) ≥ 0,8, tillbaka vid två i följd ≤ 0,2. Rapporterat brott (F-D4): P(körlängd ≤ 2) ≥ "
-              "0,8, högst ett per serie inom tre perioder. Varken regim eller brott ändrar diffusionsindex eller "
-              "tillstånd (F-D5, F-D8).", ""]
-    news_parts = []
     if len(ms_f):
         ms_f = ms_f.assign(p_slow=[_p(x) for x in ms_f["p_slow"]])
         if "state" not in ms_f or ms_f["state"].isna().all():
@@ -602,46 +692,86 @@ def regime(inp: Inputs) -> tuple[list[str], str]:
             ms_f = ms_f.sort_values(["block", "date"])
             ms_f["shift"] = [s if _s(p) and _s(s) and s != p else None
                              for s, p in zip(ms_f["state"], ms_f.groupby("block")["state"].shift(1))]
-        rows, shifts = [], []
+        blocks = []
         for block in sorted(ms_f["block"].unique(), key=lambda b: (list(BLOCK_LABEL).index(b) if b in BLOCK_LABEL
                                                                      else 99, b)):
             g = ms_f[ms_f["block"] == block].set_index("month")
             cells = []
             for mo in qmonths:
                 if mo not in g.index:
-                    cells.append("– (inget avsnitt)")
+                    cells.append({"month": mo, "present": False})
                     continue
                 r = g.loc[mo]
                 p = r["p_slow"]
-                cells.append(f"{n(p, 2) if math.isfinite(p) else '–'}; {_s(r.get('state')) or '–'}"
-                             + ("" if math.isfinite(p) else f" ({_s(r.get('reason')) or 'ingen sannolikhet'})"))
+                cells.append({"month": mo, "present": True, "p_slow": float(p) if math.isfinite(p) else None,
+                              "state": _s(r.get("state")), "shift": _s(r.get("shift")),
+                              "reason": _s(r.get("reason"))})
                 if _s(r.get("shift")):
-                    shifts.append(f"{BLOCK_LABEL.get(block, block)}: {r['shift']} från {mo}")
-            rows.append([BLOCK_LABEL.get(block, block), *cells])
-        lines += table(["Block", *[f"{mo}: P(inbromsning); rapporterat tillstånd" for mo in qmonths]], rows)
-        lines.append("- Rapporterade regimskiften i kvartalet: " + ("; ".join(shifts) if shifts else "inga") + ".")
-        news_parts.append(f"{L._plural(len(shifts), 'rapporterat regimskifte', 'rapporterade regimskiften')}")
-    else:
-        lines.append("- Inga lagrade sannolikheter per block.")
+                    out["shifts"].append({"block": block, "label": BLOCK_LABEL.get(block, block),
+                                          "shift": r["shift"], "month": mo})
+            blocks.append({"block": block, "label": BLOCK_LABEL.get(block, block), "cells": cells})
+        out["blocks"] = blocks
     if len(b_f):
         b_f = b_f.assign(p_recent=[_p(x) for x in b_f["p_recent"]])
         if "break" not in b_f:
             b_f = rt.reported_breaks(b_f)
         q = b_f[b_f["month"].isin(qmonths) & b_f["break"].astype(bool)]
         shown = q[[publishable(k, inp) for k in q["series"]]] if len(q) else q
-        hidden = len(q) - len(shown)
-        lines.append(f"- Rapporterade strukturbrott i kvartalet: {n(len(q), 0)}" + (":" if len(shown) else "."))
-        for r in shown.sort_values(["month", "branch", "series"]).to_dict("records"):
-            lines.append(f"  - {r['month']}: {_s(r.get('branch')) or '–'} {name(r['series'], inp)} (`{r['series']}`), "
-                         f"senaste period {_s(r.get('latest_period')) or '–'}, P(körlängd ≤ 2) {n(r['p_recent'], 2)}.")
-        if hidden:
-            lines.append(f"- Varav {n(hidden, 0)} i serier som inte visas av licensskäl.")
-        news_parts.append(f"{L._plural(len(q), 'rapporterat brott', 'rapporterade brott')}")
+        out["n_breaks"], out["n_hidden"] = int(len(q)), int(len(q) - len(shown))
+        out["breaks"] = [{"month": r["month"], "branch": _s(r.get("branch")), "series": r["series"],
+                          "label": name(r["series"], inp), "latest_period": _s(r.get("latest_period")),
+                          "p_recent": r["p_recent"]}
+                         for r in shown.sort_values(["month", "branch", "series"]).to_dict("records")]
+    return out
+
+
+def regime(inp: Inputs) -> tuple[list[str], str]:
+    f = regime_facts(inp)
+    lines = ["## Regim", ""]
+    if not f["available"]:
+        lines += ["Ögonblicksbilderna för kvartalet har inget regimavsnitt (C4). Regimmodellen ansluts till "
+                  "ögonblicksbilden först när holdouten är öppnad (`docs/steg2/c4_spec.md`, avsnitt 1), och ett "
+                  "rekonstruerat månadsläge har inget. Ingen sannolikhet för inbromsning och inget strukturbrott "
+                  "redovisas för kvartalet, och inget räknas om här.", ""]
+        return lines, "Regim: inget regimavsnitt i kvartalets ögonblicksbilder."
+    qmonths = f["months"]
+    lines += ["Markov-switching per faktorblock (C3:s utjämnade faktorbana) och BOCPD per räknad kärnserie, lagrade i "
+              "varje skarp ögonblicksbild och aldrig omräknade (F-D1). Rapporterat skifte (F-D2): två månader i följd "
+              "med P(inbromsning) ≥ 0,8, tillbaka vid två i följd ≤ 0,2. Rapporterat brott (F-D4): P(körlängd ≤ 2) ≥ "
+              "0,8, högst ett per serie inom tre perioder. Varken regim eller brott ändrar diffusionsindex eller "
+              "tillstånd (F-D5, F-D8).", ""]
+    news_parts = []
+    if f["blocks"] is not None:
+        rows = []
+        for b in f["blocks"]:
+            cells = []
+            for c in b["cells"]:
+                if not c["present"]:
+                    cells.append("– (inget avsnitt)")
+                    continue
+                p = c["p_slow"]
+                cells.append(f"{n(p, 2) if p is not None else '–'}; {c['state'] or '–'}"
+                             + ("" if p is not None else f" ({c['reason'] or 'ingen sannolikhet'})"))
+            rows.append([b["label"], *cells])
+        shifts = [f"{x['label']}: {x['shift']} från {x['month']}" for x in f["shifts"]]
+        lines += table(["Block", *[f"{mo}: P(inbromsning); rapporterat tillstånd" for mo in qmonths]], rows)
+        lines.append("- Rapporterade regimskiften i kvartalet: " + ("; ".join(shifts) if shifts else "inga") + ".")
+        news_parts.append(f"{L._plural(len(shifts), 'rapporterat regimskifte', 'rapporterade regimskiften')}")
+    else:
+        lines.append("- Inga lagrade sannolikheter per block.")
+    if f["breaks"] is not None:
+        shown = f["breaks"]
+        lines.append(f"- Rapporterade strukturbrott i kvartalet: {n(f['n_breaks'], 0)}" + (":" if len(shown) else "."))
+        for r in shown:
+            lines.append(f"  - {r['month']}: {r['branch'] or '–'} {r['label']} (`{r['series']}`), "
+                         f"senaste period {r['latest_period'] or '–'}, P(körlängd ≤ 2) {n(r['p_recent'], 2)}.")
+        if f["n_hidden"]:
+            lines.append(f"- Varav {n(f['n_hidden'], 0)} i serier som inte visas av licensskäl.")
+        news_parts.append(f"{L._plural(f['n_breaks'], 'rapporterat brott', 'rapporterade brott')}")
     else:
         lines.append("- Inga lagrade BOCPD-värden.")
-    missing = [mo for mo in qmonths if mo not in in_q]
-    if missing:
-        lines.append(f"- Utan regimavsnitt: {', '.join(missing)}.")
+    if f["missing"]:
+        lines.append(f"- Utan regimavsnitt: {', '.join(f['missing'])}.")
     lines.append("")
     return lines, "Regim: " + (", ".join(news_parts) if news_parts else "inga lagrade värden") + " i kvartalet."
 
@@ -649,7 +779,8 @@ def regime(inp: Inputs) -> tuple[list[str], str]:
 # ------------------------------------------------------------------ 5. data and method
 
 
-def reviews(inp: Inputs) -> list[str]:
+def review_facts(inp: Inputs) -> list[tuple[str, str, str]]:
+    """Reviews dated in the quarter (docs/granskning/*.md): (date, title, path), sorted."""
     out = []
     for f in sorted((inp.docs / "granskning").glob("*.md")):
         text = f.read_text(encoding="utf-8")
@@ -657,8 +788,12 @@ def reviews(inp: Inputs) -> list[str]:
         if not m or not in_quarter(pd.Timestamp(m.group(2)), inp):
             continue
         title = next((x[2:].strip() for x in text.splitlines() if x.startswith("# ")), f.stem)
-        out.append(f"{m.group(2)}: {title} (`docs/granskning/{f.name}`)")
+        out.append((m.group(2), title, f"docs/granskning/{f.name}"))
     return sorted(out)
+
+
+def reviews(inp: Inputs) -> list[str]:
+    return [f"{d}: {title} (`{path}`)" for d, title, path in review_facts(inp)]
 
 
 BLOCKED_HEADING = re.compile(r"^#{2,4} (?!\d|BLOCKED)(.+?)(?::\s*BLOCKED\b.*| \([^)]*\bBLOCKED\))\s*$")
@@ -692,9 +827,12 @@ def blocked(inp: Inputs) -> list[str]:
     return out
 
 
-def data_method(inp: Inputs) -> list[str]:
+def data_facts(inp: Inputs) -> dict:
+    """Data and method in the quarter: core series that entered or left the states, new series (live reports only),
+    revisions and guidance values that became known, stale and missing series at the quarter's end, and the dated
+    reviews and register entries in the quarter. Withheld series are counted (`withheld`), never named."""
     ctx, t = inp.ctx, inp.ctx.table
-    lines = ["## Data och metod", ""]
+    out = {"added": None, "gone": None, "new_series": None, "withheld": 0}
     withheld = 0
     last = inp.months[-1]
     if inp.base is not None:
@@ -703,21 +841,13 @@ def data_method(inp: Inputs) -> list[str]:
         added, gone = sorted(keys(last) - keys(inp.base)), sorted(keys(inp.base) - keys(last))
         sa, sg = [k for k in added if publishable(k, inp)], [k for k in gone if publishable(k, inp)]
         withheld += len(added) + len(gone) - len(sa) - len(sg)
-        lines.append(f"- Nya kärnserier i tillståndet sedan {mlabel(inp.base)}: "
-                     + (", ".join(f"{name(k, inp)} (`{k}`)" for k in sa) if sa else "inga") + ".")
-        if sg:
-            lines.append(f"- Kärnserier som inte längre ingår sedan {mlabel(inp.base)}: "
-                         + ", ".join(f"{name(k, inp)} (`{k}`)" for k in sg) + ".")
+        out["added"], out["gone"] = sa, sg
     if inp.kind == LIVE and len(t):
         first = t.groupby("series")["fetched_at"].min()
         new = sorted(k for k, f in first.items() if inp.start <= f <= inp.end + pd.Timedelta(days=1))
         shown = [k for k in new if publishable(k, inp)]
         withheld += len(new) - len(shown)
-        lines.append("- Nya serier (källor) i observationstabellen, första hämtning i kvartalet: "
-                     + (", ".join(f"{name(k, inp)} (`{k}`)" for k in shown) if shown else "inga") + ".")
-    else:
-        lines.append("- Nya serier i observationstabellen: redovisas inte i en rekonstruerad rapport, eftersom "
-                     "hämtdatum i dagens tabell inte säger något om kvartalet.")
+        out["new_series"] = shown
     nv = L.new_versions(t, inp.start, inp.end)
     is_guid = nv["series"].str.contains(L.GUIDANCE_MARK, regex=False)
     rev = nv[~is_guid & nv["old"].notna()]
@@ -725,17 +855,8 @@ def data_method(inp: Inputs) -> list[str]:
     rev = rev.assign(size=[x for x, _ in sizes], unit=[u for _, u in sizes])
     big = rev[np.array([L.notable(x, u) for x, u in zip(rev["size"], rev["unit"])], dtype=bool)]
     per = sorted(big.groupby("series").size().items(), key=lambda kv: (-kv[1], kv[0]))
-    shown = [(k, c) for k, c in per if publishable(k, inp)]
-    withheld += len(per) - len(shown)
-    lines.append(f"- Revideringar som blev kända i kvartalet: "
-                 f"{L._plural(len(rev), 'redan publicerat värde', 'redan publicerade värden')} fick en ny "
-                 f"version med annat värde, varav {n(len(big), 0)} i {L._plural(len(per), 'serie', 'serier')} med "
-                 f"minst {n(L.REVISION_MIN_PCT, 0)} % (andelar: {n(L.REVISION_MIN_PP, 1)} pe)"
-                 + (": " + ", ".join(f"{name(k, inp)} (`{k}`) {n(c, 0)}" for k, c in shown[:REVISION_ROWS])
-                    + (f" och {len(shown) - REVISION_ROWS} till" if len(shown) > REVISION_ROWS else "") + "."
-                    if shown else "."))
-    guid = nv[is_guid]
-    lines.append(f"- Nya eller ändrade guidancevärden från bolagen, kända i kvartalet: {n(len(guid), 0)}.")
+    shown_rev = [(k, int(c)) for k, c in per if publishable(k, inp)]
+    withheld += len(per) - len(shown_rev)
     stale, missing = [], []
     for s in sorted(ctx.specs.values(), key=lambda s: (s.branch, s.key)):
         if s.closed:
@@ -745,13 +866,48 @@ def data_method(inp: Inputs) -> list[str]:
             (missing if "inga data" in why else stale).append(s)
     ss = [s for s in stale if publishable(s.key, inp)]
     withheld += len(stale) - len(ss)
-    lines.append(f"- Inaktuella serier per {inp.end.date()}: {n(len(stale), 0)}"
+    reg = [(d, title) for d, title, _ in sections(inp.docs / "mattregister.md") if in_quarter(d, inp)]
+    out.update({"n_revised": int(len(rev)), "n_notable": int(len(big)), "n_revised_series": len(per),
+                "revised": shown_rev, "n_guidance": int(len(nv[is_guid])), "n_stale": len(stale), "stale": ss,
+                "n_missing": len(missing), "reviews": review_facts(inp), "register": reg, "withheld": withheld})
+    return out
+
+
+def data_method(inp: Inputs) -> list[str]:
+    f = data_facts(inp)
+    lines = ["## Data och metod", ""]
+    if f["added"] is not None:
+        sa, sg = f["added"], f["gone"]
+        lines.append(f"- Nya kärnserier i tillståndet sedan {mlabel(inp.base)}: "
+                     + (", ".join(f"{name(k, inp)} (`{k}`)" for k in sa) if sa else "inga") + ".")
+        if sg:
+            lines.append(f"- Kärnserier som inte längre ingår sedan {mlabel(inp.base)}: "
+                         + ", ".join(f"{name(k, inp)} (`{k}`)" for k in sg) + ".")
+    if f["new_series"] is not None:
+        shown = f["new_series"]
+        lines.append("- Nya serier (källor) i observationstabellen, första hämtning i kvartalet: "
+                     + (", ".join(f"{name(k, inp)} (`{k}`)" for k in shown) if shown else "inga") + ".")
+    else:
+        lines.append("- Nya serier i observationstabellen: redovisas inte i en rekonstruerad rapport, eftersom "
+                     "hämtdatum i dagens tabell inte säger något om kvartalet.")
+    shown = f["revised"]
+    lines.append(f"- Revideringar som blev kända i kvartalet: "
+                 f"{L._plural(f['n_revised'], 'redan publicerat värde', 'redan publicerade värden')} fick en ny "
+                 f"version med annat värde, varav {n(f['n_notable'], 0)} i "
+                 f"{L._plural(f['n_revised_series'], 'serie', 'serier')} med "
+                 f"minst {n(L.REVISION_MIN_PCT, 0)} % (andelar: {n(L.REVISION_MIN_PP, 1)} pe)"
+                 + (": " + ", ".join(f"{name(k, inp)} (`{k}`) {n(c, 0)}" for k, c in shown[:REVISION_ROWS])
+                    + (f" och {len(shown) - REVISION_ROWS} till" if len(shown) > REVISION_ROWS else "") + "."
+                    if shown else "."))
+    lines.append(f"- Nya eller ändrade guidancevärden från bolagen, kända i kvartalet: {n(f['n_guidance'], 0)}.")
+    ss = f["stale"]
+    lines.append(f"- Inaktuella serier per {inp.end.date()}: {n(f['n_stale'], 0)}"
                  + (": " + ", ".join(f"{s.branch} {s.label} (`{s.key}`)" for s in ss) + "." if ss else "."))
-    lines.append(f"- Serier i katalogen utan data kända per {inp.end.date()}: {n(len(missing), 0)}.")
-    rv = reviews(inp)
+    lines.append(f"- Serier i katalogen utan data kända per {inp.end.date()}: {n(f['n_missing'], 0)}.")
+    rv = [f"{d}: {title} (`{path}`)" for d, title, path in f["reviews"]]
     lines.append("- Granskningar daterade i kvartalet (`docs/granskning/`):" + ("" if rv else " inga."))
     lines += [f"  - {x}." for x in rv]
-    reg = [f"{d.date()} – {title}" for d, title, _ in sections(inp.docs / "mattregister.md") if in_quarter(d, inp)]
+    reg = [f"{d.date()} – {title}" for d, title in f["register"]]
     lines.append("- Ändringar i måttregistret daterade i kvartalet (`docs/mattregister.md`):" + ("" if reg else " inga."))
     lines += [f"  - {x}." for x in reg]
     bl = blocked(inp)
@@ -759,8 +915,8 @@ def data_method(inp: Inputs) -> list[str]:
                  "rapporten genererades):" + ("" if bl else " inga."))
     lines += [f"  - {x}." for x in bl]
     lines.append("")
-    if withheld:
-        lines += [f"Serier som inte visas av licensskäl ingår i antalen ovan men namnges inte ({n(withheld, 0)}).", ""]
+    if f["withheld"]:
+        lines += [f"Serier som inte visas av licensskäl ingår i antalen ovan men namnges inte ({n(f['withheld'], 0)}).", ""]
     return lines
 
 

@@ -3,10 +3,11 @@
      /flode/<L>, each branch to /gren/<G>. -->
 <script lang="ts">
   import { resolve } from '$app/paths';
-  import { Glyph, StatusBadge, fmt, periodLabel, signed, stateStyle } from '$lib/design';
+  import { Glyph, StatusBadge, dataUrl, fmt, periodLabel, setChartData, signed, stateStyle } from '$lib/design';
   import { IndexSpark, SpanChart, UnitBoxes } from '$lib/flow';
 
   let { data } = $props();
+  setChartData(() => dataUrl('flow.json'));
   const c = $derived(data.counts);
   const n = (k: string) => c[k] ?? 0;
   const sentence = $derived(

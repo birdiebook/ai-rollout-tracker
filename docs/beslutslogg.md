@@ -384,6 +384,11 @@ Johannes valde rekommendationerna:
   2024-09 klarar ändå inte villkoret, eftersom takten bärs av ett enda prissteg. **Varken A eller B registreras.** De finns kvar
   som beskrivande serier. G2 har fortsatt en räknad kärnserie. Öppet: ska avvecklingsregeln också gälla
   `g2_price_at_capability*`? Den rekommenderas som daterad registerändring efter en körning som visar effekten.
+- **Webbgranskningar (2026-11-25).** R-W1 (licens och läckage), R-W2 (tillgänglighet och prestanda) och R-W3 (neutralitet)
+  är klara och deras rättningar mergade. Innan `/next/` blir huvudsida (W16) återstår: TBT under 300 ms och tabeller som
+  nås utan JS (R-W2 P1, B1 och B2), tydligare märkning av rekonstruerat, balanserat orange och förklarade fackord
+  (R-W3), och W13-ändringarna R-W3a–c, som registreras i måttregistret innan de används. Öppet beslut för Johannes: om
+  riktningen för inhållna serier som räknas i ett publicerat index (R-W1 punkt 2).
 
 
 

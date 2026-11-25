@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://birdiebook.github.io/ai-rollout-tracker/schema/v1/report_index.json",
+  "title": "report/index.json: every quarter of the quarterly report, oldest first (W14, from 1.3.0)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["latest", "first_live", "quarters"],
+  "properties": {
+    "latest": {"oneOf": [{"$ref": "report.json#/$defs/quarter"}, {"type": "null"}]},
+    "first_live": {"$ref": "report.json#/$defs/quarter", "description": "The first quarter whose three months can all have a live snapshot; every earlier quarter is reconstructed."},
+    "quarters": {"type": "array", "items": {
+      "type": "object", "additionalProperties": false,
+      "required": ["quarter", "quarter_sv", "title", "kind", "status", "known", "headline"],
+      "properties": {
+        "quarter": {"$ref": "report.json#/$defs/quarter"}, "quarter_sv": {"type": "string"}, "title": {"type": "string"},
+        "kind": {"$ref": "common.json#/$defs/kind"}, "status": {"enum": ["live", "reconstructed"]},
+        "known": {"$ref": "common.json#/$defs/date"}, "headline": {"type": "string"}
+      }
+    }}
+  }
+}

@@ -7,7 +7,7 @@
   import { onMount } from 'svelte';
   import { resolve } from '$app/paths';
   import { replaceState } from '$app/navigation';
-  import { Glyph, StatusBadge, dateLabel, fmt, type RecordStatus } from '$lib/design';
+  import { Deferred, Glyph, StatusBadge, Term, dateLabel, fmt, type RecordStatus } from '$lib/design';
   import { clientBundle } from '$lib/data';
   import KeyFigures from './KeyFigures.svelte';
   import LevelChart from './LevelChart.svelte';
@@ -152,10 +152,10 @@
 
 <section aria-labelledby="kf-h">
   <h2 id="kf-h" class="visually-hidden">Läget enligt tillståndsmotorn</h2>
-  <KeyFigures measure={s.measure} unit={s.unit} last={allPoints.length ? { p: allPoints.at(-1)!.p, v: allPoints.at(-1)!.v } : null} />
+  <Deferred><KeyFigures measure={s.measure} unit={s.unit} last={allPoints.length ? { p: allPoints.at(-1)!.p, v: allPoints.at(-1)!.v } : null} /></Deferred>
   <p class="note">
     Tillståndsmotorns mått per {dateLabel(s.measure_as_of)}{s.measure?.known_from ? `, senaste period ${periodText(s.measure.latest_period ?? '')} känd från ${dateLabel(s.measure.known_from)}` : ''}.
-    Riktningen räknas mot dödbandet 0,25 × seriens egen standardavvikelse för förändring i takt (måttregistret avsnitt 2).
+    Riktningen räknas mot <Term id="dodband">dödbandet</Term> 0,25 × seriens egen standardavvikelse för förändring i takt (måttregistret avsnitt 2).
   </p>
 </section>
 
@@ -228,7 +228,7 @@
         Inga revideringar: varje period har kvar värdet den först publicerades med ({plural(vs.n_periods, 'period', 'perioder')},
         {plural(vs.n_dates, 'publiceringsdag', 'publiceringsdagar')} från {dateLabel(vs.first_known)}).
       {/if}
-      {#if s.rows?.backfill_last_known}Historiken fram till {dateLabel(s.rows.backfill_last_known)} är bakåtfylld med dagens version.{/if}
+      {#if s.rows?.backfill_last_known}Historiken fram till {dateLabel(s.rows.backfill_last_known)} är bakåtfylld med dagens version{#if s.rows.backfill_fetched && s.rows.backfill_fetched > s.rows.backfill_last_known}, hämtad {dateLabel(s.rows.backfill_fetched)}{/if}.{/if}
     </p>
     {#if data.revision}
       <div class="panel">
@@ -245,7 +245,7 @@
       {#if view.rev}
         {#if full}
           <div class="panel">
-            <RevisionExplorer versions={full} bind:day={() => day, setDay} unit={s.unit} log={scale === 'log' && canLog} {from} backfillLastKnown={s.rows?.backfill_last_known} source={s.source} {license} />
+            <RevisionExplorer versions={full} bind:day={() => day, setDay} unit={s.unit} log={scale === 'log' && canLog} {from} backfill={s.rows} source={s.source} {license} />
           </div>
         {:else if loadError}
           <p class="note" role="alert">Kunde inte hämta versionerna: {loadError}</p>
@@ -261,6 +261,7 @@
 
 <section aria-labelledby="about-h">
   <h2 id="about-h">Om serien</h2>
+  <Deferred>
   <div class="panel about">
     <dl class="facts">
       <dt>Nyckel</dt><dd><code>{s.key}</code></dd>
@@ -295,6 +296,7 @@
       </ul>
     </details>
   {/if}
+  </Deferred>
 </section>
 
 <style>

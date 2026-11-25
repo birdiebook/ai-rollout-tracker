@@ -18,7 +18,9 @@ const config = {
       handleMissingId: 'fail'
     },
     // Everything is self-hosted: no fonts, scripts or styles from other hosts (tests/e2e and scripts/check-external-hosts.mjs).
-    inlineStyleThreshold: 0,
+    // R-W2: all CSS inline in the page head. Separate stylesheets are render-blocking and cost a second round trip
+    // (LCP 2.1–2.8 s -> 0.8 s on a mid-range phone with Slow 4G, docs/granskning/rw2_tillganglighet.md).
+    inlineStyleThreshold: Infinity,
     version: { name: process.env.GITHUB_SHA ?? 'dev' }
   }
 };

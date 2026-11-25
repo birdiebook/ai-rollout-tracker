@@ -55,27 +55,26 @@ jobs:
     timeout-minutes: 30
     env:
       PYTHONPATH: src
-      BASE_PATH: /next
+      BASE_PATH: /ai-rollout-tracker/next  # project site: Pages serves the repo under /<repo>/
       BUNDLE: ${{ inputs.bundle || 'fixtures' }}
     steps:
       - uses: actions/checkout@v4
         with:
           ref: ${{ inputs.ref }}
+          fetch-depth: 0  # the bundle dates each live forecast by the commit that added it (git log, RW1-X 4a)
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
           cache: npm
           cache-dependency-path: web/package-lock.json
 
-      # ---- the real bundle (pages.yml and manual runs); fixtures need none of this
+      # ---- Python: the licence scan of the build (both bundles) and the real bundle (pages.yml and manual runs)
       - uses: actions/setup-python@v5
-        if: env.BUNDLE == 'real'
         with:
           python-version: "3.13"
           cache: pip
           cache-dependency-path: ci/requirements.txt
       - name: Install pinned Python dependencies
-        if: env.BUNDLE == 'real'
         run: python -m pip install -r ci/requirements.txt
       - name: Restore data cache (saved by the data jobs)
         if: env.BUNDLE == 'real'
@@ -103,18 +102,22 @@ jobs:
       - name: Unit and component tests (vitest)
         working-directory: web
         run: npm test
-      - name: Build (prerender every page under /next/)
+      # before the build: it also rasterises the share images (scripts/og-png.mjs, track W12)
+      - name: Install Chromium for Playwright
+        working-directory: web
+        run: npx playwright install --with-deps chromium
+      - name: Build (prerender every page under /next/ and draw the share images)
         working-directory: web
         run: npm run build
+      # R-W1 1b: the bundle gate sees only the bundle; this sees what was built, including constants in web/src
+      - name: Licence scan of the build and the web sources (no withheld key outside a withheld list)
+        run: python -m ai_tracker.site_bundle scan-build web/build --src web/src
       - name: No external hosts in the build
         working-directory: web
         run: npm run external-hosts
       - name: Performance budget
         working-directory: web
         run: BUDGET_REPORT="$RUNNER_TEMP/budget.json" npm run budget
-      - name: Install Chromium for Playwright
-        working-directory: web
-        run: npx playwright install --with-deps chromium
       - name: Playwright smoke, axe and screenshots (1280 and 375 px)
         working-directory: web
         run: SHOTS_DIR="$RUNNER_TEMP/web-shots" npx playwright test

@@ -46,10 +46,24 @@ web/
   `Stripes`, `Glyph`, `StatusBadge`, `Legend`, `Tooltip`, `TableToggle` och `DataTable`. Allt importeras från
   `$lib/design`.
 - Katalogen visar alla komponenter med exempelvärden: `/next/_katalog/`. Den länkas inte från menyn.
+- Ordlistan (`glossary.ts`, R-W3) visas på `/next/metod/#ordlista`, och `Term` länkar ett fackord dit där det står.
 
 **Tillgänglighet i diagrammen.** SVG:n har `role="img"` och namnges av rubriken och den genererade meningen.
-Hovringstips är till för pekare. För tangentbord och skärmläsare finns samma tal alltid i tabellvyn (knappen "Visa
-tabell", `aria-pressed`). Därför är enskilda markeringar inte tabbstopp. Breda tabeller går att fokusera och rulla.
+Hovringstips är till för pekare och har ingen live-roll (R-W2). För tangentbord och skärmläsare finns samma tal i
+tabellvyn under diagrammet: en inbyggd `<details>` ("Tabell (N rader)"), som öppnas också utan JavaScript (WX2, R-W2
+B1). En liten tabell (högst `PRERENDER_CELLS` = 60 celler) förrenderas i den. En större ritas först när den öppnas, och
+utan JavaScript innehåller den i stället en länk till det publicerade paketdokumentet som diagrammet ritas ur (sidan
+anger det med `setChartData`, ett diagram kan ge ett eget `dataHref`). Valet: små tabeller kostar nästan inget och ska
+gå att läsa direkt, medan de stora utgjorde 78 % av DOM:en på seriesidan och var orsaken till den långa
+blockeringstiden. Enskilda markeringar är inte tabbstopp. Breda tabeller går att fokusera och rulla.
+
+**Uppskjuten ritning (WX2, R-W2 P1).** `ChartFrame` förrenderar diagrammets SVG-innehåll som en sträng
+(`svelte/server` vid förrenderingen) och den första hydreringen gör bara anspråk på den markupen i stället för att gå
+igenom varje markering. Därefter ritas varje diagram levande i en egen uppgift, synliga först (`lazy.ts`), och genast
+om dess mening eller tabell ändras (ett reglage, en vy i URL:en) eller pekaren går in i det. `Deferred` gör samma sak
+för block utan formulärkontroller som inte ändras efter laddningen (startsidans kedja och rubrikrad): de lämnas som
+server-markup tills en muspekare går in. Länkar och `<details>` fungerar som vanligt i markupen. Klienten får en
+stubbe i stället för `svelte/server` (`vite.config.ts`).
 
 **Responsivt utan layoutskift.** Diagrammen förrenderas med standardbredden och ritas om med den uppmätta bredden
 efter hydreringen. Höjden är fast i px, så sidan flyttar sig inte (CLS).
@@ -92,13 +106,16 @@ Kör i `web/` med Node 22.
 | `npm run test:e2e` | Playwright mot `build/` (startar preview själv), dator 1280 px och mobil 375 px |
 | `npm run budget` | gzip-storlek per sida mot budgeten |
 | `npm run external-hosts` | statisk kontroll av `build/` |
+| `PYTHONPATH=src python -m ai_tracker.site_bundle scan-build web/build --src web/src` (i repots rot) | inga inhållna nycklar eller etiketter utanför `withheld`-listor i bygget och i källorna |
 
 Riktig data lokalt: `PYTHONPATH=src python -m ai_tracker.site_bundle build --out /tmp/bundle` och sedan
 `SITE_BUNDLE_DIR=/tmp/bundle npm run build`. Skärmbilder: `SHOTS_DIR=<katalog> npx playwright test screenshots`.
 I sessionsmiljön finns Chromium i `/opt/pw-browsers` (revision 1243). Därför är `@playwright/test` låst till 1.63.0,
 och `playwright-core` är låst med `overrides`.
 
-**Budget (gzip, per sida):** JS ≤ 150 kB, CSS ≤ 30 kB och data inlagd i HTML ≤ 100 kB (avsnitt 6.3). Det som laddas
+**Budget (gzip, per sida):** JS ≤ 150 kB, CSS ≤ 30 kB och data inlagd i HTML ≤ 100 kB (avsnitt 6.3), och högst
+3 000 element i den förrenderade HTML:en (WX2, efter R-W2 P1; metodsidan ligger på cirka 2 500 med sina 60
+källkort, seriesidorna på högst 1 400 mot 6 500 med de dolda tabellerna). Det som laddas
 lat, som DuckDB-WASM på `/data`, finns inte i HTML:en och räknas inte. Så ska det vara. Skelettet ligger på 54–75 kB JS
 per sida.
 
@@ -113,6 +130,8 @@ per sida.
 | `/next/prognoser/` | `src/routes/prognoser/` | W8 Prognossidor |
 | `/next/metod/` | `src/routes/metod/` | W11 Utforskbar metod |
 | `/next/_katalog/` | `src/routes/_katalog/` | W2 (designsystemet) |
+| `/next/manad/[manad]/` | `src/routes/manad/[manad]/`, `src/lib/story/` | W13 Månadens berättelse |
+| `/next/kvartal/[kvartal]/` | `src/routes/kvartal/[kvartal]/`, `src/lib/report/` | W14 Kvartalsrapporten |
 
 Varje sida i skelettet är en platshållare. Den är kopplad till laddarna och har en kommentar högst upp som anger
 ägaren.
@@ -131,6 +150,31 @@ Varje sida i skelettet är en platshållare. Den är kopplad till laddarna och h
 5. Lägg till routen i `tests/e2e/routes.ts`, så att smoke, axe och skärmbilder täcker den.
 6. Klart när `npm run check`, `npm test`, `npm run build`, `npm run budget`, `npm run external-hosts` och
    `npx playwright test` är gröna, och du har granskat skärmbilderna själv.
+
+## Navigering och delning (`web/src/lib/nav/`, W12)
+
+- **Toppnavigeringen** (`MainNav`, `SearchButton`, temaväxlaren) ligger i `+layout.svelte`. På mobil står märket, Sök
+  och temat på första raden och menyn på andra. "Flödet" är markerat också på led-, gren- och seriesidor.
+- **Sök** (`⌘K`/`Ctrl K` eller knappen; ingen enteckensgenväg, WCAG 2.1.4, R-W2): en modal `<dialog>` med WAI-ARIA-mönstret combobox med
+  listbox (`aria-activedescendant`, ↑/↓, PageUp/PageDown, Enter, Esc rensar och stänger). Indexet `/next/sok.json`
+  byggs vid förrenderingen ur `series/index.json`, `overview.json`, `flow.json` och `nowcast/*.json` (bara
+  publicerbara serier) och hämtas först när sökningen öppnas. Dialogen laddas också lat. Matchningen bryr sig inte
+  om versaler eller accenter, alla ord måste träffa, och en exakt kod (G6, L3, N2, en serienyckel) kommer först.
+  Utan JavaScript är knappen en länk till `/next/sok/`, som är ett förrenderat register över allt sökbart.
+- **Djuplänkar:** avsnittet ligger i hashen som `avsnitt=<id>` bredvid vyns tillstånd, enligt samma konvention som
+  `permalink.ts` (okända nycklar bevaras), till exempel `/next/serie/us_ip_semis_m/#fonster=5&avsnitt=rev-h`. Ett
+  vanligt ankare (`#rev-h`) fungerar också. Varje synlig `h2` i `<main>` är ett avsnitt. Id:t är sidans eget, annars
+  en slug utan datum. Sidägare: ge rubriker ett eget stabilt `id`, så är länken stabil.
+- **Delningsbilder:** `og/<sida>.svg` ritas vid förrenderingen ur samma data som sidan (`describe.server.ts`, `og.ts`),
+  och `scripts/og-png.mjs` gör en PNG av varje (1200×630, Playwrights Chromium, cache på innehållets hash). Därför
+  installeras Chromium före bygget i CI. Titel och beskrivning genereras ur data. `og:url` och `og:image` är absoluta
+  och utgår från `SITE_URL`, annars från GitHub Pages för repot i manifestet. Budget: 120 kB per PNG och 40 kB per SVG
+  (bygget stoppas om en bild går över).
+- **Citeringsrad** längst ned på varje sida ("Dela och citera"): `AI-utrullningen, <sidan eller serie X (nyckel; källa:
+  …)>, version per <datum>, <permalänk>`. Permalänken tar med vyns hash, och `as_of` i hashen blir versionsdatumet.
+  Den kan kopieras, och samma ruta listar sidans avsnitt.
+- En ny route behöver inget av W12 för att fungera: den får en generisk beskrivning och delningsbild. Lägg den i
+  `describe()` i `describe.server.ts` för en egen.
 
 ## Tidsresa (W9)
 
@@ -159,6 +203,36 @@ prövar samma regel i webbläsaren (`data-known ≤ D`, tabellrader = uppspelnin
 `PYTHONPATH=src python web/fixtures/gen_timetravel_golden.py --real <bundle> <ut.json>` och sedan
 `TT_BUNDLE=<bundle> TT_GOLDEN=<ut.json> npx vitest run timetravel`.
 
+## Månadens berättelse (W13)
+
+`/manad/<YYYY-MM>/` förrenderas för varje månad i `story/index.json`. Korten och texterna kommer ur paketet (urvalsregeln
+i måttregistret 2026-11-25). `src/lib/story/model.ts` lägger till en figur per kort ur befintliga komponenter
+(`IndexHistory` från `lib/flow`, `RegimeMeter` från `lib/regime`, `ForecastDots` från `routes/prognoser/parts` och
+designsystemets `Stripes`) och klipper allt till månadens känd-dag med `gate.ts` (`cutStripes`, `branchOn`,
+`cutHistory`, `leaks`). Scrollytelling: utan JavaScript en lista med kort, där figuren är fast inom kortet på breda
+skärmar och kommer före texten på mobil. Med JavaScript markeras kortet mitt på skärmen i marginalen, j och k flyttar
+mellan korten när fokus är i berättelsen (WCAG 2.1.4), och länkarna till läget, grenen och serien öppnar tidsresan vid månadens känd-dag. Med
+`prefers-reduced-motion` finns inga övergångar och ingen mjuk rullning.
+
+Tidsresa: routen är registrerad i `TimeTravel.svelte` (`MonthOn.svelte`). Med `as_of=D` visas månadens berättelse bara om
+den var känd D, annars en hänvisning till den senaste som var känd då. En länk med `data-tt-own` som själv anger `as_of`
+behåller den när ingen tidsresa är aktiv. Startsidans ingång är en rad under rubriken i `src/routes/+page.svelte`.
+
+## Kvartalsrapporten (W14)
+
+`/kvartal/<YYYYQn>/` förrenderas för varje kvartal i `report/index.json`. Texten och fakta kommer ur paketet
+(`site_bundle.report` på `ai_tracker.quarterly`). Sidan är en visuell essä i rapportens sex avsnitt, och varje avsnitt
+har levande figurer ur befintliga komponenter: ränderna (`StoryStripes`), kedjan som minikarta och ledkort med
+`IndexSpark`, `IndexHistory` för grenarna som rörde sig mest (rapportens egen ordning: störst indexförändring, sedan
+tillståndsbyten, högst fyra), `SpanChart` och `RatioChart` för avstämningarna, `ForecastDots` för utfall i kvartalet
+och prognosmålens nivåer som de var kända (`LevelChart` från `lib/series`), `RegimeMeter` per block, `DataTable` och
+`WithheldBoxes`. `src/lib/report/model.ts` klipper allt till rapportdagen med `gate.ts` (`cutStripes`, `branchOn`,
+`seriesOn`, `leaks`). Rekonstruerade kvartal har en streckad ruta och märket "rekonstruerad historik".
+
+Tidsresa: routen är registrerad i `TimeTravel.svelte` (`QuarterOn.svelte`). Med `as_of=D` visas rapporten bara om den
+var känd D, annars en hänvisning till den senaste som var känd då. Startsidans ingång är en rad under månadens
+berättelse i `src/routes/+page.svelte` (senaste kvartalet ur `report/index.json`, via `+page.server.ts`).
+
 ## CI och publicering
 
 Pages har **en** publicering per repo. Därför publicerar ett enda jobb både den nuvarande och den nya sidan:
@@ -183,7 +257,9 @@ pages.yml (efter veckohämtning, ögonblicksbild, skarpa prognoser eller manuell
   misslyckas jobbet med en varning, och den nuvarande sidan publiceras utan `/next/`.
 
 Grindarna i ordning: `npm ci`, svelte-check, vitest, förrendering (`handleHttpError: 'fail'`, så att ett schemabrott
-eller en trasig länk stoppar bygget), statisk kontroll av externa värdar, budget, Playwright smoke (alla routes,
+eller en trasig länk stoppar bygget), licensskanning av bygget och av `web/src`
+(`python -m ai_tracker.site_bundle scan-build web/build --src web/src`, datakontraktet avsnitt 4), statisk kontroll
+av externa värdar, budget, Playwright smoke (alla routes,
 1280 och 375 px, inga förfrågningar till andra värdar, inga konsolfel, ingen vågrät rullning, SVG finns utan JS),
 axe WCAG 2.2 AA i ljust och mörkt läge, och skärmbilder av alla routes. Skärmbilder, Playwright-rapport och
 budgetrapport laddas upp som artefakten `web-screenshots`.

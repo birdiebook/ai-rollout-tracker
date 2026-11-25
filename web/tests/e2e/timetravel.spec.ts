@@ -42,7 +42,7 @@ test('start page on a past day: the record known then, Python’s sentence, noth
     if (g?.record) await expect(page.locator('[data-tt="view"] .lede').first()).toContainText(g.record.sentence);
   }
   // the stripes table lists only months whose month end is on or before the day
-  await page.locator('#tt-stripes').getByRole('button', { name: 'Visa tabell' }).click();
+  await page.locator('#tt-stripes summary').click();
   await expect(page.locator('#tt-stripes-table tbody tr').first()).toBeVisible();
 });
 
@@ -67,7 +67,7 @@ test('series on a past day: the level table is exactly the replay, every row kno
   const v = doc.versions;
   const known = new Map<string, string>();
   for (let i = 0; i < v.p.length && v.dates[v.d[i]] <= TT_DAY; i++) known.set(v.periods[v.p[i]], v.dates[v.d[i]]);
-  await page.locator('#tt-level').getByRole('button', { name: 'Visa tabell' }).click();
+  await page.locator('#tt-level summary').click();
   const rows = page.locator('#tt-level-table tbody tr');
   await expect(rows).toHaveCount(known.size);
   if (golden) {
@@ -115,7 +115,7 @@ test('slider buttons step month ends; play advances and pauses; start from today
   expect(back < first!).toBe(true);
   expect(new Date(Date.parse(back) + 86_400_000).getUTCDate()).toBe(1); // a month end
   await page.getByRole('button', { name: '+1 månad' }).click();
-  await page.getByRole('button', { name: '▶ Spela' }).click();
+  await page.getByRole('button', { name: 'Spela', exact: true }).click();
   await expect.poll(() => asOfInUrl(page), { timeout: 5000 }).not.toBe(first);
   await page.getByRole('button', { name: /Paus/ }).click();
   const paused = asOfInUrl(page)!;

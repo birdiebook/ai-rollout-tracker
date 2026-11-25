@@ -34,8 +34,34 @@ export function routes(): { name: string; path: string }[] {
     { name: 'avstamningar', path: 'avstamningar/' },
     { name: 'regim', path: 'regim/' },
     { name: 'metod', path: 'metod/' },
+    { name: 'sok', path: 'sok/' },
     { name: 'katalog', path: '_katalog/' },
+    ...storyRoutes(),
+    ...reportRoutes(),
     ...timeTravelRoutes(idx.series)
+  ];
+}
+
+/** W13: the latest monthly story, the latest month without any card (K9) and the latest story under time travel. */
+export function storyRoutes(): { name: string; path: string }[] {
+  const idx = JSON.parse(readFileSync('static/data/story/index.json', 'utf-8')) as { latest: string; months: { month: string; n_events: number }[] };
+  const quiet = [...idx.months].reverse().find((m) => m.n_events === 0 && m.month !== idx.months[0].month);
+  return [
+    { name: 'manad', path: `manad/${idx.latest}/` },
+    ...(quiet ? [{ name: 'manad-lugn', path: `manad/${quiet.month}/` }] : []),
+    { name: 'tt-manad', path: `manad/${idx.latest}/#as_of=${TT_DAY}` }
+  ];
+}
+
+/** W14: the latest quarterly report, the first one, and the latest under time travel (a day before it was known). */
+export function reportRoutes(): { name: string; path: string }[] {
+  const idx = JSON.parse(readFileSync('static/data/report/index.json', 'utf-8')) as { latest: string | null; quarters: { quarter: string }[] };
+  if (!idx.latest) return [];
+  const first = idx.quarters[0].quarter;
+  return [
+    { name: 'kvartal', path: `kvartal/${idx.latest}/` },
+    ...(first !== idx.latest ? [{ name: 'kvartal-forsta', path: `kvartal/${first}/` }] : []),
+    { name: 'tt-kvartal', path: `kvartal/${idx.latest}/#as_of=${TT_DAY}` }
   ];
 }
 
