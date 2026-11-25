@@ -31,9 +31,24 @@ export function routes(): { name: string; path: string }[] {
     { name: 'prognos-n5', path: 'prognoser/n5/' },
     { name: 'prognos-d2', path: 'prognoser/d2/' },
     ...liveForecastPages().slice(0, 1),
+    { name: 'avstamningar', path: 'avstamningar/' },
+    { name: 'regim', path: 'regim/' },
     { name: 'metod', path: 'metod/' },
     { name: 'sok', path: 'sok/' },
-    { name: 'katalog', path: '_katalog/' }
+    { name: 'katalog', path: '_katalog/' },
+    ...timeTravelRoutes(idx.series)
+  ];
+}
+
+/** W9: the time-travel views (start, branch, the most revised series) and a page without one, on a past day. */
+export const TT_DAY = '2026-03-15';
+export function timeTravelRoutes(series: SeriesEntry[]): { name: string; path: string }[] {
+  const revised = [...series].sort((a, b) => (b.n_versions ?? 0) - (a.n_versions ?? 0))[0];
+  return [
+    { name: 'tt-hem', path: `#as_of=${TT_DAY}` },
+    { name: 'tt-gren', path: `gren/G6/#as_of=${TT_DAY}` },
+    { name: 'tt-serie', path: `serie/${revised.key}/#as_of=${TT_DAY}` },
+    { name: 'tt-utan', path: `prognoser/#as_of=${TT_DAY}` }
   ];
 }
 

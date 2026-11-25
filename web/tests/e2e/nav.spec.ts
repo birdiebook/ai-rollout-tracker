@@ -75,6 +75,10 @@ test('accents are optional and a query with no hits says so', async ({ page }) =
   const { dlg, box } = await openSearch(page, 'key');
   await box.fill('flodet');
   await expect(dlg.getByRole('option').first()).toContainText('Flödet');
+  await box.fill('avstamning');
+  await expect(dlg.getByRole('option').first()).toContainText('Avstämningar');
+  await box.fill('regim');
+  await expect(dlg.getByRole('option').first()).toContainText('Regim');
   await box.fill('qqqzzz');
   await expect(dlg.getByRole('option')).toHaveCount(0);
   await expect(box).toHaveAttribute('aria-expanded', 'false');
@@ -200,6 +204,7 @@ test('the header fits: brand, menu, search and theme reachable without overflow'
   // targets at least 24 px (WCAG 2.2 target size), current page marked
   for (const a of await header.locator('nav a').all()) expect((await a.boundingBox())?.height ?? 0).toBeGreaterThanOrEqual(24);
   await expect(header.locator('nav a[aria-current="page"]')).toHaveText('Flödet');
-  if (info.project.name === 'mobile') expect(box?.height ?? 0).toBeLessThan(140);
+  await expect(header.locator('nav a')).toHaveText(['Läget', 'Flödet', 'Prognoser', 'Avstämningar', 'Regim', 'Metod']);
+  if (info.project.name === 'mobile') expect(box?.height ?? 0).toBeLessThan(150);
   else expect(box?.height ?? 0).toBeLessThan(80);
 });

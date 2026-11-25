@@ -5,6 +5,7 @@
   import { tokensCss } from '$lib/design/tokens';
   import { resolve } from '$app/paths';
   import ThemeToggle from '$lib/components/ThemeToggle.svelte';
+  import TimeTravel from '$lib/timetravel/TimeTravel.svelte';
   import MainNav from '$lib/nav/MainNav.svelte';
   import PageMeta from '$lib/nav/PageMeta.svelte';
   import SearchButton from '$lib/nav/SearchButton.svelte';
@@ -37,7 +38,7 @@
 {/if}
 
 <main id="main" class="wrap">
-  {@render children()}
+  <TimeTravel>{@render children()}</TimeTravel>
   <ShareCite cite={data.meta.cite} url={data.meta.url} />
 </main>
 

@@ -181,6 +181,7 @@ describe('search index from the fixtures', () => {
     expect(by('gren')).toHaveLength(9);
     expect(by('led')).toHaveLength(9);
     expect(by('prognos').length).toBeGreaterThanOrEqual(7);
+    expect(by('sida').map((i) => i.id)).toEqual(expect.arrayContaining(['flode', 'prognoser', 'avstamningar', 'regim', 'metod']));
     const withheld = JSON.parse(readFileSync(resolve(FIX, 'withheld.json'), 'utf-8')) as { withheld: { key: string }[] };
     const text = JSON.stringify(ix);
     for (const w of withheld.withheld) expect(text).not.toContain(w.key);

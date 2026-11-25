@@ -255,6 +255,23 @@ export async function describe(b: Bundle, ref: RouteRef): Promise<Described> {
     }
     case '/prognoser/[id]/[[slug]]':
       return describeNowcast(c, p.id, p.slug);
+    case '/avstamningar': {
+      const fl = (await b.flow()) as unknown as { reconciliations: ({ hidden?: boolean; key?: string; short?: string; label?: string; direction?: number | null } | Record<string, unknown>)[]; reconciliations_available?: boolean };
+      const recs = fl.reconciliations ?? [];
+      const shown = recs.filter((x) => !('hidden' in x));
+      const title = 'Avstämningar: går leden ihop?';
+      const description = `${shown.length} kvoter mellan leden med sina komponenter${recs.length > shown.length ? ` (${recs.length - shown.length} till hålls inne av licensskäl)` : ''}, ${periodLabel(r.month, true)}. När en kvot rör sig växer det ena ledet snabbare än det andra.`;
+      return page(c, 'avstamningar', title, description, spec(c, { kicker: `Avstämningar · ${recordText(r)}`, title, subtitle: description, status: statusOf(r), graphic: chainGraphic(await leads(c)) }));
+    }
+    case '/regim': {
+      const rg = await b.regime();
+      const title = 'Regim och strukturbrott';
+      const latest = rg.blocks.map((x) => x.latest).filter((x): x is NonNullable<typeof x> => !!x);
+      const description = rg.available
+        ? `Sannolikheten för inbromsning per block (C4) ur de skarpa ögonblicksbilderna, ${latest.length} block, ${rg.shifts.length} skiften och ${rg.breaks.length + rg.n_breaks_withheld} strukturbrott.`
+        : 'Regimmodellen (C4) visas först från den första skarpa ögonblicksbilden; den rekonstrueras aldrig bakåt.';
+      return page(c, 'regim', title, description, spec(c, { kicker: 'Regim · C4', title: 'Har något fundamentalt ändrats?', subtitle: description, status: rg.available ? statusOf(rg.record) : null, graphic: overviewStripes(c) }));
+    }
     case '/metod': {
       const meth = (await b.method()) as { n_series?: number; n_published?: number; n_withheld?: number };
       const title = 'Metod: förregistrerade mått och tillstånd';
@@ -291,6 +308,8 @@ export async function ogRoutes(b: Bundle): Promise<{ og: string; ref: RouteRef |
     ...ov.branches.map((x) => ({ og: `gren/${x.code}`, ref: { routeId: '/gren/[id]', params: { id: x.code } } })),
     ...idx.series.map((s) => ({ og: `serie/${s.key}`, ref: { routeId: '/serie/[key]', params: { key: s.key } } })),
     { og: 'prognoser', ref: { routeId: '/prognoser', params: {} } },
+    { og: 'avstamningar', ref: { routeId: '/avstamningar', params: {} } },
+    { og: 'regim', ref: { routeId: '/regim', params: {} } },
     { og: 'metod', ref: { routeId: '/metod', params: {} } },
     { og: 'sok', ref: { routeId: '/sok', params: {} } },
     { og: 'katalog', ref: { routeId: '/_katalog', params: {} } },

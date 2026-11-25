@@ -249,5 +249,45 @@ export interface Method {
   [k: string]: unknown;
 }
 
+/** regime.json (W3 schema `regime`): C4 from the committed live snapshots only (never reconstructed). */
+export interface RegimeMonth {
+  month: string;
+  /** P(inbromsning) from the MSIH(2) model */
+  p_slow: number | null;
+  /** reported state after the two-months-in-a-row rule: 'expansion' | 'inbromsning' */
+  state: string | null;
+  /** the state switched to this month, else null */
+  shift: string | null;
+  n_months: number | null;
+  reason: string;
+}
+
+export interface RegimeBlock {
+  block: string;
+  label: string;
+  history: RegimeMonth[];
+  latest: RegimeMonth;
+}
+
+/** withheld.json: every series with publish=False, by name and reason only (common.json#withheld_entry). */
+export interface WithheldDoc {
+  withheld: { key: string; label: string; source?: string; license?: string; why: string; counted?: boolean; branch?: string | null }[];
+  n?: number;
+}
+
+export interface Regime {
+  record: RecordMeta;
+  /** false until a live snapshot carries a regime section */
+  available: boolean;
+  months: string[];
+  spec_version: string | null;
+  blocks: RegimeBlock[];
+  shifts: { month: string; block: string; label: string; state: string }[];
+  /** BOCPD breaks on publishable series; breaks on withheld series are only counted (n_breaks_withheld) */
+  breaks: { month: string; series: string; branch: string | null; latest_period: string | null; p_recent: number | null }[];
+  n_breaks_withheld: number;
+  block_labels: Record<string, string>;
+}
+
 export const BRANCH_CODES = ['G1', 'G2', 'G3', 'G4', 'G5', 'G6', 'G7', 'G8', 'G9'] as const;
 export type BranchCode = (typeof BRANCH_CODES)[number];

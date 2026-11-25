@@ -4,6 +4,7 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { resolve } from '$app/paths';
+  import { carryHref, readAsOf } from '$lib/timetravel/url';
   import { onMount, tick } from 'svelte';
   import SearchBox from './SearchBox.svelte';
   import { loadIndex } from './loadIndex';
@@ -43,7 +44,8 @@
   async function pick(it: SearchItem) {
     open = false;
     query = '';
-    await goto(it.h);
+    // the time-travel date goes along, like every internal link (W9)
+    await goto(carryHref(it.h, location.href, resolve('/').replace(/\/$/, ''), readAsOf(location.hash)) ?? it.h);
   }
 </script>
 

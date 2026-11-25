@@ -29,6 +29,8 @@ export async function buildSearchIndex(b: Bundle): Promise<SearchIndex> {
     { t: 'sida', id: 'laget', l: 'Läget', s: 'Startsidan: kedjan, tre frågor och tillståndsränderna', h: resolve('/'), k: 'start hem översikt' },
     { t: 'sida', id: 'flode', l: 'Flödet L1–L9', s: 'Kedjan från förmåga till el', h: resolve('/flode'), k: 'kedjan led' },
     { t: 'sida', id: 'prognoser', l: 'Prognoser', s: 'N1–N6 och D2 med intervall och facit', h: resolve('/prognoser'), k: 'nowcast facit kalender' },
+    { t: 'sida', id: 'avstamningar', l: 'Avstämningar', s: 'Går leden ihop? Kvoter mellan leden med komponenter', h: resolve('/avstamningar'), k: 'kvot avstämning A5 reconciliation glapp' },
+    { t: 'sida', id: 'regim', l: 'Regim och strukturbrott', s: 'Har något fundamentalt ändrats? C4 per block', h: resolve('/regim'), k: 'regimskifte strukturbrott bocpd c4 inbromsning' },
     { t: 'sida', id: 'metod', l: 'Metod', s: 'Måttregistret, tillståndsregler, licenser', h: resolve('/metod'), k: 'register regler licens dödband' },
     { t: 'sida', id: 'sok', l: 'Alla serier', s: 'Registret över alla publicerade serier', h: resolve('/sok'), k: 'register katalog lista' }
   );

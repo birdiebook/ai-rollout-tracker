@@ -11,6 +11,8 @@
       match: (p: string) => [resolve('/flode'), resolve('/gren'), resolve('/serie')].some((x) => p.startsWith(x))
     },
     { href: resolve('/prognoser'), label: 'Prognoser', match: (p: string) => p.startsWith(resolve('/prognoser')) },
+    { href: resolve('/avstamningar'), label: 'Avstämningar', match: (p: string) => p.startsWith(resolve('/avstamningar')) },
+    { href: resolve('/regim'), label: 'Regim', match: (p: string) => p.startsWith(resolve('/regim')) },
     { href: resolve('/metod'), label: 'Metod', match: (p: string) => p.startsWith(resolve('/metod')) }
   ];
   const path = $derived(page.url.pathname.replace(/\/?$/, '/'));
@@ -31,14 +33,14 @@
     padding: 0;
     display: flex;
     flex-wrap: wrap;
-    gap: 0 4px;
+    gap: 0 2px;
   }
   a {
     text-decoration: none;
     display: inline-flex;
     align-items: center;
     min-height: var(--hit);
-    padding: 0 8px;
+    padding: 0 7px;
     border-radius: var(--radius-md);
     color: var(--c-ink-2);
   }
@@ -54,7 +56,7 @@
     text-underline-offset: 6px;
   }
   li:first-child a {
-    margin-left: -8px;
+    margin-left: -7px;
   }
   @media (min-width: 641px) {
     li:first-child a {
