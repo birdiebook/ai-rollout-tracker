@@ -100,10 +100,17 @@ def test_fetch_recomputes_when_the_curated_csv_changes(monkeypatch):
 
 
 def test_series_from_the_curated_csv_respect_its_publish_gate():
+    # The owner's decision R11-4 (beslutsloggen 2026-11-25) makes the gate per company: a series that reads the CSV is
+    # open only while every guid_capex series of the companies whose rows it reads is open. The rows read are taken
+    # from the licence declaration (licenses.CURATED_READS), not from the F1 code; None = every company.
+    from ai_tracker import licenses
+
     specs = catalog.by_key()
-    gated = sorted(k for k, s in specs.items() if k.startswith("guid_capex_") and not s.publish)
-    open_ = [k for k in CSV_BASED if specs[k].publish]
-    assert not (gated and open_), f"publish=True {open_} while {len(gated)} guid_capex series are publish=False"
+    for k in CSV_BASED:
+        companies = licenses.CURATED_READS[k][1]
+        gated = sorted(g for g, s in specs.items() if g.startswith("guid_capex_") and not s.publish
+                       and (companies is None or g.split("_")[2] in companies))
+        assert not (gated and specs[k].publish), f"{k} publish=True while {gated} are publish=False"
 
 
 def test_csv_has_metas_2020_outlook_from_the_index_period():
