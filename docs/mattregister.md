@@ -1490,3 +1490,95 @@ tak ändras inte.
    punkt 2 gäller inte längre.
 3. **K0** räknar tillståndet "för få källor" (index v2, registret 2026-11-24) för sig, bredvid "för få serier", när det
    förekommer. Tidigare räknades det som "för få serier". Inget urval ändras.
+
+### 2026-11-25 – Q1: pris vid rörlig förmågetröskel (G2, katalogserier)
+
+Spår Q1, körning 14. Förslag 6 i `docs/riktning.md`. Granskningen R8 visade att en fast förmågetröskel mättas: från
+2025-02 klarar de billigaste modellerna tröskeln med marginal, så priset vid den förmågan slutar röra sig. En rörlig
+tröskel binder per konstruktion. Den frågar vad fronten för L månader sedan kostar i dag. Det säger hur snabbt
+frontförmåga blir en handelsvara, och därmed var marginalerna hamnar. Serierna är katalogserier. Grenindex och
+tillståndsregler ändras inte. Inga takter eller halveringstider beräknas i spåret.
+
+**Vad som tittades på före posten** (inga priser, inga trösklar och inga värden för de nya serierna): vilken modell
+som var etta i tavlan för m − L och om den finns i tavlan för m (namn och närvaro, alla månader till 2026-10), vilka
+modeller som kommer närmast under ettan och i hur många tavlor de finns tillsammans med ettan, namnformerna kring
+bytet till visningsnamn (namn och datumintervall), Epochs ECI-front per månad (den publicerade serien
+`g1_epoch_eci_frontier`, som blir tröskeln i ECI-varianten), kolumnnamnen i Epochs ZIP och METR:s YAML, och antalet
+rader med kostnad per uppgift i Arenas `agent`-delmängd. Detaljer i `docs/kallor/g2_rorlig_troskel.md`, avsnitt 1.
+
+**Arena-varianterna** (`g2_price_rolling12_arena`, huvudvariant, L = 12; `g2_price_rolling6_arena`, L = 6):
+
+- **Tavlor och versioner** som i `g2_price_at_arena_capability` (`docs/kallor/g2_arena_pris.md` avsnitt 1): Arena
+  `text`, kategori `overall`, BT-eran från 2024-01-09, `arena.subset_boards("text")`. En version av månad m har ett
+  datum d. Första versionen har d = månadsslut + 1 dag och använder tavlor belagda ≤ månadsslut. En tavla som
+  publicerades ≤ månadsslut men beläggs senare ger en ny version på beläggets datum, om värdet ändras
+  (`sources/vintages.py`).
+- **b(m)** = den senast publicerade tavlan ≤ m:s slut bland dem som är kända vid d (samma regel som G2A).
+- **Referenstavlan** = den senast publicerade tavlan ≤ slutet av m − L bland dem som är kända vid d. **Avvikelse från
+  beställningen** ("som den var känd då", alltså vid slutet av m − L): vi använder det som är känt vid d om fronten vid
+  m − L. Skäl: mätglappet 2025-09 – 2026-03 (`g1g2_nya.md`). Med den bokstavliga regeln skulle referensen i de
+  månaderna vara ettan i tavlan 2025-08-29, och fördröjningen skulle i praktiken bli L + upp till 7 månader (L = 6:
+  2026-03 – 2026-09; L = 12: från 2026-09). Inget läckage uppstår, eftersom allt som används är känt vid d. Den
+  bokstavliga regeln redovisas som känslighet och lagras inte.
+- **Referensmodellen r(m)** = modellen med högst rating i referenstavlan (vid lika: namnet i alfabetisk ordning).
+  Experiment- och förhandsnamn räknas, eftersom referensen är en förmågenivå och inte ett pris.
+- **Namn i en tavla.** Ett namn hittas i en tavla om tavlan har (1) namnet självt, annars (2) det dokumenterade nya
+  namnet efter ett namnbyte utan överlapp (`arena_map`: `gpt-4-turbo` → `gpt-4-1106-preview`,
+  `gemini-1.5-pro-api-0514` → `gemini-1.5-pro-001`, `gemini-1.5-flash-api-0514` → `gemini-1.5-flash-001`,
+  `gemini-2.0-flash-lite-preview` → `gemini-2.0-flash-lite-preview-02-05`, `gemini-2.0-flash` → `gemini-2.0-flash-001`),
+  annars (3) det enda namnet i tavlan med samma normaliserade form (gemener, bara bokstäver och siffror, i samma
+  ordning). Steg 3 tar bytet till visningsnamn (från 2026-10-15/20: `gemini-2.5-pro` = "Gemini 2.5 Pro"). Ger steg 3
+  fler än ett namn, hittas namnet inte.
+- **Tröskeln i b(m)** = r(m):s rating i b(m). En modell kvalificerar om dess rating i b(m) är ≥ tröskeln (inklusiv).
+- **Efterföljarregel** när r(m) inte hittas i b(m). Det är vanligt: experimentnamn som `gemini-exp-1206` och
+  `early-grok-3` tas bort ur tavlorna när modellen släpps. Kandidaterna är modellerna närmast under r(m) i
+  referenstavlan, i rangordning (rang 2 – 11, högst 10). Den första kandidat s som hittas i b(m) och som har minst 3
+  tavlor publicerade före b(m), kända vid d, där både r(m) och s hittas, ger tröskeln rating_b(m)(s) + Δ. Δ = medianen
+  av rating(r) − rating(s) i de 3 senaste sådana tavlorna. Det är G2A:s överlappsregel, med kedjan hämtad ur
+  referenstavlan i stället för en fast lista. Klarar ingen kandidat villkoret får månaden inget värde från den tavlan
+  (lucka). Ingen gissning om vilken släppt modell ett experimentnamn blev.
+- **Pris och värde** som i G2A: LiteLLM-filen vid månadsslut med `arena_price.PRICE_CORRECTIONS` och regeln om
+  pensionerade modeller (`deprecation_date` ≤ månadsslut i filen vid månadsslut), blandat 3 input : 1 output, USD per
+  miljon tokens. Koppling `arena_map.pairs_at(månadsslut)`, bara förstapartsnycklar, bästa variant per nyckel.
+  P(m) = lägsta blandade pris bland kvalificerade nycklar. Öppna vikter prissätts bara där utvecklaren har ett eget API
+  (`model_map`:s kanalregel), så billigare tredjepartsvärdar ingår inte.
+- **known_from** = det senare av d och månadsslut + 1 dag. `source` = `backfill` om b(m) eller referenstavlan bara
+  finns i datasetets bulkuppladdning (censurerad, belägg 2026-04-02), annars `release`. En ny rad uppstår bara när
+  värdet ändras.
+- **Första månad:** L = 12 från 2025-01, L = 6 från 2024-07 (referensmånaden ska ligga i BT-eran).
+
+**Frontpris som sammanhang** (`g2_price_frontier_arena`, inget takmått): i b(m), tröskeln = den högsta ratingen bland
+prissatta kopplade nycklar, och värdet = lägsta blandade pris bland nycklar med den ratingen, alltså priset för den
+högst rankade modell som går att köpa från utvecklaren. Samma tavlor, versioner, priser och datering som ovan. Från
+2024-01. Är tavlans etta inte prissatt (experiment, öppna vikter, alias) används den bästa prissatta modellen, och
+diagnostiken visar det.
+
+**ECI-varianten** (`g2_price_rolling12_eci`):
+
+- ECI ur Epochs `benchmark_data.zip` (`eci_scores.csv`), dagens skattningar. En modell räknas från sitt
+  release-datum hos Epoch. Tröskeln(m) = högsta ECI bland modeller släppta ≤ slutet av m − 12.
+- Förmåga per nyckel som i `g2_price_at_capability` (ECI för den senast släppta kopplade modellen, `model_map`).
+  Priser med samma regler som Arena-varianterna, alltså med prisrättningar och regeln om pensionerade modeller. Det
+  skiljer sig från I6-serierna, men är samma regel inom spåret.
+- **Täckningsgolv:** `model_map` täcker modeller med ECI ≥ 128. En månad får värde bara om tröskeln är ≥ 128, annars
+  kan okopplade modeller mellan tröskeln och 128 saknas. Med dagens ECI blir första månaden 2025-05.
+- **Läckage:** ECI och tröskeln är dagens skattningar. Hela historiken är `backfill` (som `g2_price_at_capability`),
+  och senare veckohämtningar ger revideringar daterade på hämtdagen.
+
+**Känsligheter** (redovisas i dokumentet, lagras inte): den bokstavliga referensregeln (känd vid slutet av m − L), och
+serierna utan Mistral Small 3.2-nyckeln, vars pris är omstritt (G2A R-4). Priskontrollens status per månad
+(`arena_price.PRICE_CHECKS`, annars `unchecked`) redovisas.
+
+**Kostnad per uppgift: definierad, inte byggd (BLOCKED).** Arenas `agent`-delmängd (Agent Arena, från 2026-06-04) har
+`cost_per_task_p50` och `output_tokens_per_task_p50`, men bara i tavlorna från 2026-11-02. Det finns ingen hel månad,
+och Arenas metodsida (arena.ai) nekas av proxyn, så det går inte att se vilket pris och vilka tokens kostnaden bygger
+på. Måttet som byggs när båda villkoren är uppfyllda: `g2_cost_per_task_rolling6_agent` = lägsta `cost_per_task_p50`
+(USD per uppgift) i agent-tavlan b(m) bland modeller vars poäng i b(m) är ≥ poängen för ettan i agent-tavlan för
+m − 6, med samma versions-, namn- och efterföljarregler som ovan. Andra källor ger inget rent mått: Epochs
+`*_external.csv` har kostnad per uppgift (ARC-AGI, CursorBench, DeepSWE, WeirdML med flera) men inget körningsdatum,
+och kostnaden är utvärderarens egen med egna priser. Epochs egna körningar har inga tokenantal i ZIP-filen. METR:s
+YAML har inga token- eller kostnadsfält. SWE-bench-repot saknar licens.
+
+**Licens:** Arena-varianterna och frontpriset läser samma texttavlor som G2A, inklusive Space-filerna, och får klassen
+`okänd` genom en nyckel-override (som R10-2). ECI-varianten är LiteLLM (MIT) × Epoch (CC BY 4.0) och får `ja`.
+Alla fyra har `publish=True`, som G2A och I6.
