@@ -314,3 +314,32 @@ def test_register_entry_precedes_and_names_the_keys():
     text = (config.REPO / "docs" / "mattregister.md").read_text(encoding="utf-8")
     entry = text.split("### 2026-11-25 – Q2: gapet mellan öppna och stängda modeller och Kinas gap")[1]
     assert all(f"`{k}`" in entry for k in KEYS)
+
+
+def test_name_classes_join_curated_early_and_mechanical_switch():
+    meta = _meta([
+        ("claude-x", "2026-10-13", "Proprietary", "anthropic", 9, "dataset"),
+        ("Claude X", "2026-10-15", "Proprietary", "anthropic", 9, "dataset"),
+        ("gpt-y", "2026-10-15", "Proprietary", "openai", 7, "dataset"),
+        ("Claude X", "2026-10-20", "Proprietary", "anthropic", 9, "dataset"),
+        ("GPT Y", "2026-10-20", "Proprietary", "openai", 8, "dataset"),
+    ])
+    cls = am.name_classes(meta, renames=[("old-claude", "claude-x", "2026-01-01", "test")], extra=[])
+    assert cls.find("old-claude") == cls.find("claude-x") == cls.find("Claude X")  # curated + early display names
+    assert cls.find("gpt-y") == cls.find("GPT Y")  # normalized name at the 2026-10-20 switch
+    assert cls.find("gpt-y") != cls.find("Claude X")
+
+
+def test_reach_fallback_flag_and_coverage_counts():
+    boards = [
+        board("2024-01-10", {"c0": 900, "o1": 800}),
+        board("2024-02-10", {"c2": 1100, "c1": 1050, "o1": 800}),
+        board("2024-03-10", {"c1": 1060, "c3": 1200, "o1": 1055, "u": 5000}),
+    ]
+    w = {**W, "c0": mo.CLOSED}
+    mar = _one(og.arena_build(boards, table_classifier(w), pd.Period("2024-03", "M")), period="2024-03").iloc[-1]
+    assert bool(mar["reach_fallback"]) and mar["reach_model"] == "c1"
+    assert mar["lead_model"] == "c3"  # "u" is unclassified and never counts, even with the highest rating
+    cov, left = og.arena_coverage(boards, table_classifier(w))
+    assert set(left.loc[left["what"] == "weights", "name"]) == {"u"}
+    assert cov.loc[(cov["what"] == "weights") & (cov["step"] == "test"), "pairs"].iloc[0] == 9  # every (board, name)

@@ -777,3 +777,16 @@ republishing data"), npm och arXiv (`okänd`), och Microsofts capex-guidance ur 
   regeln bakom dem ändras, och fälten är tillägg (`docs/steg3/datakontrakt.md`, Ändringar).
 - Loggarna och registret har båda sidornas poster i tidsordning. `quarterly.py` har mains omskrivning med "för få
   källor" i tillståndsordningen.
+
+## 2026-11-25 – Q2: gapet mellan öppna och stängda modeller och Kinas gap (katalogserier)
+
+- Åtta katalogserier i G1 (`g1_open_*`, `g1_china_*`, Arena och ECI). Registerposten committades före koden och koden
+  före värdena. Inga kärnserier, inga ändrade tillståndsregler (`docs/kallor/g1_oppen_stangd.md`).
+- **Val:** klassningen tas ur källornas egna fält (Arenas `license` och `organization` per tavla, Epochs
+  `Accessibility group` och `Country (of organization)`). Kurerade reserver har en referens per rad. Ett namn som inget
+  steg klassar lämnas utanför (2 namn i Arena, 4 modeller i ECI).
+- **Val:** eftersläpningen i Arena läses inom en tavla, och namnbyten hanteras med namnklasser (27 kurerade byten, 20
+  tidiga visningsnamn, 403 mekaniska och 13 kurerade vid bytet 2026-10-20). En borttagen toppmodell ersätts av nästa
+  stängda modell i samma månads tavla, vilket kan korta eftersläpningen.
+- **Rekommendation till Johannes:** låt serierna vara katalogserier tills en granskning har prövat ersättningsregeln och
+  namnklasserna. ECI-varianterna kan räknas först när egna ögonblicksbilder finns.

@@ -104,8 +104,8 @@ def lag_in_board(m: pd.Period, bm: Board, gm: dict[str, str], history: list[tupl
         by_cls[c] = max(by_cls.get(c, -np.inf), float(r))
     out = {"follow_model": follow[0], "follow": f_top, "lead_model": lead[0], "lead": l_top, "gap": l_top - f_top,
            "board": bm[0], "board_source": bm[3], "s0": history[0][0] if history else None, "s_star": None,
-           "reach_model": None, "reach": np.nan, "fallbacks": 0, "missing": 0, "lag": None, "status": "",
-           "s_star_source": None}
+           "reach_model": None, "reach": np.nan, "fallbacks": 0, "reach_fallback": False, "missing": 0, "lag": None,
+           "status": "", "s_star_source": None}
     if f_top > l_top + TOL:
         out.update(lag=0, status="leads")
         return out
@@ -119,7 +119,7 @@ def lag_in_board(m: pd.Period, bm: Board, gm: dict[str, str], history: list[tupl
         out["fallbacks"] += int(k > 0)
         r = by_cls[find(n)]
         if r >= f_top - TOL:
-            out.update(s_star=s, reach_model=n, reach=r, s_star_source=bs[3])
+            out.update(s_star=s, reach_model=n, reach=r, s_star_source=bs[3], reach_fallback=k > 0)
             break
     if out["s_star"] is None:  # cannot happen: b(m)'s own leader top reaches F(m)
         out["status"] = "no_reach"
@@ -339,13 +339,12 @@ _ARENA_SRC = "LMArena (HF-dataset + Space-filer)"
 _ECI_SRC = "Epoch AI benchmarkhubben (ECI) och modelldatabasen"
 _ARENA_NOTE = ("Inom en tavla (Arena text, overall): eftersläpningen är antalet månader sedan den ledande gruppens "
                "front (dess toppmodell i månadens tavla, läst i den aktuella tavlan) först nådde den följande gruppens "
-               "topp. Golvet 0 när den följande gruppen leder; censurerad (inget värde) när fronten redan nåddes första "
-               "månaden. Klassning ur Arenas egna fält (license, organization), kurerade reserver i "
+               "topp. Golvet 0 när den följande gruppen leder; censurerad (inget värde) när fronten redan nåddes "
+               "första månaden. Klassning ur Arenas egna fält (license, organization), kurerade reserver i "
                "sources/model_origin.py. known_from = senare av tavlans belägg och månadsslut + 1 dag. Katalogserie, "
                "inte kärnserie. Se docs/kallor/g1_oppen_stangd.md")
 _ECI_NOTE = ("Epoch ECI, en skala över tiden: eftersläpning = månader sedan den ledande gruppens bästa ECI först "
-             "nådde "
-             "den följande gruppens bästa. Golvet 0, censurerad när fronten nåddes första månaden. Klassning ur "
+             "nådde den följande gruppens bästa. Golvet 0, censurerad när fronten nåddes första månaden. Klassning ur "
              "Accessibility group och Country (of organization), reserv all_ai_models.csv. ECI skattas om och "
              "klassningen är dagens: historiken är återfylld (source=backfill, known_from nominellt månadsslut + 7 "
              "dagar), senare hämtningar ger revisioner. Katalogserie. Se docs/kallor/g1_oppen_stangd.md")

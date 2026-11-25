@@ -1594,3 +1594,17 @@ LMArena respektive Epoch AI.
 **Kända begränsningar som inte rättas här:** Arena mäter chattpreferens, inte förmåga. ECI har färre modeller (cirka
 260), och kinesiska modeller är få per månad. En eftersläpning i hela månader har golvet 0 och hoppar när en ny
 frontmodell kommer. Mätglappet 2025-09 – 2026-03 i Arena (`docs/kallor/g1g2_nya.md`) gäller även här.
+
+### 2026-11-25 – Q2: rättelse av fakta i registerposten ovan (reglerna ändras inte)
+
+Skrivet efter bygget, före analys. Posten ovan säger att 7 modeller byter `license` över tid, "alla från
+`Proprietary` till en öppen licens". Det stämmer inte. Av de 7 går 4 från "Proprietary" till en öppen licens
+(`minimax-m2.7`, `minimax-m3`, Mistral Large 4, Inkling 2 Small), `minimax-m2.5` byter mellan två öppna licenser
+(MIT och Modified MIT), och `gpt-5.4` och `gpt-5.4-high` har tomt fält i sju tavlor och annars "Proprietary". Inget
+byter från öppen till stängd, så regeln i steg 3 (en senare uppgift om stängd gäller även tidigare) står sig.
+
+Förtydliganden inom reglerna, gjorda under bygget: de första visningsnamnen kom en tavla tidigt (2026-10-15, Claude,
+Gemini, Kimi och Muse). De 20 paren 2026-10-13 → 2026-10-15 ingår i den kurerade tabellen över Arenas egna byten
+(punkt 1 under Namnbyten), granskade för hand med samma normaliserade namn, organisation och licens. En kurerad rad i
+steg 4 kan ge bara organisationen och låta vikterna komma från Arena (Arcee AI:s Trinity-modeller har tom
+organisation i Arena).
