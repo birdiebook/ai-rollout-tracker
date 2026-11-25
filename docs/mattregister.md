@@ -1999,6 +1999,110 @@ relativa skillnad mellan kandidattaggar och mellan markörer. Radetiketterna i k
 2023-10-31, 2024-08-01, 2026-11-03), för att se vad som taggats. Där syntes enstaka orderstocksbelopp (Vertiv 15,0 och
 7,2 mdr USD, Eaton 5,4, 12,9, 15,2 och 26,2 mdr USD). Inga kvartalsserier eller takter har räknats.
 
+### 2026-11-25 – Q2: gapet mellan öppna och stängda modeller och Kinas gap (G1, katalogserier)
+
+Spår Q2 (förslag 6 i `docs/riktning.md`, andra punkten). Posten låser definitioner, klassning och datering innan
+något värde i serierna har räknats. Serierna är katalogserier i G1. De ingår inte i grenens index och ändrar inga
+tillståndsregler. Att göra någon av dem till kärnserie kräver en egen registerpost och en granskning. Dokumentation:
+`docs/kallor/g1_oppen_stangd.md`.
+
+**Vad som lästes före posten** (metadata och täckning, inga värden i serierna): fältnamnen i Arena-datasetets kort,
+värdelistorna för `license` och `organization` i `text`/`overall`, vilka modeller som byter `license` över tid (7
+modeller, alla från `Proprietary` till en öppen licens), rubrikerna i Spacens `leaderboard_table_*.csv`, hur många
+(tavla, namn)-par varje klassningssteg nedan täcker, vilka namn som försvinner och dyker upp mellan på varandra följande
+tavlor (namnbyten), hur många namn reglerna för namnbytet 2026-10-20 matchar, kolumnerna i Epochs `eci_scores.csv` och
+fördelningen av `Model accessibility`, `Accessibility group` och `Country (of organization)` med namnen på modellerna
+som saknar fälten. Inga ratingar eller ECI-värden per klass, ingen topp per klass och inga eftersläpningar.
+
+**Nycklar** (månad, G1, katalogserier):
+
+| Nyckel | Källa | Värde | Enhet |
+|---|---|---|---|
+| `g1_open_lag_months_arena` | Arena `text` | ℓ(m) för öppna mot stängda | månader |
+| `g1_open_gap_arena` | Arena `text` | C(m) − O(m) i tavlan b(m) | Arena-poäng |
+| `g1_open_lag_months_eci` | Epoch ECI | ℓ(t) för öppna mot stängda | månader |
+| `g1_open_gap_eci` | Epoch ECI | C(t) − O(t) | ECI-poäng |
+| `g1_china_lag_months_arena` | Arena `text` | ℓ(m) för kinesiska mot övriga | månader |
+| `g1_china_gap_arena` | Arena `text` | N(m) − Q(m) i tavlan b(m) | Arena-poäng |
+| `g1_china_lag_months_eci` | Epoch ECI | ℓ(t) för kinesiska mot övriga | månader |
+| `g1_china_gap_eci` | Epoch ECI | N(t) − Q(t) | ECI-poäng |
+
+Gapet är positivt när de stängda (de icke-kinesiska) ligger före. Ett negativt gap betyder att de öppna (de kinesiska)
+leder.
+
+**Klassning, Arena.** Per namn och tavla, i den här ordningen. Ett fält som är tomt räknas som saknat.
+1. Tavlans egen rad i datasetet (samma publiceringsdatum): `license` = "Proprietary" är stängd, varje annat ifyllt
+   värde är öppna vikter (Arena anger en licens för vikterna). `organization` ger organisationen.
+2. Annars Arenas senaste uppgift om samma modell daterad ≤ tavlans datum: datasetets rader i andra tavlor och Spacens
+   `leaderboard_table_<datum>.csv` (kolumnerna `key`, `License`, `Organization`, daterad med datumet i filnamnet).
+   Samma modell = samma namn eller samma namnklass (namnbyten nedan).
+3. Annars Arenas tidigaste senare uppgift, men för vikterna bara om den säger stängd. Vikter släpps aldrig tillbaka,
+   så en senare uppgift om stängd gäller även tidigare. En senare uppgift om öppna vikter kan vara ett senare släpp och
+   används inte. Organisationen tas från en senare uppgift.
+4. Annars en kurerad tabell i git, med en referens per rad (modellens viktsida eller labbets tillkännagivande, och
+   datum för släppet av vikterna).
+5. Annars lämnas namnet utanför i den tavlan. Antalet redovisas per steg.
+
+Organisationens land tas från en kurerad tabell (Arenas organisationsnamn → land) med en referens per rad: Epochs fält
+`Country (of organization)` för samma organisation där Epoch har den, annars organisationens egen sida.
+
+**Klassning, Epoch.** Per modell i `eci_scores.csv`:
+1. Vikter: `Accessibility group` = "Open weights" är öppen, "Closed weights" är stängd (Epoch räknar API, värdad
+   åtkomst och osläppta modeller som stängda). "Other" eller tomt: `Open model weights?` (Yes/No) för samma `Model` i
+   `all_ai_models.csv`, sedan den kurerade tabellen, annars utanför.
+2. Land: `Country (of organization)`, annars samma fält i `all_ai_models.csv`, sedan den kurerade tabellen, annars
+   utanför. Kinesisk om alla angivna länder är Kina, icke-kinesisk om inget är det. En blandning lämnas utanför.
+
+**Arena, inom en tavla.** Tavlor = `arena.subset_boards("text")`, kategori `overall`, alla epoker från den första
+tavlan 2023-05. Versioner som i `sources/vintages.py`: för en version av månad m med brytdag c (månadsslut för första
+versionen, annars beläggsdagen) är de kända tavlorna de som är publicerade ≤ månadens slut och belagda ≤ c. b(s) är den
+senast publicerade kända tavlan med publiceringsdatum ≤ slutet av s, för varje månad s från s0 till m. s0 är den
+första månaden med en känd tavla som har minst en stängd modell (för Kina: minst en icke-kinesisk).
+- O(m) = högsta rating bland öppna modeller i b(m). C(m) = högsta bland stängda i b(m). För Kina: Q(m) = högsta bland
+  kinesiska, N(m) = högsta bland övriga klassade.
+- Den stängda fronten i månad s är den stängda modell M_C(s) som har högst rating i b(s) (lika: namnordning). Dess
+  rating läses i b(m). Finns modellen inte i b(m) under något av sina namn, används nästa stängda modell i b(s), i
+  fallande rating, som finns i b(m). Det räknas och redovisas.
+- s* = den första månaden s i [s0, m] där ratingen i b(m) för den stängda fronten i s är ≥ O(m). ℓ(m) = m − s* i
+  hela månader. Om O(m) > C(m) leder de öppna, och ℓ(m) = 0 (golvet). Om s* = s0 är ℓ censurerad (den sanna
+  eftersläpningen är ≥ m − s0), och månaden får inget värde.
+- Gapet C(m) − O(m) räknas i b(m) och är bara sammanhang, eftersom skalan ändras mellan tavlor. Ratingar jämförs
+  aldrig mellan tavlor.
+- Samma regler för Kina med N i stället för C och Q i stället för O.
+
+**Namnbyten (Arena).** Samma modell kan ha flera namn. En namnklass byggs av:
+1. en kurerad tabell över Arenas egna namnbyten före 2026-10-20, ur en genomgång av namn som försvinner och dyker upp
+   mellan på varandra följande tavlor (bara namn, organisation, licens och antal röster, inga ratingar), med tavlorna
+   som belägg per rad;
+2. bytet till visningsnamn mellan tavlorna 2026-10-15 och 2026-10-20, i ordning: samma namn, samma normaliserade namn
+   (gemener, bara bokstäver och siffror), samma mängd ord, samma licens och samma antal röster. Varje regel måste ge
+   en unik träff på båda sidor;
+3. en kurerad tabell för de namn som reglerna inte matchar, med tavlorna som belägg.
+Namn som inte matchas finns bara under sitt eget namn. Tabellerna byggs efter posten och bara ur metadata.
+
+**ECI (en skala över tiden).** O(t) och C(t) = högsta ECI bland öppna respektive stängda modeller med `date` ≤
+slutet av månad t. ℓ(t) = t − min{s: C(s) ≥ O(t)} i hela månader, med s från s0 = första månaden med en stängd modell.
+Golvet 0 när O(t) > C(t), censurerad när s* = s0. Gap = C(t) − O(t). Samma för Kina med N och Q. Månader från den
+första med både en öppen och en stängd (kinesisk och icke-kinesisk) modell till senaste hela månad.
+
+**Datering.**
+- *Arena:* `known_from` = det senare av versionens dag och månadsslut + 1 dag. En tavla som publicerades ≤ månadsslut
+  men beläggs senare ger en ny version på beläggets dag om värdet ändras. `source` = `backfill` om b(m) eller b(s*)
+  bara finns i datasetets bulkuppladdning 2026-04-02, annars `release`. Klassning och namnklasser tas ur dagens
+  metadata och är inte versionerade.
+- *ECI:* Epoch skattar om ECI när modeller och benchmarks tillkommer, och klassningen är dagens. Hela historiken är
+  därför `backfill` med nominellt `known_from` = månadsslut + 7 dagar. Senare hämtningar ger `fetch`- och
+  `revision`-rader med hämtdagen. Ärligt daterade värden finns först från våra egna hämtningar.
+
+**Licens och klass för kommersiell användning.** Arena-serierna läser `arena.subset_boards("text")` och Spacens
+`leaderboard_table_*.csv`, alltså Space-filerna: källtexten "LMArena (HF-dataset + Space-filer)" ger klassen
+`okänd` (samma regel som `g1_arena_*`). ECI-serierna: CC BY 4.0, klass `ja`. Publiceras: ja, med källhänvisning till
+LMArena respektive Epoch AI.
+
+**Kända begränsningar som inte rättas här:** Arena mäter chattpreferens, inte förmåga. ECI har färre modeller (cirka
+260), och kinesiska modeller är få per månad. En eftersläpning i hela månader har golvet 0 och hoppar när en ny
+frontmodell kommer. Mätglappet 2025-09 – 2026-03 i Arena (`docs/kallor/g1g2_nya.md`) gäller även här.
+
 ### 2026-11-25 – S1: tillägg efter första bygget (brott i totala intäkter, HPE:s Server, Aristas RPO-datum)
 
 Tillägg till posten "S1: nät, optik och servrar som katalogserier". Den posten skrivs inte om. Skälet är vad
@@ -2055,6 +2159,20 @@ taggval ändras inte.
    `defnref.xml` i fyra av DLR:s inlämningar 2010–2011, och då hittas inga fakta. Kvartalen får sin första version
    senare (2011-08-05), vilket är konservativt. Samma fil finns i sju av Microsofts inlämningar 2009–2011. Felet
    rättas inte här, eftersom koden är gemensam.
+
+### 2026-11-25 – Q2: rättelse av fakta i registerposten ovan (reglerna ändras inte)
+
+Skrivet efter bygget, före analys. Posten ovan säger att 7 modeller byter `license` över tid, "alla från
+`Proprietary` till en öppen licens". Det stämmer inte. Av de 7 går 4 från "Proprietary" till en öppen licens
+(`minimax-m2.7`, `minimax-m3`, Mistral Large 4, Inkling 2 Small), `minimax-m2.5` byter mellan två öppna licenser
+(MIT och Modified MIT), och `gpt-5.4` och `gpt-5.4-high` har tomt fält i sju tavlor och annars "Proprietary". Inget
+byter från öppen till stängd, så regeln i steg 3 (en senare uppgift om stängd gäller även tidigare) står sig.
+
+Förtydliganden inom reglerna, gjorda under bygget: de första visningsnamnen kom en tavla tidigt (2026-10-15, Claude,
+Gemini, Kimi och Muse). De 20 paren 2026-10-13 → 2026-10-15 ingår i den kurerade tabellen över Arenas egna byten
+(punkt 1 under Namnbyten), granskade för hand med samma normaliserade namn, organisation och licens. En kurerad rad i
+steg 4 kan ge bara organisationen och låta vikterna komma från Arena (Arcee AI:s Trinity-modeller har tom
+organisation i Arena).
 
 ### 2026-11-25 – S3: order och orderstock ur resultatpressmeddelanden (extraktion, inte kärnserier)
 
@@ -2293,6 +2411,77 @@ Läs därför båda ställena så här: `BB01RY` tar med hushållens köp, expor
 verifierat), och drar ifrån importen. Ingen definition, ingen serie, ingen datering och ingen beräkning ändras.
 Seriens beskrivning i katalogen var redan rätt.
 
+### 2026-11-25 – X20: första versionens brytdag är månadsslut + 1 dag (rättning efter granskning R23 av Q2)
+
+Spår X20, rättning efter `docs/granskning/r23-oppen-stangd.md` (R23-1 och R23-2). Posten ändrar en regel i Q2-posten
+ovan ("Versioner som i `sources/vintages.py`", brytdagen för första versionen) och samma regel i
+`sources/vintages.monthly`. Den regeln används av `g1_arena_text_top` (kärnserie i G1), `g1_arena_text_sc_top`,
+`g1_arena_text_top_gap_ref`, `g1_arena_webdev_top`, `g2_aws_a100_gpu_hour`, `g2_aws_h100_gpu_hour` och
+`g1_swebench_verified_top`, och av Q2:s fyra Arena-serier genom `series/open_gap.arena_build`.
+
+**Felet.** Regeln har två delar. Första versionen har `known_from` = månadsslut + 1 dag och räknar tillstånd (tavlor,
+prislistor) belagda ≤ månadsslut. Ett tillstånd som publicerades ≤ månadsslut men beläggs senare ger en ny version på
+beläggets dag. När belägget kommer just på månadsslut + 1 dag är de två dagarna samma dag. Koden räknade då dagen bara
+som första versionen, med brytdag månadsslut, och tillståndet kom aldrig in i månaden. Det strider mot regelns andra
+del.
+
+**Ny regel.** Första versionen räknar tillstånd belagda ≤ månadsslut + 1 dag och har `known_from` = månadsslut + 1 dag.
+Senare versioner är oförändrade: brytdagen är beläggets dag. `as_of` läser ett datum som slutet av dagen, så ett
+belägg på månadsslut + 1 dag är känt den dagen. Inget dateras före sitt belägg. Regeln gäller `sources/vintages.monthly`
+och `series/open_gap.arena_build`.
+
+- `g2_aws_*` och `g1_swebench_verified_top` kan inte påverkas: där är beläggsdagen lika med publiceringsdagen.
+- `series/arena_price.build` (G2, pris vid fast förmåga i Arena) säger i sin beskrivning att den följer
+  `sources/vintages.py`, men har en egen kopia av konstruktionen. Filen är skyddad i körning 14 och ändras inte här.
+  Där gäller den gamla koden tills ägaren beslutar. Effekten redovisas i X20:s leverans.
+
+**Vad som var känt före posten:** granskningens tabeller över raderna som ändras och deras rätta värden (gapen 2026-04
+och 2026-09 i Q2:s Arena-serier, och 2026-04, 2026-07 och 2026-09 i `g1_arena_text_top`, `g1_arena_text_sc_top` och
+`g1_arena_webdev_top`). Regeln väljs för att den följer regelns andra del, inte efter värdena. Effekten på
+`g1_arena_text_top_gap_ref` var inte känd.
+
+**Hämtning.** Serierna byggs om (`python -m ai_tracker.observations --rebuild`), eftersom det rätta värdet var belagt
+på månadsslut + 1 dag och det gamla värdet var ett kodfel, inte en revidering i källan. Alla lagrade rader i serierna
+kommer från en enda hämtning 2026-11-24, så ombyggnaden tar inte bort några `fetch`- eller `revision`-rader.
+
+### 2026-11-25 – X20: en ECI-modell räknas som öppen från sitt dokumenterade viktsläpp (rättning efter granskning R23 av Q2)
+
+Spår X20, rättning efter `docs/granskning/r23-oppen-stangd.md` (R23-3). Posten ändrar steg 1 i "Klassning, Epoch" i
+Q2-posten ovan, för måttet öppna mot stängda (`g1_open_lag_months_eci`, `g1_open_gap_eci`). Kina-måttet ändras inte.
+
+**Felet.** Q2-posten tar `Accessibility group` som den är i dag, utan tidsdimension. En modell vars vikter släpptes
+efter dess `date` räknas då som öppen innan vikterna fanns.
+
+**Ny regel.** För en modell som steg 1 klassar som öppen bestäms viktdatumet w i den här ordningen:
+1. En kurerad rad i `model_origin.ECI_WEIGHTS_RELEASE` (datum och referens).
+2. Annars ett datum i Epochs `Accessibility notes` (samma `Model` i `all_ai_models.csv`), i en mening som säger att
+   vikterna har släppts ("weights released", "weights were released"). Datumet skrivs som ÅÅÅÅ-MM-DD, ÅÅÅÅ/MM/DD
+   eller med månadens namn ("June 4, 2026").
+3. Säger anteckningen att vikterna kommer senare ("will", "soon") och ger steg 1–2 inget datum, är w okänt. Då lämnas
+   modellen utanför måttet öppna mot stängda. Antalet redovisas.
+4. Annars w = `date`, som förut.
+
+Modellen är öppen från max(`date`, w). Före det räknas den som stängd från sitt `date`. Epoch räknar API-åtkomst som
+stängda vikter, och Arenas etikett per tavla gör samma sak. O(t), C(t), s0 och den första månaden räknas med
+klassningen per månad. Inget annat ändras. Historiken är fortfarande `backfill` med nominellt `known_from` = månadsslut
++ 7 dagar.
+
+**Kurerad rad.** GLM-5.3: Epochs anteckning säger "The model weights of GLM-5.3 will be publicly available soon in two
+weeks." (as of 2026/08/14). Hugging Face-repot `zai-org/GLM-5.3` skapades 2026-08-25 enligt API-fältet `createdAt`
+(läst 2026-11-25). w = 2026-08-25. Begränsning: `createdAt` är dagen då repot skapades, inte dagen då det blev
+publikt. Arena listar `glm-5.3-max` med licensen MIT från tavlan 2026-08-19.
+
+**Vad som lästes före posten** (metadata, inga värden i serierna med den nya regeln): granskningens uppgift att
+2026-10 blir 7 månader och gapet 10,60 i stället för 6 och 8,01 utan Kimi K3.1 Pro; texten i `Accessibility notes`
+för de 113 öppna modellerna i `eci_scores.csv` (tre nämner när vikterna kom: Kimi K3.1 Pro 2026-11-04 med `date`
+2026-10-23, Nemotron 3 Ultra "June 4, 2026" med samma `date`, och GLM-5.3 ovan); `createdAt` för repona
+`zai-org/GLM-5.3` och `moonshotai/Kimi-K3.1-Pro` (2026-11-02); och Arenas licensetikett per tavla för GLM-5.3,
+Nemotron 3 Ultra och Mistral Large 4.
+
+**Kända fall som regeln inte fångar:** MiniMax-M3 och Mistral Large 4 är öppna i ECI före Arenas etikett för öppna
+vikter. Epochs anteckningar daterar inte deras vikter, så steg 4 gäller. Enligt granskningen är ingen av dem topp i
+någon månad. Arenas etikett används inte som viktdatum för ECI, eftersom den kan komma efter släppet.
+
 ### 2026-11-25 – S1: Aristas kontraktsskulder, Q4 över ett basbyte och aktualitetsgränsen (rättning efter R17)
 
 Rättning efter granskning R17 av spår S1 (`docs/granskning/r17-nat-servrar.md`, gren `auto14k/r17-nat-servrar`), i
@@ -2395,6 +2584,13 @@ körningen 2026-11-25.
 3. Filer med tillstånd, index eller serier per månad som finns före posten nämns med innehåll (R24-4).
 4. Om en enda version strax före V står för en grens revideringar redovisas det, med (a) också för V före den
    versionen (R24-6: G.17:s årsrevision 2026-11-24).
+
+### 2026-11-25 – X20: rättelse av fakta i ECI-posten ovan (reglerna ändras inte)
+
+Skrivet efter ombyggnaden. ECI-posten ovan återger granskningens uppgift att gapet i 2026-10 blir 10,60 utan Kimi
+K3.1 Pro. Det stämmer inte. Den öppna toppen i 2026-10 blir då DeepSeek V4.1 Flash 1017 (159,41, `date` 2026-10-17),
+inte Kimi K3 (158,61). Gapet blir 9,80 (169,21 − 159,41). Eftersläpningen blir 7 månader, som granskningen skrev
+(GPT-5.4 Pro, 160,31, 2026-03). Kontrollerat direkt i `eci_scores.csv`.
 
 ### 2026-11-25 – X17: rättning av KR1 efter granskningen R20 (spread vid emission)
 

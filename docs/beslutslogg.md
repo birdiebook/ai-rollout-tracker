@@ -841,6 +841,19 @@ republishing data"), npm och arXiv (`okänd`), och Microsofts capex-guidance ur 
   publiceras. Läs spreaden per emittent, inte den poolade serien, som till stor del visar vilken emittent som kom till
   marknaden.
 
+## 2026-11-25 – Q2: gapet mellan öppna och stängda modeller och Kinas gap (katalogserier)
+
+- Åtta katalogserier i G1 (`g1_open_*`, `g1_china_*`, Arena och ECI). Registerposten committades före koden och koden
+  före värdena. Inga kärnserier, inga ändrade tillståndsregler (`docs/kallor/g1_oppen_stangd.md`).
+- **Val:** klassningen tas ur källornas egna fält (Arenas `license` och `organization` per tavla, Epochs
+  `Accessibility group` och `Country (of organization)`). Kurerade reserver har en referens per rad. Ett namn som inget
+  steg klassar lämnas utanför (2 namn i Arena, 4 modeller i ECI).
+- **Val:** eftersläpningen i Arena läses inom en tavla, och namnbyten hanteras med namnklasser (27 kurerade byten, 20
+  tidiga visningsnamn, 403 mekaniska och 13 kurerade vid bytet 2026-10-20). En borttagen toppmodell ersätts av nästa
+  stängda modell i samma månads tavla, vilket kan korta eftersläpningen.
+- **Rekommendation till Johannes:** låt serierna vara katalogserier tills en granskning har prövat ersättningsregeln och
+  namnklasserna. ECI-varianterna kan räknas först när egna ögonblicksbilder finns.
+
 ## 2026-11-25 – Q1: pris vid rörlig förmågetröskel i G2 (katalogserier)
 
 - Fyra katalogserier: `g2_price_rolling12_arena` (huvudvariant), `g2_price_rolling6_arena`, `g2_price_frontier_arena`
@@ -928,6 +941,19 @@ Johannes svarade "kör på dina rekommendationer" på tre rekommendationer samma
 - R24-2 till R24-4 (should_fix): persistensen över alla månader (0,61 och 0,56) saknas i resultatet, slumpvärldens test
   håller bara för sitt frö, och filen med tillstånd per månad som fanns före posten ska nämnas. Övrigt är noter. G6:s
   revideringar kommer från G.17:s årsrevision 2026-11-24, en dag före V (verifierat hos Fed).
+
+## 2026-11-25 – R23: granskning av Q2 (öppna mot stängda modeller, Kinas gap)
+
+- **Dom: godkänd med anmärkningar** (`docs/granskning/r23-oppen-stangd.md`). En oberoende omräkning ur rådata ger samma
+  värden, `known_from` och `source` i 326 av 330 rader. Arena-klassningen är samtida: 0 avvikelser i 42 712 par mot
+  Space-tabeller från samma tid.
+- **R23-1 (ska rättas):** en tavla som publiceras sista dagen i månaden och beläggs nästa dag räknas aldrig i den
+  månaden. Gapet 2026-04 och 2026-09 blir fel (2026-09: 27,06 i stället för 42,58). **R23-2:** samma fel finns sedan
+  tidigare i `sources/vintages.py` och ger fel värden i kärnserien `g1_arena_text_top` (2026-09: 1 517,79 i stället för
+  1 533,09). Det bör rättas före ögonblicksbilden 2026-11-30.
+- **R23-3:** ECI räknar Kimi K3.1 Pro som öppen i 2026-10, fast Epoch anger att vikterna kom 2026-11-04.
+  **Rekommendation till Johannes:** en daterad registerpost som räknar en ECI-modell som öppen från dokumenterat
+  viktsläpp. Ingen av serierna blir kärnserie före R23-1, R23-3 och R23-4.
 
 ## 2026-11-25 – CN1: Kina via SEC, Alibaba och Baidu som katalogserier
 
@@ -1019,6 +1045,20 @@ Johannes svarade "kör på dina rekommendationer" på tre rekommendationer samma
 - G6:s byten i (a) hänger på G.17:s årsrevision dagen före V: med V = 2026-11-23 byter G6 i 3 månader i stället för 6.
 - Nästa registerpost för testet (omkörningen, tidigast 2027-11) ska välja en annan baslinje vid 6 månader och räkna
   spärren för bakåtfyllda serier som i realtid.
+
+## 2026-11-25 – X20: rättning av Q2 efter granskning R23
+
+- **R23-1 och R23-2 rättade:** första versionen av en månad räknar belägg ≤ månadsslut + 1 dag, i
+  `sources/vintages.monthly` och i `open_gap.arena_build` (daterad registerpost före koden). Det ändrar
+  `g1_arena_text_top` (kärnserie) i 2026-04 och 2026-09 (2026-09: 1 517,79 → 1 533,09), tre andra `g1_arena_*` och
+  gapen för öppna och Kina i 2026-04 och 2026-09 (2026-09: 27,06 → 42,58). Ingen eftersläpning ändras, och G1:s
+  tillstånd i backcasten 2026-04 – 2026-11 är oförändrat. Serierna är ombyggda i X20:s data.
+- **R23-3 rättad:** en ECI-modell räknas som öppen från sitt dokumenterade viktsläpp och som stängd före det. Bara
+  2026-10 ändras: 7 månader och gap 9,80 (granskningen skrev 10,60, vilket var fel).
+- **R23-4:** ersättningsregelns storlek står nu i dokumentet. Omräkningen ger granskningens tabell.
+- **Inte i X20:** `arena_meta.weights_of` (R23-8) och `arena_price.build` är skyddade i körning 14. Den senare har
+  samma konstruktion som R23-1 men inga ändrade värden i dag. **Rekommendation till Johannes:** rätta båda i ett eget
+  litet spår efter ögonblicksbilden, och slå ihop X20:s data före 2026-11-30.
 
 ## 2026-11-25 – R20: KR1:s spread vid emission godkänd med anmärkningar
 

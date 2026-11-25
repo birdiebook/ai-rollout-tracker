@@ -7,10 +7,12 @@ evidence is a dated record, "backfill" when it is only a later bulk upload).
 
 Monthly rule (frontier as known by month end, register 2026-11-23): month m takes the value of the latest
 published state with published <= end of m among the states documented by then.
-- First vintage: known_from = end of m + 1 day, using states with evidence <= end of m (a state documented on
-  the last day counts, since as_of reads a date as the end of that day; +1 as in the registered G2 series).
+- First vintage: known_from = end of m + 1 day, using states with evidence <= end of m + 1 day (as_of reads a
+  date as the end of that day, so a state documented on that day is known then; +1 as in the registered G2 series).
 - Each state published <= end of m but documented later adds a vintage on its evidence date when it changes the
   value (revisions become new versions; nothing is back-dated).
+- A state documented on end of m + 1 day therefore enters the first vintage. Until 2026-11-25 the first vintage used
+  evidence <= end of m, so such a state never entered its month (register 2026-11-25, X20, after review R23).
 A month in which no state is documented yet gets its first row on the first evidence date.
 """
 
@@ -44,8 +46,7 @@ def monthly(events: pd.DataFrame, last_month: pd.Period, first_month: pd.Period 
         days = sorted({base} | set(cand.loc[cand["evidence"] > end, "evidence"]))
         prev = None
         for day in days:
-            cutoff = end if day == base else day
-            known = cand[cand["evidence"] <= cutoff]
+            known = cand[cand["evidence"] <= day]  # first vintage: evidence <= end + 1 day (X20, R23-2)
             if known.empty:
                 continue
             last = known.iloc[-1]  # latest published (ties: latest evidence)

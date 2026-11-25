@@ -102,6 +102,29 @@ efter, även `known_from`. Juli-tavlorna med variantrader var aldrig den senaste
 2026-07-31 var det 2026-07-30, som saknar variantrader), och 2026-06-25 ändrades inte. G1:s tillstånd vid alla
 månadsslut 2024-06 – 2026-10 och 2026-11-24 är oförändrat. Rättningen behövs för nästa omskrivning.
 
+**Rättning X20 (2026-11-25, efter granskning R23, registerpost "X20: första versionens brytdag").** Första versionen
+av en månad räknade tavlor belagda ≤ månadsslut. En tavla som publicerades sista dagen i månaden och belades nästa dag
+kom därför aldrig in i sin månad, fast regeln säger att ett senare belägg ger en ny version på beläggets dag. Nu
+räknar första versionen belägg ≤ månadsslut + 1 dag (`sources/vintages.monthly`). Det gäller `text` och
+`text_style_control` 2026-04-30 och 2026-09-30 och `webdev` 2026-07-31 och 2026-09-30, alla belagda dagen efter
+(datasetets commits cirka 03:00 UTC). Serierna byggdes om (`--rebuild`), och antalet rader är detsamma (51, 35, 44
+och 12):
+
+| Serie | Månad | `known_from` | Före | Efter |
+|---|---|---|---|---|
+| `g1_arena_text_top` (kärnserie) | 2026-04 | 2026-05-01 | 1 500,21 | 1 500,56 |
+| `g1_arena_text_top` (kärnserie) | 2026-09 | 2026-10-01 | 1 517,79 | 1 533,09 |
+| `g1_arena_text_sc_top` | 2026-04 | 2026-05-01 | 1 502,93 | 1 504,00 |
+| `g1_arena_text_sc_top` | 2026-09 | 2026-10-01 | 1 508,55 | 1 524,84 |
+| `g1_arena_text_top_gap_ref` | 2026-04 | 2026-05-01 | 368,74 | 369,11 |
+| `g1_arena_text_top_gap_ref` | 2026-09 | 2026-10-01 | 386,23 | 401,56 |
+| `g1_arena_webdev_top` | 2026-07 | 2026-08-01 | 1 711,88 | 1 703,69 |
+| `g1_arena_webdev_top` | 2026-09 | 2026-10-01 | 1 820,31 | 1 817,84 |
+
+G1:s tillstånd ändras inte: backcasten (`python -m ai_tracker.state backcast`) för månadsslut 2026-04 – 2026-11 och
+`state show --date 2026-11-30` ger samma utfall före och efter. `g1_swebench_verified_top` och `g2_aws_*` kan inte
+påverkas, eftersom deras beläggsdag är publiceringsdagen.
+
 ### Serier och mått
 
 - `g1_arena_text_top`: högsta rating i `text`, kategori `overall`. Elo till och med 2024-01-08, därefter
