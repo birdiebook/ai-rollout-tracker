@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import argparse
 import re
+import time
 
 import pandas as pd
 
@@ -221,6 +222,7 @@ def run(frac: float = 0.3, seed: int = 20261125, df: pd.DataFrame | None = None)
                 subs[row["company"]] = _submissions(row["company"])
             if row["source_url"] not in texts:
                 texts[row["source_url"]] = fetch_text(row["source_url"])
+                time.sleep(orders_backlog_corpus.PAUSE)  # bulk loop: stay near 2 requests per second
             text = texts[row["source_url"]]
             dates = check_dates(row, subs[row["company"]], text)
             status = check_row(row, text)

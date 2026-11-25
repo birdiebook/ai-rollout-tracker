@@ -177,3 +177,135 @@ rad i urvalet:
 
 Kontrollen bekräftar plats, tal och datum, inte semantiken (definition, period, organiskt eller inte, första
 dokumentet). Det är för den oberoende granskningen.
+
+## Kodning (2026-11-25, efter låsningen)
+
+Kodat efter commit 471c67b. Korpusen byggdes med `python -m ai_tracker.sources.orders_backlog_corpus` (113
+pressmeddelanden, inga misslyckade hämtningar). Raderna kodades i arbetsblad per bolag och skrevs till
+`curated/orders_backlog.csv` med plats, SHA-256 och datumraden. Meningarna ligger i `data/raw/orders_sentences/`.
+
+### Läsmängd och kodade rader
+
+| Bolag | Dokument | Kandidater | Läsmängd | Värden | varav gränser | Stopp | Definitioner | Katalogserier | Avslutade |
+|---|---|---|---|---|---|---|---|---|---|
+| Vertiv | 21 | 119 | 211 | 61 | 1 | 19 | 11 | 10 | 10 |
+| GE Vernova | 11 | 177 | 311 | 197 | 0 | 1 | 27 | 26 | 0 |
+| Eaton | 20 | 209 | 334 | 108 | 4 | 8 | 11 | 10 | 4 |
+| Dell | 20 | 26 | 51 | 26 | 5 | 14 | 10 | 3 | 1 |
+| Digital Realty | 20 | 731 | 1 312 | 183 | 0 | 0 | 12 | 12 | 0 |
+| Equinix | 21 | 114 | 183 | 0 | – | – | – | – | – |
+| **Summa** | **113** | **1 376** | **2 402** | **575** | **10** | **42** | **71** | **61** | **15** |
+
+Talen räknar meningar med upprepningar. GE Vernova har 19 jämförelsetal ur segmenttabellernas kolumn för året före
+(12 första gången för 2023, 6 revideringar och ett "från 50 GW"). 15 upprepade jämförelsetal kodades inte, eftersom
+talet var detsamma som i det första dokumentet. 19 värden har `approx` och räknas som punkter.
+
+**Utanför läsmängden** kodades 4 rader, alla Dell: tre ur 2024-08-29 #14 ("AI-optimized server demand was $3.2
+billion, up 23% sequentially, and $5.8 billion year to date", ordet är "demand") och en ur 2025-08-28 #3 ("shipped $10
+billion of AI solutions in the first half of FY26", inget mått-ord). De hittades när agenten sökte efter "AI" och
+belopp i Dells pressmeddelanden.
+
+**Läsning av långa meningar.** En tabell blir en lång "mening". För meningar över 700 tecken läste agenten fönster
+på 150–220 tecken runt varje mått-ord med en siffra i närheten. För Eaton bestämdes segmentet av blocket meningen står
+i (mellan "Sales for the Electrical Americas segment", "Sales for the Electrical Global segment" och "Aerospace segment
+sales"), eftersom meningarna om order och orderstock inte upprepar segmentets namn. För Digital Realty, vars `EX-99.1`
+är ett finansiellt supplement med pressmeddelandet som avsnitt, läste agenten pressmeddelandets avsnitt (höjdpunkter,
+"Leasing Activity" och tabellen över nya avtal per region och produkt). Raden "All Regions" och totalraderna delades
+med ett reguljärt uttryck, och varje tal jämfördes för hand med tabelltexten.
+
+### Tolkningar
+
+Tolkningar som behövdes under kodningen. Reglerna ovan är oförändrade.
+
+1. **Samma tal två gånger i ett dokument.** Står ett tal i både rubrik och brödtext kodas en rad, ur meningen med det
+   mest precisa talet och den mest bestämda formuleringen (Vertiv 2021Q4: 51,2 % i brödtexten, 51 % i rubriken; Vertiv
+   2024Q2: rubriken säger "organic orders ... up 37% on a trailing twelve-month basis", brödtexten bara "orders").
+2. **"Organic" och "excluding foreign exchange" i samma mening** kodas `organic` (Vertiv 2024Q1–2024Q4).
+3. **Jämförelsetal som bara skiljer sig i avrundning** räknas som samma tal (Vertiv 2022Q3: "+51% in fourth quarter
+   2021", kodat 51,2).
+4. **Stock vid ett datum som inte är kvartalets slut** kodas inte: Vertivs orderstock "as of the end of August" 2022
+   (det preliminära 8-K:t 2022-10-03) och Dells AI-orderstock "as of today" 2025-02-27.
+5. **Extra dokument.** Vertivs 8-K 2022-10-03 (preliminära order för tredje kvartalet 2022, med vd-byte) är ett extra
+   dokument (`EXTRA_DOCUMENTS`). Det ger ett värde (12 %, fast valuta) som det ordinarie pressmeddelandet reviderade
+   till 15 %. Equinix 8-K/A 2025-07-31 är extra genom sin form, men Equinix är inte kodat.
+6. **GE Vernova.** Order per komponent (service, utrustning) kodas inte, eftersom reglerna bara nämner uppdelningen för
+   orderstock. GW kodas bara för kvartalets summa (order, orderstock, reservationer), inte för enskilda kontrakt
+   ("a 1.8 GW order for three H-class gas turbines") och inte för vindkraft. Flöden i GW som inte är order
+   (nytecknade reservationer, konverterade reservationer, levererade GW) och förändringar i USD ("backlog growth of $5.2
+   B sequentially") passar inte schemat och kodas inte. "Orders exceeded revenue by 1.4X" och Electrifications
+   book-to-bill (2026) kodas inte, eftersom reglerna för GE Vernova inte nämner book-to-bill. Electrifications order
+   till datacenter ("$2.4 billion in equipment orders to support data centers", "over $5 billion year-to-date") är ett
+   delsegment i USD och kodas inte. Alla GW-rader har komponenten `equipment` (gasturbiner). Orderstocken för
+   Electrification står i en punkt under segmentets rubrik utan segmentets namn, och noten säger det. Orderstocken från
+   2026Q1 innehåller det köpta Prolec GE, och noten säger det. Det är samma definition med ny omfattning, inte en ny
+   serie (regeln om ny ordalydelse).
+7. **Eaton.** "Flat" är ett ord och kodas inte. Därför står ett stopp för Electrical Globals organiska order i 2025Q1.
+   Ordertillväxten "excluding one large multi-year data center order" (2025Q1) kodas inte (en egen justering). Tal för
+   hela bolaget ("23% Backlog Growth", "The company's backlog was up 18%") och book-to-bill för Electrical och
+   Aerospace tillsammans kodas inte, eftersom reglerna bara tar segmenten och Electrical. Rubriken 2022Q2 ("Robust
+   Order Activity up 25% in Electrical") har inget fönster. Den kodas som rullande tolv månader, eftersom
+   pressmeddelandet bara anger order så, och noten säger det. Eaton anger inga tal för order eller försäljning till
+   datacenter, bara ord ("driven by data center momentum").
+8. **Dell.** "AI orders" och "AI-optimized server demand" kodas som order för AI-servrar, och "AI solutions" som
+   leveranser av AI-servrar. Noten säger ordet. Tillväxten "shipments up more than 100%" och "backlog growing more than
+   30%" (2024-05-30) är gränser. De kodas som förändring mot kvartalet före, eftersom meningen börjar med "increasing
+   sequentially" och orderstocken gick från 2,9 till 3,8 miljarder (+31 %).
+9. **Digital Realty: andel.** Till och med 2024Q4 säger pressmeddelandet inte vilken andel totalen gäller. Tabellens
+   rad "Grand Total" och textens "total bookings" kodas ändå som Digital Realtys andel (`dlr_share`), eftersom samma
+   rad och samma mening från 2025Q1 (texten) och 2025Q3 (tabellen) heter "at Digital Realty's share". Talen vid 100 %
+   andel (från 2025Q2) är en egen serie (`all`). Detta är den viktigaste tolkningen att granska. Kategorin "0–1
+   megawatt plus interconnection" kodas inte, eftersom båda delarna kodas var för sig. "FY backlog cash NOI" i
+   NAV-tabellen är ett annat mått och kodas inte.
+10. **Datumraden.** Eatons pressmeddelande 2026-02-03 är daterat "February 26, 2026", alltså efter inlämningen. Det är
+    ett skrivfel. `release_date` är tom och known_from är inlämningsdagen.
+11. **Avslutad serie.** En gräns ("more than 100%") efter ett stopp öppnar inte serien igen, eftersom en gräns inte är
+    en seriepunkt (`orders_backlog.stopped`). Vertivs organiska order 2026Q3 ("over 100%") är ett sådant fall.
+
+### Resultat
+
+- **Vertiv slutade ange order i siffror 2026.** Pressmeddelandena för 2026Q1 och 2026Q2 har inga tal för order,
+  orderstock eller book-to-bill, och 2026Q3 bara "Organic Orders Growth over 100%" (en gräns). Alla tio serierna är
+  därför avslutade. Det senaste talet är 2025Q4: organiska order +252 %, book-to-bill 2,9 och orderstock 15,0
+  miljarder dollar. Vertiv har också bytt definition flera gånger: order utan angiven bas (2021Q4–2022Q2 och 2025Q1),
+  i fast valuta (2022Q3–2023Q3) och organiskt (från 2023Q4).
+- **GE Vernova** anger order per segment varje kvartal från 2024Q1 (och 2023 genom jämförelsetalen), gasturbinernas
+  orderstock och reservationer i GW från 2025Q1 och orderstocken för hela bolaget från 2025Q4. Segmenttabellernas
+  jämförelsetal för 2025 ändrades i pressmeddelandena 2026 (till exempel Power 2025Q1 från 6 247 till 6 263 miljoner).
+  Det är nya vintages.
+- **Eaton** anger bara tillväxt: order som rullande tolv månader och orderstock mot samma månad året före, per segment.
+  Från 2025Q2 står orderstockens tillväxt utan ordet "organically", och det blir en ny serie.
+- **Dell** anger AI-order och AI-orderstock oregelbundet och i citat. Tre serier har minst två perioder.
+- **Digital Realty** anger nya avtal per produkt i varje kvartal sedan 2021Q4 och orderstocken av tecknade avtal från
+  2024Q3.
+- **Gren.** G7 för Vertiv, GE Vernova och Eaton (kraft och kylning), G6 för Dell (AI-servrar) och G4 för Digital
+  Realty (tecknade hyresavtal är kontrakterade intäkter, som RPO).
+
+### Datering
+
+known_from är inlämningsdagen i EDGAR. Datumraden fanns i alla 113 bilagor (`orders_backlog_corpus.dateline`). Den är
+samma dag som inlämningen i alla kodade dokument utom Eaton 2026-02-03 (skrivfel, se tolkning 10). Equinix 8-K/A
+2025-07-31 är daterat dagen före, eftersom ändringen lämnades in dagen efter originalet. Inget pressmeddelande var
+alltså offentligt en tidigare dag än inlämningen, enligt datumraden. Att pressmeddelandet kan ha legat på bolagets sida
+några timmar före 8-K:t samma dag ger inget läckage, eftersom known_from är en dag.
+
+### Stickprov
+
+`python -m ai_tracker.orders_check --frac 0.3 --seed 20261125`: 185 rader (11 stopp), 1 fel. Hela filen
+(`--frac 1.0`): 617 rader (42 stopp), 3 fel, 0 flyttade meningar. Alla tre felen är `still_stated` för stopp, och
+agenten läste meningarna:
+- `dell-2024-05-30-s01` (order mot kvartalet före): meningen anger ordernivån "increasing sequentially to $2.6
+  billion" och tillväxt för leveranser och orderstock, inte orderns tillväxt i procent.
+- `etn-2025-08-05-s01` (Electrical Americas orderstock, organisk): rubriken anger orderstocken för hela Electrical,
+  och ordet "organic" gäller försäljningen.
+- `vrt-2022-10-26-s01` (order utan angiven bas): meningen anger jämförelsetal för 2021Q4 och 2022Q1.
+
+Alla hashar, tal och datum (filed, accepted och datumraden) stämde. Kontrollen säger inget om semantiken: definition,
+period, organiskt eller inte och första dokumentet. Det är för den oberoende granskningen.
+
+### Inte kodat
+
+- **Equinix** (valfritt) är inte kodat. Dokumenten ingår i korpusen, och läsmängden (183 meningar) är inte läst.
+- Guidance ("we expect", "at least 110 GW by year-end 2026", Dells guidance för AI-leveranser), "pipeline" och ord
+  utan tal ("record", "doubled", "flat").
+- Regioner (Vertivs Americas, Digital Realtys regioner), Aerospace, Vehicle och GE Vernovas vindkraft i GW.
+- Intervall förekom inte i de kodade måtten.

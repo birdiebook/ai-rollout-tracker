@@ -777,3 +777,15 @@ republishing data"), npm och arXiv (`okänd`), och Microsofts capex-guidance ur 
   regeln bakom dem ändras, och fälten är tillägg (`docs/steg3/datakontrakt.md`, Ändringar).
 - Loggarna och registret har båda sidornas poster i tidsordning. `quarterly.py` har mains omskrivning med "för få
   källor" i tillståndsordningen.
+
+## 2026-11-25 – S3: order och orderstock ur resultatpressmeddelanden
+
+- Kodningsreglerna låstes och committades före kodningen (471c67b). 575 värden och 42 stopp för Vertiv, GE Vernova,
+  Eaton, Dell och Digital Realty ur 113 pressmeddelanden. Equinix (valfritt) är inte kodat.
+- 61 katalogserier (G7 kraft och kylning, G6 Dell, G4 Digital Realty), `publish=False` tills den oberoende
+  granskningen är godkänd. Klass `ja` (egen extraktion ur sec.gov). Inga kärnserier, och ingen takt är räknad.
+- Vertiv slutade ange order i siffror 2026. Alla Vertivs serier är avslutade.
+- Stickprov på hela filen: 3 fel av 617, alla grova stoppträffar som agenten läste och bedömde som falska.
+- **Rekommendation:** låt granskningen pröva tolkningen av Digital Realtys andel före allt annat. Gasturbinernas GW
+  (GE Vernova) och Digital Realtys tecknade avtal i MW är de mest direkta måtten på fysisk utbyggnad, men de är för
+  korta (7 och 20 kvartal) för att bli kärnserier nu.

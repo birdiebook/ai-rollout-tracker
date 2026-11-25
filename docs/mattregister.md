@@ -1514,3 +1514,14 @@ submissions och indexsidorna för resultat-8-K:na (bilagornas nummer och namn). 
 - **Inte kärnserier.** De ingår inte i grenarnas tillstånd, diffusionsindex eller takter. Ingen takt räknas.
 - **Publicering:** `publish=False` tills den oberoende granskningen av extraktionen är godkänd. Stickprov med
   `python -m ai_tracker.orders_check`.
+
+### 2026-11-25 – S3, tillägg efter kodningen: tolkningar (inga regler ändrade)
+
+Skrivet efter kodningen. Reglerna i posten ovan står kvar. Tolkningarna finns i
+[`docs/kallor/order_orderstock.md`](kallor/order_orderstock.md), avsnittet "Tolkningar". Tre av dem rör registrets
+regler:
+- **Avslutad serie.** "Senaste rad" läses som senaste seriepunkt eller stopp. En gräns ("more than 100%") efter ett
+  stopp öppnar inte serien igen, eftersom gränser inte är seriepunkter.
+- **Digital Realtys andel.** Totaler utan angiven andel (2021Q4–2024Q4) kodas som Digital Realtys andel, eftersom samma
+  tabellrad och mening senare heter "at Digital Realty's share". Talen vid 100 % andel är en egen serie.
+- **Stock vid ett annat datum än periodens slut** ("as of the end of August", "as of today") kodas inte.
