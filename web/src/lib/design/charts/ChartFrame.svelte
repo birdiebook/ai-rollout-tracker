@@ -15,11 +15,12 @@
   import { dims as mkDims, type ChartDims, type Margin, type RecordStatus, type TableSpec } from './types';
   import { provideTooltip } from './tooltip.svelte';
   import Tooltip from './Tooltip.svelte';
-  import DataTable from './DataTable.svelte';
+  import TableView from './TableView.svelte';
   import StatusBadge from './StatusBadge.svelte';
-  import { PRERENDER_CELLS, chartData } from './chartData';
+  import { chartData } from './chartData';
   import { claimingServerMarkup, enqueue, staticMarkup } from './lazy';
   import SnippetHost from './SnippetHost.svelte';
+  import Deferred from './Deferred.svelte';
 
   let {
     id,
@@ -67,8 +68,6 @@
   const pageData = chartData();
   const href = $derived(dataHref === undefined ? pageData() : dataHref);
   const tbl = $derived(table);
-  const nRows = $derived(tbl?.rows.length ?? 0);
-  const prerendered = $derived(!!tbl && nRows * tbl.columns.length <= PRERENDER_CELLS);
   const w = $derived(measured > 0 ? Math.round(measured) : width);
   const d = $derived(mkDims(w, height, margin));
   const d0 = $derived(mkDims(width, height, margin)); // the prerendered body's dimensions
@@ -85,12 +84,18 @@
       ? staticMarkup(render(SnippetHost, { props: { snippet: children as never, args: d0 as never }, context: ctx ?? undefined }).body)
       : ' '
   );
+  // the table view likewise (TableView): no table is built during the hydration
+  const tableBody = $derived(
+    import.meta.env.SSR && table
+      ? staticMarkup(render(TableView, { props: { id, table, href, drawn: false } }).body)
+      : ' '
+  );
   let job: ReturnType<typeof enqueue> | null = null;
   let seen = false;
   $effect(() => {
-    // the inputs the generated sentence and table depend on changed (a view in the URL, a slider): draw live now
+    // the inputs the generated sentence depends on changed (a view in the URL, a slider): draw live now. The table
+    // is not read here: building it is what the deferred drawing avoids during the hydration.
     void description;
-    void tbl;
     if (seen && !live) {
       job?.cancel();
       live = true;
@@ -127,22 +132,15 @@
   </div>
 
   <div class="foot">
-    {#if legend}<div class="legend-slot">{@render legend()}</div>{/if}
+    <!-- legend and a small prerendered table stay server markup until the chart is live (R-W2 P1) -->
+    {#if legend}<div class="legend-slot">{#if live}{@render legend()}{:else}<Deferred>{@render legend()}</Deferred>{/if}</div>{/if}
     <div class="meta">
       {#if source}<span>Källa: {source}</span>{/if}
       {#if license}<span>Licens: {license}</span>{/if}
     </div>
     {#if table}
-      <details class="tbl" bind:open data-rows={nRows} data-pre={prerendered ? '' : undefined}>
-        <summary class="chip">Tabell <span class="n">({nRows} {nRows === 1 ? 'rad' : 'rader'})</span></summary>
-        <div id="{id}-table">
-          {#if prerendered || opened}
-            <DataTable {table} />
-          {:else}
-            <p class="note nojs">Tabellen har {nRows} rader och ritas när sidan har JavaScript.{#if href} Talen finns i den publicerade datan nedan.{/if}</p>
-          {/if}
-          {#if href}<p class="note data"><a href={href}>Datan bakom diagrammet (JSON)</a></p>{/if}
-        </div>
+      <details class="tbl" bind:open>
+        {#if live || opened}<TableView {id} table={tbl!} {href} drawn={opened} />{:else}{@html tableBody}{/if}
       </details>
     {/if}
   </div>
@@ -194,31 +192,7 @@
     color: var(--c-muted);
     margin-left: auto;
   }
-  .tbl > summary {
-    list-style: none;
-    font-size: 12px;
-  }
-  .tbl > summary::-webkit-details-marker {
-    display: none;
-  }
-  .tbl > summary::before {
-    content: '▸';
-    margin-right: 5px;
-  }
-  .tbl[open] > summary::before {
-    content: '▾';
-  }
-  .tbl .n {
-    color: var(--c-muted);
-  }
   .tbl[open] {
     flex-basis: 100%;
-  }
-  .tbl[open] > div {
-    margin-top: 8px;
-  }
-  .tbl .note {
-    margin: 6px 0 0;
-    font-size: 12px;
   }
 </style>

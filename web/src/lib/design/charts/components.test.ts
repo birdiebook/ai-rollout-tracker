@@ -53,14 +53,14 @@ describe('ChartFrame with primitives', () => {
     expect(details.querySelector('summary')?.textContent?.replace(/\s+/g, ' ').trim()).toBe('Tabell (3 rader)');
     // prerendered: the rows are in the DOM before the <details> is opened, so they open without JavaScript
     expect(container.querySelectorAll('#t-table tbody tr')).toHaveLength(3);
-    expect(details.hasAttribute('data-pre')).toBe(true);
+    expect(container.querySelector('#t-table')?.hasAttribute('data-pre')).toBe(true);
     expect(container.querySelector('#t-chart')?.hasAttribute('hidden')).toBe(false);
     expect(container.textContent).toContain('Källa: test');
   });
   it('draws a large table only when it is opened, and links the data (R-W2 P1)', async () => {
     const { container } = render(ChartHarness, { dots: [], nRows: 40, dataHref: '/x/data/series/a.json' });
     const details = container.querySelector('details.tbl') as HTMLDetailsElement;
-    expect(details.hasAttribute('data-pre')).toBe(false);
+    expect(container.querySelector('#t-table')?.hasAttribute('data-pre')).toBe(false);
     expect(container.querySelectorAll('#t-table tr')).toHaveLength(0);
     expect(container.querySelector('#t-table .nojs')?.textContent).toContain('40 rader');
     expect(container.querySelector('#t-table a')?.getAttribute('href')).toBe('/x/data/series/a.json');

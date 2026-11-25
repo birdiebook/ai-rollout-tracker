@@ -23,12 +23,12 @@ test.describe('without JavaScript', () => {
 
   test('a small table opens natively and a large one links its data (R-W2 B1)', async ({ page, request }) => {
     await page.goto(`serie/${monthly.key}/`);
-    const small = page.locator('details.tbl[data-pre]').first();
+    const small = page.locator('details.tbl:has([data-pre])').first();
     if (await small.count()) {
       await small.locator('summary').click();
       await expect(small.locator('table')).toBeVisible();
     }
-    const large = page.locator('details.tbl:not([data-pre])').first();
+    const large = page.locator('details.tbl:not(:has([data-pre]))').first();
     await large.locator('summary').click();
     await expect(large.locator('.nojs')).toBeVisible();
     const href = await large.locator('a').getAttribute('href');
@@ -141,4 +141,14 @@ test('time travel, branch page: every spark has numbers in its name and a shared
   expect(names.every((t) => /lägst .+, högst .+, senast /.test(t) && /Riktningen bytte \d+/.test(t)) || names.every((t) => /inga mått/.test(t))).toBe(true);
   await page.locator('[data-tt="spark-table"] summary').click();
   await expect(page.locator('[data-tt="spark-table"] table thead th')).toHaveCount(n + 1);
+});
+
+test('method page: the source filter works on the deferred list (R-W2 P1)', async ({ page }) => {
+  await page.goto('metod/', { waitUntil: 'networkidle' });
+  const items = page.locator('ul.sources > li');
+  const all = await items.count();
+  await page.getByRole('button', { name: 'Hålls inne helt eller delvis' }).click();
+  await expect.poll(async () => (await items.allInnerTexts()).every((t) => { const m = t.match(/(\d+)\/(\d+)/); return !!m && Number(m[1]) < Number(m[2]); })).toBe(true);
+  await page.getByRole('button', { name: /^Alla/ }).click();
+  await expect(items).toHaveCount(all);
 });

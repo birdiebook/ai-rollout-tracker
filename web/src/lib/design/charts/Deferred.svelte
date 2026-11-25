@@ -5,12 +5,13 @@
      the focused element are carried over. Not for blocks with form controls. The wrapper is display: contents, so
      the page's layout and CSS are untouched. -->
 <script lang="ts">
-  import { getAllContexts, onMount, type Snippet } from 'svelte';
+  import { getAllContexts, onMount, tick, type Snippet } from 'svelte';
   import { render } from 'svelte/server';
   import { claimingServerMarkup, drawOnce, enqueue, staticMarkup } from './lazy';
   import SnippetHost from './SnippetHost.svelte';
 
-  let { children, mode = 'static' }: { children: Snippet; mode?: 'static' | 'idle' } = $props();
+  /** force: draw live now (the block's content depends on state that just changed, e.g. a filter) */
+  let { children, mode = 'static', force = false }: { children: Snippet; mode?: 'static' | 'idle'; force?: boolean } = $props();
   let live = $state(!import.meta.env.SSR && !claimingServerMarkup());
   const ctx = import.meta.env.SSR ? getAllContexts() : null;
   const body = $derived(
@@ -41,6 +42,13 @@
     if (live || !host) return;
     if (mode === 'idle') job = enqueue(host, draw, after);
   });
+  $effect(() => {
+    if (!force || live) return;
+    job?.cancel();
+    before();
+    live = true;
+    tick().then(after);
+  });
   function enter(e: PointerEvent) {
     if (live || e.pointerType !== 'mouse') return; // a touch swap would lose the tap's target
     if (job) job.now();
@@ -48,12 +56,12 @@
   }
 </script>
 
-<div class="deferred" bind:this={host} onpointerenter={enter} role="presentation" data-live={live ? '' : undefined}>
+<div class="dfr" bind:this={host} onpointerenter={enter} role="presentation" data-live={live ? '' : undefined}>
   {#if live}{@render children()}{:else}{@html body}{/if}
 </div>
 
 <style>
-  .deferred {
+  .dfr {
     display: contents;
   }
 </style>
