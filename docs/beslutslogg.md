@@ -777,3 +777,19 @@ republishing data"), npm och arXiv (`okänd`), och Microsofts capex-guidance ur 
   regeln bakom dem ändras, och fälten är tillägg (`docs/steg3/datakontrakt.md`, Ändringar).
 - Loggarna och registret har båda sidornas poster i tidsordning. `quarterly.py` har mains omskrivning med "för få
   källor" i tillståndsordningen.
+
+## 2026-11-25 – CN1: Kina via SEC, Alibaba och Baidu som katalogserier
+
+- **Byggt:** 14 katalogserier ur 6-K (`docs/kallor/kina_sec.md`): Alibabas molnsegment i fyra definitioner
+  (`rev_baba_cloud_v1`–`v4`, skarvas aldrig), Alibabas capex i två (`capex_baba_v1`, `v2`), Baidus capex (`capex_bidu`,
+  `capex_bidu_core`), US$-vyer för de öppna tabellserierna och två textserier för Baidu (`publish=False`). Inga
+  kärnserier ändras, och inget index eller tillstånd påverkas.
+- **Gränserna** sätts av bolagens egen text om omklassning, inte av en procentgräns. Omräkningarna vid gränserna är
+  under 1 %. En odeklarerad omräkning stoppar hämtningen.
+- **Datering:** `known_from` = 6-K:ns inlämningsdatum. Fem av Baidus pressmeddelanden 2020–2021 kom 2–6 dagar före
+  inlämningen. Registret ändrades före analysen: de används med inlämningsdatumet (konservativt, inget läckage).
+- **Valuta:** H.10 hämtas från federalreserve.gov och inte från FRED, eftersom FRED:s villkor ger klassen `okänd`.
+- **Kontroll:** molnsegmentet stämmer exakt mot 20-F:ns XBRL på samma definition, Baidus capex exakt mot companyfacts.
+  Alla 26 textrader klarar kontrollen mot EDGAR.
+- **Rekommendation till Johannes:** låt extraktionsgranskningen pröva Baidus textserier innan de publiceras. Ingen
+  serie föreslås som kärnserie nu. `capex_baba_v2` är den bästa kandidaten för G5.
