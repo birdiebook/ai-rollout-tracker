@@ -19,7 +19,7 @@
   </figcaption>
   {#if reg.available && reg.blocks.length}
     <p class="desc">
-      Sannolikheten för inbromsning enligt regimmodellen C4, {periodLabel(reg.blocks[0].month ?? start.record.month, true)}.
+      Sannolikheten för inbromsning enligt regimmodellen, {periodLabel(reg.blocks[0].month ?? start.record.month, true)}.
       Ett skifte till inbromsning registreras när två månader i rad ligger på minst {fmt(REGIME_HIGH, 1)}, och ett skifte
       till expansion när två månader i rad ligger på högst {fmt(REGIME_LOW, 1)}.
     </p>
@@ -39,7 +39,7 @@
     <p class="note k">stapel: sannolikhet 0–100 % · streck: registrerad tröskel {fmt(REGIME_HIGH, 1)}</p>
   {:else}
     <p class="desc">
-      Regimsannolikheten (C4) räknas bara på skarpa ögonblicksbilder.
+      Regimsannolikheten räknas bara på skarpa ögonblicksbilder.
       {#if start.record.first_live_date}Den första committas {dateLabel(start.record.first_live_date)}, och då visas
         sannolikheten här per block.{/if}
     </p>

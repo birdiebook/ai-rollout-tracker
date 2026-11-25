@@ -43,24 +43,33 @@ describe('DataTable', () => {
 });
 
 describe('ChartFrame with primitives', () => {
-  it('names the SVG by title and sentence and toggles to the table view', async () => {
+  it('names the SVG by title and sentence; a small table is prerendered in a native <details> (R-W2 B1)', () => {
     const { container } = render(ChartHarness, { dots: [] });
     const svg = container.querySelector('svg[role="img"]')!;
     expect(svg.getAttribute('aria-labelledby')).toBe('t-title t-desc');
     expect(container.querySelector('#t-desc')?.textContent).toBe('Testmening.');
-    const chart = container.querySelector('#t-chart') as HTMLElement;
-    const table = container.querySelector('#t-table') as HTMLElement;
-    expect(chart.hidden).toBe(false);
-    expect(table.hidden).toBe(true);
-    const btn = screen.getByRole('button', { name: 'Visa tabell' });
-    // R-W2: the name says what a press does, so no aria-pressed (a toggle button must keep its name)
-    expect(btn.hasAttribute('aria-pressed')).toBe(false);
-    expect(btn.getAttribute('aria-controls')).toBe('t-chart t-table');
-    await fireEvent.click(btn);
-    expect(chart.hidden).toBe(true);
-    expect(table.hidden).toBe(false);
-    expect(screen.getByRole('button', { name: 'Visa diagram' }).hasAttribute('aria-pressed')).toBe(false);
+    const details = container.querySelector('details.tbl') as HTMLDetailsElement;
+    expect(details.open).toBe(false);
+    expect(details.querySelector('summary')?.textContent?.replace(/\s+/g, ' ').trim()).toBe('Tabell (3 rader)');
+    // prerendered: the rows are in the DOM before the <details> is opened, so they open without JavaScript
+    expect(container.querySelectorAll('#t-table tbody tr')).toHaveLength(3);
+    expect(details.hasAttribute('data-pre')).toBe(true);
+    expect(container.querySelector('#t-chart')?.hasAttribute('hidden')).toBe(false);
     expect(container.textContent).toContain('Källa: test');
+  });
+  it('draws a large table only when it is opened, and links the data (R-W2 P1)', async () => {
+    const { container } = render(ChartHarness, { dots: [], nRows: 40, dataHref: '/x/data/series/a.json' });
+    const details = container.querySelector('details.tbl') as HTMLDetailsElement;
+    expect(details.hasAttribute('data-pre')).toBe(false);
+    expect(container.querySelectorAll('#t-table tr')).toHaveLength(0);
+    expect(container.querySelector('#t-table .nojs')?.textContent).toContain('40 rader');
+    expect(container.querySelector('#t-table a')?.getAttribute('href')).toBe('/x/data/series/a.json');
+    details.open = true;
+    await fireEvent(details, new Event('toggle'));
+    expect(container.querySelectorAll('#t-table tbody tr')).toHaveLength(40);
+    details.open = false;
+    await fireEvent(details, new Event('toggle'));
+    expect(container.querySelectorAll('#t-table tbody tr')).toHaveLength(40); // kept once drawn
   });
   it('draws axis ticks, band levels widest first, a line with end dot and label', () => {
     const { container } = render(ChartHarness, { dots: [] });

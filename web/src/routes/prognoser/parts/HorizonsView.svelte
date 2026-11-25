@@ -1,7 +1,7 @@
 <!-- W8: D2, forecasts 1–8 quarters ahead. A shadow throughout: it is evaluated, never a main model. -->
 <script lang="ts">
   import { resolve } from '$app/paths';
-  import { DataTable, dateLabel, fmt } from '$lib/design';
+  import { DataTable, Term, dateLabel, fmt } from '$lib/design';
   import type { Horizons } from '$lib/data';
   import FanChart from './FanChart.svelte';
   import KindTag from './KindTag.svelte';
@@ -65,7 +65,7 @@
             }))
           }}
         />
-        <p class="note">Få utfall per horisont: skillnaderna kan vara slump. Kalibrering (CRPS, täckning) visas när fördelningarna har utfall (n_dist).</p>
+        <p class="note">Få utfall per horisont: skillnaderna kan vara slump. Kalibrering (<Term id="crps">CRPS</Term>, täckning) visas när fördelningarna har utfall (n_dist).</p>
       {:else}
         <p class="empty-line">Inga utfall att jämföra med ännu.</p>
       {/if}

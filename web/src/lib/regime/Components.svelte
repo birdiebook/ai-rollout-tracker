@@ -43,7 +43,7 @@
                 </svg>
                 <span class="stats">
                   {#if c.pace !== null}
-                    <span class="num">takt {signed(c.pace, 1)}{c.pace_percentile !== null ? ` · ${fmt(c.pace_percentile, 0)}:e pct` : ''}</span>
+                    <span class="num">takt {signed(c.pace, 1)}{c.pace_percentile !== null ? ` · ${fmt(c.pace_percentile, 0)}:e percentilen` : ''}{#if c.pace_percentile !== null}<span class="visually-hidden"> av seriens egen historik</span>{/if}</span>
                   {/if}
                   {#if c.direction !== null}<Glyph direction={c.direction} />{:else}<span class="muted">ingen riktning</span>{/if}
                   {#if c.latest_period}<span class="muted">{periodLabel(c.latest_period)}</span>{/if}

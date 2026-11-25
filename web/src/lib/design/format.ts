@@ -3,7 +3,7 @@
 
 export const MINUS = '−';
 const nf = new Map<number, Intl.NumberFormat>();
-function formatter(d: number) {
+function intl(d: number) {
   let f = nf.get(d);
   if (!f) {
     f = new Intl.NumberFormat('sv-SE', { minimumFractionDigits: d, maximumFractionDigits: d, useGrouping: true });
@@ -11,6 +11,42 @@ function formatter(d: number) {
   }
   return f;
 }
+const NBSP = '\u00a0';
+const group = (i: string) => {
+  if (i.length <= 3) return i;
+  let n = i.length % 3 || 3;
+  let o = i.slice(0, n);
+  for (; n < i.length; n += 3) o += NBSP + i.slice(n, n + 3);
+  return o;
+};
+/** sv-SE formatting of a non-negative number with `d` decimals, without Intl (R-W2 P1: the first Intl.NumberFormat
+ *  costs ~60 ms at 4x CPU during hydration). Same output as Intl.NumberFormat('sv-SE'): the shortest decimal form of
+ *  the number rounded half away from zero (format.test.ts compares the two). Exponent forms fall back to Intl. */
+function formatAbs(a: number, d: number): string {
+  const s = String(a);
+  if (s.includes('e')) return intl(d).format(a);
+  const k = s.indexOf('.');
+  let i = k < 0 ? s : s.slice(0, k);
+  let f = k < 0 ? '' : s.slice(k + 1);
+  if (f.length > d) {
+    const up = f.charCodeAt(d) >= 53; // '5'
+    f = f.slice(0, d);
+    if (up) {
+      const digits = (i + f).split('');
+      let j = digits.length - 1;
+      while (j >= 0 && digits[j] === '9') digits[j--] = '0';
+      if (j < 0) digits.unshift('1');
+      else digits[j] = String.fromCharCode(digits[j].charCodeAt(0) + 1);
+      const all = digits.join('');
+      i = all.slice(0, all.length - d) || '0';
+      f = all.slice(all.length - d);
+    }
+  } else f = f.padEnd(d, '0');
+  return d ? `${group(i)},${f}` : group(i);
+}
+const formatter = (d: number) => ({ format: (a: number) => formatAbs(a, d) });
+/** Intl's own output, for the test that the fast path agrees with it. */
+export const intlFormat = (a: number, d: number) => intl(d).format(a);
 
 const missing = (x: number | null | undefined): x is null | undefined =>
   x === null || x === undefined || Number.isNaN(x);

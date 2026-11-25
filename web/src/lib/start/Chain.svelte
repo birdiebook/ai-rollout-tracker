@@ -5,7 +5,7 @@
      prerendered HTML is right at every width. -->
 <script lang="ts">
   import { resolve } from '$app/paths';
-  import { StatusBadge, Tooltip, fmt, provideTooltip, stateStyle } from '$lib/design';
+  import { Deferred, StatusBadge, Term, Tooltip, fmt, provideTooltip, stateStyle } from '$lib/design';
   import IndexSpark from './IndexSpark.svelte';
   import UnitGlyphs from './UnitGlyphs.svelte';
   import type { BranchView, LeadView, StartData } from './model';
@@ -57,10 +57,11 @@
     <span><span aria-hidden="true" style:color="var(--c-acc)">▲</span> ökar takten</span>
     <span><span aria-hidden="true" style:color="var(--c-stb)">●</span> oförändrad takt</span>
     <span><span aria-hidden="true" style:color="var(--c-brk)">▼</span> minskar takten</span>
-    <span>en markering per räknad serie · linjen: diffusionsindex {start.sparks[start.branches[0]?.code]?.months.length ?? 24} månader, bandet är stabilt läge ({fmt(start.thresholds.low, 2)}–{fmt(start.thresholds.high, 2)})</span>
+    <span>en markering per räknad serie · linjen: andel serier som ökar takten (<Term id="diffusionsindex">diffusionsindex</Term>), {start.sparks[start.branches[0]?.code]?.months.length ?? 24} månader, bandet är stabilt läge ({fmt(start.thresholds.low, 2)}–{fmt(start.thresholds.high, 2)})</span>
   </p>
 
   <div class="host" bind:this={host} bind:clientWidth={hostWidth}>
+    <Deferred>
     <ol class="spine" aria-label="Leden L1 till L9">
       {#each start.leads as l (l.code)}
         <li class="node" data-lead={l.code}>
@@ -112,13 +113,14 @@
               </div>
               <p class="more">
                 {@render nowcastChips(l)}
-                <a href={resolve('/flode/[led]', { led: l.code })}>{l.code} i flödet →</a>
+                <a href={resolve('/flode/[led]', { led: l.code })}>{l.code} i flödet <span aria-hidden="true">→</span></a>
               </p>
             </div>
           </details>
         </li>
       {/each}
     </ol>
+    </Deferred>
     <Tooltip state={tip} {hostWidth} />
   </div>
 </section>

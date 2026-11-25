@@ -28,6 +28,12 @@ describe.each(themes)('palette %s', (t) => {
     expect(deltaE(p.stb, p.acc)).toBeGreaterThanOrEqual(15);
     expect(deltaE(p.stb, p.brk)).toBeGreaterThanOrEqual(15);
   });
+  it('the naive baseline is not the stable grey (R-W3: one grey, two meanings)', () => {
+    expect(deltaE(p.base, p.stb)).toBeGreaterThanOrEqual(10);
+  });
+  it('the poles are equally far from the diverging mid (R-W3: blue may not outweigh orange)', () => {
+    expect(Math.abs(deltaE(p.acc, p.mid) - deltaE(p.brk, p.mid))).toBeLessThanOrEqual(2.5);
+  });
   it('never uses green or red hues for direction', () => {
     // OKLab hue angle: red ~ 20-40 deg, green ~ 130-150 deg. Orange sits at ~55-60, blue at ~255.
     for (const k of ['acc', 'brk'] as const) {
@@ -37,9 +43,9 @@ describe.each(themes)('palette %s', (t) => {
   });
 });
 
-it('matches the validated values quoted in the vision (CVD protan 26.1 light, 26.8 dark)', () => {
-  expect(deltaE(palettes.light.acc, palettes.light.brk, 'protan')).toBeCloseTo(26.1, 1);
-  expect(deltaE(palettes.dark.acc, palettes.dark.brk, 'protan')).toBeCloseTo(26.8, 1);
+it('matches the validated values quoted in the vision (CVD protan 26.7 light, 27.5 dark; R-W3 colours)', () => {
+  expect(deltaE(palettes.light.acc, palettes.light.brk, 'protan')).toBeCloseTo(26.7, 1);
+  expect(deltaE(palettes.dark.acc, palettes.dark.brk, 'protan')).toBeCloseTo(27.5, 1);
 });
 
 it('dark mode is its own palette, not an inversion of light', () => {

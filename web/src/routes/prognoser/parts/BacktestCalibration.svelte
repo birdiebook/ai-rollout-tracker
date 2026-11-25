@@ -4,7 +4,7 @@
      comparison between models (Diebold–Mariano, Holm) lives in the results document, not here. -->
 <script lang="ts">
   import { scaleLinear } from 'd3-scale';
-  import { Axis, ChartFrame, Legend, fmt, periodLabel } from '$lib/design';
+  import { Axis, ChartFrame, Legend, Term, fmt, periodLabel } from '$lib/design';
   import type { BacktestCalibration } from '$lib/data';
   import { LEVELS, roleOf, type Roles } from './model';
 
@@ -28,6 +28,11 @@
   {#if cal.champion_mae}Huvudmodellens MAE {fmt(cal.champion_mae.mae, 2)} (n {cal.champion_mae.n}).{/if}
 </p>
 
+<p class="note words">
+  Täckning: hur ofta utfallet låg inom intervallet, mot <Term id="slumpband">slumpbandet</Term>. <Term id="holm">Holm</Term>-kolumnerna i
+  tabellen är p-värden för täckningen, justerade för att många jämförelser görs. <Term id="pit">PIT</Term>: var i fördelningen utfallet
+  hamnade. <Term id="crps">CRPS</Term>: genomsnittligt avstånd mellan prognosfördelningen och utfallet, i målets enhet.
+</p>
 <div class="three">
   <ChartFrame
     id="{id}-cov"
@@ -43,7 +48,7 @@
         { key: 'm', label: 'Modell', align: 'left' },
         { key: 'n', label: 'n', align: 'right' },
         ...LEVELS.map((l) => ({ key: l, label: `${l} %`, align: 'right' as const })),
-        ...LEVELS.map((l) => ({ key: `h${l}`, label: `Holm ${l}`, align: 'right' as const }))
+        ...LEVELS.map((l) => ({ key: `h${l}`, label: `Holm-p ${l} %`, align: 'right' as const }))
       ],
       rows: rows.map((r) => ({
         m: label(r.model),
@@ -143,6 +148,10 @@
 </div>
 
 <style>
+  .words {
+    max-width: 80ch;
+    margin: 0 0 10px;
+  }
   .note {
     margin: 0 0 12px;
     max-width: 75ch;

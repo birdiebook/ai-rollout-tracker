@@ -137,7 +137,7 @@ export function storyPage(d: Docs): StoryPage {
           }
         : { kind: 'none', why: 'C4-sektionen saknas för månaden.' };
     } else if (c.type === 'K3') figure = { kind: 'forecast', row: forecastRow(f), unit: f.unit ?? '', decimals: f.decimals ?? 0 };
-    else if (c.track && c.track.months.length) figure = { kind: 'track', track: c.track, month: story.month, direction: c.direction, unit: f.pace_unit ?? null };
+    else if (c.track && c.track.months.length) figure = { kind: 'track', track: c.track, month: story.month, direction: c.type === 'K6' ? null : c.direction, unit: f.pace_unit ?? null }; // K6: no direction in an index (R-W3), drawn in ink
     else figure = { kind: 'none', why: 'Ingen historik i posten för serien.' };
     return { ...c, figure, target: target(c.link, day) };
   });

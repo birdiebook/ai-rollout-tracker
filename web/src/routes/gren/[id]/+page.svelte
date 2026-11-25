@@ -2,10 +2,11 @@
      level, link to /serie/<key>), not counted series with reason, withheld series as named boxes without values. -->
 <script lang="ts">
   import { resolve } from '$app/paths';
-  import { Glyph, StatusBadge, fmt, periodLabel, signed, stateStyle } from '$lib/design';
+  import { Glyph, StatusBadge, Term, dataUrl, fmt, periodLabel, setChartData, signed, stateStyle } from '$lib/design';
   import { IndexHistory, Minimap, Multiples, UnitBoxes, WithheldBoxes } from '$lib/flow';
 
   let { data } = $props();
+  setChartData(() => dataUrl(`branch/${data.branch.code}.json`));
   const b = $derived(data.branch);
   const st = $derived(stateStyle(b.state));
   const heldCounted = $derived(data.withheld.filter((w) => w.counted));
@@ -34,7 +35,7 @@
     <div class="big" data-state={st.key}><Glyph state={b.state} size="1.15em" /></div>
     <p class="idx">
       <span class="num">{fmt(b.index, 2)}</span>
-      <span class="unit">diffusionsindex, 0–1</span>
+      <span class="unit"><Term id="diffusionsindex">diffusionsindex</Term>: andel serier som ökar takten, 0–1</span>
     </p>
     {#if b.previous}
       <p class="note">
@@ -79,8 +80,9 @@
   <section aria-labelledby="counted-h">
     <h2 id="counted-h">Räknade serier</h2>
     <p class="note">
-      Takt och riktning ur posten för {periodLabel(b.record.month, true)}. Punkten i slutet har riktningens färg; mätaren under visar
-      förändringen i takt mot seriens dödband.
+      Takt och riktning ur posten för {periodLabel(b.record.month, true)}, takten oftast i <Term id="log100">log ×100 per år</Term> (≈ procent per
+      år för små tal). Punkten i slutet har riktningens färg; mätaren under visar förändringen i takt mot seriens
+      <Term id="dodband">dödband</Term> (±0,25 standardavvikelser: inom bandet räknas takten som oförändrad).
     </p>
     <Multiples items={data.counted} label="Räknade serier" />
   </section>

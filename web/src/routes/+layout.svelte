@@ -12,9 +12,12 @@
   import ShareCite from '$lib/nav/ShareCite.svelte';
   import { tt } from '$lib/timetravel/store.svelte';
   import { dateLabel } from '$lib/design';
+  import { hydrationDone } from '$lib/design/charts/lazy';
+  import { onMount } from 'svelte';
 
   let { data, children } = $props();
   const css = `<style>${tokensCss()}</style>`;
+  onMount(hydrationDone); // the root mounts last: every chart of the first hydration has queued itself (R-W2 P1)
 
   // R-W2: the hash carries view state (as_of, fonster, avsnitt …). A plain "#main" would replace it, so with JS the
   // skip link moves focus itself and leaves the URL alone (without JS the href works as usual).

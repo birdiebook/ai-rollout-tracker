@@ -3,6 +3,7 @@
 <script lang="ts">
   import { resolve } from '$app/paths';
   import type { Nowcast } from '$lib/data';
+  import { dataUrl, setChartData } from '$lib/design';
   import Calendar from './parts/Calendar.svelte';
   import NowcastCard from './parts/NowcastCard.svelte';
   import RoleTag from './parts/RoleTag.svelte';
@@ -10,6 +11,7 @@
   import { liveRows, overviewSentence } from './parts/model';
 
   let { data } = $props();
+  setChartData(() => dataUrl('overview.json'));
   const cards = $derived(data.nowcasts.map((n) => ({ n, rows: liveRows(n as unknown as Nowcast) })));
   const nLive = $derived(cards.reduce((a, c) => a + c.rows.length, 0));
   const nOut = $derived(cards.reduce((a, c) => a + c.rows.filter((r) => r.scored).length, 0));

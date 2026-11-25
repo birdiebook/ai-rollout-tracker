@@ -61,12 +61,16 @@ test('no single-character shortcut opens the search (WCAG 2.1.4); Ctrl+K does', 
   await expect(page.locator('dialog[open] input')).toBeFocused();
 });
 
-test('table toggles name the action and carry no aria-pressed', async ({ page }) => {
+test('the table view is a native disclosure that keeps its name (WX2: <details>, no aria-pressed)', async ({ page }) => {
   await page.goto(`serie/${monthly.key}/`, { waitUntil: 'networkidle' });
-  const b = page.getByRole('button', { name: 'Visa tabell' }).first();
-  expect(await b.getAttribute('aria-pressed')).toBeNull();
-  await b.click();
-  await expect(page.getByRole('button', { name: 'Visa diagram' }).first()).toBeVisible();
+  const d = page.locator('#level details.tbl');
+  const s = d.locator('summary');
+  const name = await s.innerText();
+  expect(await s.getAttribute('aria-pressed')).toBeNull();
+  await s.click();
+  await expect(d).toHaveAttribute('open', '');
+  await expect(page.locator('#level-table table')).toBeVisible();
+  expect(await s.innerText()).toBe(name);
 });
 
 test('heading levels do not skip on the forecast overview', async ({ page }) => {
