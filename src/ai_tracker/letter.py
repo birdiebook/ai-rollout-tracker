@@ -759,14 +759,13 @@ def reconciliation_section(inp: Inputs) -> list[str]:
     rec = inp.current.get("reconciliations")
     if not rec:
         return []
+    shown = [m for m in rec.get("series", []) if publishable(m["series"], inp)]
     lines = [RECONCILIATION_HEADING, "",
-             "Härledda kvoter mellan leden (registrerade 2026-11-23, A5). Takt = årsförändring i log(kvot) ×100. "
-             "De räknas inte i grenarnas diffusionsindex.", ""]
+             f"Härledda kvoter mellan leden (registrerade {R.reconciliation_dates(m['series'] for m in shown)}, A5). "
+             "Takt = årsförändring i log(kvot) ×100. De räknas inte i grenarnas diffusionsindex.", ""]
     rows = []
-    for m in rec.get("series", []):
+    for m in shown:
         key = m["series"]
-        if not publishable(key, inp):
-            continue
         rows.append([f"{series_name(key, inp.ctx)} (`{key}`)", str(m.get("latest_period") or "–"),
                      value_text(m.get("level")), pace_text(m), change_text(m), m.get("reason") or "–"])
     if not rows:

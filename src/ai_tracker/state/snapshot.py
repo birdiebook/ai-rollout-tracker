@@ -3,6 +3,12 @@
 Snapshot date: the last calendar day of the month (the register does not name a day; see
 docs/resultat/tillstand.md). `write` refuses a date that is not a month end, a date after today (UTC), and an
 existing file (opened with mode "x"): a snapshot is written once and never rewritten, the git timestamp is the proof.
+
+The snapshot is public (committed to a public repo). A series whose values may not be shown (site.data.publishable,
+Spec.publish=False: PJM, npm, arXiv ...) keeps its key, family, validity, reason and direction in the record (the
+direction counts in a published index, beslutsloggen 2026-11-24), never a value: `withhold` drops `VALUE_FIELDS` from
+its measures, the break probability from its C4 row, and the curated guidance values from the expectations section
+(review L3-1, beslutsloggen 2026-11-25). Reconstructions (`compute`) keep everything: they stay in memory.
 """
 
 from __future__ import annotations
@@ -23,6 +29,13 @@ from ai_tracker.state.measures import Context
 SNAPSHOTS = config.REPO / "snapshots"
 BACKCAST = config.REPO / "outputs" / "state_backcast.csv"
 BACKCAST_LABEL = "rekonstruerad (as-of-backcast, inte ett skarpt register)"
+# Measure fields that carry a value of the series or a statistic of its values (state.measures.measure). The public
+# record keeps none of them for a withheld series (review L3-1); the direction stays, as the index counts it.
+VALUE_FIELDS = ("level", "pace", "change_in_pace", "pace_percentile", "change_percentile", "surprise", "sd_change",
+                "deadband")
+WITHHELD_NOTE = ("Serier som inte får visas (publish=False) har bara nyckel, familj, giltighet, skäl och riktning i "
+                 "ögonblicksbilden, inga värden (nivå, takt, förändring i takt, percentiler, överraskning, "
+                 "standardavvikelse, dödband, brottsannolikhet). Riktningen räknas i grenens index.")
 INDEX_RULE_NOTE = ("index och state följer v2 (en röst per källfamilj, minst min_families räknade familjer, "
                    "registret 2026-11-24). v1 (en röst per serie, minst min_series serier) står under v1 i varje gren.")
 
@@ -63,10 +76,53 @@ def compute(when, ctx: Context) -> dict:
     return {code: branch(code, when, ctx) for code in catalog.BRANCHES}
 
 
+def _publishable(ctx: Context):
+    from ai_tracker.site import data as D  # lazy: site.data imports this module
+
+    return lambda key: D.publishable(key, ctx)
+
+
+def _strip_measure(m: dict) -> dict:
+    return {k: v for k, v in m.items() if k not in VALUE_FIELDS}
+
+
+def withhold_measures(branches: dict, reconciliations: dict | None, publishable) -> tuple[dict, dict | None]:
+    """The branch states and the A5 group with no value fields for a series that `publishable` refuses."""
+    out = {}
+    for code, b in branches.items():
+        if not isinstance(b, dict):
+            out[code] = b
+            continue
+        b = dict(b)
+        for lst in ("series_used", "series_not_counted"):
+            if isinstance(b.get(lst), list):
+                b[lst] = [_strip_measure(m) if isinstance(m, dict) and m.get("series") and not publishable(m["series"])
+                          else m for m in b[lst]]
+        out[code] = b
+    if isinstance(reconciliations, dict) and isinstance(reconciliations.get("series"), list):
+        reconciliations = dict(reconciliations)
+        reconciliations["series"] = [_strip_measure(m) if m.get("series") and not publishable(m["series"]) else m
+                                     for m in reconciliations["series"]]
+    return out, reconciliations
+
+
+def withhold_regime(section: dict, publishable) -> dict:
+    """The C4 section with no break probability for a withheld series (the break flag stays: K4 counts it)."""
+    if not isinstance(section, dict) or not isinstance(section.get("bocpd"), list):
+        return section
+    section = dict(section)
+    section["bocpd"] = [{k: v for k, v in row.items() if k != "p_recent"}
+                        if isinstance(row, dict) and row.get("series") and not publishable(row["series"]) else row
+                        for row in section["bocpd"]]
+    return section
+
+
 def build(when, table: pd.DataFrame | None = None, ctx: Context | None = None) -> dict:
     when = pd.Timestamp(when).normalize()
     ctx = ctx or Context(observations.load() if table is None else table)
     t = ctx.table
+    branches, recon = withhold_measures(_clean(compute(when, ctx)), _clean(reconciliations(when, ctx)),
+                                        _publishable(ctx))
     return _clean({
         "snapshot": str(when.to_period("M")),
         "date": str(when.date()),
@@ -82,9 +138,9 @@ def build(when, table: pd.DataFrame | None = None, ctx: Context | None = None) -
                   "change_lag": R.CHANGE_LAG, "doubling_window_months": R.DOUBLING_WINDOW,
                   "backfill_gated": sorted(R.BACKFILL_GATED), "backfill_flagged": sorted(R.BACKFILL_FLAGGED),
                   "own_snapshot_months": R.OWN_SNAPSHOT_MONTHS, "g1_selected_benchmarks": ctx.selection(when),
-                  "reconciliations": list(ctx.reconciliations)},
-        "branches": compute(when, ctx),
-        "reconciliations": reconciliations(when, ctx),
+                  "reconciliations": list(ctx.reconciliations), "withheld_values": WITHHELD_NOTE},
+        "branches": branches,
+        "reconciliations": recon,
     })
 
 
@@ -124,10 +180,12 @@ def write(when, table: pd.DataFrame | None = None, out_dir: Path | None = None, 
     if path.exists():
         raise FileExistsError(f"{path} exists; snapshots are never rewritten")
     table = observations.load() if table is None else table
-    data = build(when, table)
+    ctx = Context(table)
+    data = build(when, table, ctx)
+    publishable = _publishable(ctx)
     from ai_tracker.state import expectations  # F1 (register 2026-11-24): own section, never in a branch index
 
-    data[expectations.SECTION] = _clean(expectations.safe_section(when, table))
+    data[expectations.SECTION] = _clean(expectations.withhold(expectations.safe_section(when, table), publishable))
     if regime is None:
         from ai_tracker.regime.live import FIRST_LIVE
 
@@ -135,7 +193,7 @@ def write(when, table: pd.DataFrame | None = None, out_dir: Path | None = None, 
     if regime:
         from ai_tracker.regime.live import SECTION
 
-        data[SECTION] = _clean(regime_section(when, table, out_dir))
+        data[SECTION] = _clean(withhold_regime(regime_section(when, table, out_dir), publishable))
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("x", encoding="utf-8") as f:  # 'x' = fail if it appeared meanwhile
         json.dump(data, f, indent=2, ensure_ascii=False)

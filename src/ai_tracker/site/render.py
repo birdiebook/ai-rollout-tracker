@@ -633,7 +633,7 @@ def reconciliation_section(rec: dict) -> str:
     hidden = f'<p class="small">Visas inte av licensskäl:</p><ul class="small">{hidden}</ul>' if hidden else ""
     return f"""<section id="avstamningar">
 <h2>Avstämningar mellan leden</h2>
-<p>Härledda kvoter som gör kedjan granskningsbar (registrerade i måttregistret 2026-11-23, A5). En version finns först när alla komponenter för perioden är kända, och den dateras med den senaste komponenten. Takt är årsförändringen i log(kvot) ×100, förändring i takt är takten nu minus två kvartal tidigare. Avstämningarna räknas inte i grenarnas diffusionsindex. Beräkningsdag {esc(rec.get("date"))}{kind_note(rec.get("kind"))}.</p>
+<p>Härledda kvoter som gör kedjan granskningsbar (registrerade i måttregistret {R.reconciliation_dates(s["key"] for s in rec["series"])}, A5). En version finns först när alla komponenter för perioden är kända, och den dateras med den senaste komponenten. Takt är årsförändringen i log(kvot) ×100, förändring i takt är takten nu minus två kvartal tidigare. Avstämningarna räknas inte i grenarnas diffusionsindex. Beräkningsdag {esc(rec.get("date"))}{kind_note(rec.get("kind"))}.</p>
 <div class="table-wrap"><table><thead><tr><th>Avstämning</th><th>Senaste period</th><th>Nivå</th><th>Takt</th><th>Förändring i takt</th><th>Anmärkning</th></tr></thead><tbody>{rows}</tbody></table></div>
 {hidden}
 </section>"""

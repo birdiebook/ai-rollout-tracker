@@ -315,6 +315,8 @@ def select(inp: dict, publishable: Callable[[str], bool], label: Callable[[str],
     if has_prev:
         cur_c, prev_c = _counted(branches), _counted(prev)
         for key in sorted(cur_c):
+            if not publishable(key):  # amendment 2026-11-25 (L3-1): the live record has no percentile for it
+                continue
             code, m = cur_c[key]
             p = m.get("change_percentile")
             z = zone_of(p)
@@ -322,9 +324,6 @@ def select(inp: dict, publishable: Callable[[str], bool], label: Callable[[str],
                 continue
             pm = (prev_c.get(key) or (None, None))[1]
             if pm is not None and zone_of(pm.get("change_percentile")) == z:
-                continue
-            if not publishable(key):
-                withheld["K5"] += 1
                 continue
             pp, note = _previous_note(pm, "change_percentile", z)
             d = m.get("direction")
@@ -346,15 +345,14 @@ def select(inp: dict, publishable: Callable[[str], bool], label: Callable[[str],
         prev_r = {m.get("series"): m for m in inp["prev_recon"] if m.get("series")}
         for m in sorted(inp.get("recon") or [], key=lambda m: m.get("series") or ""):
             key = m.get("series")
+            if not key or not publishable(key):  # amendment 2026-11-25 (L3-1), as K5
+                continue
             p = m.get("pace_percentile")
             z = zone_of(p)
-            if not key or z is None:
+            if z is None:
                 continue
             pm = prev_r.get(key)
             if pm is not None and zone_of(pm.get("pace_percentile")) == z:
-                continue
-            if not publishable(key):
-                withheld["K6"] += 1
                 continue
             pp, note = _previous_note(pm, "pace_percentile", z)
             if pm is None:
@@ -410,10 +408,11 @@ def select(inp: dict, publishable: Callable[[str], bool], label: Callable[[str],
                      for c in struck]
     chance = None
     if has_prev:  # R-W3b: how many hits chance gives, N/10 of the series tested
-        n5 = sum(1 for _, m in _counted(branches).values()
-                 if m.get("valid") and _finite(m.get("change_percentile")))
-        n6 = sum(1 for m in inp.get("recon") or [] if _finite(m.get("pace_percentile"))) \
-            if inp.get("prev_recon") is not None else 0
+        # publishable series only (amendment 2026-11-25, L3-1): the same population in live and reconstructed months
+        n5 = sum(1 for k, (_, m) in _counted(branches).items()
+                 if publishable(k) and m.get("valid") and _finite(m.get("change_percentile")))
+        n6 = sum(1 for m in inp.get("recon") or [] if m.get("series") and publishable(m["series"])
+                 and _finite(m.get("pace_percentile"))) if inp.get("prev_recon") is not None else 0
         chance = {t: {"n": n, "expected": round(n * CHANCE_SHARE, 1), "met": qualified[t] + withheld[t]}
                   for t, n in (("K5", n5), ("K6", n6))}
 
@@ -487,13 +486,16 @@ def _k0(inp: dict, has_prev: bool, status: str) -> dict:
     counts = {s: 0 for s in (R.STATE_ACCEL, R.STATE_STABLE, R.STATE_BRAKE, R.STATE_FEW)}
     for b in branches.values():
         s = (b or {}).get("state") or R.STATE_FEW
+        if s == R.STATE_FEW_FAMILIES:  # index v2 (K1): its own count, only when it occurs
+            counts.setdefault(s, 0)
         counts[s if s in counts else R.STATE_FEW] += 1
     with_state = counts[R.STATE_ACCEL] + counts[R.STATE_STABLE] + counts[R.STATE_BRAKE]
     stable = f"{_count_word(counts[R.STATE_STABLE])} {'är stabil' if counts[R.STATE_STABLE] == 1 else 'är stabila'}"
     text = (f"Av {with_state} grenar med tillstånd: {_count_word(counts[R.STATE_ACCEL])} accelererar, {stable} och "
             f"{_count_word(counts[R.STATE_BRAKE])} bromsar in.")
-    if counts[R.STATE_FEW]:
-        text += f" {counts[R.STATE_FEW]} {'gren har' if counts[R.STATE_FEW] == 1 else 'grenar har'} för få serier."
+    for s, what in ((R.STATE_FEW_FAMILIES, "för få källor"), (R.STATE_FEW, "för få serier")):
+        if counts.get(s):
+            text += f" {counts[s]} {'gren har' if counts[s] == 1 else 'grenar har'} {what}."
     moves = None
     if has_prev:
         up = down = same = 0

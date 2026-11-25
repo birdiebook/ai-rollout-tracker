@@ -138,6 +138,23 @@ RECONCILIATIONS: list[str] = ["x_capex_cloud", "x_rpo_cover", "x_nvda_capex", "x
                                # revenue requirement (register 2026-11-24 "A5: intäktskrav", track P2b)
                                "x_dep_rev", "x_capcost_rev_r08", "x_capcost_rev_r12", "x_dep_capex", "x_dep_rev_aws"]
 RECONCILIATION_GROUP = "Avstämningar"
+# The register entry that added each reconciliation (its heading's date): the public texts date the ones they show
+# (review L3-5). tests/test_state.py checks it against the A5 tables in docs/mattregister.md.
+RECONCILIATION_REGISTERED: dict[str, str] = {
+    **{k: "2026-11-23" for k in ("x_capex_cloud", "x_rpo_cover", "x_nvda_capex", "x_debt_capex", "x_capex_ocf")},
+    **{k: "2026-11-24" for k in ("x_dep_rev", "x_capcost_rev_r08", "x_capcost_rev_r12", "x_dep_capex",
+                                 "x_dep_rev_aws")},
+}
+
+
+def reconciliation_dates(keys) -> str:
+    """'2026-11-23' or '2026-11-23 och 2026-11-24': the register dates of the reconciliations `keys` (all when
+    empty), in Swedish for the letter and the site."""
+    keys = list(keys) or list(RECONCILIATION_REGISTERED)
+    days = sorted({RECONCILIATION_REGISTERED[k] for k in keys if k in RECONCILIATION_REGISTERED})
+    if not days:
+        return min(RECONCILIATION_REGISTERED.values())
+    return days[0] if len(days) == 1 else ", ".join(days[:-1]) + " och " + days[-1]
 METHOD_OVERRIDES.update({k: "log" for k in RECONCILIATIONS})
 
 # ------------------------------------------------------------------ section 2: branch state

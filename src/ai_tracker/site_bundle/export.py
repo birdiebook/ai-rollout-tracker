@@ -16,6 +16,7 @@ from pathlib import Path
 import pandas as pd
 
 from ai_tracker import catalog, config, evaluation, observations
+from ai_tracker import letter as L
 from ai_tracker.nowcast import intervals
 from ai_tracker.site import data as D
 from ai_tracker.site import flow as F
@@ -322,6 +323,28 @@ def method_doc(ctx: Context, rec: D.Record) -> dict:
             "n_withheld": len(m["withheld"])}
 
 
+WITHHELD_HEADING = L.WITHHELD_HEADING  # the quarterly report reuses the letter's section
+WITHHELD_POINTER = ("Här namnges serierna som inte visas bara i sidans lista över serier som inte visas "
+                    "(`withheld.json`), med källa och skäl. Avsnittet i sin helhet står i `{file}` i repot.")
+
+
+def without_withheld_names(markdown: str, file: str) -> str:
+    """A letter's or report's Markdown for the bundle. Its section "Visas inte av licensskäl" names the withheld
+    series on purpose, and the bundle names them only in withheld lists (gate.scan, review L3-3): the section's body
+    becomes a pointer to withheld.json and to the file in the repo. Everything else is unchanged."""
+    out, skip = [], False
+    for line in markdown.split("\n"):
+        if line.rstrip() == WITHHELD_HEADING:
+            out += [line, "", WITHHELD_POINTER.format(file=file), ""]
+            skip = True
+            continue
+        if skip and (line.startswith("## ") or line.startswith("# ")):
+            skip = False
+        if not skip:
+            out.append(line)
+    return "\n".join(out)
+
+
 def letters_docs(letters_dir: Path, reports_dir: Path) -> dict[str, dict]:
     letters = D.letters(letters_dir)["letters"]
     reports = D.reports(reports_dir)["reports"]
@@ -330,12 +353,12 @@ def letters_docs(letters_dir: Path, reports_dir: Path) -> dict[str, dict]:
     for x in letters:
         path = f"letters/{x['month']}.json"
         docs[path] = {"month": x["month"], "month_sv": x["month_sv"], "title": x["title"], "kind": x["kind"],
-                      "file": x["file"], "markdown": x["markdown"]}
+                      "file": x["file"], "markdown": without_withheld_names(x["markdown"], x["file"])}
         idx_l.append({k: x[k] for k in ("month", "month_sv", "title", "kind", "file")} | {"doc": path})
     for x in reports:
         path = f"reports/{x['quarter']}.json"
         docs[path] = {"quarter": x["quarter"], "quarter_sv": x["quarter_sv"], "title": x["title"], "kind": x["kind"],
-                      "file": x["file"], "markdown": x["markdown"]}
+                      "file": x["file"], "markdown": without_withheld_names(x["markdown"], x["file"])}
         idx_r.append({k: x[k] for k in ("quarter", "quarter_sv", "title", "kind", "file")} | {"doc": path})
     docs["letters.json"] = {"letters": idx_l, "reports": idx_r}
     return docs

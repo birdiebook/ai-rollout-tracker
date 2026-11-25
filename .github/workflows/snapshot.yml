@@ -4,6 +4,9 @@
 # On a month end: restore the data cache, refresh every catalog series and run the warehouse checks (a failed
 # check fails the job before the cache is saved or anything is written; the retry slot tries again), write
 # snapshots/<YYYY-MM>.json as of that date and commit only that new file to main with the bot identity.
+# Stale series alone (the freshness check, exit 2) do not stop the snapshot: the table passed the integrity checks
+# and the measures mark a stale series as not counted. The job writes and commits the snapshot as usual, warns, and
+# fails at the end so the stale series are seen (as fetch-weekly.yml; review L3-4). Exit 1 still stops it.
 # An existing snapshot is never rewritten or re-committed: the git timestamp is the proof.
 # The monthly letter (docs/manadsbrev/<YYYY-MM>.md, python -m ai_tracker.letter) is generated from the new snapshot
 # and committed in the same commit. It is not a record (it may be regenerated later); if it fails, the snapshot is
@@ -66,8 +69,19 @@ jobs:
           key: ai-data-${{ github.run_id }}
           restore-keys: ai-data-
       - name: Refresh all series and run the warehouse checks
+        id: refresh
         if: steps.due.outputs.due == 'true'
-        run: python -m ai_tracker.pipeline weekly
+        run: |
+          set +e
+          python -m ai_tracker.pipeline weekly
+          rc=$?
+          echo "rc=$rc" >> "$GITHUB_OUTPUT"
+          # 2 = only stale series (freshness check): the table is sound, so the snapshot is written; fail at the end
+          if [ "$rc" -eq 2 ]; then
+            echo "::warning::Stale series (see this step's log and docs/drift.md, section Aktualitet). The snapshot is still written; the job fails at the end."
+            exit 0
+          fi
+          exit "$rc"
       - name: Save data cache
         if: steps.due.outputs.due == 'true'
         uses: actions/cache/save@v4
@@ -108,3 +122,8 @@ jobs:
           if [ "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)" ]; then echo "nothing committed"; exit 0; fi
           git pull --rebase origin main  # an add/add conflict (file appeared meanwhile) fails here: no overwrite
           git push origin HEAD:main
+      - name: Fail on stale series
+        if: always() && steps.refresh.outputs.rc == '2'  # after the commit: the snapshot is never held back by it
+        run: |
+          echo "::error::Stale series (see the refresh step log and docs/drift.md, section Aktualitet)."
+          exit 1

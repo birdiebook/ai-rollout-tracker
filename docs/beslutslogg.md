@@ -746,3 +746,23 @@ sex poolade revideringsindex blir `okänd` när F1 mergas (R10-1).
   HS-serierna (M2) väntar på `CENSUS_API_KEY`.
 - F1:s CSV-serier och `guid_capex_*` har kvar `publish=False` tills Johannes beslutar (R11-4). Det strikta
   xfail-testet för "för få källor" står kvar, eftersom webbens `state.ts` på main saknar ordet.
+
+## 2026-11-25 – Inga värden för inhållna serier i den publika ögonblicksbilden
+
+Granskningen L3 (körning 13) visade att den första skarpa ögonblicksbilden (2026-11-30) skulle bära nivå, takt och
+percentiler för serier med `publish=False`, bland dem PJM (klass `nej`: "non-members are specifically prohibited from
+republishing data"), npm och arXiv (`okänd`), och Microsofts capex-guidance ur `curated/guidance_capex.csv` (R11-4
+öppet). Ögonblicksbilden committas till ett publikt repo och skrivs aldrig om, så felet går inte att rätta i efterhand.
+- **Regel från och med 2026-11-30.** För en serie som inte får visas har posten nyckel, familj, giltighet, skäl och
+  riktning, inga värden: ingen nivå, takt, förändring i takt, percentil, överraskning, standardavvikelse, dödband eller
+  brottsannolikhet (C4). Riktningen står kvar, eftersom den räknas i grenens publicerade index (beslutet 2026-11-24).
+  Brottflaggan i C4 står kvar, eftersom kort K4 räknar den. Rekonstruktioner i minnet påverkas inte.
+- **Förväntningsavsnittet** har inga siffror ur den kurerade filen så länge serierna som läser den har
+  `publish=False`: brottraden för Microsoft visas utan storlek, och revideringsindexet, överraskningsindexet och
+  Metas och Alphabets överraskningar har bara period och datum. Det ändrar X8:s "visas med sin storlek (−8,2) i
+  ögonblicksbilden" tills R11-4 är avgjort. TSMC och Nvidia (SEC) visas som förut. Värdena går att räkna fram igen ur
+  de daterade serierna när ägaren beslutar.
+- **Månadens berättelse** prövar därför inte inhållna serier i K5 och K6, i någon månad (daterad registerändring
+  2026-11-25).
+- **Rekommendation till Johannes:** behåll regeln. Vill du hellre ha percentiler eller värden i repot behöver det
+  beslutet stå här före 2026-11-30 22:41 UTC, eftersom ögonblicksbilden då skrivs en gång för alla.

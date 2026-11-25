@@ -137,6 +137,10 @@ datatesterna.
 - **Exitkod:** 1 om ett datatest fallerar (cachen sparas inte), 2 om bara serier är för gamla. Med 2 sparar
   workflowet cachen, eftersom tabellen i sig är korrekt, och fäller sedan jobbet i steget *Fail on stale series*.
   Med `pipeline weekly <serier>` kontrolleras bara de serierna.
+- **Månadsbilden och exitkod 2 (2026-11-25, granskning L3-4).** `snapshot.yml` skriver och committar
+  ögonblicksbilden också när bara serier är för gamla. Måtten markerar en för gammal serie som inte räknad, så posten
+  stämmer. Jobbet varnar i uppdateringssteget och fälls sist i *Fail on stale series*, efter committen. Tidigare
+  hoppade båda försöken (22:41 och 23:29) över skrivningen, och månaden blev en lucka som aldrig rekonstrueras.
 
 **När jobbet fallerar på aktualitet.** Loggen och jobbsammanfattningen listar varje serie med nyaste period, ålder
 och gräns, och om hämtningen fallerade i samma körning.

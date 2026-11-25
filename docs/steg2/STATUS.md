@@ -1,6 +1,6 @@
 # Status steg 2
 
-Uppdateras av orkestreraren vid varje milstolpe. Senast: 2026-11-24 (körning 13).
+Uppdateras av orkestreraren vid varje milstolpe. Senast: 2026-11-25 (körning 13, rättning efter granskningen av integrationen).
 
 ## Läge
 
@@ -22,6 +22,11 @@ Uppdateras av orkestreraren vid varje milstolpe. Senast: 2026-11-24 (körning 13
 - **Makro:** BNP-bidrag, elpris och PPI (M1, [kallor/makro_bea_bls.md](../kallor/makro_bea_bls.md)). Import per land
   (M2, [kallor/census_hs.md](../kallor/census_hs.md)): årsfilen finns, HS-serierna väntar på `CENSUS_API_KEY`.
 - **Läsanvisningar** för webben: [steg3/datakontrakt.md](../steg3/datakontrakt.md), "Läsanvisningar för körning 13".
+- **Efter granskningen av integrationen (2026-11-25):** `origin/main` (W12–W14, RW1-X, R-W1–R-W3, WX2 och
+  aktualitetsgränsen för Nvidia) är mergad in. Paketet är 1.4.0. Den publika ögonblicksbilden bär inga värden för
+  serier med `publish=False` (beslutsloggen 2026-11-25), paketets brev och rapporter klarar licensgrinden, och
+  `snapshot.yml` skriver bilden även när bara serier är för gamla. Webbens röda tester står i
+  [steg3/datakontrakt.md](../steg3/datakontrakt.md), "Webbgrindar efter integrationen".
 
 ### Tidigare
 
@@ -64,6 +69,12 @@ Kvar för nya sessioner: `DATA_KEY` (punkt 2 nedan).
    sidan någon gång användas kommersiellt måste de dras tillbaka.
 
 5. **PyPI-historik i Actions-cachen** (cirka 176 GB av månadskvoten på 1 TB) kan vänta till nästa kvotmånad.
+
+6. **Före 2026-11-30 22:41 UTC** (när integrationen pushas till `main`):
+   - regeln att ögonblicksbilden inte bär värden för inhållna serier (beslutsloggen 2026-11-25). Rekommendation: behåll;
+   - `/next/` försvinner från Pages efter pushen tills webbens vitest är grön, eftersom `pages.yml` bara tar med
+     `/next/` när `pages-next.yml` lyckas. Den gamla sidan publiceras som förut. Alternativet är att webbrättningen
+     landar först.
 
 ## Viktiga datum
 

@@ -18,7 +18,9 @@ with the FX part (R11-7). These are sensitivities, not main measures.
 
 from __future__ import annotations
 
+import copy
 import math
+from collections.abc import Callable
 
 import numpy as np
 import pandas as pd
@@ -181,6 +183,58 @@ def section(when, table: pd.DataFrame, csv: pd.DataFrame | None = None) -> dict:
                      "index": _index_entry(out["surprise_index"], "value", "Q"),
                      "tsmc_usd_sensitivity": _tsmc_usd(out["surprises_tsmc_usd"])},
     }
+
+
+# Companies whose statements come from SEC series in the table (TSMC's 6-K, Nvidia's 8-K: GR.table_statements);
+# every other company's statements come from the curated CSV (GR.capex_statements).
+TABLE_COMPANIES = ("tsmc", "nvda")
+WITHHELD_NOTE = ("Värden ur curated/guidance_capex.csv står inte i den publika ögonblicksbilden så länge serierna som "
+                 "läser filen har publish=False (R11-4, granskning L3-1): för de bolagen och för revideringsindexet och "
+                 "överraskningsindexet bara bolag, period, definition och datum. TSMC och Nvidia (SEC) visas som förut.")
+_ID_FIELDS = ("period", "known_from", "companies")
+_SURPRISE_ID = ("company", "measure", "period", "known_from", "guidance_known_from")
+
+
+def from_csv(company) -> bool:
+    return company not in TABLE_COMPANIES
+
+
+def csv_public(publishable: Callable[[str], bool]) -> bool:
+    """True when every series that reads the curated CSV may be shown (the owner's decision R11-4)."""
+    return all(publishable(k) for k in (*GR.CSV_BASED, *GR.csv_component_keys()))
+
+
+def _ids(entry):
+    return {k: v for k, v in entry.items() if k in _ID_FIELDS} if isinstance(entry, dict) else entry
+
+
+def withhold(section: dict, publishable: Callable[[str], bool]) -> dict:
+    """The section for the public record: no number that comes from the curated CSV while its series are withheld
+    (break statements, revision events and counts of the CSV companies, their surprises, the revision index and the
+    surprise index, which all read the CSV). TSMC's and Nvidia's statements and surprises are SEC series and stay."""
+    if not isinstance(section, dict) or "error" in section or csv_public(publishable):
+        return section
+    s = copy.deepcopy(section)
+    for part in ("revisions", "revisions_numeric_only"):
+        for entry in (s.get(part) or {}).values():
+            for k in ("latest", "latest_with_value"):
+                entry[k] = _ids(entry.get(k))
+    if isinstance(s.get("composition_main_window"), dict):
+        s["composition_main_window"] = {k: v for k, v in s["composition_main_window"].items() if k == "period"}
+    s["break_statements"] = [{k: v for k, v in b.items() if k not in ("value", "prev_value", "size")}
+                             if from_csv(b.get("company")) else b for b in s.get("break_statements") or []]
+    s["events_recent"] = [{k: v for k, v in e.items() if k not in ("size", "direction")}
+                          if from_csv(e.get("company")) else e for e in s.get("events_recent") or []]
+    s["events_per_company_year"] = {c: v for c, v in (s.get("events_per_company_year") or {}).items()
+                                    if not from_csv(c)}
+    sur = s.get("surprise")
+    if isinstance(sur, dict):
+        sur["companies"] = [{k: v for k, v in c.items() if k in _SURPRISE_ID} if from_csv(c.get("company")) else c
+                            for c in sur.get("companies") or []]
+        if isinstance(sur.get("index"), dict):
+            sur["index"] = {k: _ids(v) for k, v in sur["index"].items()}
+    s["values_withheld"] = WITHHELD_NOTE
+    return s
 
 
 def safe_section(when, table: pd.DataFrame) -> dict:

@@ -194,7 +194,8 @@ def test_withheld_series_are_counted_never_named():
                                         "p_recent": 0.9}]}
     doc = sel(inp(branches={"G1": branch("stabil", 0.5, s)}, prev_branches={"G1": branch("stabil", 0.5)},
                   regime=regime), withheld={"hidden_key"})
-    assert doc["withheld"]["K5"] == 1 and doc["withheld"]["K4"] == 1
+    # amendment 2026-11-25 (L3-1): K5 and K6 test only publishable series; K4 still counts a withheld break
+    assert doc["withheld"]["K5"] == 0 and doc["withheld"]["K4"] == 1
     assert "hidden_key" not in json.dumps(doc)
     assert [c["facts"]["series"] for c in events(doc)] == ["shown"]
 
@@ -339,7 +340,8 @@ def test_r_w3b_chance_level():
     assert doc["chance"]["K5"] == {"n": 4, "expected": 0.4, "met": 4}
     assert doc["chance"]["K6"] == {"n": 2, "expected": 0.2, "met": 2}
     withheld = sel(dup_world(others=3), withheld=("s0",))
-    assert withheld["chance"]["K5"] == {"n": 4, "expected": 0.4, "met": 4}  # withheld ones count, unnamed
+    # amendment 2026-11-25 (L3-1): a withheld series is not tested, so it is in neither n nor met
+    assert withheld["chance"]["K5"] == {"n": 3, "expected": 0.3, "met": 3}
     assert sel(inp(previous=None, prev_branches=None, prev_recon=None))["chance"] is None
 
 

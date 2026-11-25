@@ -1473,3 +1473,20 @@ implementeras. Den gäller för alla månader, även de som redan visats. Trösk
    skrivs "från X till Y" i stället för med en pil, eftersom rubrikerna också blir länktexter i sidans avsnittslista.
 5. **Rekonstruerat.** På månadssidan står statusen (rekonstruerad eller skarp) i rubrikraden, i samma storlek som
    månadsnamnet, och för rekonstruerade månader en mening om vad det betyder. Det ändrar inget urval.
+
+#### 2026-11-25 – Ändring av W13 (L3-1): inhållna serier prövas inte i K5 och K6
+
+Motivering: från den första skarpa ögonblicksbilden (2026-11-30) har den publika posten inga värden för serier som
+inte får visas (`publish=False`), inte heller percentiler (beslutsloggen 2026-11-25, granskning L3-1). En skarp månad
+kan då inte pröva dem i K5 och K6, men en rekonstruerad månad kan det. För att samma regel ska gälla alla månader
+ändras regeln för alla månader. Ändringen skrivs innan den första skarpa posten finns. Trösklar, korttyper, ordning och
+tak ändras inte.
+
+1. **K5 och K6** prövar bara publicerbara serier (`site.data.publishable`). En inhållen serie räknas inte längre som
+   "uppfyllde villkoret" i dessa typer, så antalet inhållna är 0 för K5 och K6. K3 och K4 räknar inhållna mål och brott
+   som förut (brottflaggan står kvar i posten).
+2. **Slumpnivån (R-W3b).** N är för K5 de räknade, giltiga och publicerbara kärnserierna med percentil för förändring
+   i takt i M, och för K6 de publicerbara avstämningarna med percentil för takt. "Publicerbara eller inte" i R-W3b
+   punkt 2 gäller inte längre.
+3. **K0** räknar tillståndet "för få källor" (index v2, registret 2026-11-24) för sig, bredvid "för få serier", när det
+   förekommer. Tidigare räknades det som "för få serier". Inget urval ändras.
