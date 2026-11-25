@@ -309,3 +309,25 @@ period, organiskt eller inte och första dokumentet. Det är för den oberoende 
   utan tal ("record", "doubled", "flat").
 - Regioner (Vertivs Americas, Digital Realtys regioner), Aerospace, Vehicle och GE Vernovas vindkraft i GW.
 - Intervall förekom inte i de kodade måtten.
+
+## Rättning efter granskning R19 (spår X16, 2026-11-25)
+
+R19 godkände extraktionen med anmärkningar (`docs/granskning/r19-order-orderstock.md`). Rättningarna R-1 till R-4
+görs här. Bara R-1 ändrar en regel. Den har en daterad post i registret: "S3: GE Vernovas order i GW delas och
+konverteringar kodas".
+
+### Regler för GE Vernovas GW (committade före omkodningen)
+
+Före reglerna hade X16 läst GW-meningarna i GE Vernovas sju pressmeddelanden 2025Q1–2026Q3 och R19:s granskning, där
+konverteringarna står. Inga andra bilagor lästes.
+
+- **2025Q1** har en egen uppställning: kvartalets "gas turbine orders" och nya reservationer i en mening. Talet behåller
+  måttet `orders`. Det är en period, alltså ingen katalogserie.
+- **Från 2025Q2** står kvartalets nya kontrakt i en mening ("new gas equipment contracts"), uppdelade på nya
+  reservationer och order ("Y GW of orders"). Y kodas med måttet `orders_new_contracts`. Nästa mening anger
+  konverteringarna ("Converted X GW of existing slot reservation agreements"). X kodas med måttet `orders_converted`,
+  med samma plats och hash som orderstocken, som står i samma mening.
+- Läsaren avvisar `orders` i GW för en period från 2025Q2. Ett stopp för `orders` i GW kodas i pressmeddelandet för
+  2025Q2, enligt stoppregeln.
+- Kvartalets orderingång i GW är `orders_new_contracts` + `orders_converted`. Den blir ingen egen serie.
+- Nya reservationer, summan av nya kontrakt och levererade GW kodas inte (tolkning 6 gäller för dem).

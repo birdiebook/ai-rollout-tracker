@@ -1525,3 +1525,36 @@ regler:
 - **Digital Realtys andel.** Totaler utan angiven andel (2021Q4–2024Q4) kodas som Digital Realtys andel, eftersom samma
   tabellrad och mening senare heter "at Digital Realty's share". Talen vid 100 % andel är en egen serie.
 - **Stock vid ett annat datum än periodens slut** ("as of the end of August", "as of today") kodas inte.
+
+### 2026-11-25 – S3: GE Vernovas order i GW delas och konverteringar kodas (rättning efter granskning R19)
+
+Skäl: fynd F-1 i [`docs/granskning/r19-order-orderstock.md`](granskning/r19-order-orderstock.md). Serien
+`ob_gev_orders_gas_power_equipment_q_level_gw` skarvar två definitioner. 2025Q1 anger "gas turbine orders". Från 2025Q2
+är talet bara ordren bland kvartalets nya kontrakt ("new gas equipment contracts"). Reservationer som blir order står i
+en egen mening ("converted ... to orders") och är inte kodade. Registrets regel tar "alla tal i GW för gasturbiner:
+order, orderstock och reservationer". Bolaget kallar konverteringarna order, så de hör till regeln. Tolkning 6 i
+källdokumentet tog bort dem.
+
+Skrivet efter att talen var lästa. R19 läste meningarna och låste konverteringarna i sitt test. Spår X16 läste samma
+meningar före posten: GW-meningarna i GE Vernovas sju pressmeddelanden 2025Q1–2026Q3. Posten rättar alltså en
+definition. Den är ingen förregistrering på oläst data. Inga takter räknas.
+
+Regler. De gäller GE Vernova, segment `gas_power`, enhet GW, komponent `equipment`, fönster kvartal och form nivå:
+- **Två nya mått.** `orders_new_contracts` är ordren bland kvartalets nya kontrakt ("Y GW of orders" i meningen om
+  "new gas equipment contracts"). `orders_converted` är reservationer som blev order i kvartalet ("Converted X GW of
+  existing slot reservation agreements").
+- **Delning.** `orders` i GW är bara talet "gas turbine orders" från tiden före den nya uppställningen (2025Q1). Från
+  2025Q2 kodas ordren i GW som `orders_new_contracts`. Läsaren avvisar en rad `orders` i GW för en period från 2025Q2.
+  Om talet för 2025Q1 innehåller konverteringar går inte att avgöra. Därför skarvas det inte med något.
+- **Inget läggs ihop.** Kvartalets orderingång i GW är summan av de två måtten. Den blir ingen egen serie, eftersom
+  extraktionen inte räknar om något (posten för S3 ovan). Seriernas noter säger hur den bildas.
+- **Fortfarande inte kodat:** nya reservationer i kvartalet, summan av nya kontrakt och levererade GW. Reservationerna
+  syns redan i stocken. Levererade GW är inget mått som reglerna nämner för GE Vernova.
+- Första dokumentet, stoppregeln, dateringen och `publish=False` gäller som i posten för S3. Stoppregeln ger ett stopp
+  för `orders` i GW i pressmeddelandet för 2025Q2, eftersom det inte längre anger "gas turbine orders".
+
+Väntad effekt: `ob_gev_orders_gas_power_equipment_q_level_gw` försvinner ur katalogen, eftersom bara 2025Q1 är kvar
+(en period). Två nya katalogserier får sex kvartal var, 2025Q2–2026Q3:
+`ob_gev_orders_new_contracts_gas_power_equipment_q_level_gw` och `ob_gev_orders_converted_gas_power_equipment_q_level_gw`.
+Övriga 60 serier får samma värden. Bara noterna och luckorsakerna ändras (rättningarna R-2 och R-4, som inte rör
+registrets regler).
