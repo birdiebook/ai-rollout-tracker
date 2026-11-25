@@ -70,6 +70,7 @@ En rad per spår, fylls på efter varje körning. Tumreglerna justeras när siff
 | 2026-11-25 | 14 | R-W3 neutralitet | granskning | ~20 | ~98 | ~230 | speglingstest symmetriskt; 3 mallasymmetrier rättade; 4 krav före byte av huvudsida |
 | 2026-11-25 | 14 | R-W2 tillgänglighet | granskning + rättning | ~56 | ~116 | ~270 | axe 0 i 54 körningar; 4 tangentbordsfel rättade; LCP 0,8 s; TBT kvar (P1) |
 | 2026-11-25 | 14 | S2 kraft, kylning och datacenter | bygge (SEC XBRL, 6 bolag, instanser) | ~95 | ~75 | ~400 | 27 serier (986 rader), register före hämtning (009602a), RPO för Vertiv BLOCKED, 7 handkontroller OK, 14 tester |
+| 2026-11-25 | 14 | R18 kraft och datacenter | granskning | ~75 | ~95 | ~330 | 12 handkontroller OK; 4 should_fix (ETN 2020, EQIX capex, VRT brutto, defnref.xml); 6 strikta xfail |
 
 ## Körning 1, sammanfattning (2026-11-23, orkestrerare)
 

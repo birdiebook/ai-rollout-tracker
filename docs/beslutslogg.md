@@ -793,3 +793,14 @@ republishing data"), npm och arXiv (`okänd`), och Microsofts capex-guidance ur 
   skalbolag 2012.
 - Rekommendation: inga av serierna blir kärnserier nu. De flesta är korta (GE Vernova 15 kvartal) eller mest annat än
   AI. `rpo_etn`, `rpo_gev_equipment` och `rpo_pwr` är kandidater för G7 när datacenterandelen finns från S3.
+
+## 2026-11-25 – R18: granskning av S2 (kraft, kylning, elnät och datacenterbolag)
+
+- **Dom: godkänd med anmärkningar** (`docs/granskning/r18-kraft-datacenter.md`). Registret kom före värdena, och
+  tilläggets två regler är regler för datafel. Inga läckage och inga fel värden i 12 handkontroller över alla sex
+  bolagen.
+- Fyra rättningar före analys: Eatons segment läser inte 2020 års 10-Q (R18-1), Equinix capex förkastar en tagg på
+  en rad som inte hör till måttet (R18-2), Vertivs bruttosegment har ett täckningsskäl som inte håller (R18-3), och
+  den gemensamma `instance_name` väljer `defnref.xml` i inlämningar 2009–2011 (R18-4, eget spår). Alla ger för sena
+  första versioner eller saknad historik, alltså den konservativa sidan.
+- Ägarbeslut: ska Vertivs externa segmentförsäljning läggas till bredvid bruttot? Rekommendation: ja.
