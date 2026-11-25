@@ -59,6 +59,7 @@ En rad per spår, fylls på efter varje körning. Tumreglerna justeras när siff
 | 2026-11-24 | 13 | X12 rättning av P2a efter R15 | rättning (dokumentation, not, läsmängd som kod) | ~35 | ~60 | – | 4 should_fix och N-1, N-2 rättade, registerpost, `supplementary()` täcker alla 82 rader utanför kandidaterna, 11 av 305 fel med gamla kontrollen bekräftat, serierna oförändrade (203 rader), 2 nya tester, 6 xfail blev vanliga |
 | 2026-11-24 | 13 | X10 rättning av M2 efter R13 | rättning (kod, register, dokument, ingen nyckel) | ~50 | ~65 | – | R13-1–R13-5 rättade (5 strikta xfail nu vanliga tester), R13-7–R13-9 också, delning per år vid timeout, `check`-kommando för första hämtningen, 14 nya tester; R13-6 blockerad (ingen nyckel), 210 årsrader omhämtade och identiska |
 | 2026-11-24 | 13 | X8 rättning F1 efter R11 | rättning (data, kod, register, två känsligheter, ny tolkning) | ~80 | ~100 | – | 3 CSV-rader verifierade mot källan, brottet flyttat (0,67 → 0,62), stängningsversion, cache, publiceringsgrind, US$-intäkt TSMC (40 kvartal), grannkontroll 81 dokument, 12 nya tester, 6 xfail → pass |
+| 2026-11-24 | 13 | Integration körning 13 | integration (11 mergar, uppföljning över spår, data, dokument, grindar) | ~50 | ~230 | – | 11 mergar utan förlorad loggpost, K2 klassar 633 serier, P2b omräknat, N7 omkört (beslut oförändrat), 112 serier in i basen, backcast v1/v2, läsanvisningar; webbens vitest röd av paket 1.1.0 (20 tester, ägs av webbsessionen) |
 
 ## Körning 1, sammanfattning (2026-11-23, orkestrerare)
 

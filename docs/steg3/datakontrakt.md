@@ -347,3 +347,16 @@ förändringen mellan år. Varje år blir känt 10 juli året efter. Månadsseri
 `CENSUS_API_KEY` och har inga rader än. När de har rader ska notisen "This product uses the Census Bureau Data API but
 is not endorsed or certified by the Census Bureau." stå med serien och i sidfoten. Paketet lägger den redan sist i
 `license.attribution`.
+
+**Webbgrindar efter integrationen (2026-11-24).** `npm run check`, `npm run build` och Playwright (348 tester) är
+gröna mot fixturerna 1.1.0. `npm test` har 20 röda tester, alla i `src/lib/method/engine.test.ts` och
+`src/lib/start/model.test.ts`, och alla beror på index v2 i fixturerna. På `main` med fixturerna 1.0.0 är samma tester
+gröna. Webbsessionen behöver:
+- lägga till tillståndet "för få källor" i `design/state.ts`, `data/types.ts`, `start/model.ts` (`State`, `VERB`,
+  `asState`, räkningarna), `timetravel/gate.ts` och `start/Hero.svelte`;
+- räkna index v2 i metodsidans motor (`method/engine.ts`, `prepare.ts`): en röst per källfamilj ur
+  `method.json#branches[].families` och minst `rules.min_families` familjer, med v1 bredvid;
+- skriva "en" för 1 i `countsSentence`, som Python gör (`site_bundle.export._sv_number`);
+- uppdatera de fixturberoende förväntningarna i `start/model.test.ts` (ändringarna är nu bara G6);
+- spegla P2b:s fem avstämningar i `regime/reconciliations.json`, med vikten r på `ppe_net_hyp4`. Testet
+  `tests/test_web_regime_constants.py::test_web_mirrors_every_reconciliation` är strikt xfail tills dess.
