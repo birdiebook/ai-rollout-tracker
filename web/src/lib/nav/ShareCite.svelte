@@ -25,7 +25,10 @@
   const live = $derived(href || url);
   const hash = $derived(live.includes('#') ? live.slice(live.indexOf('#')) : '');
   const asOf = $derived(asOfOf(hash));
-  const text = $derived(`AI-utrullningen, ${cite.what}, version per ${asOf ?? cite.date}${cite.commit ? ` (commit ${cite.commit})` : ''}, ${live}`);
+  // Under time travel the start page's title names today's record ("AI-utrullningen: läget oktober 2026"): drop it.
+  // Interim (R-W1): a timeless page name per route in describe.server.ts is the real fix (RW1-X).
+  const what = $derived(asOf ? cite.what.replace(/:\s*läget\s+\p{L}+\s+\d{4}$/u, '') : cite.what);
+  const text = $derived(`AI-utrullningen, ${what}, version per ${asOf ?? cite.date}${cite.commit ? ` (commit ${cite.commit})` : ''}, ${live}`);
   const sectionHref = (id: string) => withSection(hash, id) || '#';
 
   const reduce = () => matchMedia('(prefers-reduced-motion: reduce)').matches;

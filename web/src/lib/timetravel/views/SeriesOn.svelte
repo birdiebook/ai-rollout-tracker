@@ -70,7 +70,8 @@
         <p class="note">{periodText(last.period, true)}, känt från {dateLabel(last.known)}</p>
       {:else}
         <p class="big">–</p>
-        <p class="note">Inget var publicerat ännu{doc.versions ? `; första version ${dateLabel(doc.versions.first_known)}` : ''}.</p>
+        <!-- R-W1: the day of the first version is later knowledge and is not shown -->
+        <p class="note">Inget var publicerat ännu.</p>
       {/if}
     </div>
     <div class="panel fig" data-known={m?.known ?? ''}>
