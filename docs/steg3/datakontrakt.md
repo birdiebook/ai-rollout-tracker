@@ -102,7 +102,7 @@ Tester: `tests/test_site_bundle.py`.
 | `measure_as_of`, `measure`, `measure_path` | måttet per postens datum (ur ögonblicksbilden när serien finns där) och dess bana |
 | `measure_history` | postens mått varje månadsslut i ränderna, kolumnform: `months`, `kind`, `counted`, `latest_period`, `known_from`, `pace`, `change_in_pace`, `pace_percentile`, `change_percentile`, `direction`, `valid`. Bara för serier som någon gren mätte |
 | `levels` | senaste versionen av varje period som var känd byggdagen (`as_of`), i seriens egen frekvens |
-| `rows.counts`, `rows.backfill_last_known` | antal rader per typ (`release`, `fetch`, `revision`, `backfill`, `derived`); senaste `known_from` för bakåtfyllda rader |
+| `rows.counts`, `rows.backfill_last_known`, `rows.backfill_fetched` | antal rader per typ (`release`, `fetch`, `revision`, `backfill`, `derived`); senaste `known_from` för bakåtfyllda rader; senaste hämtdag (`fetched_at`, avrundad uppåt till hel dag) för samma rader (från 1.2.0, avsnitt 5.6) |
 | `versions` | tidsresan, avsnitt 5 |
 
 ### nowcast/n<k>.json
@@ -110,12 +110,20 @@ Tester: `tests/test_site_bundle.py`.
 `publishable` (alltid `true` i dag; ett inhållet mål skulle bara behålla regeln och namnet), `id`, `title`, `target`,
 `target_label`, `unit`, `source`, `license`, `decimals`, `error_unit`, `frequency`, `origin_rule`, `results_doc`,
 `champion`, `shadows`, `variants[]` (`id`, `text`), `next_origin`, `next_period`, `forecasts[]` (skarpa filer:
-`period`, `origin`, `value`, `variants`, `intervals` 50/80/95 för huvudmodellen, `file`; aldrig `inputs`),
+`period`, `origin`, `value`, `variants`, `intervals` 50/80/95 för huvudmodellen, `file`, `commit`; aldrig `inputs`),
 `scorecard[]` (en rad per fil mot första versionen av utfallet: `forecast`, `outcome`, `err_<modell>`,
 `crps_<modell>`, `pit_<modell>`, `hit_<nivå>_<modell>`, `interval_<nivå>`), `summary[]` (MAE och bias per variant),
 `coverage[]` (skarp täckning med binomialband), `history` (målets senaste nivåer), `backtest_calibration` (täckning
 per nivå med band, Holm, CRPS, PIT och huvudmodellens MAE i backtesten, beräknad vid bygget och alltid märkt som
 backtest).
+
+**`commit` (från 1.2.0, R-W1 4a).** `{sha, date}` för den commit som lade till filen (`git log --diff-filter=A
+--format=%H%x09%cI -- <fil>`, första raden, alltså det senaste tillägget), med datumet i UTC
+(`YYYY-MM-DDTHH:MM:SSZ`). Det är prognosens tidsstämpel, och prognossidan länkar exakt den commiten
+(`commit/<sha>`). `null` betyder att bygget saknade git-historiken (till exempel en grund klon). Sidan visar då filen
+som "väntar på verifiering", aldrig som skarp. Båda Pages-workflows checkar ut med `fetch-depth: 0`. Bygget stoppas
+(`export.CommitError`) om en poängsatt fil committades samma dag som eller efter utfallets `known_from`.
+`nowcast/d2.json` har samma fält för sin senaste fil (`commit` bredvid `file`).
 
 ### story/<YYYY-MM>.json (W13)
 
@@ -153,6 +161,14 @@ rekonstrueras med samma kod per månadsslut och märks `rekonstruerad`. En måna
   katalogserier, härledda serier och nowcastmål som inte är publicerbara) får bara stå i en lista under nyckeln
   `withheld`, och en sådan post får bara ha fälten i `withheld_entry`, utan tal. Nyckeln som ordkant i en sträng,
   som objektnyckel eller som filnamn räknas som läcka och stoppar bygget.
+- **Den byggda sidan** (`python -m ai_tracker.site_bundle scan-build web/build --src web/src`, R-W1 1b, ett steg i
+  `pages-next.yml` efter bygget): grinden ovan ser bara paketet, men frontend har också data som skrivits in för hand
+  i `web/src` (`holdout.ts`, `reconciliations.json`, `rules.json`). Skanningen läser bygget: `data/` med
+  `gate.scan`, `**/__data.json` (SvelteKits laddata, devalue) efter uppackning med samma regel, `**/*.html` med
+  varje `withheld:[…]` bortklippt (inga inhållna nycklar i resten; etiketter får stå i markeringen, eftersom sidorna
+  namnger inhållna serier med skäl), samt `_app/**/*.{js,json,css}` och alla källfiler under `web/src` (inga
+  inhållna nycklar och inga inhållna etiketter alls). En planterad nyckel i en konstant stoppar bygget
+  (`tests/test_site_bundle_rw1x.py`).
 - **Tester:** skanningen hittar alla planterade läckor (sträng, etikett, objektnyckel, tal i en inhållen post, filnamn).
   I fixturvärlden har de två inhållna serierna värden kring 7·10⁶ och 6·10⁶, och testet kontrollerar att inget tal i
   paketet, i någon avrundning, är ett av deras värden. En skarp prognosfils `inputs` (som namnger en inhållen serie)
@@ -198,8 +214,21 @@ Regler (testade):
 5. **Storleksskydd:** en serie med fler än 6 000 versioner får sina äldsta versioner hopslagna: allt som var känt
    före en brytdag ersätts av versionen som gällde brytdagen, daterad brytdagen (senare, aldrig tidigare).
    `collapsed_before` anger brytdagen, och tidsresa före den visar inget för serien. Ingen serie behöver det i dag.
-6. **Bakåtfylld historik** har dagens version (`source="backfill"`). `rows.backfill_last_known` anger senaste
-   `known_from` bland de bakåtfyllda raderna, och tidsresa till ett datum före det ska märkas rekonstruerad.
+6. **Bakåtfylld historik** (`source="backfill"`) har versionen från dagen raderna hämtades, inte från dagen
+   perioderna först publicerades. Deras `known_from` är en regel (periodslut plus fördröjning) och säger därför inte
+   när värdet blev känt i den form det har. `rows.backfill_last_known` anger senaste `known_from` bland de
+   bakåtfyllda raderna och `rows.backfill_fetched` (från 1.2.0) den senaste hämtdagen för samma rader, avrundad uppåt
+   till hel dag. Tidsresa till ett datum före `max(backfill_last_known, backfill_fetched)` märks rekonstruerad
+   (`versions.ts` `backfillUntil`), och noten anger båda dagarna. Före rättningen R-W1 3a användes bara regeldagen.
+   Då visades till exempel `us_elec_sales_com_*` (regeldag 2013-01-29, hämtad 2026-11-23) omärkta under en
+   tidsresa till 2020. I det riktiga paketet 2026-11-25 har 105 publicerade serier bakåtfyllnad, och för 43 av dem
+   ligger hämtningen mer än 7 dagar efter regeldagen (18 mer än 30 dagar, 17 mer än 180). Testerna:
+   `tests/test_site_bundle_rw1x.py` (Python, även mot den riktiga tabellen), `timetravel.test.ts` (varje
+   bakåtfylld serie i paketet, fixturer eller `TT_BUNDLE`), golden-filen (`backfilled` per prov-dag) och
+   `rw1.spec.ts` (sidan märker fallet i webbläsaren).
+   Samma regel gäller grenposterna: en serie som bakåtfylls efter den första skarpa ögonblicksbilden ändrar inga
+   skarpa månader (de läses ur ögonblicksbilderna), och rekonstruerade månader före dess `backfill_fetched` märks
+   rekonstruerade.
 
 `measure_history` kompletterar versionerna för mått: den visar vad posten (skarp eller rekonstruerad) sa om serien
 varje månadsslut, så att tidsresan för takt och riktning läser pipelinens siffror i stället för att räkna om.

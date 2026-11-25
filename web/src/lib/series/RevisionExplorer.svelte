@@ -8,7 +8,7 @@
   import { logTicks, timeScale, timeTicks, valueScale } from './chart';
   import { periodText, periodTime } from './period';
   import { logTickNum, num, snum, tickNum } from './text';
-  import { asOf, emptyOn, knownRows, reconstructedOn, sampleDates, snapshots, versionOn } from './versions';
+  import { asOf, backfillUntil, emptyOn, knownRows, reconstructedOn, sampleDates, snapshots, versionOn } from './versions';
   import type { Versions } from './types';
 
   let {
@@ -17,7 +17,7 @@
     unit,
     log = false,
     from = -Infinity,
-    backfillLastKnown,
+    backfill,
     source,
     license
   }: {
@@ -28,12 +28,14 @@
     /** log value scale (follows the level chart's choice) */
     log?: boolean;
     from?: number;
-    backfillLastKnown?: string | null;
+    /** the series' rows block: backfill_last_known and backfill_fetched (datakontrakt 5.6) */
+    backfill?: { backfill_last_known?: string | null; backfill_fetched?: string | null } | null;
     source?: string;
     license?: string;
   } = $props();
 
   const v = $derived(versions);
+  const backfillTo = $derived(backfillUntil(backfill));
   const dates = $derived(v.dates);
   const idx = $derived(Math.max(0, knownRows(v, day) === 0 ? 0 : dates.indexOf(versionOn(v, day) ?? dates[0])));
   const then = $derived(asOf(v, day));
@@ -111,7 +113,7 @@
   </div>
 </div>
 <p class="note" aria-live="polite">
-  {#if reconstructedOn(backfillLastKnown, day)}Historiken före {dateLabel(backfillLastKnown ?? '')} är bakåtfylld med dagens version (rekonstruerad).{/if}
+  {#if reconstructedOn(backfillTo, day)}Historiken före {dateLabel(backfillTo ?? '')} är bakåtfylld med dagens version (rekonstruerad){#if backfill?.backfill_fetched && backfill.backfill_fetched === backfillTo}: värdena hämtades {dateLabel(backfill.backfill_fetched)}, inte när perioderna först publicerades{/if}.{/if}
   {#if v.collapsed_before && day < v.collapsed_before}Versioner före {dateLabel(v.collapsed_before)} är hopslagna; serien visar inget före den dagen.{/if}
 </p>
 

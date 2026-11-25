@@ -53,6 +53,7 @@
         "champion": {"type": "string"}, "value": {"$ref": "common.json#/$defs/num"},
         "variants": {"type": "object", "additionalProperties": {"$ref": "common.json#/$defs/num"}},
         "period": {"type": ["string", "null"]}, "file": {"type": "string"},
+        "commit": {"$ref": "common.json#/$defs/commit"},
         "intervals": {"$ref": "common.json#/$defs/intervals"}
       }
     },

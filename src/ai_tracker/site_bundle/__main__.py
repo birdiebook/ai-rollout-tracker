@@ -42,7 +42,8 @@ def build_fixtures(out: Path) -> dict:
         root = Path(tmp)
         ctx = SY.context(root)
         paths = SY.write_inputs(root, ctx)
-        docs = E.assemble(ctx, today=SY.TODAY, history_from=SY.HISTORY_FROM, calibration=SY.calibration(), **paths)
+        docs = E.assemble(ctx, today=SY.TODAY, history_from=SY.HISTORY_FROM, calibration=SY.calibration(),
+                          commits=SY.commits, **paths)
     info = {"built_utc": SY.BUILT_UTC, "git_sha": SY.GIT_SHA, "repo": "https://github.com/birdiebook/ai-rollout-tracker"}
     files = B.serialise(docs, info, SY.TODAY, synthetic=True)
     B.write(files, out)
@@ -98,6 +99,9 @@ def main(argv: list[str] | None = None) -> int:
     v.add_argument("dir")
     s = sub.add_parser("sizes", help="size report from a written bundle's manifest")
     s.add_argument("dir")
+    sb = sub.add_parser("scan-build", help="licence scan of the built site (web/build) and of the web sources")
+    sb.add_argument("dir", help="the output of `npm run build` (web/build)")
+    sb.add_argument("--src", default=None, help="also scan the front-end sources (web/src) for withheld keys and labels")
     a = ap.parse_args(argv)
 
     from ai_tracker import observations
@@ -124,6 +128,15 @@ def main(argv: list[str] | None = None) -> int:
             for e in errs[:50]:
                 print(e, file=sys.stderr)
             print(f"{len(errs)} problems")
+            return 1 if errs else 0
+        elif a.cmd == "scan-build":
+            from ai_tracker.site_bundle import scan_build as SB2
+
+            errs = SB2.scan_build(Path(a.dir), Path(a.src) if a.src else None)
+            for e in errs[:50]:
+                print(f"::error::{e}", file=sys.stderr)
+            print(f"scan-build: {len(errs)} withheld keys or labels outside a withheld list in {a.dir}"
+                  + (f" and {a.src}" if a.src else ""))
             return 1 if errs else 0
         elif a.cmd == "sizes":
             man = json.loads((Path(a.dir) / "manifest.json").read_text(encoding="utf-8"))

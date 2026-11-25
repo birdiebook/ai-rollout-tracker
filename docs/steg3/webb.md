@@ -92,6 +92,7 @@ Kör i `web/` med Node 22.
 | `npm run test:e2e` | Playwright mot `build/` (startar preview själv), dator 1280 px och mobil 375 px |
 | `npm run budget` | gzip-storlek per sida mot budgeten |
 | `npm run external-hosts` | statisk kontroll av `build/` |
+| `PYTHONPATH=src python -m ai_tracker.site_bundle scan-build web/build --src web/src` (i repots rot) | inga inhållna nycklar eller etiketter utanför `withheld`-listor i bygget och i källorna |
 
 Riktig data lokalt: `PYTHONPATH=src python -m ai_tracker.site_bundle build --out /tmp/bundle` och sedan
 `SITE_BUNDLE_DIR=/tmp/bundle npm run build`. Skärmbilder: `SHOTS_DIR=<katalog> npx playwright test screenshots`.
@@ -224,7 +225,9 @@ pages.yml (efter veckohämtning, ögonblicksbild, skarpa prognoser eller manuell
   misslyckas jobbet med en varning, och den nuvarande sidan publiceras utan `/next/`.
 
 Grindarna i ordning: `npm ci`, svelte-check, vitest, förrendering (`handleHttpError: 'fail'`, så att ett schemabrott
-eller en trasig länk stoppar bygget), statisk kontroll av externa värdar, budget, Playwright smoke (alla routes,
+eller en trasig länk stoppar bygget), licensskanning av bygget och av `web/src`
+(`python -m ai_tracker.site_bundle scan-build web/build --src web/src`, datakontraktet avsnitt 4), statisk kontroll
+av externa värdar, budget, Playwright smoke (alla routes,
 1280 och 375 px, inga förfrågningar till andra värdar, inga konsolfel, ingen vågrät rullning, SVG finns utan JS),
 axe WCAG 2.2 AA i ljust och mörkt läge, och skärmbilder av alla routes. Skärmbilder, Playwright-rapport och
 budgetrapport laddas upp som artefakten `web-screenshots`.

@@ -84,7 +84,10 @@ function forecastRow(f: Record<string, any>): LiveRow {
     err: f.err_champion ?? null,
     inside,
     pit: null,
-    crps: null
+    crps: null,
+    // the story card links the forecast's own page, which shows its commit (RW1-X 4a)
+    commit: null,
+    verified: false
   };
 }
 

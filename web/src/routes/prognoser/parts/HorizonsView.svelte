@@ -12,7 +12,7 @@
 
   const days = $derived(daysUntil(site.today, d2.next_origin));
   const live = $derived(d2.origin !== null && d2.origin >= d2.first_live);
-  const proof = $derived(d2.file ? proofLinks(site.repo, site.sha, d2.file) : null);
+  const proof = $derived(d2.file ? proofLinks(site.repo, site.sha, d2.file, d2.commit) : null);
   const sentence = $derived(
     `D2 ger banor 1–8 kvartal framåt för ${d2.targets.map((t) => t.label).join(' och ')}. ` +
       `Den är en skugga: den utvärderas men styr ingenting och ersätter inte nowcastens huvudmodell. ` +
@@ -43,7 +43,7 @@
   {/each}
   {#if d2.file}
     <p class="note">
-      Fil: <code>{d2.file}</code>{#if proof}: <a href={proof.history} rel="external">commit-historik</a>{/if}. Grupper: {Object.entries(d2.groups).map(([g, hs]) => `${g} = h ${hs.join(', ')}`).join('; ')}.
+      Fil: <code>{d2.file}</code>{#if d2.commit}, committad {dateLabel(d2.commit.date.slice(0, 10))}{#if proof?.commit} (<a href={proof.commit} rel="external"><code>{d2.commit.sha.slice(0, 7)}</code></a>){/if}{:else}, ingen commit i bygget{/if}{#if proof}: <a href={proof.history} rel="external">commit-historik</a>{/if}. Grupper: {Object.entries(d2.groups).map(([g, hs]) => `${g} = h ${hs.join(', ')}`).join('; ')}.
     </p>
   {/if}
 </section>

@@ -2,7 +2,7 @@
 // the URL handling around it. Synthetic inputs only, so the edge cases are explicit. See docs/granskning/rw1_webb.md.
 import { describe, expect, it } from 'vitest';
 import type { Versions } from '$lib/series/types';
-import { asOf, toDay } from '$lib/series/versions';
+import { asOf, backfillUntil, toDay } from '$lib/series/versions';
 import { branchOn, cutHistory, cutVersions, lastMonthEnd, leaks, monthEnd, monthKnown, overviewOn, seriesOn } from './gate';
 import { carryHref, readAsOf } from './url';
 import { hidesBeforePaint } from './prepaint';
@@ -122,6 +122,18 @@ describe('collapsed versions (size guard) and the backfill boundary', () => {
     const doc = { key: 'x', label: 'x', versions: V, rows: { counts: {}, backfill_last_known: '2024-06-30' } } as never;
     expect(seriesOn(doc, '2024-06-29').backfilled).toBe(true);
     expect(seriesOn(doc, '2024-06-30').backfilled).toBe(false);
+  });
+  it('RW1-X 3a: the backfill flag holds until the fetch day, not only until the rule day (us_elec_sales_com_*)', () => {
+    // rule days (period end + lag) up to 2013-01-29, but the rows were fetched 2026-11-23 with that day's vintage
+    const doc = { key: 'x', label: 'x', versions: V, rows: { counts: {}, backfill_last_known: '2013-01-29', backfill_fetched: '2026-11-23' } } as never;
+    for (const d of ['2013-01-28', '2013-01-29', '2020-06-30', '2026-11-22']) expect(seriesOn(doc, d).backfilled, d).toBe(true);
+    expect(seriesOn(doc, '2026-11-23').backfilled).toBe(false);
+    expect(backfillUntil({ backfill_last_known: '2013-01-29', backfill_fetched: '2026-11-23' })).toBe('2026-11-23');
+    // the later of the two days, whichever it is; a bundle before 1.2.0 has only the rule day
+    expect(backfillUntil({ backfill_last_known: '2026-12-31', backfill_fetched: '2026-11-23' })).toBe('2026-12-31');
+    expect(backfillUntil({ backfill_last_known: '2013-01-29' })).toBe('2013-01-29');
+    expect(backfillUntil({ backfill_last_known: null, backfill_fetched: null })).toBeNull();
+    expect(backfillUntil(null)).toBeNull();
   });
 });
 

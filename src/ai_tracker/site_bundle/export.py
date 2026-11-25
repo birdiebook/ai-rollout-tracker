@@ -7,7 +7,9 @@ and runs every value through the licence gate (site_bundle.gate) before it is re
 
 from __future__ import annotations
 
+import subprocess
 import sys
+from collections.abc import Callable
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -34,6 +36,44 @@ HISTORY_FIELDS = ("latest_period", "known_from", "pace", "change_in_pace", "pace
 
 class GateError(RuntimeError):
     """The licence scan found a withheld series outside a withheld list: nothing is written."""
+
+
+class CommitError(RuntimeError):
+    """A live forecast file was committed on or after the day its outcome became known: nothing is written."""
+
+
+# ------------------------------------------------------------------ the commit that added a live forecast file
+
+
+def file_commit(path: Path) -> dict | None:
+    """{sha, date} of the commit that added `path` (the newest add, `git log --diff-filter=A`), date in UTC
+    ("YYYY-MM-DDTHH:MM:SSZ"). None outside git, for an uncommitted file, or in a shallow clone that lacks the add
+    (pages workflows check out with fetch-depth: 0)."""
+    path = Path(path).resolve()
+    try:
+        out = subprocess.run(["git", "-C", str(path.parent), "log", "--diff-filter=A", "--format=%H%x09%cI", "--",
+                              path.name], capture_output=True, text=True, timeout=30)
+    except (OSError, subprocess.SubprocessError):
+        return None
+    line = out.stdout.strip().splitlines()[0] if out.returncode == 0 and out.stdout.strip() else ""
+    if "\t" not in line:
+        return None
+    sha, date = line.split("\t", 1)
+    when = pd.Timestamp(date).tz_convert("UTC")
+    return {"sha": sha, "date": when.strftime("%Y-%m-%dT%H:%M:%SZ")}
+
+
+def commit_violations(nowcasts: list[dict]) -> list[str]:
+    """Every scored forecast ("utfall") whose file was committed on or after its outcome's known_from day (UTC). A
+    file without a commit is not a violation here: the page shows it as waiting for verification, never as live."""
+    out = []
+    for n in nowcasts:
+        commits = {f.get("period"): f.get("commit") for f in n.get("forecasts") or []}
+        for r in n.get("scorecard") or []:
+            c, kf = commits.get(r.get("period")), r.get("known_from")
+            if r.get("status") == "utfall" and c and kf and c["date"][:10] >= str(kf)[:10]:
+                out.append(f"{n.get('id')} {r.get('period')}: committed {c['date']} ({c['sha'][:7]}), outcome known {kf}")
+    return out
 
 
 # ------------------------------------------------------------------ helpers
@@ -137,10 +177,19 @@ def _levels(key: str, ctx: Context, as_of) -> dict | None:
 
 
 def _row_sources(rows: pd.DataFrame, as_of) -> dict:
+    """Rows per source type, and the two backfill days (datakontrakt 5.6). Backfilled rows carry the vintage of the
+    day they were fetched, while their known_from is a rule (period end + lag): time travel is reconstructed before
+    max(backfill_last_known, backfill_fetched). backfill_fetched is the latest fetched_at among the backfilled rows
+    known on as_of, rounded up to a whole day (a fetch at 10:00 is known from the next day, never earlier)."""
     r = rows[rows["known_from"] <= pd.Timestamp(as_of)]
     counts = {str(k): int(v) for k, v in r["source"].value_counts().items()}
     b = r[r["source"] == "backfill"]
-    return {"counts": counts, "backfill_last_known": str(pd.Timestamp(b["known_from"].max()).date()) if len(b) else None}
+    last = str(pd.Timestamp(b["known_from"].max()).date()) if len(b) else None
+    fetched = None
+    if len(b) and "fetched_at" in b:
+        f = pd.to_datetime(b["fetched_at"]).max()
+        fetched = None if pd.isna(f) else str(pd.Timestamp(f).ceil("D").date())
+    return {"counts": counts, "backfill_last_known": last, "backfill_fetched": fetched}
 
 
 def licence_block(key: str, ctx: Context) -> dict:
@@ -289,9 +338,11 @@ def letters_docs(letters_dir: Path, reports_dir: Path) -> dict[str, dict]:
 def assemble(ctx: Context | None = None, snapshots_dir: Path | None = None, forecasts_dir: Path | None = None,
              today=None, history_from: str = D.HISTORY_FROM, letters_dir: Path | None = None,
              reports_dir: Path | None = None, calibration: dict | None = None,
-             series: list[str] | None = None) -> dict[str, dict]:
+             series: list[str] | None = None,
+             commits: Callable[[Path], dict | None] = file_commit) -> dict[str, dict]:
     """Every document of the bundle except the manifest: {relative path: JSON document}. `series` limits the
-    per-series documents (default: every publishable series)."""
+    per-series documents (default: every publishable series). `commits(path)` gives the commit that added a live
+    forecast file (default: git; the synthetic world passes its own)."""
     ctx = ctx or Context(observations.load())
     today = pd.Timestamp(today).normalize() if today is not None else D.utc_today()
     rec = D.Record(ctx, Path(snapshots_dir or S.SNAPSHOTS), today, history_from)
@@ -301,6 +352,15 @@ def assemble(ctx: Context | None = None, snapshots_dir: Path | None = None, fore
         calibration = P.backtest_calibration(ctx.table) if intervals.ENABLED else {}
     forecasts_dir = Path(forecasts_dir or config.REPO / "forecasts")
     prog = D.nowcasts(ctx, forecasts_dir, today, calibration)
+    # the commit that added each live file is its timestamp (R-W1 4a, bundle 1.2.0, datakontrakt nowcast)
+    for n in prog["nowcasts"]:
+        for f in n.get("forecasts") or []:
+            f["commit"] = commits(forecasts_dir / Path(f["file"]).relative_to("forecasts"))
+    bad_commits = commit_violations(prog["nowcasts"])
+    if bad_commits:
+        raise CommitError(f"{len(bad_commits)} live forecasts committed after their outcome: {bad_commits[:5]}")
+    hz0 = prog["horizons"]
+    hz0["commit"] = commits(forecasts_dir / Path(hz0["file"]).relative_to("forecasts")) if hz0.get("file") else None
     regime = P.regime_view(rec.live, lambda k: G.publishable(k, ctx))
     flow = F.flow_view(rec, branches, prog, calibration, sys.modules["ai_tracker.site.data"])
     nowcasts = [_gate_nowcast(n, ctx) for n in prog["nowcasts"]]

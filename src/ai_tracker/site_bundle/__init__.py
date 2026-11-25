@@ -6,6 +6,7 @@ bundle of static JSON files.
     python -m ai_tracker.site_bundle fixtures [--out web-data-fixtures]   # synthetic bundle (committed)
     python -m ai_tracker.site_bundle validate DIR                          # schema + licence scan + versions
     python -m ai_tracker.site_bundle sizes DIR                             # size report from the manifest
+    python -m ai_tracker.site_bundle scan-build web/build [--src web/src]  # licence scan of the built site
 
 Layout of the bundle (one JSON Schema per document type in schema/, copied into the bundle):
 
@@ -30,4 +31,4 @@ Python owns all data and the licence gate (site_bundle.gate, which reuses site.d
 only this bundle, never the observation table.
 """
 
-VERSION = "1.1.0"
+VERSION = "1.2.0"
