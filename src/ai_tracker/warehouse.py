@@ -69,6 +69,12 @@ from ai_tracker.series.bls import KNOWN_GAP_PERIODS as _BLS_GAP_PERIODS  # noqa:
 
 KNOWN_GAP_PERIODS: dict[str, dict[str, str]] = {**_BLS_GAP_PERIODS}
 
+# Orders and backlog from earnings releases (track S3): a company stopped stating a figure and later stated it again;
+# the stop is coded, the gap is never filled (docs/kallor/order_orderstock.md).
+from ai_tracker.series.orders_backlog import KNOWN_GAP_PERIODS as _ORDERS_GAP_PERIODS  # noqa: E402
+
+KNOWN_GAP_PERIODS.update(_ORDERS_GAP_PERIODS)
+
 # Stale series accepted until a date (ISO), and why: a known outage, never a permanent exemption
 # (that is Spec.max_age_days or Spec.closed). Example: {"us_imports_tw_m": ("2026-12-31", "shutdown, ...")}.
 KNOWN_STALE: dict[str, tuple[str, str]] = {
