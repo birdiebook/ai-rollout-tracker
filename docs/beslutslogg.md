@@ -808,3 +808,18 @@ republishing data"), npm och arXiv (`okänd`), och Microsofts capex-guidance ur 
 - **Rekommendation till Johannes:** registrets villkor för granskningen är uppfyllt. Volymerna och spreaden per emittent
   kan få `publish=True` med en daterad registerpost. Visa den poolade serien bara med noten om mixen. Rätta R-1 till R-5
   före nästa ombyggnad av CSV:n.
+
+## 2026-11-25 – X17: rättning av KR1 efter granskningen R20 (spread vid emission)
+
+- Registerposten "2026-11-25 – X17" committades före ombyggnaden. Den ändrar ingen regel. Den säger hur fem låsta regler
+  genomförs (R20-1 till R20-5) och preciserar helgdagarna i T+n: den federala kalendern i USA för USD. Långfredagen, en
+  lördagshelg som flyttas till fredagen och annan valuta än USD ger ingen framräknad likviddag, och raden kodas för hand.
+- Självkontrollen söker nu talen i tranchens del av blocket. Mutationsprov mot de cachade dokumenten: 1 229 av 1 234
+  tal från en annan tranche flaggas, mot 0 förut. Den första versionen gav ett falskt fel (en nyckel utan kolon), och
+  regeln för var en tranche börjar ändrades till parserns form (tillägg i registret).
+- Effekt: ingen. CSV:n och blocken är byte för byte desamma. De 107 dokumenten som inte kodas står med skäl i
+  `curated/credit_issuance_skipped.csv`, och de 39 paren FWP–prospekttillägg är exakt R20:s. Självkontrollen och
+  `--covers` åt båda hållen mot nyhämtade dokument gav 0 fel.
+- Serierna är fortfarande katalogserier med `publish=False`. **Rekommendation till Johannes:** som R20. Volymerna och
+  spreaden per emittent kan få `publish=True` med en daterad registerpost, och den poolade serien bara med noten om
+  mixen.

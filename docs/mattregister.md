@@ -1571,3 +1571,13 @@ självkontrollen något annat redovisas det i källdokumentet, och de rader som 
 påståenden. Nya syntetiska tester: tranchens del med en titelrad och en rörlig tranche i samma tabell, kolumntabell,
 prospekttillägg som källa och som täckt, omvänd omslagskontroll, helgdagar och osäkra dagar, avstämning per kvartal och
 skrivning utan avrundning.
+
+### 2026-11-25 – X17 (tillägg): var en tranche börjar i självkontrollen
+
+Tillägg till posten "2026-11-25 – X17", punkt 1, efter den första körningen av den nya självkontrollen mot KR1:s cachade
+dokument. Den gav ett falskt fel: Amazons villkorsbilaga 2021 skriver "2024 Notes May 12, 2024" utan kolon, så
+förfallodagen räknades till 2023 Notes. En tranches text börjar därför vid nyckeln med kolon som tillval, eller vid "In
+the case of (the) <nyckel>", och bara på en rad där värdet (efter etiketten, eller hela fortsättningsraden) börjar med
+en nyckel. En nyckel efter "the" börjar ingenting. Andra rader i blocket räknas som rader utan nyckel, där bara prisdag
+och likviddag får stå. Det är parserns form. Tillägget gäller kontrollen, inget värde: efter det ger kontrollen 238
+rader rätt och den manuella raden med beloppet utanför blocket, som förut.

@@ -273,3 +273,5 @@ Anmärkningar utan rättning:
 - Privata placeringar, 144A, SPV och lån har inga villkorsbilagor på EDGAR. Granskningen kan bara bekräfta att de inte
   ingår, inte hur stora de är.
 - Kreditbetygen i källdokumentet (AAA till BBB) är lästa i Microsofts villkorsbilaga 2026 och Oracles 2025, inte i alla.
+
+Rättat i auto14k/x17-kredit-emission
