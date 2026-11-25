@@ -20,7 +20,7 @@ Uppdateras av orkestreraren vid varje milstolpe. Senast: 2026-11-25 (körning 13
 - **Förväntningar:** revideringsindex och överraskningsindex (F1, [resultat/f1_revideringar.md](../resultat/f1_revideringar.md)).
   Serierna som läser den kurerade CSV:n har `publish=False` tills Johannes beslutar (R11-4).
 - **Makro:** BNP-bidrag, elpris och PPI (M1, [kallor/makro_bea_bls.md](../kallor/makro_bea_bls.md)). Import per land
-  (M2, [kallor/census_hs.md](../kallor/census_hs.md)): årsfilen finns, HS-serierna väntar på `CENSUS_API_KEY`.
+  (M2, [kallor/census_hs.md](../kallor/census_hs.md)): årsfilen finns, och HS-serierna är hämtade med `CENSUS_API_KEY` (2026-11-25).
 - **Läsanvisningar** för webben: [steg3/datakontrakt.md](../steg3/datakontrakt.md), "Läsanvisningar för körning 13".
 - **Efter granskningen av integrationen (2026-11-25):** `origin/main` (W12–W14, RW1-X, R-W1–R-W3, WX2 och
   aktualitetsgränsen för Nvidia) är mergad in. Paketet är 1.4.0. Den publika ögonblicksbilden bär inga värden för

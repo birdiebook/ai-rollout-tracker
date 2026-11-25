@@ -79,7 +79,7 @@ Se `docs/plan.md`, avsnitt 8. Uppdatera här när en fas är klar.
   2026-11-30 (v1 redovisas bredvid). Klass för kommersiell användning per serie (`ai_tracker.licenses`).
   Avskrivningar och PP&E (P1), nyttjandeperioder (P2a), intäktskrav som avstämningar (P2b), N7 som backtest (ingen
   variant klarar regeln, B1). Revideringar av guidance och överraskningsindex (F1). BNP-bidrag, elpris och PPI (M1).
-  Serverimport per land (M2): årsfilen finns, HS-serierna väntar på första hämtningen med `CENSUS_API_KEY`
+  Serverimport per land (M2): årsfilen och HS-serierna (hämtade med `CENSUS_API_KEY` 2026-11-25)
 - Drift: `docs/drift.md` (veckohämtning, skarpa prognoser N2 dag 5 och N1 kvartal + 20 dagar, ögonblicksbild vid månadsslut)
 
 ## Tekniska konventioner

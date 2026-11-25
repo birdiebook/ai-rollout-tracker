@@ -9,7 +9,7 @@ Alla serier är katalogserier i G6, inte kärnserier. Inga mått har räknats.
 | Nycklar | Källa | Frekv. | Historik | known_from | Status |
 |---|---|---|---|---|---|
 | `us_imp_eu{21300,21301,21320}_{tw,mx,vn,my,th,cn,world}_a` (21 serier) | Census `enduse_imports.xlsx`, ingen nyckel | A | 2016–2025 | 31 dec + 191 dagar (10 juli året efter) | hämtad, backfill |
-| `us_imp_hs{8471,847150,847180,847330,8542}_{tw,mx,vn,my,th,cn,world}_m` (35 serier) | Census API `intltrade/imports/hs` | M | från 2013-01 | max(månadsslut + 41 dagar, sena FT-900-releaser) | **BLOCKED** tills `CENSUS_API_KEY` finns |
+| `us_imp_hs{8471,847150,847180,847330,8542}_{tw,mx,vn,my,th,cn,world}_m` (35 serier) | Census API `intltrade/imports/hs` | M | från 2013-01 | max(månadsslut + 41 dagar, sena FT-900-releaser) | hämtad 2026-11-25 med `CENSUS_API_KEY` (lokalt och i CI:s veckohämtning, alla datakontroller ok), backfill |
 
 Länder (Census `CTY_CODE`): `tw` 5830 Taiwan, `mx` 2010 Mexiko, `vn` 5520 Vietnam, `my` 5570 Malaysia, `th` 5490
 Thailand, `cn` 5700 Kina och `world` hela världen (0000 i årsfilen, `-` i API:t). Enhet: MUSD, ej säsongsrensad.
@@ -210,6 +210,9 @@ R13](../granskning/r13_census_hs.md), R13-6).
   inte på fältet utan på FT-900:s kalender, så det påverkar inga värden.
 - **Start 2010 eller 2013:** kontrollen frågar från 2013-01 och kan inte avgöra om datasetet går längre bak. Den
   registrerade starten 2013-01 gäller.
+- **Hämtningen (2026-11-25):** serierna hämtades lokalt och i CI:s veckohämtning samma dag, och alla datakontroller i
+  `warehouse.py` var ok. Den delade bastabellen har alla 35 serier, 5 774 rader, 2013-01 till 2026-09 (kontrollerat i
+  integrationen av körning 14).
 
 ## Kontroll mot Census publicerade tabeller (2026-11-24)
 
