@@ -93,9 +93,14 @@ def test_company_surprises_list_only_their_company_and_are_published():
         gate = tuple(k for k in s.components if k.startswith("guid_capex_"))
         assert gate and {GR.csv_company(k) for k in gate} == set(reads), key
         assert s.components == GR.COMPONENTS + GR.csv_component_keys(reads)
-        assert s.publish and licenses.classify(s)[0] == licenses.JA
+        assert licenses.classify(s)[0] == licenses.JA
+        # published unless the owner has yet to decide (the surprise index, R25-1): then withheld with that reason
+        assert s.publish == (key not in GR.AWAITING_OWNER), key
+        assert s.withheld_reason == GR.AWAITING_OWNER.get(key, ""), key
         assert licenses.CURATED_READS[key] == ("guidance_capex.csv", reads)  # the licence rule says the same
-    assert set(GR.CSV_READS) == {"f1_surprise_meta_capex", "f1_surprise_googl_capex"}
+    assert set(GR.CSV_READS) == {"f1_surprise_meta_capex", "f1_surprise_googl_capex", "f1_surprise_index",
+                                 "f1_surprise_index_n"}
+    assert set(GR.AWAITING_OWNER) == {"f1_surprise_index", "f1_surprise_index_n"}
 
 
 def test_series_that_pool_every_company_keep_microsoft_and_stay_withheld():

@@ -3,9 +3,9 @@
 Passing tests: no Microsoft figure of the committed curated CSV survives `expectations.withhold` with the catalog's
 publish flags; the surprise index reads no row of Microsoft or Amazon (so its Microsoft components are not read);
 Amazon's published 2026 series changes definition (the fact behind R25-2).
-Strict xfail: R25-1, the surprise index lists Microsoft's guid_capex_* series as components (and the public withheld
-list gives them as its reason) although it does not read them; R25-2, a published guid_capex_* series that changes
-definition within a period does not say so. Synthetic tables and the committed CSV only, no network.
+Strict xfail until auto14k/x22-agarbeslut, now passing: R25-1, the surprise index lists only the guid_capex_* series of
+the companies whose rows it reads (Meta and Alphabet); R25-2, a published guid_capex_* series that changes definition
+within a period says so in its note. Synthetic tables and the committed CSV only, no network.
 """
 
 from __future__ import annotations
@@ -140,9 +140,8 @@ def test_the_amazon_switch_is_in_the_published_series():
     assert list(rows.loc[rows["period"] == "2026", "value"]) == [200000.0, 220000.0]  # one series, two versions
 
 
-@pytest.mark.xfail(strict=True, reason="R25-2: guid_capex_amzn_cy_lo/hi change definition in 2026 (UNSPEC -> CASH "
-                                       "capex, 2026-10-29) without saying so; the letter shows it as a revision")
 def test_a_published_guidance_series_names_a_definition_switch_within_a_period():
+    """R25-2, fixed in auto14k/x22-agarbeslut: the note names the switch (guidance_capex.switch_note)."""
     df = GC.load()
     specs = catalog.by_key()
     bad = []
@@ -154,10 +153,9 @@ def test_a_published_guidance_series_names_a_definition_switch_within_a_period()
     assert bad == []
 
 
-@pytest.mark.xfail(strict=True, reason="R25-1: f1_surprise_index(_n) lists guid_capex_msft_*/amzn_* as components "
-                                       "although it reads only Meta's and Alphabet's rows (licenses.CURATED_READS)")
 @pytest.mark.parametrize("key", INDEX_KEYS)
 def test_the_surprise_index_lists_only_the_rows_it_reads(key):
+    """R25-1, fixed in auto14k/x22-agarbeslut: the components are Meta's and Alphabet's (GR.CSV_READS)."""
     spec = catalog.by_key()[key]
     reads = licenses.CURATED_READS[key][1]
     gate = {k for k in spec.components if k.startswith("guid_capex_")}

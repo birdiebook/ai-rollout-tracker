@@ -67,6 +67,9 @@ class Spec:
     # A notice the source's terms require to be displayed with the data (e.g. the Census Data API's), quoted in
     # `license`. The site shows it with the series' attribution and in the footer once the series has rows.
     notice: str = ""
+    # Why a series that its licence and components would allow is withheld anyway (e.g. an owner decision pending,
+    # R25-1). Needs publish=False; the public withheld lists give it as the reason.
+    withheld_reason: str = ""
 
 
 def _all() -> list[Spec]:
@@ -105,6 +108,8 @@ def validate(specs: list[Spec] | None = None) -> list[str]:
             errors.append(f"{s.key}: closed or max_age_days needs a reason in note")
         if s.notice and s.notice not in s.license:
             errors.append(f"{s.key}: notice must be quoted in license (the terms that require it)")
+        if s.withheld_reason.strip() and s.publish:
+            errors.append(f"{s.key}: withheld_reason needs publish=False")
     keys = {**by_key(), **{s.key: s for s in specs}}  # components may live in other modules
     for s in specs:
         missing = [c for c in s.components if c not in keys]

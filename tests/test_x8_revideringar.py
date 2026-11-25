@@ -179,7 +179,8 @@ def test_new_series_and_the_publish_gate():
     for key in GR.CSV_BASED:  # owner decision 2026-11-25 (R11-4): per company, see tests/test_agarbeslut.py
         reads = GR.CSV_READS.get(key)
         assert set(GR.csv_component_keys(reads)) <= set(specs[key].components)
-        assert specs[key].publish == (reads is not None)  # the pooled series read Microsoft's rows
+        # the pooled series read Microsoft's rows; the surprise index waits for the owner (R25-1)
+        assert specs[key].publish == (reads is not None and key not in GR.AWAITING_OWNER)
     assert catalog.validate() == []
 
 

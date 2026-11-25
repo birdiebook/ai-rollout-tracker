@@ -33,9 +33,10 @@ kvartal i CSV:n (för valet av fönster) och TSMC:s capex-meningar (för att kon
     de. De avslöjar samma värden: G = U × e^(−s/100). `f1_surprise_tsmc`, `f1_surprise_tsmc_usd` och
     `f1_surprise_nvda` har `publish=True`. **Ägarbeslut 2026-11-25:** `guid_capex_*` för Alphabet, Amazon och Meta
     publiceras (alla rader från sec.gov, klass `ja`). Metas och Alphabets överraskningar läser bara bolagets egna rader
-    och listar nu bara dess serier, så de publiceras också. Revideringsserierna och överraskningsindexet listar
-    Microsofts serier och har kvar `publish=False`. I ögonblicksbildens avsnitt `expectations` visas värdena per bolag,
-    och Microsofts och de poolade måtten har bara period och datum.
+    och listar nu bara dess serier, så de publiceras också. Revideringsserierna listar Microsofts serier och har kvar
+    `publish=False`. Överraskningsindexet läser bara Metas och Alphabets rader och listar från granskningen R25 bara
+    deras serier (klass `ja`), men har `publish=False` tills ägaren beslutar. I ögonblicksbildens avsnitt
+    `expectations` visas värdena per bolag, och Microsofts och de poolade måtten har bara period och datum.
 - `src/ai_tracker/sources/tsmc_capex_guidance.py`: TSMC:s capex-budget för året, en deterministisk tolkning av samma
   6-K som `tsmc_guidance` läser. Serierna `tsmc_guid_capex_lo/hi` (G6, år). Se `docs/kallor/guidance.md`.
 - `src/ai_tracker/sources/tsmc_usd_revenue.py` (X8): TSMC:s kvartalsintäkt i US$ ur pressmeddelandet i samma 6-K,

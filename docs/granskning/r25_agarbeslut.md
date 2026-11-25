@@ -168,3 +168,9 @@ under `RAW_DIR`.
 493 BB01RY-rader i vyn): 2 185 passerade, 1 fallerade, 1 överhoppad, 5 xfail. Det som fallerar är det kända
 `test_committed_fixtures_are_the_current_synthetic_bundle`, och bara registrets SHA-256 skiljer. Fixturerna är
 inte omgenererade. 2 185 + 1 = basen 2 168 + spårets 14 + granskningens 4.
+
+Rättat i auto14k/x22-agarbeslut: R25-1 (indexets komponenter är Metas och Alphabets, inhållet uttryckligen i väntan på
+ägarbeslut), R25-2 (noten anger definitionsbytet, brevet skriver bytet i stället för "tidigare"), R25-3 (ny
+registerpost), R25-4 (`docs/drift.md`) och R25-5 (`docs/kallor/guidance.md`, beslutsloggen). De tre strikta
+xfail-testerna är vanliga tester. Paketets `n_revised_periods` räknar fortfarande Amazons 2026 som reviderad (kräver ett
+nytt fält i kontraktet).

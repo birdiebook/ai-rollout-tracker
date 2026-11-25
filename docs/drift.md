@@ -259,8 +259,11 @@ av `data/` per spår.
   skriver där. Det är säkert för HTTP-kopiorna, eftersom varje fil heter källa/hämtdatum/URL-hash och skrivs
   atomärt. Två spår som hämtar samma URL samma dag skriver samma innehåll till samma namn. Det finns också
   föränderliga filer under `RAW_DIR`: git-klonen för Indeed (`indeed/ai-tracker`, två samtidiga `git fetch` kan
-  ge ett låsfel, och då räcker det att köra igen) och Census `schedule_log.parquet` (den sista skrivningen
-  vinner, med samma innehåll samma dag). LiteLLM-klonen ligger kvar i spårets egen `data/raw`.
+  ge ett låsfel, och då räcker det att köra igen), Census `schedule_log.parquet` (den sista skrivningen
+  vinner, med samma innehåll samma dag) och BEA-extrakten i `bea/vintages/`. Ett extrakt skrivs om när en kod
+  läggs till i `series/bea_nipa.ARCHIVE_SERIES`, atomärt (`os.replace`) och som en överuppsättning av det gamla.
+  Äldre kod läser det, eftersom den bara kräver sina egna koder. Ett ändrat värde eller datum i ett befintligt
+  extrakt stoppar hämtningen (granskning R25-4). LiteLLM-klonen ligger kvar i spårets egen `data/raw`.
 - **Begränsning:** två spår som uppdaterar samma serie stegvis kan båda lägga till samma nya period med olika
   `known_from`. Merge ger då två versioner. Planen undviker det, eftersom spåren inom en våg inte rör samma
   serier. Kör `--dry-run` och läs *updated* om du är osäker.

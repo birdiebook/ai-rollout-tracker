@@ -48,7 +48,8 @@ Publication (R11-4, owner decision 2026-11-25): every series that reads the cura
 of the companies whose rows it reads as components and is published only when they all are. The guid_capex_* series of
 Alphabet, Amazon and Meta are published (all their rows on sec.gov); Microsoft's are not (microsoft.com). Meta's and
 Alphabet's surprises read only their own company's rows (CSV_READS), so they are published; the revision series pool
-every company's rows, Microsoft's too, and stay withheld, as does the surprise index (see CSV_READS).
+every company's rows, Microsoft's too, and stay withheld. The surprise index reads only Meta's and Alphabet's rows and
+lists only theirs (CSV_READS, review R25-1), but stays withheld until the owner decides (AWAITING_OWNER).
 """
 
 from __future__ import annotations
@@ -682,10 +683,18 @@ KNOWN_GAPS = {
 # Rows of the curated CSV that a CSV_BASED series reads: the companies; a series not listed reads every row (pooled).
 # Meta's and Alphabet's surprises read only their own rows: capex_surprises selects the company's rows, standardize
 # divides by the company's own earlier surprises, and _series keeps the company's rows (tests/test_agarbeslut.py fails
-# if another company's rows change them). As licenses.CURATED_READS. The revision series pool every row, Microsoft's
-# too. The surprise index reads only Meta's and Alphabet's rows as well, but as an index across companies it stays on
-# the pooled gate (owner decision 2026-11-25 covered the guid_capex_* series and the two company surprises).
-CSV_READS: dict[str, tuple[str, ...]] = {f"f1_surprise_{c}_capex": (c,) for c in CAPEX_SURPRISE}
+# if another company's rows change them). The surprise index and its count read the same rows, Meta's and Alphabet's,
+# plus TSMC's and Nvidia's SEC series (tests/test_r25_agarbeslut.py fails if Microsoft's or Amazon's rows change
+# them), so their components are those companies' guid_capex_* series (review R25-1). As licenses.CURATED_READS. The
+# revision series pool every row, Microsoft's too.
+CSV_READS: dict[str, tuple[str, ...]] = {**{f"f1_surprise_{c}_capex": (c,) for c in CAPEX_SURPRISE},
+                                         **{k: tuple(CAPEX_SURPRISE) for k in ("f1_surprise_index",
+                                                                               "f1_surprise_index_n")}}
+# CSV_BASED series whose components are all publishable but that stay withheld: the owner decision 2026-11-25 covered
+# the guid_capex_* series and the two company surprises, not the index across companies (beslutsloggen, R25-1).
+# key -> the public reason (Spec.withheld_reason). Publishing the index is removing it from here.
+AWAITING_OWNER: dict[str, str] = {
+    k: "väntar på ägarbeslut (komponenterna får visas, R25-1)" for k in ("f1_surprise_index", "f1_surprise_index_n")}
 
 
 @lru_cache(maxsize=1)
@@ -706,19 +715,23 @@ def csv_component_keys(companies: tuple[str, ...] | None = None) -> tuple[str, .
 
 def _spec(key: str) -> Spec:
     _kind, branch, label, unit, freq, lag, max_age, question, note = SERIES[key]
+    held = AWAITING_OWNER.get(key, "")
     if key in CSV_BASED:
         reads = CSV_READS.get(key)
         gate = csv_component_keys(reads)
         comps = COMPONENTS + gate
-        publish = bool(gate) and all(s.publish for s in csv_component_specs() if s.key in gate)
-        whose = "alla bolags rader" if reads is None else "bara bolagets egna rader"
+        publish = bool(gate) and all(s.publish for s in csv_component_specs() if s.key in gate) and not held
+        whose = ("alla bolags rader" if reads is None else "bara bolagets egna rader" if len(reads) == 1
+                 else f"bara raderna för {'/'.join(reads)}")
         note += (f" Bygger på curated/guidance_capex.csv ({whose}) och följer därför publish-flaggan för "
                  f"guid_capex_*-serierna {'för alla bolag' if reads is None else 'för ' + '/'.join(reads)} (R11-4).")
+        if held:
+            note += f" Visas inte: {held}."
     else:
         comps, publish = COMPONENTS, True
     return Spec(key=key, branch=branch, label=label, unit=unit, freq=freq, source=SOURCE, fetch=_fetch(key),
                 lag_days=lag, license=LICENSE, revised=True, publish=publish, question=question, note=_NOTE + note,
-                max_age_days=max_age, components=comps)
+                max_age_days=max_age, components=comps, withheld_reason=held)
 
 
 @lru_cache(maxsize=1)

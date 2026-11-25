@@ -71,6 +71,7 @@ En rad per spår, fylls på efter varje körning. Tumreglerna justeras när siff
 | 2026-11-25 | 14 | R-W2 tillgänglighet | granskning + rättning | ~56 | ~116 | ~270 | axe 0 i 54 körningar; 4 tangentbordsfel rättade; LCP 0,8 s; TBT kvar (P1) |
 | 2026-11-25 | 14 | Ägarbeslut (spärrregeln, R11-4, BB01RY) | tre ägarbeslut: publiceringsregel, uppdelad spärr, ny serie (förregistrerad) | ~45 | ~100 | – | guid_capex för GOOGL/META/AMZN publicerade via klassregeln, MSFT inhållen; 2 F1-överraskningar avgränsade med bevistest; spärr per bolag i ögonblicksbilden; BB01RY (493 rader, 24 kvartal för hand, 194 mot flatfil, bara avsnitt 1 omhämtat); 14 nya tester |
 | 2026-11-25 | 14 | R25 granskning av ägarbesluten | granskning (publika utdata, licensgrind, primärkälla BEA) | ~75 | ~95 | – | GODKÄND MED ANMÄRKNINGAR: inga Microsoft-siffror i ögonblicksbilder (2026-10, 2026-11), paket, gamla sidan och två månadsbrev; 21 kvartal BB01RY i tre andra releaser för hand; R25-1 och R25-2 (bör, strikt xfail), 4 noter; 7 tester |
+| 2026-11-25 | 14 | X22 rättning efter R25 | rättning (katalog, notering, brev, dokument) | ~40 | ~60 | – | R25-1 och R25-2 rättade (3 strikta xfail nu vanliga tester), R25-3–R25-5 också; indexet inhållet med skäl (`Spec.withheld_reason`), definitionsbyte i not och brev; torrkörning brev 2026-10 och paket; 5 nya tester |
 
 ## Körning 1, sammanfattning (2026-11-23, orkestrerare)
 

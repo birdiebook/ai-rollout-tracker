@@ -38,6 +38,7 @@ import pandas as pd
 from ai_tracker import catalog, config, observations, pipeline
 from ai_tracker.site import data as D
 from ai_tracker.site.render import NOT_INVESTMENT_ADVICE, num
+from ai_tracker.sources import guidance_capex
 from ai_tracker.state import branch as BR
 from ai_tracker.state import register as R
 from ai_tracker.state import snapshot as S
@@ -162,6 +163,16 @@ def value_text(x) -> str:
         return "–"
     a = abs(x)
     return n(x, 0 if a >= 100 else 2 if a >= 1 else 3)
+
+
+def guidance_was(key: str, period, old, known_from) -> str:
+    """The parenthesis after a new guidance value: the period's previous value, unless the new version comes from a
+    row with another definition (sources.guidance_capex.definition_switch). The register (F1) does not count that as
+    a revision, so the letter names the switch instead of an earlier value (review R25-2)."""
+    switch = guidance_capex.definition_switch(key, period, known_from)
+    if switch:
+        return f" (definitionsbyte från {switch[0]} till {switch[1]}, inte en revidering)"
+    return "" if pd.isna(old) else f" (tidigare {value_text(old)})"
 
 
 def prev_label(inp: Inputs) -> str:
@@ -707,7 +718,7 @@ def data_news(inp: Inputs) -> tuple[list[str], list[str]]:
         for r in guid_shown.sort_values(["series", "period", "known_from"]).to_dict("records"):
             spec = ctx.specs.get(r["series"])
             unit = spec.unit if spec else ""
-            was = "" if pd.isna(r["old"]) else f" (tidigare {value_text(r['old'])})"
+            was = guidance_was(r["series"], r["period"], r["old"], r["known_from"])
             lines.append(f"  - {series_name(r['series'], ctx)} (`{r['series']}`), {r['period']}: "
                          f"{value_text(r['new'])} {unit}{was}, känd {pd.Timestamp(r['known_from']).date()}.")
     lines.append("")

@@ -452,7 +452,8 @@ def test_catalog_contract():
         if key in GR.CSV_BASED:  # reads the curated CSV: declares the rows it reads and follows their gate (R11-4)
             reads = GR.CSV_READS.get(key)
             assert s.components == GR.COMPONENTS + GR.csv_component_keys(reads)
-            assert s.publish == all(specs_all[k].publish for k in GR.csv_component_keys(reads))
+            assert s.publish == (all(specs_all[k].publish for k in GR.csv_component_keys(reads))
+                                 and key not in GR.AWAITING_OWNER)
         else:
             assert s.publish and s.components == GR.COMPONENTS
     assert {"tsmc_guid_capex_lo", "tsmc_guid_capex_hi", "tsmc_rev_usd_q"} <= set(specs)

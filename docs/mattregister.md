@@ -1533,3 +1533,15 @@ nettomått för `ai_invest_contrib_gross`, och något sådant registreras inte. 
 
 **Kontroll efter hämtningen.** Minst tre kvartal kontrolleras för hand mot tabell 1.2.2 i den arkiverade releasen.
 Resultatet står i `docs/kallor/makro_bea_bls.md`.
+
+### 2026-11-25 – Rättelse: vad BB01RY omfattar (granskning R25-3)
+
+Posten "M1: nettobidrag för datorer efter import (BB01RY), ägarbeslut" ovan säger under "Hur den läses" att `BB01RY`
+"tar med hushållens och den offentliga sektorns köp och exporten". Den säger också att skillnaden mot `B935RY` blandar
+"hushåll, offentlig sektor, export och import". Samma post säger att offentliga investeringar bara troligen ingår och
+att det inte är verifierat. BEA:s `SeriesRegister.txt` listar bara `B935RC`, `DCPPRC`, `B850RC` och `B852RC` under
+`BB01RC`.
+
+Läs därför båda ställena så här: `BB01RY` tar med hushållens köp, exporten och troligen offentliga investeringar (inte
+verifierat), och drar ifrån importen. Ingen definition, ingen serie, ingen datering och ingen beräkning ändras.
+Seriens beskrivning i katalogen var redan rätt.

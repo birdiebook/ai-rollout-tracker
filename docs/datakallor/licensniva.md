@@ -90,11 +90,14 @@ I tur och ordning, och det första som gäller avgör:
   6-K och är `ja`. Efter X8 hade de tio F1-serier som läser filen alla `guid_capex_*` som komponenter (R11-4), och
   därför blev också överraskningarna för Meta och Alphabet `okänd`, via Microsofts rader. **Ägarbeslut 2026-11-25:**
   Metas och Alphabets överraskningar listar nu bara bolagets egna `guid_capex_*` (`guidance_revisions.CSV_READS`,
-  bevisat med ett test som ändrar de andra bolagens rader), så de är `ja` och publiceras. Revideringsserierna och
-  överraskningsindexet listar fortfarande alla bolags serier och är `okänd`. `guid_capex_*` för Alphabet, Amazon och
+  bevisat med ett test som ändrar de andra bolagens rader), så de är `ja` och publiceras. Revideringsserierna listar
+  fortfarande alla bolags serier och är `okänd`. Överraskningsindexet och dess antal listar från granskningen R25 bara
+  Metas och Alphabets serier, som i `CURATED_READS`, och är `ja`. De har `publish=False` tills ägaren beslutar
+  (`Spec.withheld_reason`). `guid_capex_*` för Alphabet, Amazon och
   Meta publiceras, eftersom klassen är `ja`, och Microsofts gör det inte (`publish` följer klassen,
-  [kallor/guidance.md](../kallor/guidance.md)). Tabellerna nedan är från före beslutet: två serier har bytt från
-  `okänd` till `ja`, och `us_gdp_contrib_final_sales_computers` (BEA, `ja`) har tillkommit. Kör om rapporten vid nästa
+  [kallor/guidance.md](../kallor/guidance.md)). Tabellerna nedan är från före beslutet: fyra serier har bytt från
+  `okänd` till `ja` (de två överraskningarna och, efter R25, indexet och dess antal), och
+  `us_gdp_contrib_final_sales_computers` (BEA, `ja`) har tillkommit. Kör om rapporten vid nästa
   integration.
 - **Körning 13:s nya serier är `ja`, utom de tio F1-serier som läser den kurerade filen.** Avskrivningar och PP&E (P1),
   avstämningarna för intäktskravet (P2b) och TSMC:s capex-utsikt och US$-intäkt (F1) kommer från sec.gov.

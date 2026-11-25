@@ -824,3 +824,27 @@ Johannes svarade "kör på dina rekommendationer" på tre rekommendationer samma
   brutto (`us_gdp_contrib_computers`). Cachen laddade bara ned avsnitt 1 igen, och inget extrakt avvek.
 - **Kvar:** `docs/datakallor/licensniva.md`:s genererade tabeller är från före beslutet. Två serier har bytt från
   `okänd` till `ja`, och en serie har tillkommit. Kör om rapporten vid nästa integration.
+
+## 2026-11-25 – Rättning efter granskning R25 (spår `auto14k/x22-agarbeslut`)
+
+- **R25-1: överraskningsindexet.** `f1_surprise_index` och `f1_surprise_index_n` listar nu bara Metas och Alphabets
+  `guid_capex_*` som komponenter. Det är de rader de läser (`guidance_revisions.CSV_READS`, samma som
+  `licenses.CURATED_READS`), och testet i R25 visar det. Klassen blir `ja`. Indexet publiceras ändå inte än, eftersom
+  ägarbeslutet i dag gällde `guid_capex_*` och bolagens egna överraskningar. Det står nu uttryckligen
+  (`guidance_revisions.AWAITING_OWNER`, nytt fält `Spec.withheld_reason`). Listan över inhållna serier på sidan säger
+  "väntar på ägarbeslut" i stället för att namnge Microsofts serier. Ögonblicksbilden visar som förut bara period och
+  datum för indexet. **Rekommendation till Johannes:** publicera indexet. Det avslöjar inget som inte redan är publikt,
+  eftersom z per bolag går att räkna fram ur de publicerade `f1_surprise_*`. Ändringen är att ta bort nycklarna ur
+  `AWAITING_OWNER`.
+- **R25-2: definitionsbyte i Amazons serie.** En ny version av en `guid_capex_*`-serie från en rad med en annan
+  definition än versionen före är ett definitionsbyte. F1 räknar det inte som en revidering. Seriens not anger nu bytet
+  (`guidance_capex.definition_switches`), och månadsbrevet skriver "definitionsbyte från AMZN_CAPEX_UNSPEC till
+  AMZN_CASH_CAPEX, inte en revidering" i stället för "tidigare 200 000". I dag gäller det bara Amazons 2026
+  (2026-10-29). Torrkörningen av brevet för oktober visar den nya texten. Serien delas inte per definition. Det skulle
+  ändra nycklar och rader för en publicerad serie i bastabellen. Paketets versioner räknar fortfarande perioden som
+  reviderad (`n_revised_periods`), eftersom paketet saknar ett fält för noten. Att visa noten där är en ändring av
+  kontraktet och webben, och hör till ett webbspår.
+- **Noterna.** R25-3 rättas i en ny registerpost samma dag. R25-4 står i `docs/drift.md` (Delad data). R25-5:
+  stickproven på extraktionen för Amazon, Alphabet och Meta är R2 (5 av 5 för Amazon). R5 kontrollerade bara att
+  planerna för nästa år var fullständiga. Hänvisningen "R2: 5 av 5 stickprov rätt, R5" i posten ovan ska läsas så.
+  `docs/kallor/guidance.md` är rättad.

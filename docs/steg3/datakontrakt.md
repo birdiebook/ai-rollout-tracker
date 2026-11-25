@@ -400,7 +400,8 @@ betyder fler höjningar än sänkningar. Överraskningen är utfallet mot bolage
 kvartal (n står bredvid), ingen takt. Från 2026-11-25 (ägarbeslut R11-4) visas värdena ur `curated/guidance_capex.csv`
 per bolag: Alphabet, Amazon och Meta (alla rader från sec.gov) med värden, Microsoft (microsoft.com) bara med period
 och datum. Revideringsindexet och överraskningsindexet har bara period och datum, eftersom deras serier har
-`publish=False`. Avsnittet finns i ögonblicksbilden men inte i paketet än.
+`publish=False` (överraskningsindexet väntar på ägarbeslut, R25-1). Avsnittet finns i ögonblicksbilden men inte i
+paketet än.
 
 **Intäktskravet (`x_dep_rev`, `x_capcost_rev_r08`, `x_capcost_rev_r12`, `x_dep_capex`, `x_dep_rev_aws`).**
 Avskrivningar, och avskrivningar plus 8 eller 12 % på det bokförda nettot, som procent av intäkterna för MSFT, GOOGL,
