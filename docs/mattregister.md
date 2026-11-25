@@ -692,6 +692,7 @@ implementeras. Den gäller för alla månader, även de som redan visats. Trösk
    percentilen ("Förändringen i takt är högre än i 98 % av seriens egen historik", nedre zonen "lägre än i …").
    K6:s fält `direction` anger zonen (+1 övre, −1 nedre) och ritas i bläckfärg med ▲/▼ och orden "kvotens takt högt
    i egen historik" eller "lågt i egen historik", eftersom avstämningarna saknar riktning i ett index (A5). Blått och
-   orange betyder därmed bara riktning i ett diffusionsindex.
+   orange betyder därmed bara riktning i ett diffusionsindex. Tillägg samma dag under implementeringen: K1-rubriken
+   skrivs "från X till Y" i stället för med en pil, eftersom rubrikerna också blir länktexter i sidans avsnittslista.
 5. **Rekonstruerat.** På månadssidan står statusen (rekonstruerad eller skarp) i rubrikraden, i samma storlek som
    månadsnamnet, och för rekonstruerade månader en mening om vad det betyder. Det ändrar inget urval.
