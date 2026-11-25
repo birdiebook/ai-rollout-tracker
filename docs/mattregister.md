@@ -1521,3 +1521,53 @@ ICE BofA och Moody's. Regler i detalj: [`docs/kallor/kredit_emission.md`](kallor
   kvartal i `spread_issue_ai_7_12y_q` och en registrerad regel för emittentmixen.
 - **Tester:** syntetiska villkorsbilagor för parsern, löptiden, bandets gränser, vägningen, luckregeln, dateringen,
   CSV-kontrollen och självkontrollen.
+
+### 2026-11-25 – X17: rättning av KR1 efter granskningen R20 (spread vid emission)
+
+Rättningsspår X17, körning 14, efter granskningen R20 (`docs/granskning/r20-kredit-emission.md`). Posten ändrar ingen
+regel i posten "2026-11-25 – KR1" eller i de låsta kodningsreglerna i `docs/kallor/kredit_emission.md`, och de skrivs
+inte om. Den säger hur fem regler som koden inte följde genomförs, och den preciserar en regel (helgdagar i T+n).
+Serierna är fortfarande katalogserier med `publish=False`. Grenindex och tillstånd ändras inte.
+
+**Vad som var känt före posten.** KR1:s 239 rader och elva serier, R20:s granskning med tabellen per kvartal i punkt 4,
+och en ombyggnad av CSV:n ur KR1:s cachade dokument med koden före rättningen (byte för byte samma fil, åtta FWP:er
+hoppade över). Inga nya värden räknades före posten.
+
+1. **Självkontrollen prövar talen i tranchens del av blocket** (R20-1). Regeln "i kolumnen när den anges" genomförs så.
+   För `col #j` i en gemensam tabell (tolkning 2) är tranchens del texten efter nyckel j ("2028 Notes:", eller "In the
+   case of the 2028 Floating Rate Notes") fram till nästa nyckel eller radens slut, på varje rad i blocket. Ett namn som
+   bara nämns ("the 2028 Notes") är ingen gräns. Nyckellistan läses med parserns `keys_of`, eftersom den definierar j.
+   Uppdelningen av texten är kontrollens egen. I en verklig kolumntabell är delen cell j på de rader som har lika många
+   värdeceller som beloppsraden. Belopp, förfallodag, kupong, avkastningar, pris och spread ska stå i tranchens del.
+   Prisdag och likviddag får också stå på en rad i blocket utan nyckel, eftersom de gäller hela erbjudandet. Ett avsnitt
+   (utan `col`) är tranchens eget block, som förut. Samma prövning gäller manuella rader. Omtolkningen med parsern ligger
+   kvar för parserrader.
+2. **Dokument som inte kodas listas med skäl, och det slutliga prospekttillägget är källan när FWP saknas** (R20-2).
+   Ombyggnaden läser också 424B2 och 424B5. Ett preliminärt tillägg, ett tillägg utan obligationer på omslaget och ett
+   slutligt tillägg till ett erbjudande som redan har en FWP som källa kodas inte och listas med skäl. Ett erbjudande har
+   redan en källa om en FWP från samma bolag, inlämnad 0–7 dagar före tillägget, har minst en tranche som står på
+   tilläggets omslag, eller om en källa har exakt omslagets tranchar. Ett slutligt tillägg för obligationer utan FWP blir
+   källan, om parserns tranchar är exakt omslagets. Annars stoppas ombyggnaden tills raderna kodas för hand. Alla
+   dokument som inte kodas skrivs till `curated/credit_issuance_skipped.csv` (bolag, formulär, inlämningsdag, accession,
+   skäl). `--covers` prövar också åt andra hållet: varje slutligt tillägg för obligationer i korpusen ska ha en källa i
+   CSV:n.
+3. **Helgdagar i T+n** (R20-3, precisering). För USD räknas vardagar med den federala helgdagskalendern i USA (pandas
+   `USFederalHolidayCalendar`). Långfredagen och en helgdag på lördag som kalendern flyttar till fredagen stänger inte
+   marknaderna lika (SIFMA:s rekommendation och Federal Reserve skiljer sig). Ligger en sådan dag efter prisdagen och
+   senast på den framräknade likviddagen, och för annan valuta än USD, räknas likviddagen inte fram. Parsern skriver då
+   en not, raden ska kodas för hand med likviddagen ur det slutliga prospekttillägget, och inläsningen av CSV:n stoppar
+   en parserrad med den noten.
+4. **Talen skrivs som de står** (R20-4). CSV:n skrivs med den kortaste decimalform som läses tillbaka till samma tal
+   (`repr`, ett heltal utan ".0"), inte med sex värdesiffror.
+5. **Avstämning per kvartal** (R20-5). `coverage` ger också en rad per kvartal med emission: USD-tranchar efter
+   likviddag i bolagets räkenskapskvartal (mittpunktsregeln) mot `debt_issued` för samma kvartal. Ett kvartal som XBRL
+   ännu inte har står under "senare". Källdokumentet får tabellen.
+
+**Väntad effekt:** ingen rad och inget värde ändras. Alla 39 erbjudanden har en FWP, ingen likviddag är framräknad, inget
+tal har fler än sex värdesiffror, och R20:s kontroll per nyckel godkände alla 239 rader. Ger ombyggnaden eller
+självkontrollen något annat redovisas det i källdokumentet, och de rader som ändras granskas igen.
+
+**Tester:** de fem strikta xfail-testerna i `tests/test_r20_kredit_emission.py` blir vanliga tester utan ändrade
+påståenden. Nya syntetiska tester: tranchens del med en titelrad och en rörlig tranche i samma tabell, kolumntabell,
+prospekttillägg som källa och som täckt, omvänd omslagskontroll, helgdagar och osäkra dagar, avstämning per kvartal och
+skrivning utan avrundning.
