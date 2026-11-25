@@ -872,6 +872,18 @@ Johannes svarade "kör på dina rekommendationer" på tre rekommendationer samma
 - **Rekommendation:** rätta R17-1 och R17-2 med en daterad registerpost före eller vid mergen. `rev_dell_isg` är inte
   en ren kandidat från 2015, utan från 2017Q1 (38 kvartal). Ingen serie ska bli kärnserie före 2026-11-30.
 
+## 2026-11-25 – S3: order och orderstock ur resultatpressmeddelanden
+
+- Kodningsreglerna låstes och committades före kodningen (471c67b). 575 värden och 42 stopp för Vertiv, GE Vernova,
+  Eaton, Dell och Digital Realty ur 113 pressmeddelanden. Equinix (valfritt) är inte kodat.
+- 61 katalogserier (G7 kraft och kylning, G6 Dell, G4 Digital Realty), `publish=False` tills den oberoende
+  granskningen är godkänd. Klass `ja` (egen extraktion ur sec.gov). Inga kärnserier, och ingen takt är räknad.
+- Vertiv slutade ange order i siffror 2026. Alla Vertivs serier är avslutade.
+- Stickprov på hela filen: 3 fel av 617, alla grova stoppträffar som agenten läste och bedömde som falska.
+- **Rekommendation:** låt granskningen pröva tolkningen av Digital Realtys andel före allt annat. Gasturbinernas GW
+  (GE Vernova) och Digital Realtys tecknade avtal i MW är de mest direkta måtten på fysisk utbyggnad, men de är för
+  korta (7 och 20 kvartal) för att bli kärnserier nu.
+
 ## 2026-11-25 – Rättning efter granskning R25 (spår `auto14k/x22-agarbeslut`)
 
 - **R25-1: överraskningsindexet.** `f1_surprise_index` och `f1_surprise_index_n` listar nu bara Metas och Alphabets
@@ -953,4 +965,28 @@ Johannes svarade "kör på dina rekommendationer" på tre rekommendationer samma
 - **`defnref.xml`** utesluts i den gemensamma `instance_name`. `dep_msft` får tre kvartal till (från 2009Q4) och tidigare
   versioner 2010Q4–2011Q2. N7 påverkas inte. Digital Realtys sena versioner 2010–2011 hade en annan orsak
   (`ParentCompanyMember` på alla fakta i tre inlämningar), och den är också rättad.
+
+## 2026-11-25 – R19: granskning av S3 (order och orderstock)
+
+- **GODKÄND MED ANMÄRKNINGAR** (`docs/granskning/r19-order-orderstock.md`). Reglerna låstes före kodningen, inget
+  läckage och inga fel värden: 0 fel av 65 i stickprovet (95 % KI 0–5,5 %) och inga fel när hela filen prövades med
+  egna tabelltolkningar och omhämtade bilagor. 42 av 42 stopp är riktiga.
+- Fyra should_fix: GE Vernovas order i GW skarvar 2025Q1 med en smalare definition och saknar konverterade
+  reservationer (R-1), en luckorsak säger "not stated" där Eaton anger en gräns (R-2), källdokumentet citerar två hela
+  meningar (R-3), och Digital Realtys andel före 2025 är obelagd i seriernas noter (R-4).
+- **Rekommendation:** `publish=True` kan prövas för de 52 serierna utan fynd. GE Vernovas order i GW och Digital Realtys
+  åtta serier med `dlr_share` väntar på R-1 och R-4. Som kärnkandidat i G7 är gasturbinernas orderstock och
+  reservationer i GW bättre än ordren i GW.
+
+## 2026-11-25 – X16: rättning av S3 efter R19 (order och orderstock)
+
+- **R-1.** GE Vernovas order i GW delas (daterad registerpost, committad före omkodningen). 2025Q1 ("gas turbine
+  orders") står ensam med ett stopp. Från 2025Q2 finns två serier: order bland nya kontrakt och reservationer som blev
+  order. Orderingången i GW är summan: 5–16 GW per kvartal, inte 1–3. Orderstocken går ihop med båda.
+- **R-2–R-4.** Luckorsaken nämner gränsen. Dell-citaten är omskrivna. Noten för Digital Realtys åtta serier med
+  `dlr_share` säger att andelen inte anges före 2025 och ger beläggen. Andelen för 2021Q4–2024Q1 är fortfarande obelagd.
+- 62 katalogserier, alla `publish=False`. Inga kärnserier, och ingen takt är räknad.
+- **Rekommendation:** pröva `publish=True` för de 52 serierna utan fynd och för GE Vernovas två nya GW-serier efter en
+  kort granskning av konverteringarna. Vänta med Digital Realtys `dlr_share`-serier tills andelen före 2024Q2 är
+  belagd i 10-Q/10-K.
 

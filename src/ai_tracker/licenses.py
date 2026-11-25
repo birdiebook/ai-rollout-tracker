@@ -163,6 +163,20 @@ def _lab_revenue_key(row: dict) -> str | None:
 # row of its company (R10-6). Files without one, and series no row maps to, fall back to the company.
 ROW_SERIES = {"ai_kpis.csv": _kpi_key, "lab_revenue.csv": _lab_revenue_key}
 
+# ---- track S3 (run 14): orders and backlog in earnings releases, curated/orders_backlog.csv -----------------------
+def _orders_backlog_key(row: dict) -> str | None:
+    # series/orders_backlog.py: one series per definition; a stop row maps to its definition's series as well
+    from ai_tracker.sources import orders_backlog  # late: keep this module light to import
+
+    try:
+        return orders_backlog.series_key(row)
+    except KeyError:
+        return None
+
+
+ROW_SERIES["orders_backlog.csv"] = _orders_backlog_key
+# ---- end track S3 ---------------------------------------------------------------------------------------------------
+
 # R10-1: series whose Spec.source names a curated file without being a curated extraction of it, and that no row maps
 # to: whose rows they read. None = every row of the file (pooled over companies), () = no row (the file is only named).
 # The curated rule is applied to those rows.
@@ -443,6 +457,8 @@ SOURCE_GROUPS: list[tuple[str, str, str]] = [
     ("Kurerad extraktion: planer", r"curated/plans\.csv", "kallor/planer.md"),
     ("Kurerad extraktion: leasing som inte har börjat", r"curated/lease_commitments\.csv", "kallor/finansiering.md"),
     ("Kurerad extraktion: nyttjandeperioder", r"curated/useful_lives\.csv", "kallor/nyttjandeperioder.md"),
+    # track S3 (run 14)
+    ("Kurerad extraktion: order och orderstock", r"curated/orders_backlog\.csv", "kallor/order_orderstock.md"),
     ("Anthropics nyhetsrum", r"anthropic\.com/news", "kallor/labbintakter.md"),
     ("BEA NIPA, releasearkivet", r"^BEA NIPA release archive", "kallor/makro_bea_bls.md"),
     ("BEA NIPA", r"^BEA NIPA", "kallor/census_eu.md"),

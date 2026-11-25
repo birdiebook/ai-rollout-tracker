@@ -1798,6 +1798,41 @@ taggval ändras inte.
    senare (2011-08-05), vilket är konservativt. Samma fil finns i sju av Microsofts inlämningar 2009–2011. Felet
    rättas inte här, eftersom koden är gemensam.
 
+### 2026-11-25 – S3: order och orderstock ur resultatpressmeddelanden (extraktion, inte kärnserier)
+
+Låst före kodningen. Inga bilagor var hämtade och inga värden lästa när posten skrevs. Agenten hade bara sett EDGAR:s
+submissions och indexsidorna för resultat-8-K:na (bilagornas nummer och namn). Regler i detalj:
+[`docs/kallor/order_orderstock.md`](kallor/order_orderstock.md), avsnittet "Kodningsregler".
+- **Vad:** tal för order, orderstock, book-to-bill, reservationer av leveransplatser (GW), AI-servrar och tecknade
+  hyresavtal som Vertiv, GE Vernova, Eaton, Dell, Digital Realty och (valfritt) Equinix anger i pressmeddelandet
+  (`EX-99.1`, eller `EX-99` när det är den enda bilagan) till 8-K med Item 2.02, inlämnade 2022-01-01–2026-11-25.
+  Luckregel för ett kvartal utan Item 2.02 (GE Vernova 2025-07-23).
+- **Definitioner:** bolag, mått, segment, komponent, fönster (kvartal, tolv månader, hittills i året, helår, stock vid
+  periodens slut), form (nivå, tillväxt mot året före, mot kvartalet före, mot förra årsslutet, kvot, multipel),
+  organiskt eller inte, och enhet. Varje kombination är en egen serie. Inget räknas om och inget skarvas.
+- **Serier:** `ob_<bolag>_<mått>_<segment>[_<komponent>]_<fönster>_<form>[_<organiskt>]_<enhet>` för varje
+  definition med värden för minst två perioder. Kalenderkvartalet som innehåller mitten av räkenskapskvartalet, år
+  för helårstal. Gren G7 (Vertiv, GE Vernova, Eaton), G6 (Dell) och G4 (Digital Realty, Equinix).
+- **known_from** = EDGAR:s `filingDate`. Datumraden i pressmeddelandet sparas och kontrolleras mot den. Första
+  dokumentet som anger ett tal för en period räknas. Ett ändrat tal i ett senare dokument är en ny vintage.
+- **Stopp:** när ett ordinarie pressmeddelande slutar ange en definition som det föregående angav kodas ett stopp.
+  Luckan fylls inte. Anges definitionen igen fortsätter serien, och stoppet står kvar.
+- **Gränser** ("more than", "nearly") står i CSV:n men blir inga seriepunkter.
+- **Inte kärnserier.** De ingår inte i grenarnas tillstånd, diffusionsindex eller takter. Ingen takt räknas.
+- **Publicering:** `publish=False` tills den oberoende granskningen av extraktionen är godkänd. Stickprov med
+  `python -m ai_tracker.orders_check`.
+
+### 2026-11-25 – S3, tillägg efter kodningen: tolkningar (inga regler ändrade)
+
+Skrivet efter kodningen. Reglerna i posten ovan står kvar. Tolkningarna finns i
+[`docs/kallor/order_orderstock.md`](kallor/order_orderstock.md), avsnittet "Tolkningar". Tre av dem rör registrets
+regler:
+- **Avslutad serie.** "Senaste rad" läses som senaste seriepunkt eller stopp. En gräns ("more than 100%") efter ett
+  stopp öppnar inte serien igen, eftersom gränser inte är seriepunkter.
+- **Digital Realtys andel.** Totaler utan angiven andel (2021Q4–2024Q4) kodas som Digital Realtys andel, eftersom samma
+  tabellrad och mening senare heter "at Digital Realty's share". Talen vid 100 % andel är en egen serie.
+- **Stock vid ett annat datum än periodens slut** ("as of the end of August", "as of today") kodas inte.
+
 ### 2026-11-25 – Rättelse: vad BB01RY omfattar (granskning R25-3)
 
 Posten "M1: nettobidrag för datorer efter import (BB01RY), ägarbeslut" ovan säger under "Hur den läses" att `BB01RY`
@@ -1955,3 +1990,36 @@ inlämningen, inte "upp till 578". Och i punkt 3: radens namn "Purchases of prop
 2010–2014. I 10-Q 2016-11-04 och 2017–2018 heter samma rad "Purchases of other property, plant and equipment".
 Effekterna per serie står i `docs/kallor/sec_stack_kraft.md` ("Rättning efter R18") och för `dep_msft` i
 `docs/kallor/sec_avskrivningar.md`.
+
+### 2026-11-25 – S3: GE Vernovas order i GW delas och konverteringar kodas (rättning efter granskning R19)
+
+Skäl: fynd F-1 i [`docs/granskning/r19-order-orderstock.md`](granskning/r19-order-orderstock.md). Serien
+`ob_gev_orders_gas_power_equipment_q_level_gw` skarvar två definitioner. 2025Q1 anger "gas turbine orders". Från 2025Q2
+är talet bara ordren bland kvartalets nya kontrakt ("new gas equipment contracts"). Reservationer som blir order står i
+en egen mening ("converted ... to orders") och är inte kodade. Registrets regel tar "alla tal i GW för gasturbiner:
+order, orderstock och reservationer". Bolaget kallar konverteringarna order, så de hör till regeln. Tolkning 6 i
+källdokumentet tog bort dem.
+
+Skrivet efter att talen var lästa. R19 läste meningarna och låste konverteringarna i sitt test. Spår X16 läste samma
+meningar före posten: GW-meningarna i GE Vernovas sju pressmeddelanden 2025Q1–2026Q3. Posten rättar alltså en
+definition. Den är ingen förregistrering på oläst data. Inga takter räknas.
+
+Regler. De gäller GE Vernova, segment `gas_power`, enhet GW, komponent `equipment`, fönster kvartal och form nivå:
+- **Två nya mått.** `orders_new_contracts` är ordren bland kvartalets nya kontrakt ("Y GW of orders" i meningen om
+  "new gas equipment contracts"). `orders_converted` är reservationer som blev order i kvartalet ("Converted X GW of
+  existing slot reservation agreements").
+- **Delning.** `orders` i GW är bara talet "gas turbine orders" från tiden före den nya uppställningen (2025Q1). Från
+  2025Q2 kodas ordren i GW som `orders_new_contracts`. Läsaren avvisar en rad `orders` i GW för en period från 2025Q2.
+  Om talet för 2025Q1 innehåller konverteringar går inte att avgöra. Därför skarvas det inte med något.
+- **Inget läggs ihop.** Kvartalets orderingång i GW är summan av de två måtten. Den blir ingen egen serie, eftersom
+  extraktionen inte räknar om något (posten för S3 ovan). Seriernas noter säger hur den bildas.
+- **Fortfarande inte kodat:** nya reservationer i kvartalet, summan av nya kontrakt och levererade GW. Reservationerna
+  syns redan i stocken. Levererade GW är inget mått som reglerna nämner för GE Vernova.
+- Första dokumentet, stoppregeln, dateringen och `publish=False` gäller som i posten för S3. Stoppregeln ger ett stopp
+  för `orders` i GW i pressmeddelandet för 2025Q2, eftersom det inte längre anger "gas turbine orders".
+
+Väntad effekt: `ob_gev_orders_gas_power_equipment_q_level_gw` försvinner ur katalogen, eftersom bara 2025Q1 är kvar
+(en period). Två nya katalogserier får sex kvartal var, 2025Q2–2026Q3:
+`ob_gev_orders_new_contracts_gas_power_equipment_q_level_gw` och `ob_gev_orders_converted_gas_power_equipment_q_level_gw`.
+Övriga 60 serier får samma värden. Bara noterna och luckorsakerna ändras (rättningarna R-2 och R-4, som inte rör
+registrets regler).
