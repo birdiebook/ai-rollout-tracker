@@ -87,8 +87,9 @@ def test_threshold_binds_by_construction_as_the_frontier_moves():
 # ------------------------------------------------------------------ missing reference
 
 def test_missing_reference_uses_the_next_model_of_the_reference_board_with_overlap_offset():
-    # exp-top is the reference (top of the January board) but is gone in July; "mid" is next and overlaps 4 times
-    early = [board(f"2024-01-{d:02d}", {"exp-top": 1250, "mid": 1250 - diff, "cheap": 1100})
+    # exp-top is the reference (top of the January board) but is gone in July; "mid" is next and overlaps 4 times;
+    # "cheap" is new in July, so mid is the only valid candidate (several candidates: the median, test further down)
+    early = [board(f"2024-01-{d:02d}", {"exp-top": 1250, "mid": 1250 - diff})
              for d, diff in ((10, 10), (12, 20), (15, 30), (20, 40))]
     now = board("2024-07-20", {"mid": 1300, "cheap": 1330, "weak": 1320})
     row = build(early + [now]).iloc[-1]
@@ -98,13 +99,12 @@ def test_missing_reference_uses_the_next_model_of_the_reference_board_with_overl
 
 
 def test_successor_needs_three_earlier_boards_known_at_the_version_date():
-    early = [board("2024-01-10", {"exp-top": 1250, "mid": 1240, "cheap": 1200}),
-             board("2024-01-12", {"exp-top": 1250, "mid": 1240, "cheap": 1200})]
-    later_documented = board("2024-01-15", {"exp-top": 1250, "mid": 1240, "cheap": 1200}, evidence="2024-08-10")
+    early = [board("2024-01-10", {"exp-top": 1250, "mid": 1240}), board("2024-01-12", {"exp-top": 1250, "mid": 1240})]
+    later_documented = board("2024-01-15", {"exp-top": 1250, "mid": 1240}, evidence="2024-08-10")
     now = board("2024-07-20", {"mid": 1300, "cheap": 1320})
     t = build(early + [later_documented, now], last="2024-07")
-    # at month end only two overlap boards are known -> mid fails; cheap (next) has only two as well -> no value; the
-    # third board becomes known 2024-08-10 and gives the first row then
+    # at month end only two overlap boards are known -> mid fails and cheap (new in July) never overlaps -> no value;
+    # the third board becomes known 2024-08-10 and gives the first row then
     assert len(t) == 1 and t.iloc[0]["known_from"] == T("2024-08-10") and t.iloc[0]["via"] == "mid"
 
 

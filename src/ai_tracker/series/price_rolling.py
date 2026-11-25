@@ -7,17 +7,21 @@ construction: what does the capability that was the frontier L months ago cost t
 Arena variants (`g2_price_rolling12_arena`, main, L = 12; `g2_price_rolling6_arena`, L = 6), within one board so that
 scale breaks cancel (the idea of series/arena_price.py). A version of month m has a date d (sources/vintages.py: first
 version month end + 1 from boards documented by month end, later versions on the evidence date of a board published
-by month end but documented later, only when the value changes).
+by month end but documented later, only when the value changes). The version on month end + 1 uses the boards
+documented through that day (X19, R22-1), so a board published on the last day and documented the next day counts.
 - b(m): latest board published <= end of m among the boards known at d (as G2A).
 - reference board: latest board published <= end of m - L among the boards known at d (what is known at d about the
   frontier at m - L; the register explains why not "as known at the end of m - L": the measurement gap 2025-09 -
   2026-03 would make the lag up to L + 7). `literal_reference=True` gives the literal rule as a sensitivity.
 - r(m): the top-rated model of the reference board (ties: name order); experimental names count.
 - a name is found in a board as itself, else under its documented rename (RENAMES), else as the single board name with
-  the same normalized form (lowercase letters and digits; the switch to display names in 2026-10).
-- threshold: r(m)'s rating in b(m). If r(m) is not found: the first of the next SUCCESSORS models of the reference
+  the same normalized form (lowercase letters and digits; the switch to display names in 2026-10), else as the single
+  board name with the renamed name's normalized form (X19).
+- threshold: r(m)'s rating in b(m). If r(m) is not found: every one of the next SUCCESSORS models of the reference
   board (rank order) that is found in b(m) and shares >= OVERLAP_BOARDS earlier boards (published before b(m), known at
-  d) with r(m): its rating in b(m) + the median r - s difference over the latest OVERLAP_BOARDS of them. Else no value.
+  d) with r(m) is a valid candidate s with threshold rating_b(m)(s) + the median r - s difference over the latest
+  OVERLAP_BOARDS of them; the threshold is the median over the valid candidates (X19, R22-3: the first candidate alone
+  made the value depend on the candidate order when the offsets are old). No valid candidate: no value.
 - value: lowest 3:1 blended first-party price (LiteLLM at month end, arena_price's corrections and retirement rule,
   arena_map pairs, best variant per key) among keys rated >= threshold in b(m).
 - known_from = max(d, month end + 1); source "backfill" when b(m) or the reference board is only in the bulk upload.
@@ -33,6 +37,7 @@ from __future__ import annotations
 
 import re
 from functools import lru_cache, partial
+from typing import NamedTuple
 
 import numpy as np
 import pandas as pd
@@ -59,10 +64,18 @@ RENAMES: dict[str, str] = {
     "gemini-1.5-flash-api-0514": "gemini-1.5-flash-001",
     "gemini-2.0-flash-lite-preview": "gemini-2.0-flash-lite-preview-02-05",
     "gemini-2.0-flash": "gemini-2.0-flash-001",
+    # X19 (review R22-2): observed in the text boards, not (yet) in arena_map, which is protected in run 14. The rating
+    # continues across the switch and no board has both names; Arena's own notes could not be read (arena.ai blocked).
+    # Old name in 5 boards 2024-08-22 .. 2024-09-04 (last 1315.62); new name from 2024-09-15 (1315.98), the board that
+    # also adds chatgpt-4o-latest-20240903 as a new entry.
+    "chatgpt-4o-latest": "chatgpt-4o-latest-20240808",
+    # Old name last 2026-08-11 (1502.79); new name from 2026-08-12 (1502.80).
+    "claude-opus-4-6-thinking": "claude-opus-4-6-high",
 }
 
 COLUMNS = ["period", "value", "known_from", "source", "key", "name", "rating", "threshold", "reference", "via",
-           "board", "ref_board", "board_top", "n_qualifying", "price_check"]
+           "board", "ref_board", "board_top", "n_qualifying", "price_check",
+           "delta_from", "delta_to", "n_successors", "threshold_spread", "floor"]
 
 
 def norm(name: str) -> str:
@@ -87,6 +100,8 @@ class Lookup:
         if new is not None and new in self.ratings.index:
             return new
         hits = self.by_norm.get(norm(name), [])
+        if not hits and new is not None:  # the renamed name under a display name (X19)
+            hits = self.by_norm.get(norm(new), [])
         return hits[0] if len(hits) == 1 else None
 
     def rating(self, name: str) -> float | None:
@@ -108,18 +123,24 @@ def _latest_per_date(boards: list) -> list:
     return [out[k] for k in sorted(out)]
 
 
-def threshold(board, earlier: list, reference: list[str], lookup) -> tuple[float, str, str] | None:
-    """(threshold, reference, via) in `board`. `reference`: the reference board's names in rank order (the first is
-    r(m)); `earlier`: boards known at the version date (only those published before `board` are used, one version
-    per date); `lookup(board) -> Lookup`. via = "" when r(m) is in the board, else the successor used."""
-    if not reference:
-        return None
+class Threshold(NamedTuple):
+    value: float
+    reference: str
+    via: str  # "" when r(m) is in the board, else the valid successor candidates in rank order (", ")
+    delta_from: pd.Timestamp | None = None  # oldest offset board over the candidates
+    delta_to: pd.Timestamp | None = None  # latest offset board over the candidates
+    n_successors: int = 0
+    spread: float = 0.0  # max - min of the candidates' thresholds
+
+
+def candidates(board, earlier: list, reference: list[str], lookup) -> list[tuple[str, float, list]]:
+    """Valid successor candidates of r(m) = reference[0] in `board`: (s, rating_b(m)(s) + offset, offset boards), in
+    rank order. Ranks 2 .. 1 + SUCCESSORS, found in `board`, >= OVERLAP_BOARDS earlier boards (published before
+    `board`, one version per date) with both names; offset = median r - s over the latest OVERLAP_BOARDS of them."""
     r = reference[0]
     lb = lookup(board)
-    rr = lb.rating(r)
-    if rr is not None:
-        return rr, r, ""
     prior = _latest_per_date([b for b in earlier if b[0] < board[0]])
+    out = []
     for s in reference[1:1 + SUCCESSORS]:
         rs = lb.rating(s)
         if rs is None:
@@ -129,10 +150,31 @@ def threshold(board, earlier: list, reference: list[str], lookup) -> tuple[float
             lk = lookup(b)
             a, c = lk.rating(r), lk.rating(s)
             if a is not None and c is not None:
-                diffs.append(a - c)
+                diffs.append((b[0], a - c))
         if len(diffs) >= OVERLAP_BOARDS:
-            return rs + float(np.median(diffs[-OVERLAP_BOARDS:])), r, s
-    return None
+            last = diffs[-OVERLAP_BOARDS:]
+            out.append((s, rs + float(np.median([d for _, d in last])), [day for day, _ in last]))
+    return out
+
+
+def threshold(board, earlier: list, reference: list[str], lookup) -> Threshold | None:
+    """Threshold in `board`. `reference`: the reference board's names in rank order (the first is r(m)); `earlier`:
+    boards known at the version date (only those published before `board` are used, one version per date);
+    `lookup(board) -> Lookup`. r(m)'s own rating when it is in the board, else the median over the valid successor
+    candidates (X19), else None."""
+    if not reference:
+        return None
+    r = reference[0]
+    rr = lookup(board).rating(r)
+    if rr is not None:
+        return Threshold(rr, r, "")
+    cands = candidates(board, earlier, reference, lookup)
+    if not cands:
+        return None
+    values = [v for _, v, _ in cands]
+    days = [d for _, _, ds in cands for d in ds]
+    return Threshold(float(np.median(values)), r, ", ".join(s for s, _, _ in cands), min(days), max(days),
+                     len(cands), float(max(values) - min(values)))
 
 
 def frontier_threshold(prices: pd.DataFrame, ratings: pd.Series, pairs: pd.DataFrame) -> tuple[float, str] | None:
@@ -163,11 +205,12 @@ def _versions(bs: list, m: pd.Period):
     end = m.end_time.normalize()
     cand = [b for b in bs if b[0] <= end]
     base = max(end + pd.Timedelta(days=1), end + pd.Timedelta(days=PRICE_LAG_DAYS))
-    for day in sorted({base} | {b[2] for b in cand if b[2] > end}):
-        cutoff = end if day == base else day
-        known = [b for b in cand if b[2] <= cutoff]
+    # the version on `base` uses every board documented through that day (X19, R22-1: a board published on the last
+    # day and documented the next is part of the first version, not of a second version on the same date)
+    for day in sorted({base} | {b[2] for b in cand if b[2] > base}):
+        known = [b for b in cand if b[2] <= day]
         if known:
-            yield max(day, base), known
+            yield day, known
 
 
 def build(boards: list, snaps: pd.DataFrame, lag: int, last_month: pd.Period, pairs_at=arena_map.pairs_at,
@@ -191,7 +234,7 @@ def build(boards: list, snaps: pd.DataFrame, lag: int, last_month: pd.Period, pa
             board = known[-1]  # latest published (ties: latest evidence)
             if lag == 0:
                 ref_board, ft = board, frontier_threshold(prices, board[1], pairs)
-                t = None if ft is None else (ft[0], ft[1], "")
+                t = None if ft is None else Threshold(ft[0], ft[1], "")
             else:
                 pool = [b for b in known if b[0] <= ref_end
                         and (not literal_reference or b[2] <= ref_end)]
@@ -210,7 +253,10 @@ def build(boards: list, snaps: pd.DataFrame, lag: int, last_month: pd.Period, pa
                              "key": v["key"], "name": v["name"], "rating": v["rating"], "threshold": t[0],
                              "reference": t[1], "via": t[2], "board": board[0], "ref_board": ref_board[0],
                              "board_top": ranked(board[1])[0], "n_qualifying": v["n_qualifying"],
-                             "price_check": ap.PRICE_CHECKS.get(v["key"], ("unchecked", ""))[0]})
+                             "price_check": ap.PRICE_CHECKS.get(v["key"], ("unchecked", ""))[0],
+                             "delta_from": t.delta_from, "delta_to": t.delta_to, "n_successors": t.n_successors,
+                             "threshold_spread": t.spread,
+                             "floor": ap.month_value(prices, board[1], -np.inf, pairs)["value"]})
                 prev = v["value"]
     return pd.DataFrame(rows, columns=COLUMNS)
 
@@ -243,7 +289,8 @@ def coverage(boards: list, lag: int, last_month: pd.Period) -> pd.DataFrame:
 def build_eci(snaps: pd.DataFrame, epoch: dict[str, pd.DataFrame], last_month: pd.Period, lag: int = ECI_LAG,
               floor: float = ECI_FLOOR, mapping: pd.DataFrame | None = None, deprecations: pd.DataFrame | None = None,
               corrections: list[dict] | None = None, exclude_keys: tuple[str, ...] = ()) -> pd.DataFrame:
-    """Monthly table (period index): value, key, model, capability, threshold, reference, n_qualifying."""
+    """Monthly table (period index): value, key, model, capability, threshold, reference, n_qualifying, floor (the
+    lowest price among mapped priced keys with a known capability, no threshold; X19, R22-4)."""
     mapping = model_map.key_models() if mapping is None else mapping
     eci = epoch["eci"]
     release = pc._release(epoch)
@@ -267,6 +314,7 @@ def build_eci(snaps: pd.DataFrame, epoch: dict[str, pd.DataFrame], last_month: p
         p = p.merge(mapping[["key", "provider"]].drop_duplicates(), on=["key", "provider"])  # first-party only
         cap = pc.key_capability(capability_at(when), release, when, mapping)
         p = p.assign(capability=p["key"].map(cap)).dropna(subset=["capability"])
+        floor_value = float(pc.blended(p["input_per_m"], p["output_per_m"]).min()) if len(p) else np.nan
         p = p[p["capability"] >= thr - TOL]
         if p.empty:
             continue
@@ -276,7 +324,7 @@ def build_eci(snaps: pd.DataFrame, epoch: dict[str, pd.DataFrame], last_month: p
         model = model[model["r"] <= when].sort_values("r").iloc[-1]["model"]
         rows[m] = {"value": float(best["blended"]), "key": best["key"], "model": model,
                    "capability": float(best["capability"]), "threshold": thr, "reference": ref["model"],
-                   "n_qualifying": int(p["key"].nunique())}
+                   "n_qualifying": int(p["key"].nunique()), "floor": floor_value}
     return pd.DataFrame.from_dict(rows, orient="index").sort_index()
 
 

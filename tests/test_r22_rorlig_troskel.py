@@ -118,11 +118,11 @@ def test_eci_variant_drops_keys_retired_by_month_end():
     assert m not in t.index  # k-a retired by month end; k-b (130) is below the threshold 131
 
 
-# ------------------------------------------------------------------ defects (strict xfail)
+# ------------------------------------------------------------------ defects R22-1 .. R22-5 (strict xfail until the fix
+# track X19, auto14k/x19-rorlig-troskel; now normal tests)
 
-@pytest.mark.xfail(strict=True, reason="R22-1: a board published on the last day and documented the next day is "
-                                       "never used for that month (the version day coincides with month end + 1)")
 def test_month_end_board_documented_next_day_gives_a_version():
+    """R22-1 (fixed in X19): the version on month end + 1 uses the boards documented through that day."""
     boards = [REF, board("2024-07-10", {"front": 1300, "mid": 1310}),
               board("2024-07-31", {"front": 1300, "cheap": 1300}, evidence="2024-08-01")]
     t = build(boards)
@@ -130,31 +130,29 @@ def test_month_end_board_documented_next_day_gives_a_version():
     assert t.iloc[-1]["board"] == T("2024-07-31") and t.iloc[-1]["key"] == "k-cheap"
 
 
-@pytest.mark.xfail(strict=True, reason="R22-2: two observed renames without overlap are not in RENAMES "
-                                       "(chatgpt-4o-latest 2024-09-04 -> chatgpt-4o-latest-20240808 2024-09-15, "
-                                       "claude-opus-4-6-thinking 2026-08-11 -> claude-opus-4-6-high 2026-08-12)")
 def test_observed_no_overlap_renames_are_found():
+    """R22-2 (fixed in X19): both observed renames without overlap are in price_rolling.RENAMES."""
     assert pr.Lookup(pd.Series({"chatgpt-4o-latest-20240808": 1316.0})).find("chatgpt-4o-latest") \
         == "chatgpt-4o-latest-20240808"
     assert pr.Lookup(pd.Series({"claude-opus-4-6-high": 1502.8})).find("claude-opus-4-6-thinking") \
         == "claude-opus-4-6-high"
 
 
-@pytest.mark.xfail(strict=True, reason="R22-3: the successor offset can be measured up to 359 days before b(m) "
-                                       "and the table does not show its age")
 def test_successor_offset_age_is_visible():
-    early = [board(f"2024-01-{d:02d}", {"exp-top": 1250, "mid": 1240, "cheap": 1100}) for d in (10, 12, 15)]
+    """R22-3 (fixed in X19): delta_from shows the oldest offset board. X19 also made the threshold the median over all
+    valid candidates, so "cheap" is left out of the January boards here (as R22 wrote it, cheap was a second valid
+    candidate with an implied threshold of 1480 against mid's 1310, and the median 1395 leaves no qualifying model);
+    the assertion is unchanged."""
+    early = [board(f"2024-01-{d:02d}", {"exp-top": 1250, "mid": 1240}) for d in (10, 12, 15)]
     t = build(early + [board("2024-07-20", {"mid": 1300, "cheap": 1330})])
     assert "delta_from" in t.columns and t.iloc[0]["delta_from"] == T("2024-01-10")
 
 
-@pytest.mark.xfail(strict=True, reason="R22-4: the level check (section 7) covers only the Arena variants; the ECI "
-                                       "variant equals its floor in 7 of 18 months (2025-05 - 2025-11)")
 def test_level_check_covers_the_eci_variant():
+    """R22-4 (fixed in X19)."""
     assert "ECI" in section(7)
 
 
-@pytest.mark.xfail(strict=True, reason="R22-5: caveat 5 says the successor error is not measured; R22 measured it "
-                                       "(spread between valid candidates up to 25 points with year-old offsets)")
 def test_successor_caveat_reports_the_measured_error():
+    """R22-5 (fixed in X19)."""
     assert "inte mätt" not in section(9)
