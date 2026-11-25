@@ -224,3 +224,8 @@ p 0,048 (frö 3, h = 6). Fröna står inte i resultatet (R24-7).
 - handkontrollerna i resultatet och tre bytta tillstånd på riktiga data (passerar)
 - slumpvärldens test med ett annat frö (strikt xfail, R24-3)
 - resultatets text för R24-1, R24-2 och R24-4 (strikt xfail)
+
+`python -m pytest -q tests/test_r24_tillstandsregeln.py tests/test_state_evaluate.py`: 40 passerade, 4 xfail. Hela
+sviten på grenen: 2 205 passerade, 3 överhoppade, 6 xfail och 1 fel. Felet är det kända
+`tests/test_site_bundle.py::test_committed_fixtures_are_the_current_synthetic_bundle`: fixturerna bär sha256 av
+`docs/mattregister.md`, som T1 lade till i. Fixturerna har inte genererats om.
