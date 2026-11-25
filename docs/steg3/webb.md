@@ -49,7 +49,7 @@ web/
 
 **Tillgänglighet i diagrammen.** SVG:n har `role="img"` och namnges av rubriken och den genererade meningen.
 Hovringstips är till för pekare. För tangentbord och skärmläsare finns samma tal alltid i tabellvyn (knappen "Visa
-tabell", `aria-pressed`). Därför är enskilda markeringar inte tabbstopp. Breda tabeller går att fokusera och rulla.
+tabell"/"Visa diagram" med `aria-controls`; namnet säger vad knappen gör, därför inget `aria-pressed`, R-W2). Därför är enskilda markeringar inte tabbstopp. Breda tabeller går att fokusera och rulla.
 
 **Responsivt utan layoutskift.** Diagrammen förrenderas med standardbredden och ritas om med den uppmätta bredden
 efter hydreringen. Höjden är fast i px, så sidan flyttar sig inte (CLS).
@@ -137,7 +137,7 @@ Varje sida i skelettet är en platshållare. Den är kopplad till laddarna och h
 
 - **Toppnavigeringen** (`MainNav`, `SearchButton`, temaväxlaren) ligger i `+layout.svelte`. På mobil står märket, Sök
   och temat på första raden och menyn på andra. "Flödet" är markerat också på led-, gren- och seriesidor.
-- **Sök** (`⌘K`/`Ctrl K`, `/` utanför textfält, eller knappen): en modal `<dialog>` med WAI-ARIA-mönstret combobox med
+- **Sök** (`⌘K`/`Ctrl K` eller knappen; ingen enteckensgenväg, WCAG 2.1.4, R-W2): en modal `<dialog>` med WAI-ARIA-mönstret combobox med
   listbox (`aria-activedescendant`, ↑/↓, PageUp/PageDown, Enter, Esc rensar och stänger). Indexet `/next/sok.json`
   byggs vid förrenderingen ur `series/index.json`, `overview.json`, `flow.json` och `nowcast/*.json` (bara
   publicerbara serier) och hämtas först när sökningen öppnas. Dialogen laddas också lat. Matchningen bryr sig inte
@@ -193,7 +193,7 @@ i måttregistret 2026-11-25). `src/lib/story/model.ts` lägger till en figur per
 designsystemets `Stripes`) och klipper allt till månadens känd-dag med `gate.ts` (`cutStripes`, `branchOn`,
 `cutHistory`, `leaks`). Scrollytelling: utan JavaScript en lista med kort, där figuren är fast inom kortet på breda
 skärmar och kommer före texten på mobil. Med JavaScript markeras kortet mitt på skärmen i marginalen, j och k flyttar
-mellan korten, och länkarna till läget, grenen och serien öppnar tidsresan vid månadens känd-dag. Med
+mellan korten när fokus är i berättelsen (WCAG 2.1.4), och länkarna till läget, grenen och serien öppnar tidsresan vid månadens känd-dag. Med
 `prefers-reduced-motion` finns inga övergångar och ingen mjuk rullning.
 
 Tidsresa: routen är registrerad i `TimeTravel.svelte` (`MonthOn.svelte`). Med `as_of=D` visas månadens berättelse bara om

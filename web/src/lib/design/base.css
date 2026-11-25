@@ -179,6 +179,21 @@ svg .axisline {
   svg .mark {
     forced-color-adjust: none;
   }
+  /* R-W2: legend swatches keep the colours of the marks they explain (a forced background would erase them) */
+  .legend .sw {
+    forced-color-adjust: none;
+  }
+  /* R-W2: a pressed chip differed from the others only by its background, which forced colours replace */
+  .chip[aria-pressed='true'] {
+    forced-color-adjust: none;
+    background: Highlight;
+    color: HighlightText;
+    border-color: Highlight;
+  }
+  .chip:disabled {
+    color: GrayText;
+    border-color: GrayText;
+  }
 }
 @media (prefers-reduced-motion: reduce) {
   *,

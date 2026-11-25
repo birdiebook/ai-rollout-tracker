@@ -46,6 +46,12 @@ test('keyboard: j and k step through the cards, focus follows, reduced motion is
   await page.waitForFunction(() => document.querySelector('.scrolly.enhanced') !== null);
   const transition = await page.locator('article.step').first().evaluate((e) => getComputedStyle(e).transitionDuration);
   expect(transition).toBe('0s');
+  // R-W2 (WCAG 2.1.4): the letters do nothing while focus is outside the story ...
+  await page.getByRole('navigation', { name: 'Huvudmeny' }).getByRole('link').first().focus();
+  await page.keyboard.press('j');
+  await expect(page.getByRole('navigation', { name: 'Huvudmeny' }).getByRole('link').first()).toBeFocused();
+  // ... and step through the cards once it is inside (here: the first card)
+  await page.locator('article.step').first().focus();
   await page.keyboard.press('j');
   await expect(page.locator(`#kort-${latest.cards[1].id}`)).toBeFocused();
   await page.keyboard.press('j');

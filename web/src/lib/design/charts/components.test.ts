@@ -53,11 +53,13 @@ describe('ChartFrame with primitives', () => {
     expect(chart.hidden).toBe(false);
     expect(table.hidden).toBe(true);
     const btn = screen.getByRole('button', { name: 'Visa tabell' });
-    expect(btn.getAttribute('aria-pressed')).toBe('false');
+    // R-W2: the name says what a press does, so no aria-pressed (a toggle button must keep its name)
+    expect(btn.hasAttribute('aria-pressed')).toBe(false);
+    expect(btn.getAttribute('aria-controls')).toBe('t-chart t-table');
     await fireEvent.click(btn);
     expect(chart.hidden).toBe(true);
     expect(table.hidden).toBe(false);
-    expect(screen.getByRole('button', { name: 'Visa diagram' }).getAttribute('aria-pressed')).toBe('true');
+    expect(screen.getByRole('button', { name: 'Visa diagram' }).hasAttribute('aria-pressed')).toBe(false);
     expect(container.textContent).toContain('Källa: test');
   });
   it('draws axis ticks, band levels widest first, a line with end dot and label', () => {

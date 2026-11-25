@@ -23,10 +23,16 @@ const base = (process.env.BASE_PATH ?? '/next').replace(/\/+$/, '');
 const gz = (buf) => gzipSync(buf, { level: 9 }).length;
 const kb = (n) => n / 1024;
 const sizeCache = new Map();
+// R-W2: an asset the HTML names but the build lacks (usually BASE_PATH not set like the build's) used to count as
+// 0 kB, so every page passed with JS 0 kB. It now fails the budget.
+const missing = new Set();
 function assetSize(url) {
   const path = url.startsWith(base + '/') ? url.slice(base.length + 1) : url.replace(/^\//, '');
   const file = join(build, path);
-  if (!sizeCache.has(file)) sizeCache.set(file, existsSync(file) ? gz(readFileSync(file)) : 0);
+  if (!sizeCache.has(file)) {
+    if (!existsSync(file)) missing.add(url);
+    sizeCache.set(file, existsSync(file) ? gz(readFileSync(file)) : 0);
+  }
   return sizeCache.get(file);
 }
 
@@ -58,6 +64,10 @@ rows.sort((a, b) => b.js_kb - a.js_kb);
 console.table(rows);
 console.log(`budget (gzip): JS <= ${BUDGET.jsKb} kB, CSS <= ${BUDGET.cssKb} kB, inlined data <= ${BUDGET.dataKb} kB per page`);
 if (process.env.BUDGET_REPORT) writeFileSync(process.env.BUDGET_REPORT, JSON.stringify({ budget: BUDGET, pages: rows }, null, 2));
+if (missing.size) {
+  console.error(`budget: ${missing.size} referenced assets not found in the build (BASE_PATH=${base}; set it as for the build), e.g. ${[...missing][0]}`);
+  failed = true;
+}
 if (failed) {
   console.error('budget: FAILED');
   process.exit(1);

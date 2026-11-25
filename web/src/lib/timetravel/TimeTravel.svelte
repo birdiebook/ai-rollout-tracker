@@ -4,7 +4,7 @@
      showing today's data under a past date. Internal links carry `as_of` along (pointerdown/keydown/click, capture
      phase, before SvelteKit's router reads the href). -->
 <script lang="ts">
-  import { onMount, type Component, type Snippet } from 'svelte';
+  import { onMount, tick, type Component, type Snippet } from 'svelte';
   import { afterNavigate } from '$app/navigation';
   import { page } from '$app/state';
   import { resolve } from '$app/paths';
@@ -49,6 +49,12 @@
       .catch((e) => (viewError = String(e)));
   });
 
+  // R-W2: the button disappears with the view; focus goes to the page (main) instead of being dropped on <body>
+  async function showToday() {
+    tt.set(null);
+    await tick();
+    document.getElementById('main')?.focus();
+  }
   function carry(e: Event) {
     if (e instanceof KeyboardEvent && e.key !== 'Enter') return;
     if (e instanceof MouseEvent && e.type !== 'click' && e.button > 1) return;
@@ -114,7 +120,7 @@
           Den visar bara dagens kunskap, och därför visas den inte under datumet {dateLabel(tt.effective)}. Tidsresan finns för
           <a href={resolve('/')}>läget</a>, grensidorna och seriesidorna.
         </p>
-        <p><button type="button" class="chip" onclick={() => tt.set(null)}>Visa sidan som i dag</button></p>
+        <p><button type="button" class="chip" onclick={showToday}>Visa sidan som i dag</button></p>
       </section>
     {:else if viewError}
       <p class="note" role="alert">Kunde inte ladda tidsresan: {viewError}</p>

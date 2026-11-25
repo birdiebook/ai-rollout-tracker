@@ -115,7 +115,7 @@ test('slider buttons step month ends; play advances and pauses; start from today
   expect(back < first!).toBe(true);
   expect(new Date(Date.parse(back) + 86_400_000).getUTCDate()).toBe(1); // a month end
   await page.getByRole('button', { name: '+1 månad' }).click();
-  await page.getByRole('button', { name: '▶ Spela' }).click();
+  await page.getByRole('button', { name: 'Spela', exact: true }).click();
   await expect.poll(() => asOfInUrl(page), { timeout: 5000 }).not.toBe(first);
   await page.getByRole('button', { name: /Paus/ }).click();
   const paused = asOfInUrl(page)!;
