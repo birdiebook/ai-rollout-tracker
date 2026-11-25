@@ -792,3 +792,15 @@ republishing data"), npm och arXiv (`okänd`), och Microsofts capex-guidance ur 
   träffar.
 - **Rekommendation till Johannes:** läs tillstånden som en beskrivning av läget, inte som en prognos. Gör om testet på
   det skarpa registret när det finns minst 12 ögonblicksbilder (tidigast 2027-11), med en ny registerpost.
+
+## 2026-11-25 – R24: granskning av T1 (testet av tillståndsregeln)
+
+- Slutsatsen står: ingen granskning av regeln rekommenderas, och (b) är inte avgjort
+  (`docs/granskning/r24-tillstandsregeln.md`).
+- Ordningen register → kod → körning håller. Omkörningen gav samma resultatfil. Dagens data byggd bokstavligt (76
+  grenmånader), utfall och persistens med egen kod (236 fall), permutationen, Holm, kappa och MDE stämmer. Inget läckage.
+- Rättning R24-1 (should_fix): vid 6 månader är persistensen tillståndets egen jämförelse utan dödband (46 av 46
+  prediktioner har samma riktning). Likheten 35 mot 35,0 är byggd in i testet, och godkänt kan bara nås vid 3 månader.
+- R24-2 till R24-4 (should_fix): persistensen över alla månader (0,61 och 0,56) saknas i resultatet, slumpvärldens test
+  håller bara för sitt frö, och filen med tillstånd per månad som fanns före posten ska nämnas. Övrigt är noter. G6:s
+  revideringar kommer från G.17:s årsrevision 2026-11-24, en dag före V (verifierat hos Fed).
