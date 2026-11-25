@@ -19,12 +19,13 @@
   // knowledge never flashes under a past date (without JS nothing runs and the prerendered page shows as usual)
   const pre = `<script>try{if(/(^#|&)as_of=\\d{4}-\\d{2}-\\d{2}/.test(location.hash))document.documentElement.setAttribute('data-tt','')}catch(e){}<\/script>`;
 
-  type ViewKind = 'start' | 'branch' | 'series';
-  const ROUTES: Record<string, ViewKind> = { '/': 'start', '/gren/[id]': 'branch', '/serie/[key]': 'series' };
+  type ViewKind = 'start' | 'branch' | 'series' | 'story';
+  const ROUTES: Record<string, ViewKind> = { '/': 'start', '/gren/[id]': 'branch', '/serie/[key]': 'series', '/manad/[manad]': 'story' };
   const LOADERS: Record<ViewKind, () => Promise<{ default: Component<any> }>> = {
     start: () => import('./views/StartOn.svelte'),
     branch: () => import('./views/BranchOn.svelte'),
-    series: () => import('./views/SeriesOn.svelte')
+    series: () => import('./views/SeriesOn.svelte'),
+    story: () => import('$lib/story/MonthOn.svelte')
   };
   const kind = $derived<ViewKind | null>(ROUTES[page.route.id ?? ''] ?? null);
   const site = $derived((page.data as { site?: { build?: { built?: string | null } } }).site);
@@ -54,6 +55,8 @@
     const cur = a.getAttribute('href') ?? '';
     const raw = a.dataset.ttSet === cur ? (a.dataset.ttHref ?? cur) : cur;
     const day = readAsOf(location.hash);
+    // a link marked data-tt-own names its own as_of (the monthly story, W13): it opens time travel when none is active
+    if (day === null && a.hasAttribute('data-tt-own') && readAsOf(new URL(raw, location.href).hash)) return;
     if (raw.startsWith('#')) {
       // an in-page anchor would replace the hash and drop as_of: scroll to it ourselves while travelling
       if (day && e.type === 'click' && raw.length > 1) {

@@ -113,6 +113,7 @@ per sida.
 | `/next/prognoser/` | `src/routes/prognoser/` | W8 Prognossidor |
 | `/next/metod/` | `src/routes/metod/` | W11 Utforskbar metod |
 | `/next/_katalog/` | `src/routes/_katalog/` | W2 (designsystemet) |
+| `/next/manad/[manad]/` | `src/routes/manad/[manad]/`, `src/lib/story/` | W13 Månadens berättelse |
 
 Varje sida i skelettet är en platshållare. Den är kopplad till laddarna och har en kommentar högst upp som anger
 ägaren.
@@ -158,6 +159,21 @@ klippet av dagens paket ger samma sak, plus invarianter för var nionde dag 2009
 prövar samma regel i webbläsaren (`data-known ≤ D`, tabellrader = uppspelningen, Pythons rubrikmening). Mot riktig data:
 `PYTHONPATH=src python web/fixtures/gen_timetravel_golden.py --real <bundle> <ut.json>` och sedan
 `TT_BUNDLE=<bundle> TT_GOLDEN=<ut.json> npx vitest run timetravel`.
+
+## Månadens berättelse (W13)
+
+`/manad/<YYYY-MM>/` förrenderas för varje månad i `story/index.json`. Korten och texterna kommer ur paketet (urvalsregeln
+i måttregistret 2026-11-25). `src/lib/story/model.ts` lägger till en figur per kort ur befintliga komponenter
+(`IndexHistory` från `lib/flow`, `RegimeMeter` från `lib/regime`, `ForecastDots` från `routes/prognoser/parts` och
+designsystemets `Stripes`) och klipper allt till månadens känd-dag med `gate.ts` (`cutStripes`, `branchOn`,
+`cutHistory`, `leaks`). Scrollytelling: utan JavaScript en lista med kort, där figuren är fast inom kortet på breda
+skärmar och kommer före texten på mobil. Med JavaScript markeras kortet mitt på skärmen i marginalen, j och k flyttar
+mellan korten, och länkarna till läget, grenen och serien öppnar tidsresan vid månadens känd-dag. Med
+`prefers-reduced-motion` finns inga övergångar och ingen mjuk rullning.
+
+Tidsresa: routen är registrerad i `TimeTravel.svelte` (`MonthOn.svelte`). Med `as_of=D` visas månadens berättelse bara om
+den var känd D, annars en hänvisning till den senaste som var känd då. En länk med `data-tt-own` som själv anger `as_of`
+behåller den när ingen tidsresa är aktiv. Startsidans ingång är en rad under rubriken i `src/routes/+page.svelte`.
 
 ## CI och publicering
 
