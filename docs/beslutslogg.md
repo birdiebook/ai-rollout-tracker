@@ -803,3 +803,17 @@ republishing data"), npm och arXiv (`okänd`), och Microsofts capex-guidance ur 
 - **R23-3:** ECI räknar Kimi K3.1 Pro som öppen i 2026-10, fast Epoch anger att vikterna kom 2026-11-04.
   **Rekommendation till Johannes:** en daterad registerpost som räknar en ECI-modell som öppen från dokumenterat
   viktsläpp. Ingen av serierna blir kärnserie före R23-1, R23-3 och R23-4.
+
+## 2026-11-25 – X20: rättning av Q2 efter granskning R23
+
+- **R23-1 och R23-2 rättade:** första versionen av en månad räknar belägg ≤ månadsslut + 1 dag, i
+  `sources/vintages.monthly` och i `open_gap.arena_build` (daterad registerpost före koden). Det ändrar
+  `g1_arena_text_top` (kärnserie) i 2026-04 och 2026-09 (2026-09: 1 517,79 → 1 533,09), tre andra `g1_arena_*` och
+  gapen för öppna och Kina i 2026-04 och 2026-09 (2026-09: 27,06 → 42,58). Ingen eftersläpning ändras, och G1:s
+  tillstånd i backcasten 2026-04 – 2026-11 är oförändrat. Serierna är ombyggda i X20:s data.
+- **R23-3 rättad:** en ECI-modell räknas som öppen från sitt dokumenterade viktsläpp och som stängd före det. Bara
+  2026-10 ändras: 7 månader och gap 9,80 (granskningen skrev 10,60, vilket var fel).
+- **R23-4:** ersättningsregelns storlek står nu i dokumentet. Omräkningen ger granskningens tabell.
+- **Inte i X20:** `arena_meta.weights_of` (R23-8) och `arena_price.build` är skyddade i körning 14. Den senare har
+  samma konstruktion som R23-1 men inga ändrade värden i dag. **Rekommendation till Johannes:** rätta båda i ett eget
+  litet spår efter ögonblicksbilden, och slå ihop X20:s data före 2026-11-30.

@@ -260,3 +260,5 @@ ersättningsregeln.
 - ECI-serierna har `lag_days` 7 och Arena-serierna 1 (passerar)
 
 `python -m pytest -q tests/test_r23_oppen_stangd.py tests/test_q2_open_gap.py`: 28 passerade, 3 xfail.
+
+Rättat i auto14k/x20-oppen-stangd

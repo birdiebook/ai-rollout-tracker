@@ -16,6 +16,9 @@ Regler: `docs/mattregister.md`, "2026-11-25 – Q2: gapet mellan öppna och stä
 | `13d6d9b` | Registerposten: definitioner, klassningsordning, namnbyten, censurering och datering. Inga värden |
 | `bc39cc5` | Kod och tester. Kurerade tabeller byggda ur metadata. Inga värden |
 | senare | Serierna räknade på riktiga data, handkontroller, det här dokumentet och en daterad rättelse av en faktauppgift i registerposten (vilka modeller som byter licensfält). Reglerna ändrades inte |
+| `6dc30b0` | Rättning X20 efter granskning R23: två daterade registerposter (första versionens brytdag, ECI-modell öppen från viktsläppet). Inga nya värden |
+| `5afb639` | X20: kod och syntetiska tester för de två reglerna. Inga värden |
+| senare | X20: serierna byggda om, effekten, handkontroller och avsnitt 9 |
 
 **Det här lästes före registerposten** (metadata och täckning, inga värden i serierna): fältnamnen i Arena-datasetets
 kort, värdelistorna för `license` och `organization` i `text`/`overall`, vilka modeller som byter `license` över tid,
@@ -154,9 +157,12 @@ Värdena är den senaste versionen 2026-11-25.
 | 2023-09 | ECI, Kina | `eci_scores.csv` | Qwen-14B 101,76 | GPT-4 (Mar 2023) 121,61 | GPT-4 (Mar 2023), 2023-03-14 | 6 mån, gap 19,9 |
 | 2024-12 | ECI, öppna | `eci_scores.csv` | DeepSeek-V3 131,69 | o1 141,16 | o1-mini, 2024-09-12 (Claude 3.5 Sonnet 130,00 når inte) | 3 mån, gap 9,5 |
 | 2025-07 | ECI, Kina | `eci_scores.csv` | Qwen3-235B-A22B-Thinking (Jul 2025) 143,23 | o3-pro 147,47 | Gemini 2.5 Pro (Mar 2025), 2025-03-31 | 4 mån, gap 4,2 |
-| 2026-10 | ECI, öppna | `eci_scores.csv` | Kimi K3.1 Pro 161,20 | GPT-6 Astra 169,21 | GPT-5.5 Pro, 2026-04-23 (GPT-5.4 Pro 160,31 når inte) | 6 mån, gap 8,0 |
+| 2026-10 | ECI, öppna (före X20) | `eci_scores.csv` | Kimi K3.1 Pro 161,20 | GPT-6 Astra 169,21 | GPT-5.5 Pro, 2026-04-23 (GPT-5.4 Pro 160,31 når inte) | 6 mån, gap 8,0 |
+| 2026-10 | ECI, öppna (X20) | `eci_scores.csv` | DeepSeek V4.1 Flash 1017 159,41 (Kimi K3.1 Pro är stängd till 2026-11-04) | GPT-6 Astra 169,21 | GPT-5.4 Pro, 2026-03-05, 160,31 | 7 mån, gap 9,8 |
+| 2026-09 | Arena, öppna och Kina (X20) | dataset 2026-09-30, belagd 2026-10-01 03:04 UTC | `mimo-v2.6-pro` (MIT, xiaomi) 1 490,51 | `gemini-4-argon-high` 1 533,09 | 2026-01: `gemini-3-pro` 1 479,41 (når inte). 2026-02: `claude-opus-4-6` 1 497,67 | 7 mån, gap 42,58 |
 
-Alla tio stämmer med serierna. Tavlan per månad stämmer med regeln (senast publicerade tavla som var belagd vid
+Alla tio stämmer med serierna, och de två raderna från X20 stämmer med de ombyggda serierna. Raden "före X20"
+gäller registrets första ECI-regel. Tavlan per månad stämmer med regeln (senast publicerade tavla som var belagd vid
 månadsslut). I 2024-10 täcker datasetet inte `chatgpt-4o-latest-20240903` (censurerad bulk), och klassningen kommer
 från Space-tabellen (steg 2, "Proprietary").
 
@@ -170,13 +176,37 @@ från Space-tabellen (steg 2, "Proprietary").
    versionerna av 2025-09 – 2026-03: toppen i mars 2025, `gemini-2.5-pro-exp-03-25`, togs bort 2025-06-01 och ersätts av
    `chatgpt-4o-latest-20250326`. Den ledande fronten blir då lägre än den var, och eftersläpningen kan bli kortare än
    den verkliga. Hade februaris topp `early-grok-3` funnits kvar kunde s* ha blivit en månad tidigare.
+   **Storleken** (granskning R23, R23-4; omräknad i X20, avsnitt 9). I 2025-08 saknas de åtta högsta stängda modellerna
+   i februaris tavla, så ersättaren är plats 9 (`gemini-2.0-flash-001`). s* = 2025-03 i 2025-06 – 2025-08 vilar på
+   ersättaren `chatgpt-4o-latest-20250326`, och i 2025-08 når den `glm-4.5` med bara 0,30 poäng (1 429,38 mot
+   1 429,08). En känslighetsräkning ger den borttagna toppen samma försprång före ersättaren som den hade i b(s). Det
+   är ett antagande, inte ett värde. Då blir eftersläpningen 2–3 månader längre i åtta månader:
+
+   | Version | Mått | Månader | Regeln | Med försprånget |
+   |---|---|---|---|---|
+   | första | båda | 2025-08 | 3 | 5 |
+   | senaste | Kina | 2025-09 | 3 | 6 |
+   | senaste | båda | 2025-10 – 2026-01 | 4, 5, 6, 7 | 7, 8, 9, 10 |
+   | senaste | öppna | 2026-02 – 2026-03 | 8, 9 | 11, 12 |
+
+   Regeln påverkar alltså inte bara s* i 2025-06 – 2025-08 och de första versionerna. Den påverkar också de senaste
+   versionerna av 2025-09 – 2026-03, genom månaderna före s*. Värdena i de månaderna kan vara 2–3 månader för korta.
 3. **En eftersläpning i hela månader har golvet 0 och hoppar.** Den växer med en månad varje månad som den följande
    gruppens topp står still, och faller när en ny frontmodell kommer. Mätglappet 2025-09 – 2026-03 syns tydligt: med
    tavlan 2025-08-29 växer den öppna eftersläpningen 6, 7, ..., 12, och bulkuppladdningen 2026-04-02 rättar den till 4–9.
-4. **ECI har färre modeller** (258) och skattas om. Klassningen är dagens. En modell vars vikter släpptes senare räknas
-   som öppen från sitt `date`. ECI börjar 2023-02. För Kina-måttet ger det värden från 2023-09 med s* = 2023-03 (GPT-4),
-   men icke-kinesiska modeller före 2023-02 finns inte i filen. De tidiga värdena (2023-09 – 2024-05) är därför i
-   praktiken undre gränser.
+4. **ECI har färre modeller** (258) och skattas om. Klassningen är dagens. Från rättningen X20 räknas en öppen modell
+   som öppen från sitt dokumenterade viktsläpp och som stängd före det (avsnitt 9). En modell vars vikter släpptes
+   senare utan att Epoch skriver det räknas fortfarande som öppen från sitt `date`. ECI börjar 2023-02. För Kina-måttet
+   är s0 den första icke-kinesiska modellen oavsett vikter, LLaMA-65B (2023-02-24), en månad före GPT-4. Därför
+   censureras inte 2023-09 – 2024-04 (6–13 månader, s* = 2023-03), fast filen saknar modeller före 2023-02. De värdena
+   är undre gränser (granskning R23, R23-6). 2024-05 (14 månader) är troligen rätt, eftersom F = 120,82 ligger nära
+   GPT-4 (121,61), men det går inte att pröva i filen. Måttet för öppna censureras i samma månader, eftersom dess s0 är
+   GPT-4:s månad.
+   **Datum i Epochs två filer** (R23-7): `eci_scores.csv` daterar "GPT-4 Turbo (Nov 2023)" 2024-01-25, men
+   `all_ai_models.csv` har 2023-11-06. Serierna använder `eci_scores.csv`. Med 2023-11-06 hade eftersläpningen för
+   öppna blivit 7 i stället för 5 i 2024-06, och för Kina 7, 8 och 9 i stället för 5, 6 och 7 i 2024-06 – 2024-08
+   (granskningens räkning). Vilket datum som är rätt är inte verifierat. 13 modeller skiljer mer än 14 dagar mellan
+   filerna. De flesta är tillkännagivande mot släpp (o3: 2024-12-20 mot 2025-04-16), och då är `date` det rimliga.
 5. **Få kinesiska modeller och samma modeller i båda måtten.** Från 2024-12 är den bästa öppna modellen kinesisk i båda
    källorna (DeepSeek, GLM, Qwen, Kimi, MiMo), och den bästa stängda är icke-kinesisk. Måtten för öppna och för Kina blir
    därför ofta lika. De skiljer sig bara när en stängd kinesisk modell (Qwen-Max, ERNIE, Dola-Seed) ligger högst bland
@@ -193,3 +223,59 @@ från Space-tabellen (steg 2, "Proprietary").
 Inga av serierna föreslås som kärnserier nu. En granskning bör pröva punkt 2 och 8 först, och om Arena-varianten med
 stilkontroll (`text_style_control`, standardvyn från 2025-05-16) ger samma bild. ECI-serierna kan räknas först när
 det finns egna ögonblicksbilder, som för `g1_epoch_eci_frontier`.
+
+**Stilkontroll (granskning R23, R23-5).** Granskningen räknade eftersläpningen i `text_style_control` (från 2024-08,
+censurerad till 2024-12). Den ger samma spann, 2–9 månader, men andra månadsvärden, med upp till 5 månaders skillnad:
+öppna 2026-01 är 2 med stilkontroll och 7 utan, 2025-10 – 2025-12 är 7–9 mot 4–6, och 2026-07 – 2026-08 är 5–6 mot 8–9.
+Nivån håller alltså mot vyn, men förändringen från månad till månad gör det inte. Takten i Arena-serierna ska därför
+inte läsas som robust. Ett förslag om `g1_open_lag_months_arena` som kärnserie måste ta ställning till vyn och till
+ersättningsregeln i punkt 7.2.
+
+## 9. Rättning X20 efter granskning R23
+
+Granskning R23 (`docs/granskning/r23-oppen-stangd.md`) godkände serierna med anmärkningar. Rättningsspåret X20
+(gren `auto14k/x20-oppen-stangd`) åtgärdar R23-1 – R23-4 och R23-9 och dokumenterar R23-5 – R23-7. Två regler
+ändras genom daterade registerposter (2026-11-25, X20), committade före koden och före värdena.
+
+**R23-1 och R23-2: första versionens brytdag.** Första versionen av en månad räknar nu tavlor belagda ≤ månadsslut + 1
+dag, i både `series/open_gap.arena_build` och `sources/vintages.monthly`. Förut föll en tavla som publicerades sista
+dagen och belades nästa dag bort ur sin månad. Serierna byggdes om (`--rebuild`). Effekten på Arena-serierna:
+
+| Serie | Månad | `known_from` | Före | Efter |
+|---|---|---|---|---|
+| `g1_open_gap_arena` | 2026-04 | 2026-05-01 | 33,82 | 32,91 |
+| `g1_open_gap_arena` | 2026-09 | 2026-10-01 | 27,06 | 42,58 |
+| `g1_china_gap_arena` | 2026-04 | 2026-05-01 | 27,49 | 28,57 |
+| `g1_china_gap_arena` | 2026-09 | 2026-10-01 | 27,06 | 42,58 |
+
+Eftersläpningen ändras inte i någon månad, och inga rader tillkommer eller försvinner. Samma rättning ändrar
+`g1_arena_*` (avsnittet om rättningen i `docs/kallor/g1g2_nya.md`).
+
+**R23-3: ECI-modell öppen från viktsläppet.** En öppen ECI-modell räknas som öppen från max(`date`, viktdatum) och som
+stängd före det. Viktdatumet tas ur en kurerad rad (`model_origin.ECI_WEIGHTS_RELEASE`) eller ur en mening om släppta
+vikter med datum i Epochs `Accessibility notes`. Av 127 öppna modeller får 124 viktdatumet från `date`, 2 från
+anteckningen (Kimi K3.1 Pro 2026-11-04 efter `date` 2026-10-23; Nemotron 3 Ultra samma dag som `date`) och 1 från den
+kurerade tabellen (GLM-5.3, 2026-08-25, samma månad som `date`). Ingen modell lämnas utanför. Effekten:
+
+| Serie | Månad | Före | Efter |
+|---|---|---|---|
+| `g1_open_lag_months_eci` | 2026-10 | 6 | 7 |
+| `g1_open_gap_eci` | 2026-10 | 8,01 | 9,80 |
+
+Den öppna toppen i 2026-10 blir DeepSeek V4.1 Flash 1017 (159,41, `date` 2026-10-17), inte Kimi K3 som granskningen
+skrev. Granskningens gap 10,60 är därför fel. Rätt värde är 9,80, och eftersläpningen 7 stämmer (GPT-5.4 Pro, 160,31,
+2026-03). Kontrollerat direkt i `eci_scores.csv`. Kina-måttet ändras inte, eftersom landet inte beror på vikterna.
+
+**R23-4: ersättningsregelns storlek.** Känslighetsräkningen i punkt 7.2 räknades om i X20 med en ändrad kopia av
+`lag_in_board` i minnet (den borttagna toppen behåller sitt försprång före ersättaren). Den ger exakt granskningens
+tabell. Regeln är oförändrad.
+
+**R23-9.** Två referenser i `ORG_COUNTRY` citerar nu Epochs stavning ("Nous Research", "Nvidia"). Landet var rätt.
+
+**Inte åtgärdat i X20:**
+- R23-8 ("Propretary" i Space-tabellerna läses som öppen). Ingen effekt i dag, eftersom datasetets rad vinner i alla
+  183 tavlor. Rättningen hör hemma i `sources/arena_meta.weights_of`, som är skyddad i körning 14 (filnamnet
+  `arena*.py`). Föreslås för ägaren.
+- R23-10 kräver ingen åtgärd. R23-11 (licenstabellerna i `docs/datakallor/licensniva.md`) görs vid integrationen.
+- `series/arena_price.build` har samma konstruktion som felet i R23-1, men filen är skyddad. Omräknat i minnet med
+  rättad brytdag ger den samma rader i båda serierna (34 och 30), så inget värde ändras i dag.

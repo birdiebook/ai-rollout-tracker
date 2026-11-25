@@ -1679,3 +1679,10 @@ Nemotron 3 Ultra och Mistral Large 4.
 **Kända fall som regeln inte fångar:** MiniMax-M3 och Mistral Large 4 är öppna i ECI före Arenas etikett för öppna
 vikter. Epochs anteckningar daterar inte deras vikter, så steg 4 gäller. Enligt granskningen är ingen av dem topp i
 någon månad. Arenas etikett används inte som viktdatum för ECI, eftersom den kan komma efter släppet.
+
+### 2026-11-25 – X20: rättelse av fakta i ECI-posten ovan (reglerna ändras inte)
+
+Skrivet efter ombyggnaden. ECI-posten ovan återger granskningens uppgift att gapet i 2026-10 blir 10,60 utan Kimi
+K3.1 Pro. Det stämmer inte. Den öppna toppen i 2026-10 blir då DeepSeek V4.1 Flash 1017 (159,41, `date` 2026-10-17),
+inte Kimi K3 (158,61). Gapet blir 9,80 (169,21 − 159,41). Eftersläpningen blir 7 månader, som granskningen skrev
+(GPT-5.4 Pro, 160,31, 2026-03). Kontrollerat direkt i `eci_scores.csv`.
