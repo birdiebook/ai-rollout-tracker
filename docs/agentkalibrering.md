@@ -33,6 +33,10 @@ En rad per spår, fylls på efter varje körning. Tumreglerna justeras när siff
 | 2026-11-24 | 12 | W7 serieinstrumentet | webb (2 enheter) | ~41 | ~112 | ~309 | 387 seriesidor, asOf-API (golden mot Python), revisionsvy, CSV, permalänk, 130 vitest |
 | 2026-11-24 | 12 | W8 prognossidor | webb (sidor) | ~46 | ~116 | ~312 | översikt, sida per nowcast och skarp prognos, facit, kalibrering, D2-solfjäder |
 | 2026-11-24 | 12 | X5 rättning Arena | rättning (läckage + priser) | ~48 | ~122 | ~323 | tavlor versionerade per commit, daterade prisrättningar, ingen G1-historik ändrad |
+| 2026-11-24 | 13 | W9 tidsresa | webb + läckagegräns | ~56 | ~110 | ~342 | globalt as_of, en grind (gate.ts), golden mot Python-replay, uppspelning |
+| 2026-11-24 | 13 | W10 avstämningar och regim | webb (sidor) | ~36 | ~121 | ~312 | /avstamningar, /regim, bidragsdiagram, holdoutresultat, konstanter testade mot Python |
+| 2026-11-24 | 13 | W11 utforskbar metod | webb (interaktiv) | ~48 | ~123 | ~344 | dödband, intervall, as_of, Holm-stege; golden mot Python-motorn |
+| 2026-11-25 | 13 | W12 navigering och delning | webb (layout, sök, delningsbilder) | ~105 (två pass, kvotstopp) | ~180 | ~380 | ⌘K-sök, djuplänkar, 421 delningsbilder, citeringsrad; hittade basvägsfelet |
 
 ## Körning 1, sammanfattning (2026-11-23, orkestrerare)
 
@@ -60,3 +64,7 @@ En rad per spår, fylls på efter varje körning. Tumreglerna justeras när siff
 - Parallella webbspår krockade på förhandsvisningsporten 4173. Playwright testade då tyst ett annat spårs bygge. Ge varje
   spår en egen `PW_PORT`.
 - Granskningsspåren hittar fortfarande verkliga fel (R8: Arena-läckaget). Behåll en granskning per ny serie som ska räknas.
+- Kvotgränsen nåddes med fem samtidiga spår. Spåret som stoppades kunde återupptas med SendMessage när kvoten var tillbaka,
+  utan att något arbete gick förlorat. Med webbspår är 3–4 samtidiga spår per 5-timmarsfönster rimligt.
+- Basvägsfelet (`/next` i stället för `/<repo>/next` på en projektsida) syntes inte i några lokala tester. Testa en gång
+  mot den publicerade adressen efter första publiceringen.
