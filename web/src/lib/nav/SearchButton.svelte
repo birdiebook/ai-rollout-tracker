@@ -1,4 +1,4 @@
-<!-- W12: the search button in the header and the shortcuts ⌘K / Ctrl+K (and "/" outside text fields). The dialog
+<!-- W12: the search button in the header and the shortcuts ⌘K / Ctrl+K. The dialog
      and the index load on first use only (dynamic import + fetch), so no page pays for them up front. Before
      hydration (or without JavaScript) the button is a link to the search page /sok/, which works without scripts. -->
 <script lang="ts">
@@ -19,9 +19,6 @@
   }
   const back = () => (opener && opener.isConnected ? opener : btn)?.focus();
 
-  const editable = (t: EventTarget | null) =>
-    t instanceof HTMLElement && (t.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(t.tagName));
-
   onMount(() => {
     mounted = true;
     mac = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
@@ -31,10 +28,9 @@
       if (k === 'k' && (e.metaKey || e.ctrlKey) && !e.altKey && !e.shiftKey) {
         e.preventDefault();
         if (!open) show();
-      } else if (e.key === '/' && !e.metaKey && !e.ctrlKey && !e.altKey && !editable(e.target) && !open) {
-        e.preventDefault();
-        show();
       }
+      // R-W2 (WCAG 2.1.4): no single-character shortcut ("/" was one): it fires for speech input and stray keys and
+      // could not be turned off. ⌘K / Ctrl+K and the button remain.
     };
     addEventListener('keydown', onkey);
     return () => removeEventListener('keydown', onkey);
@@ -42,7 +38,7 @@
 </script>
 
 {#if mounted}
-  <button bind:this={btn} type="button" class="sbtn" aria-haspopup="dialog" aria-keyshortcuts="Meta+K Control+K /" onclick={show}>
+  <button bind:this={btn} type="button" class="sbtn" aria-haspopup="dialog" aria-keyshortcuts="Meta+K Control+K" onclick={show}>
     {@render inner()}
   </button>
 {:else}

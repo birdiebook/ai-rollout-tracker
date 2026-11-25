@@ -15,6 +15,16 @@
 
   let { data, children } = $props();
   const css = `<style>${tokensCss()}</style>`;
+
+  // R-W2: the hash carries view state (as_of, fonster, avsnitt …). A plain "#main" would replace it, so with JS the
+  // skip link moves focus itself and leaves the URL alone (without JS the href works as usual).
+  function skip(e: MouseEvent) {
+    const main = document.getElementById('main');
+    if (!main) return;
+    e.preventDefault();
+    main.scrollIntoView({ block: 'start' });
+    main.focus({ preventScroll: true });
+  }
 </script>
 
 <svelte:head>
@@ -23,7 +33,7 @@
 </svelte:head>
 <PageMeta meta={data.meta} />
 
-<a class="skip" href="#main">Hoppa till innehållet</a>
+<a class="skip" href="#main" onclick={skip}>Hoppa till innehållet</a>
 <header class="top wrap">
   <a class="brand" href={resolve('/')}>AI-utrullningen</a>
   <MainNav />
@@ -39,7 +49,7 @@
   </div>
 {/if}
 
-<main id="main" class="wrap">
+<main id="main" class="wrap" tabindex="-1">
   <TimeTravel>{@render children()}</TimeTravel>
   <ShareCite cite={data.meta.cite} url={data.meta.url} />
 </main>
@@ -61,6 +71,9 @@
   .skip {
     position: absolute;
     left: -9999px;
+  }
+  main:focus {
+    outline: none;
   }
   .skip:focus {
     left: 16px;

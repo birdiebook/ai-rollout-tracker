@@ -80,6 +80,8 @@
       if (e.altKey || e.ctrlKey || e.metaKey) return;
       const t = e.target as HTMLElement | null;
       if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT|BUTTON)$/.test(t.tagName))) return;
+      // R-W2 (WCAG 2.1.4): single-letter shortcuts only while focus is in the story, not anywhere on the page
+      if (!t || !host?.contains(t)) return;
       if (e.key === 'j' || e.key === 'k') {
         // step from the focused card (the observer's card can be the next one once a card is scrolled to the top)
         const focused = (document.activeElement as HTMLElement | null)?.closest<HTMLElement>('[data-step]');
@@ -125,7 +127,7 @@
           </li>
         {/each}
       </ol>
-      {#if enhanced}<p class="note keys">Tangenterna j och k går till nästa och föregående kort.</p>{/if}
+      {#if enhanced}<p class="note keys">När fokus är i berättelsen går tangenterna j och k till nästa och föregående kort.</p>{/if}
     </nav>
 
     <ol class="steps">

@@ -2,7 +2,7 @@
      Collapsed to one button until time travel starts. Every change goes to the URL (as_of) and from there to the
      views; playback steps one month end at a time and stops at the bundle's day. -->
 <script lang="ts">
-  import { onDestroy } from 'svelte';
+  import { onDestroy, tick } from 'svelte';
   import { dateLabel } from '$lib/design';
   import { MIN_DAY, tt } from './store.svelte';
   import { dayToMs, msToDay, stepMonth } from './url';
@@ -26,7 +26,34 @@
       tt.set(stepMonth(tt.effective, 1));
     }, 700);
   }
-  const start = () => tt.set(stepMonth(tt.max, -12));
+  // R-W2: the bar swaps its markup when time travel starts or ends, which would drop keyboard focus on <body>;
+  // focus goes to the slider (start) or back to the start button (I dag)
+  let slider: HTMLInputElement | undefined = $state();
+  let opener: HTMLButtonElement | undefined = $state();
+  let barH = $state(0);
+  const start = async () => {
+    tt.set(stepMonth(tt.max, -12));
+    await tick();
+    slider?.focus();
+  };
+  const today = async () => {
+    stop();
+    tt.set(null);
+    await tick();
+    opener?.focus();
+  };
+  // R-W2 (WCAG 2.4.11): the bar is sticky on wide screens, so the page scrolls focused elements clear of it
+  $effect(() => {
+    const root = document.documentElement;
+    const wide = matchMedia('(min-width: 861px)');
+    const apply = () => (root.style.scrollPaddingTop = tt.active && wide.matches && barH ? `${barH + 18}px` : '');
+    apply();
+    wide.addEventListener('change', apply);
+    return () => {
+      wide.removeEventListener('change', apply);
+      root.style.scrollPaddingTop = '';
+    };
+  });
   const step = (k: number) => {
     stop();
     tt.set(stepMonth(tt.effective, k));
@@ -38,13 +65,14 @@
 </script>
 
 {#if tt.active}
-  <section class="bar on" aria-label="Tidsresa">
+  <section class="bar on" aria-label="Tidsresa" bind:offsetHeight={barH}>
     <div class="row">
       <p class="when">
         <span class="k">Vad visste vi den</span>
         <strong aria-live={tt.playing ? 'off' : 'polite'}>{dateLabel(tt.effective)}</strong>
       </p>
       <input
+        bind:this={slider}
         class="slider"
         type="range"
         min="0"
@@ -60,7 +88,8 @@
       />
       <div class="btns">
         <button type="button" class="chip" onclick={() => step(-1)} disabled={tt.effective <= MIN_DAY}>−1 månad</button>
-        <button type="button" class="chip" aria-pressed={tt.playing} onclick={play}>{tt.playing ? '❚❚ Paus' : '▶ Spela'}</button>
+        <!-- R-W2: the name says what a press does (Spela/Paus), so no aria-pressed; the glyph is not read out -->
+        <button type="button" class="chip" onclick={play}><span aria-hidden="true">{tt.playing ? '❚❚' : '▶'}</span> {tt.playing ? 'Paus' : 'Spela'}</button>
         <button type="button" class="chip" onclick={() => step(1)} disabled={tt.effective >= tt.max}>+1 månad</button>
         <label class="date">
           <span class="visually-hidden">Datum</span>
@@ -78,14 +107,14 @@
             }}
           />
         </label>
-        <button type="button" class="chip" onclick={() => tt.set(null)}>I dag</button>
+        <button type="button" class="chip" onclick={today}>I dag</button>
       </div>
     </div>
     <p class="rule note">Allt nedan bygger bara på värden som var kända den dagen. Senare kunskap syns bara där det står ”i dag”.</p>
   </section>
 {:else}
   <div class="bar off">
-    <button type="button" class="chip" onclick={start}>Tidsresa: vad visste vi den …?</button>
+    <button bind:this={opener} type="button" class="chip" onclick={start}>Tidsresa: vad visste vi den …?</button>
   </div>
 {/if}
 
