@@ -4,7 +4,7 @@
 <script lang="ts">
   import { resolve } from '$app/paths';
   import { DIRECTIONS, StatusBadge, dateLabel, fmt, periodLabel, signed } from '$lib/design';
-  import { REGIME_HIGH, reconDescription, type StartData } from './model';
+  import { REGIME_HIGH, REGIME_LOW, reconDescription, type StartData } from './model';
 
   let { start }: { start: StartData } = $props();
   const reg = $derived(start.regime);
@@ -20,7 +20,8 @@
   {#if reg.available && reg.blocks.length}
     <p class="desc">
       Sannolikheten för inbromsning enligt regimmodellen C4, {periodLabel(reg.blocks[0].month ?? start.record.month, true)}.
-      Ett skifte registreras när två månader i rad ligger på minst {fmt(REGIME_HIGH, 1)}.
+      Ett skifte till inbromsning registreras när två månader i rad ligger på minst {fmt(REGIME_HIGH, 1)}, och ett skifte
+      till expansion när två månader i rad ligger på högst {fmt(REGIME_LOW, 1)}.
     </p>
     <ul class="rows">
       {#each reg.blocks as b (b.block)}

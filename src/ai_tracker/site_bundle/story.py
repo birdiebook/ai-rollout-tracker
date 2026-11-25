@@ -25,6 +25,7 @@ from ai_tracker.state import register as R
 
 ENTRY = "2026-11-25 – W13: urvalsregel för månadens berättelse"
 HIGH, LOW = 95.0, 5.0  # extreme percentile zones (K5, K6): >= HIGH or <= LOW
+ZONE_BOUND = {"övre": "≥ 95", "nedre": "≤ 5"}  # a card names only its own zone's bound (R-W3)
 CAP = 8  # event cards (K1-K6) per month
 TYPE_CAPS = {"K4": 3, "K5": 3, "K6": 2}
 EVENT_TYPES = ("K1", "K2", "K3", "K4", "K5", "K6")
@@ -322,7 +323,7 @@ def select(inp: dict, publishable: Callable[[str], bool], label: Callable[[str],
             d = m.get("direction")
             inv = m.get("method") in ("doubling", "halving")
             text = (f"Takten är {pace_text(m, with_unit=True)}, och förändringen i takt är {change_text(m)}. Det är "
-                    f"percentil {pct(p)} av seriens egen historik, i den {z} zonen (≥ 95 eller ≤ 5). Jämförelse: "
+                    f"percentil {pct(p)} av seriens egen historik, i den {z} zonen ({ZONE_BOUND[z]}). Jämförelse: "
                     f"{note}. Seriens riktning i {code}: {DIRECTION_WORD.get(d, '–')}."
                     + (" För fördubblings- och halveringstid betyder en högre percentil en längre tid." if inv else ""))
             card = {"type": "K5", "id": f"k5-{key}",
@@ -351,7 +352,7 @@ def select(inp: dict, publishable: Callable[[str], bool], label: Callable[[str],
             if pm is None:
                 note = "inget mått förra månaden"
             text = (f"Takten i kvoten är {pace_text(m, with_unit=True)}. Det är percentil {pct(p)} av kvotens egen "
-                    f"historik, i den {z} zonen (≥ 95 eller ≤ 5). Jämförelse: {note}. Avstämningarna räknas inte i "
+                    f"historik, i den {z} zonen ({ZONE_BOUND[z]}). Jämförelse: {note}. Avstämningarna räknas inte i "
                     f"grenarnas diffusionsindex (A5).")
             card = {"type": "K6", "id": f"k6-{key}", "title": f"{label(key)}: takten i percentil {pct(p)}",
                     "text": text, "direction": 1 if z == "övre" else -1,

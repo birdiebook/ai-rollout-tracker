@@ -147,6 +147,20 @@ def test_percentile_zone_entry():
     assert invalid == []
 
 
+def test_a_zone_card_names_only_its_own_bound():
+    """R-W3: "i den nedre zonen (≥ 95 eller ≤ 5)" named the other zone's bound too. Each card names its own."""
+    cur = {"G1": branch("stabil", 0.5, [measure("hi", 98.0, direction=1), measure("lo", 2.0, direction=-1)])}
+    prev = {"G1": branch("stabil", 0.5, [measure("hi", 50.0), measure("lo", 50.0)])}
+    recon = [measure("x_hi", p_pace=99.0), measure("x_lo", p_pace=1.0)]
+    prev_recon = [measure("x_hi", p_pace=50.0), measure("x_lo", p_pace=50.0)]
+    ev = {c["id"]: c["text"] for c in events(sel(inp(branches=cur, prev_branches=prev, recon=recon,
+                                                       prev_recon=prev_recon)))}
+    for k in ("k5-hi", "k6-x_hi"):
+        assert "i den övre zonen (≥ 95)" in ev[k] and "≤ 5" not in ev[k], ev[k]
+    for k in ("k5-lo", "k6-x_lo"):
+        assert "i den nedre zonen (≤ 5)" in ev[k] and "≥ 95" not in ev[k], ev[k]
+
+
 def test_caps_per_type_and_total_and_omitted_counts():
     s = [measure(f"s{i}", 96.0 + i * 0.3 if i % 2 else 4.0 - i * 0.3) for i in range(6)]
     cur = {f"G{i}": branch("accelererar", 0.8, s if i == 1 else ()) for i in range(1, 10)}

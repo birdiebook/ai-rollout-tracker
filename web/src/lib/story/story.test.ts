@@ -2,12 +2,13 @@
 import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { render } from '@testing-library/svelte';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { fsBundle } from '$lib/server/bundle';
 import type { Branch, Story } from '$lib/data';
 import type { SeriesDoc } from '$lib/series/types';
 import { LeakError, monthKnown, seriesOn } from '$lib/timetravel/gate';
 import { monthsKnownOn, storyPage, target, type Docs } from './model';
+import StoryView from './StoryView.svelte';
 import TrackChart from './TrackChart.svelte';
 
 const dirs = [resolve('../web-data-fixtures'), process.env.STORY_BUNDLE_DIR].filter(
@@ -97,5 +98,29 @@ describe('TrackChart', () => {
     expect(container.querySelectorAll('rect.zone').length).toBe(2);
     expect(container.querySelector('circle.mark')?.getAttribute('data-month')).toBe('2026-10');
     expect(container.textContent).toContain('97,5');
+  });
+});
+
+describe('StoryView texts (R-W3)', () => {
+  it('singular counts, a Swedish comparison month, and K1 directions as index (not pace)', async () => {
+    const dir = resolve('../web-data-fixtures');
+    const idx = await fsBundle(dir).storyIndex();
+    const months = [];
+    for (const m of idx.months) months.push(await docs(dir, m.month));
+    const d = months.find((x) => x.story.previous && x.story.cards.some((c) => c.type === 'K1' && c.direction !== null));
+    expect(d).toBeDefined();
+    const story: Story = { ...structuredClone(d!.story), omitted: { K1: 0, K2: 0, K3: 0, K4: 0, K5: 1, K6: 2 } };
+    // jsdom has neither: the view's onMount (scrollytelling) needs both
+    vi.stubGlobal('matchMedia', () => ({ matches: true, addEventListener() {}, removeEventListener() {} }));
+    vi.stubGlobal('IntersectionObserver', class { observe() {} disconnect() {} unobserve() {} });
+    const { container } = render(StoryView, { page: storyPage({ ...d!, story }) });
+    vi.unstubAllGlobals();
+    const text = container.textContent ?? '';
+    expect(text).toContain('1 kärnserie i extrem percentil, 2 avstämningar i extrem percentil');
+    expect(text).not.toContain('1 kärnserier');
+    const prevSv = idx.months.find((m) => m.month === story.previous)!.month_sv;
+    expect(text).toContain(`Jämförelsemånad: ${prevSv}.`);
+    expect(text).toMatch(/Tillståndsskifte, (högre|lägre) index/);
+    expect(text).not.toMatch(/Tillståndsskifte, (mer|mindre) takt/);
   });
 });

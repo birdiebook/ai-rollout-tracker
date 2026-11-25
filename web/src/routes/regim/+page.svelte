@@ -38,7 +38,7 @@
   <h2 id="now-h">Läget per block</h2>
   <p class="note">
     P(inbromsning) ur en Markov-switching-modell med två tillstånd (MSIH(2)) på faktorn för varje block. Skifte rapporteras
-    när sannolikheten är minst {fmt(RULES.shiftAtLeast, 1)} {inARow} månader i rad, och tillbaka när den är högst
+    till inbromsning när sannolikheten är minst {fmt(RULES.shiftAtLeast, 1)} {inARow} månader i rad, och till expansion när den är högst
     {fmt(RULES.backAtMost, 1)} {inARow} månader i rad. Däremellan behålls tillståndet.
   </p>
   <div class="meters">
@@ -90,7 +90,7 @@
       <table class="nums">
         <caption class="visually-hidden">Holdouten per block</caption>
         <thead>
-          <tr><th scope="col">Block</th><th scope="col">Skiften till inbromsning</th><th scope="col">Skiften tillbaka</th><th scope="col">Månader i inbromsning</th><th scope="col">Omklassat i efterhand</th></tr>
+          <tr><th scope="col">Block</th><th scope="col">Skiften till inbromsning</th><th scope="col">Skiften till expansion</th><th scope="col">Månader i inbromsning</th><th scope="col">Omklassat i efterhand</th></tr>
         </thead>
         <tbody>
           {#each HOLDOUT.blocks as b (b.block)}

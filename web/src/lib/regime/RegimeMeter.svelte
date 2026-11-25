@@ -37,7 +37,7 @@
     <span style:left="{hi}%">{fmt(RULES.shiftAtLeast, 1)}</span>
     <span style:left="100%">1</span>
   </div>
-  <p class="zones" aria-hidden="true"><span>≤ {fmt(RULES.backAtMost, 1)}: tillbaka till expansion</span><span>≥ {fmt(RULES.shiftAtLeast, 1)}: skifte till inbromsning</span></p>
+  <p class="zones" aria-hidden="true"><span>≤ {fmt(RULES.backAtMost, 1)}: skifte till expansion</span><span>≥ {fmt(RULES.shiftAtLeast, 1)}: skifte till inbromsning</span></p>
   {#if p !== null}<p class="sentence">{laneSentence(lane)}</p>{/if}
 </article>
 

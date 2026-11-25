@@ -26,10 +26,22 @@
     K5: 'kärnserier i extrem percentil',
     K6: 'avstämningar i extrem percentil'
   };
+  const typeName1: Record<string, string> = {
+    K1: 'tillståndsskifte',
+    K2: 'regimskifte',
+    K3: 'nytt skarpt utfall',
+    K4: 'strukturbrott',
+    K5: 'kärnserie i extrem percentil',
+    K6: 'avstämning i extrem percentil'
+  };
+  const counted = (t: string, n: number) => `${n} ${n === 1 ? typeName1[t] : typeNames[t]}`;
+  const prevLabel = $derived(s.previous ? (months.find((m) => m.month === s.previous)?.month_sv ?? s.previous) : null);
   const omitted = $derived(Object.entries(s.omitted).filter(([, n]) => n > 0));
   const withheld = $derived(Object.entries(s.withheld).filter(([, n]) => n > 0));
   const dirColor = (d: -1 | 0 | 1 | null) => (d === null ? 'var(--c-model)' : DIRECTIONS[d].color);
-  const dirWord = (d: -1 | 0 | 1 | null) => (d === null ? '' : d === 1 ? 'mer takt' : d === -1 ? 'mindre takt' : 'oförändrad takt');
+  // A state change (K1) moves the branch's index, not its pace: "högre/lägre index" (R-W3).
+  const dirWord = (t: string, d: -1 | 0 | 1 | null) =>
+    d === null ? '' : t === 'K1' ? (d === 1 ? 'högre index' : 'lägre index') : d === 1 ? 'mer takt' : d === -1 ? 'mindre takt' : 'oförändrad takt';
 
   const clip = (x: string, n = 26) => (x.length > n ? x.slice(0, n - 1).trimEnd() + '…' : x);
   function railLabel(c: (typeof page.cards)[number]): string {
@@ -132,7 +144,7 @@
             <p class="kicker kick">
               <span class="tag" style:border-color={dirColor(c.direction)}>
                 <span aria-hidden="true" style:color={dirColor(c.direction)}>{typeGlyph[c.type] ?? '·'}</span>
-                <span>{c.type_label}{#if dirWord(c.direction)}, {dirWord(c.direction)}{/if}</span>
+                <span>{c.type_label}{#if dirWord(c.type, c.direction)}, {dirWord(c.type, c.direction)}{/if}</span>
               </span>
               <span class="count">Kort {k + 1} av {cards.length}</span>
             </p>
@@ -161,9 +173,9 @@
       Taket är {s.rule.cap} kort (strukturbrott högst {s.rule.type_caps.K4}, kärnserier högst {s.rule.type_caps.K5}, avstämningar högst {s.rule.type_caps.K6}).
     </p>
     <ul class="facts">
-      <li>{omitted.length ? `Uppfyllde villkoren men visas inte på grund av taket: ${omitted.map(([t, n]) => `${n} ${typeNames[t]}`).join(', ')}.` : 'Inget kort ströks på grund av taket.'}</li>
-      <li>{withheld.length ? `Serier som inte visas av licensskäl men uppfyllde villkoren (räknas, namnges inte): ${withheld.map(([t, n]) => `${n} ${typeNames[t]}`).join(', ')}.` : 'Inga serier som hålls inne av licensskäl uppfyllde villkoren.'}</li>
-      <li>{s.previous ? `Jämförelsemånad: ${s.previous}.` : 'Ingen jämförelsemånad: tillståndsskiften och extrema percentiler kunde inte prövas.'}</li>
+      <li>{omitted.length ? `Uppfyllde villkoren men visas inte på grund av taket: ${omitted.map(([t, n]) => counted(t, n)).join(', ')}.` : 'Inget kort ströks på grund av taket.'}</li>
+      <li>{withheld.length ? `Serier som inte visas av licensskäl men uppfyllde villkoren (räknas, namnges inte): ${withheld.map(([t, n]) => counted(t, n)).join(', ')}.` : 'Inga serier som hålls inne av licensskäl uppfyllde villkoren.'}</li>
+      <li>{prevLabel ? `Jämförelsemånad: ${prevLabel}.` : 'Ingen jämförelsemånad: tillståndsskiften och extrema percentiler kunde inte prövas.'}</li>
     </ul>
     <details class="all">
       <summary>Alla månader ({months.length})</summary>

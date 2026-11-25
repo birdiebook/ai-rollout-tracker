@@ -24,7 +24,7 @@ test('regime: registered thresholds, live from the first snapshot, holdout told 
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Har något fundamentalt ändrats?');
   await expect(page.locator('#regime-timeline svg')).toBeVisible();
   await expect(page.getByText(/≥ 0,8: skifte till inbromsning/).first()).toBeVisible();
-  await expect(page.getByText(/≤ 0,2: tillbaka till expansion/).first()).toBeVisible();
+  await expect(page.getByText(/≤ 0,2: skifte till expansion/).first()).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Vad holdouten visade' })).toBeVisible();
   await expect(page.getByText('Delvis känd holdout.')).toBeVisible();
   const text = (await page.locator('main').textContent()) ?? '';

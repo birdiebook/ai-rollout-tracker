@@ -343,16 +343,16 @@
   {
    "path": "story/2025-07.json",
    "schema": "story",
-   "bytes": 3682,
-   "gzip_bytes": 1423,
-   "sha256": "9031abc145895300c5529ebbd4be1ee35e311624009f724e83523577caf3840f"
+   "bytes": 3669,
+   "gzip_bytes": 1414,
+   "sha256": "b99a172e0989b19bf5be8acd0362ee9b8a035e5f006bf7750bf22606f4e67bd2"
   },
   {
    "path": "story/2025-08.json",
    "schema": "story",
-   "bytes": 3139,
-   "gzip_bytes": 1358,
-   "sha256": "862b5352214e86a3e12b9e86759ab7979575dda7628554c506d2084d003a14f6"
+   "bytes": 3127,
+   "gzip_bytes": 1351,
+   "sha256": "d57a7841597cdbbd0be0ff849df392bf3a609b74a13660ee97dd1746b726bd71"
   },
   {
    "path": "story/2025-09.json",
@@ -371,9 +371,9 @@
   {
    "path": "story/2025-11.json",
    "schema": "story",
-   "bytes": 4385,
-   "gzip_bytes": 1537,
-   "sha256": "36723bdb06f27ef4df5059efbb10ca7bf595cfada8db823241686e91847b16a1"
+   "bytes": 4361,
+   "gzip_bytes": 1529,
+   "sha256": "3bae9c6273d865a2926b258796e2a2fff7a0b7c2338712ebd561a4ba36cd9473"
   },
   {
    "path": "story/2025-12.json",
@@ -385,9 +385,9 @@
   {
    "path": "story/2026-01.json",
    "schema": "story",
-   "bytes": 5740,
-   "gzip_bytes": 1775,
-   "sha256": "925a3fe7f59759406f9a66e855536751ec43bf42ddb92c4b06712c11cc843eb4"
+   "bytes": 5704,
+   "gzip_bytes": 1767,
+   "sha256": "9e02bb65e3ad9ffa7ca293d022ae1f132b8028613a7e59533167de42bbba3668"
   },
   {
    "path": "story/2026-02.json",
@@ -406,30 +406,30 @@
   {
    "path": "story/2026-04.json",
    "schema": "story",
-   "bytes": 4637,
-   "gzip_bytes": 1714,
-   "sha256": "bec25896c0ffdf32fb68b91a3fa3c6e9c2f5115e47e401d847050f32bb1b4339"
+   "bytes": 4613,
+   "gzip_bytes": 1705,
+   "sha256": "bdc41ecc9b213e16135bcfd93c05ddc8e73f01fbe2799261d48d8d082bbd70a0"
   },
   {
    "path": "story/2026-05.json",
    "schema": "story",
-   "bytes": 3332,
-   "gzip_bytes": 1449,
-   "sha256": "2f108e557c9667326caaafbeb2ba8178c07eab8f08ea5292de1a4768ecfe1e2a"
+   "bytes": 3319,
+   "gzip_bytes": 1440,
+   "sha256": "edb7f612c4af89b23bf1cd67c2c902585ebd4ce0ecea2142ce70b9706959093a"
   },
   {
    "path": "story/2026-06.json",
    "schema": "story",
-   "bytes": 3267,
-   "gzip_bytes": 1385,
-   "sha256": "ec05bee0681539104ca93efacecf483331c2ec1d1ca5d788d09035da14efd83b"
+   "bytes": 3255,
+   "gzip_bytes": 1376,
+   "sha256": "5c894642b21663d7332f10969e178f7c2503478acfa7805fa9defc7ba609cdc3"
   },
   {
    "path": "story/2026-07.json",
    "schema": "story",
-   "bytes": 2640,
-   "gzip_bytes": 1210,
-   "sha256": "2bc75d97e4fd208f0b0d56b2898189235685dbc9ea08ad01ddbf6fb8ed615ac0"
+   "bytes": 2627,
+   "gzip_bytes": 1201,
+   "sha256": "ff0a0f917b02cbeca758a6918c2bfb8609fc02abd921dc4f87c64ac1031035c5"
   },
   {
    "path": "story/2026-08.json",
@@ -441,9 +441,9 @@
   {
    "path": "story/2026-09.json",
    "schema": "story",
-   "bytes": 3361,
-   "gzip_bytes": 1462,
-   "sha256": "69e2b517fc983bb3a2fc49104e2ea41356e3caf5b6973101f8e53bbbad52e4f3"
+   "bytes": 3349,
+   "gzip_bytes": 1453,
+   "sha256": "693637096ab7bfa3885e31a081b0bb23632661d8de25f97679084236c347ab21"
   },
   {
    "path": "story/2026-10.json",
@@ -649,8 +649,8 @@
   {
    "group": "story",
    "files": 18,
-   "bytes": 58192,
-   "gzip_bytes": 22409
+   "bytes": 58033,
+   "gzip_bytes": 22332
   },
   {
    "group": "withheld.json",
@@ -661,8 +661,8 @@
  ],
  "totals": {
   "files": 79,
-  "bytes": 647043,
-  "gzip_bytes": 181516
+  "bytes": 646884,
+  "gzip_bytes": 181439
  },
  "budgets": {
   "per_file": [
