@@ -1490,3 +1490,99 @@ tak ändras inte.
    punkt 2 gäller inte längre.
 3. **K0** räknar tillståndet "för få källor" (index v2, registret 2026-11-24) för sig, bredvid "för få serier", när det
    förekommer. Tidigare räknades det som "för få serier". Inget urval ändras.
+
+### 2026-11-25 – S2: kraft, kylning, elnät och datacenterbolag som katalogserier (inte kärnserier)
+
+Spår S2, körning 14 (punkt 1 i `riktning.md`, avsnitt 8). Serierna är katalogserier. De ingår inte i diffusionsindexet,
+och här räknas inga takter eller tillstånd. Kod: `src/ai_tracker/series/sec_stack_kraft.py`. Källa och kontroller:
+`docs/kallor/sec_stack_kraft.md`.
+
+**Bolag.** Alla har kalenderår, och räkenskapskvartalen kontrolleras mot kalenderkvartalen i bygget.
+
+| Bolag | CIK | Anmärkning |
+|---|---|---|
+| Vertiv (VRT) | 1674101 | f.d. GS Acquisition Holdings Corp. 10-K och 10-Q som Vertiv från 2020-03-12 |
+| GE Vernova (GEV) | 1996810 | första 10-Q 2024-04-30. Form 10 (10-12B 2024-02-15, 10-12B/A 2024-03-05) har ingen XBRL, så historiken börjar med jämförelsetalen i 10-Q 2024 |
+| Eaton (ETN) | 1551182, 31277 | Eaton Corporation plc (Irland, lämnar 10-Q och 10-K) och föregångaren Eaton Corporation (till 10-Q 2012-10-31), som Alphabet och Google Inc. |
+| Quanta Services (PWR) | 1050915 | |
+| Equinix (EQIX) | 1101239 | REIT |
+| Digital Realty (DLR) | 1297996 | REIT. companyfacts saknar 10-Q 2026-07-31 och 2026-10-30, så flödena läses ur instanserna (nedan) |
+
+**Regel för taggval** (som P1). Taggen väljs per bolag efter täckning och definitionskonsistens, aldrig efter seriens
+förlopp. Byte av tagg för samma rad skarvas per kvartal med `sec.py`:s regel, och bara när taggarna är identiska i
+överlappet. En kandidattagg som avviker i överlappet används inte.
+
+| Mått | Bolag | Taggar (prioritet) och rad |
+|---|---|---|
+| `rev_<co>` | VRT | `RevenueFromContractWithCustomerExcludingAssessedTax` ("Net sales"). `Revenues` (2016–2019) avviker i alla sju överlappande perioder och används inte |
+| | GEV | `RevenueFromContractWithCustomerExcludingAssessedTax` |
+| | ETN | `RevenueFromContractWithCustomerExcludingAssessedTax`, `SalesRevenueNet` (identiska i 7 perioder), för båda CIK (föregångarens `SalesRevenueNet` är identisk i 7 perioder). `Revenues` avviker och används inte |
+| | PWR | `RevenueFromContractWithCustomerExcludingAssessedTax`, `SalesRevenueServicesNet` (identiska i 7 perioder) |
+| | EQIX | `RevenueFromContractWithCustomerExcludingAssessedTax`, `Revenues` (identiska i 7 perioder) |
+| | DLR | `Revenues` ur instanserna |
+| `capex_<co>` | VRT | `PaymentsToAcquirePropertyPlantAndEquipment` ("Capital expenditures"). Raden "Investments in capitalized software" ingår inte |
+| | GEV | `PaymentsToAcquireProductiveAssets` ("Additions to property, plant, and equipment and internal-use software") |
+| | ETN | `PaymentsToAcquirePropertyPlantAndEquipment` ("Capital expenditures for property, plant and equipment"), båda CIK |
+| | PWR | `PaymentsToAcquirePropertyPlantAndEquipment` ("Capital expenditures") |
+| | EQIX | `PaymentsToAcquireOtherPropertyPlantAndEquipment` ("Purchases of other property, plant and equipment"). Raden "Real estate acquisitions" (`PaymentsToAcquireRealEstate`) ingår inte |
+| | DLR | `PaymentsToDevelopRealEstateAssets` ("Improvements to investments in real estate") ur instanserna. Förvärv och investeringar i intresseföretag ingår inte |
+
+**Capex för datacenterbolagen** är utbyggnad och förbättring av egen kapacitet: raden för bygge och utrustning, inte
+köp av befintliga fastigheter eller bolag. Det gör de två jämförbara med varandra. De är inte helt jämförbara med de
+stora molnbolagens capex, som också innehåller köpt mark och byggnader.
+
+**Segmentintäkter** (ur instanserna). En fakta räknas bara när kontextens dimensioner är exakt de angivna.
+
+| Serie | Medlem (`StatementBusinessSegmentsAxis`) och markör (`ConsolidationItemsAxis`) |
+|---|---|
+| `rev_gev_power`, `rev_gev_wind`, `rev_gev_electrification` | `PowerSegmentMember`, `WindSegmentMember`, `ElectrificationSegmentMember`, med `OperatingSegmentsExcludingIntersegmentEliminationMember` (segmentets intäkter före eliminering av interna intäkter). Markören finns i alla elva inlämningar. `OperatingSegmentsMember` finns bara i 10-Q 2024, avviker upp till 5 % och används inte |
+| `rev_etn_electrical_americas`, `rev_etn_electrical_global` | `ElectricalAmericasSegmentMember`, `ElectricalGlobalSegmentMember`, utan markör och annars med `OperatingSegmentsMember` (identiska i 156 par). Bara inlämningar från 2020-01-01, eftersom medlemsnamnet `ElectricalAmericasSegmentMember` användes i 10-K för 2012 för ett äldre segment |
+| `rev_vrt_americas`, `rev_vrt_apac`, `rev_vrt_emea` | `AmericasSegmentMember`, `AsiaPacificSegmentMember`, `EMEASegmentMember`, med `OperatingSegmentsMember` (segmentets intäkter inklusive försäljning till andra segment). Markören finns i alla inlämningar från 2020-05. Medlemmen utan markör (avviker upp till 35 %) saknas i 10-K 2024-02-23 |
+
+Inte byggt: segment för PWR (fem segmentindelningar 2018–2026), regioner för EQIX och produktlinjer för VRT och GEV.
+
+**RPO och orderstock** (balans vid kvartalets slut, som `sec_rpo`, ur instanserna). Bara totalen, ingen uppdelning i
+tid: tidshinkarna är inkonsekvent taggade (PWR 2021 och 2023 har andelens startdatum och längden på olika hinkar,
+ETN 2022–2023 har inaktuella startdatum och en odimensionerad andel).
+
+| Serie | Gren | Tagg och kontext |
+|---|---|---|
+| `rpo_gev` | G7 | `RevenueRemainingPerformanceObligation` utan dimension |
+| `rpo_gev_equipment`, `rpo_gev_services` | G7 | samma med `ProductOrServiceAxis` = `ProductMember` respektive `ServiceMember` (alla elva inlämningar) |
+| `rpo_pwr` | G7 | utan dimension, från 10-Q 2018-05-09 |
+| `rpo_etn` | G7 | Eatons "total backlog" (fasta order), taggad som RPO: utan dimension 2020Q3–2024Q1, därefter med bara startdatumaxeln (en hink), som `sec_rpo.totals` läser som total. Samma mening i 10-Q 2020-11-03, 2023-10-31, 2024-08-01 och 2026-11-03 |
+| `rpo_eqix` | G4 | utan dimension, från 10-Q 2018-05-04 |
+
+**Vertiv: RPO och orderstock är BLOCKED i XBRL.** Vertiv taggar inget RPO. Fakta med `RevenueRemainingPerformanceObligation`
+och startdatumaxeln är tidsfördelningen av långfristiga förutbetalda intäkter ("expects to recognize noncurrent deferred
+revenue of ... in the next 13 to 24 months ..."), inte RPO, och används inte. Orderstocken ("estimated combined order
+backlog") står bara i texten. Spår S3 extraherar de uttalade siffrorna ur pressmeddelandena.
+
+**Omräkningar och brott.** Omräkningar är versioner med regeln om konsekvent bas i `sec.py`. En inlämning som räknar om
+tidigare värden av en segmentserie eller en balans med mer än 2 % (`sec_segment.definition_breaks`) deklareras efter
+granskning, och varje definition får en egen nyckel. En odeklarerad omräkning stoppar hämtningen. För totala intäkter
+och capex gäller P1:s regel: omräkningar är versioner och ger ingen ny nyckel. En senare version som bara avrundar
+tusental till hela miljoner tas bort, som i `neoclouds`.
+
+**DLR ur instanserna.** Fakta utan dimension gäller Digital Realty Trust, Inc. (partnerskapet har `LegalEntityAxis`).
+Samma kvartals- och versionslogik som för companyfacts. Kontroll i bygget: instansserien ska vara lika med
+companyfacts-serien i alla versioner till och med 2026-05-01.
+
+**Datering och kalender.** known_from är inlämningsdatumet för 10-Q eller 10-K. YTD-differens, Q4 = helår − 9M och
+mittpunktsregeln som i `sec.py`. `lag_days` = 25. Aktualitetsgräns per bolag = största observerade avstånd från
+kvartalets slut till första egna inlämning (2015–2026) + 92 + 30.
+
+**Grenar.** VRT, GEV, ETN och PWR (alla mått) i G7. EQIX och DLR: intäkter och RPO i G4, capex i G5, som CoreWeave
+(`rev_crwv` i G4, `capex_crwv` i G5). Alla har `unit` MUSD, `freq` Q, SEC-licensen (`series.sec.LICENSE`, klass `ja`)
+och `publish=True`. Inga värden extraheras ur text.
+
+**Förbehåll.** GEV och ETN är till största delen annat än AI (gasturbiner, vind, flyg, fordon). Datacenterandelen går
+inte att skilja ut i XBRL. Spår S3 extraherar bolagens uttalade datacentersiffror ur pressmeddelandena.
+
+**Vad som setts före denna post:** entitetsnamn, räkenskapsår och inlämningslistor. Vilka kandidattaggar som finns och
+vilka perioder och inlämningsdatum de täcker. Per inlämning: vilka segmentmedlemmar och markörer som finns på
+intäkterna, och hur RPO är taggat (dimension, hinkarnas startdatum och längd). Antal överlappande perioder och största
+relativa skillnad mellan kandidattaggar och mellan markörer. Radetiketterna i kassaflödesanalysen i senaste 10-K (och
+10-Q för EQIX och DLR). Texten kring RPO-fakta hos Vertiv (10-K 2026-02-13 och 10-Q 2026-10-28) och Eaton (10-Q 2020-11-03,
+2023-10-31, 2024-08-01, 2026-11-03), för att se vad som taggats. Där syntes enstaka orderstocksbelopp (Vertiv 15,0 och
+7,2 mdr USD, Eaton 5,4, 12,9, 15,2 och 26,2 mdr USD). Inga kvartalsserier eller takter har räknats.
