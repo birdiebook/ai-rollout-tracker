@@ -43,6 +43,8 @@ class Line:
     breaks: tuple[str, ...] = ()  # declared definition breaks (filing dates)
     regime_notes: tuple[str, ...] = ()
     lag_days: int = 25
+    max_age_days: int | None = None  # freshness bound override (warehouse.fresh); needs the reason in age_note
+    age_note: str = ""
 
 
 LINES = [
@@ -65,8 +67,13 @@ LINES = [
          regime_notes=("Definition före omräkningen FY2025 (inlämnat t.o.m. 2024-07).",
                        "Omräknad definition FY2025-FY2026 (inlämnat från 2024-10); raden ersattes FY2027.")),
     Line(("rev_msft_azure",), MSFT, ((PROD, "AzureMember"),), "Azure (Microsoft, egen rad från FY2027)"),
+    # Nvidia's fiscal quarters end about four weeks after the calendar quarter they map to (Aug-Oct -> Q3), and the
+    # 10-Q follows about four weeks later: ~60 days after the calendar quarter's end, so the derived bound (92 + 25 +
+    # slack) flags it each November. Freshness only: lag_days stays, so no known_from changes.
     Line(("rev_nvda_datacenter",), NVDA, ((PROD, "DataCenterMember"), (PROD, "DatacenterMember")),
-         "Data Center (Nvidia)"),
+         "Data Center (Nvidia)", max_age_days=165,
+         age_note="Aktualitet: Nvidias räkenskapskvartal slutar ungefär fyra veckor efter kalenderkvartalet och "
+                  "10-Q lämnas ungefär fyra veckor senare, därför 165 dagar."),
     # Oracle's fiscal quarters end in Nov/Feb/May/Aug: Sep-Nov maps to calendar Q4 (midpoint) and is
     # filed ~10 days after it ends, i.e. before the calendar quarter's end; lag_days -31 allows that.
     Line(("rev_orcl_cloud",), ORCL, ((PROD, "CloudRevenuesMember"), (PROD, "CloudServicesMember")),
@@ -121,6 +128,8 @@ def _spec(line: Line, i: int) -> Spec:
         note += " " + line.regime_notes[i]
     superseded = i < len(line.keys) - 1
     discontinued = line.keys[i] in DISCONTINUED
+    if line.age_note:
+        note += " " + line.age_note
     if superseded:
         note += " Avslutad: ersatt av nästa definition efter ett definitionsbrott."
     elif discontinued:
@@ -128,7 +137,8 @@ def _spec(line: Line, i: int) -> Spec:
     return Spec(key=line.keys[i], branch="G4", label=f"Segmentintäkter, {line.label}", unit="MUSD", freq="Q",
                 source=SOURCE, fetch=_fetch(line, i), lag_days=line.lag_days, license=LICENSE, revised=True,
                 publish=True, question="Hur snabbt växer de intäkter som AI- och molninvesteringarna ska bära?",
-                note=note, closed=superseded or discontinued)
+                note=note, closed=superseded or discontinued,
+                max_age_days=line.max_age_days)
 
 
 SPECS = [_spec(line, i) for line in LINES for i in range(len(line.keys))]
