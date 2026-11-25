@@ -53,7 +53,8 @@ CODES = {
 }
 QUARTER_NAMED = re.compile(r"\b(first|second|third|fourth) quarter(?: of)?,? (\d{4})\b", re.I)
 YEAR_NAMED = re.compile(r"\b(?:full[- ]year|fiscal year|for the year)\b", re.I)
-FY_HEADING = re.compile(r"\bFiscal Year (\d{4}) Results\b")
+# the section heading, not the title "... Fourth Quarter and (Full) Fiscal Year <year> Results"
+FY_HEADING = re.compile(r"(?<!Quarter and )(?<!Quarter and Full )\bFiscal Year (\d{4}) Results\b")
 
 
 class CodingError(RuntimeError):
