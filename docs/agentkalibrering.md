@@ -69,6 +69,7 @@ En rad per spår, fylls på efter varje körning. Tumreglerna justeras när siff
 | 2026-11-25 | 14 | RW1-X rättning | rättning (schema, CI, scan) | ~43 | ~132 | ~285 | backfill_fetched, commit per skarp prognos, scan-build, tidlös citering |
 | 2026-11-25 | 14 | R-W3 neutralitet | granskning | ~20 | ~98 | ~230 | speglingstest symmetriskt; 3 mallasymmetrier rättade; 4 krav före byte av huvudsida |
 | 2026-11-25 | 14 | R-W2 tillgänglighet | granskning + rättning | ~56 | ~116 | ~270 | axe 0 i 54 körningar; 4 tangentbordsfel rättade; LCP 0,8 s; TBT kvar (P1) |
+| 2026-11-25 | 14 | T1 tillståndsregeln | test av regeln (förregistrerat: revideringar, blockpermutation, Holm) | ~50 | ~50 | – | registerpost före kod, `state/evaluate.py` + CLI `evaluate`, (a) kappa 0,83 och inga hårda byten, (b) inte avgjort (Holm-p 0,37, MDE 0,28/0,44), ingen granskning rekommenderas, 18 tester |
 
 ## Körning 1, sammanfattning (2026-11-23, orkestrerare)
 

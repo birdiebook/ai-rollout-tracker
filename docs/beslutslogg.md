@@ -777,3 +777,18 @@ republishing data"), npm och arXiv (`okänd`), och Microsofts capex-guidance ur 
   regeln bakom dem ändras, och fälten är tillägg (`docs/steg3/datakontrakt.md`, Ändringar).
 - Loggarna och registret har båda sidornas poster i tidsordning. `quarterly.py` har mains omskrivning med "för få
   källor" i tillståndsordningen.
+
+## 2026-11-25 – T1: tillståndsregeln prövad, ingen granskning rekommenderas
+
+- Förregistrerat test av själva tillståndsregeln (`docs/mattregister.md`, "2026-11-25 – T1", resultat i
+  `docs/resultat/t1_tillstandsregeln.md`). Ingen skarp regel ändras, och ögonblicksbilden 2026-11-30 påverkas inte.
+- **Revideringar (a):** med v2 har 91 % av grenmånaderna samma tillstånd med dagens data, kappa 0,83 och inga hårda
+  byten. Det klarar den registrerade nivån. G6 (Fed G.17) och G7 (EIA:s elförsäljning) byter i 6 och 8 av 34 månader.
+  Bara 33 % av de räknade serierna har reviderade värden alls, så resten är inte prövat.
+- **Information (b):** tillstånden träffar 0,74 (3 månader) och 0,76 (6 månader), mot slumpen 0,68 och 0,71 och
+  persistensen 0,70 och 0,76. Holm-p 0,37. Inte avgjort. MDE var 0,28 och 0,44, alltså låg styrka, som sades före
+  testet. Bromsar in träffade 1 av 6 och 1 av 4.
+- **Regeln tillämpad mekaniskt:** ingen granskning rekommenderas. Marginalen mot persistensen vid 3 månader är 2
+  träffar.
+- **Rekommendation till Johannes:** läs tillstånden som en beskrivning av läget, inte som en prognos. Gör om testet på
+  det skarpa registret när det finns minst 12 ögonblicksbilder (tidigast 2027-11), med en ny registerpost.
