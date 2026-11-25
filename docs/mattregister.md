@@ -1677,3 +1677,12 @@ med värden (YTD 2009–2019), och kassaflödesanalysen i 10-Q 2011-04-29. Digit
 (värden och dimensioner) i de fyra inlämningarna med `defnref.xml`, och vilka inlämningar som har
 `ParentCompanyMember`. Antalet fakta med Microsofts tagg i de sju inlämningarna. Nvidias indexfiler 2012–2013. Inga
 serier har byggts med reglerna ovan.
+
+### 2026-11-25 – X15: utfall efter hämtningen
+
+Reglerna i X15-posten ovan gjorde vid hämtningen det posten säger. Regeln för taggval tar bort exakt två fakta, båda
+Equinix äldre capex-tagg (10-K 2011-02-25 och 10-Q 2011-04-29). Undantaget från 550-dagarsregeln behåller exakt sex
+segmentfakta, Eatons 2018Q1–Q3 för båda segmenten ur 10-Q 2020-04-30. Inga brott upptäcktes, och inga värden i
+tidigare hämtade kvartal ändrades. En rättelse av en detalj i punkt 2: kvartalen 2018Q1–Q3 slutar 578–761 dagar före
+inlämningen, inte "upp till 578". Effekterna per serie står i `docs/kallor/sec_stack_kraft.md` ("Rättning efter R18")
+och för `dep_msft` i `docs/kallor/sec_avskrivningar.md`.

@@ -804,3 +804,21 @@ republishing data"), npm och arXiv (`okänd`), och Microsofts capex-guidance ur 
   den gemensamma `instance_name` väljer `defnref.xml` i inlämningar 2009–2011 (R18-4, eget spår). Alla ger för sena
   första versioner eller saknad historik, alltså den konservativa sidan.
 - Ägarbeslut: ska Vertivs externa segmentförsäljning läggas till bredvid bruttot? Rekommendation: ja.
+
+## 2026-11-25 – X15: rättning av S2 efter R18
+
+- Alla fyra fel är rättade, och registrets tillägg kom före den nya hämtningen (d2c14cc). Inga värden i redan hämtade
+  kvartal ändras. Rättningarna ger längre historik och tidigare första versioner, alltså rätt datering i stället för
+  för sen.
+- **Eaton** läser segmentnamnen i 2020 års 10-Q. Segmenten börjar 2018Q1, med de omräknade kvartalen 2018–2019 ur 10-Q
+  2020-04-30. **Beslut:** 550-dagarsregeln gäller flöden och balanser, inte segmentintäkter, eftersom segmentnoten efter
+  en ny indelning redovisar äldre kvartal.
+- **Equinix capex** skarvar den äldre taggen och börjar 2009Q3. Taggen står på ett fastighetsköp i två inlämningar,
+  inte en: också 10-Q 2011-04-29 (Paris 4). Granskningens förslag "bara 10-Q" räckte därför inte. Regeln utesluter
+  taggen ur en inlämning där den skiljer sig från den prioriterade taggen.
+- **Vertiv:** de externa segmentserierna `rev_vrt_*_net` är tillagda bredvid bruttot, enligt granskningens
+  rekommendation. Rekommendation: använd de externa för tillväxt per region.
+- **`defnref.xml`** utesluts i den gemensamma `instance_name`. `dep_msft` får tre kvartal till (från 2009Q4) och tidigare
+  versioner 2010Q4–2011Q2. N7 påverkas inte. Digital Realtys sena versioner 2010–2011 hade en annan orsak
+  (`ParentCompanyMember` på alla fakta i tre inlämningar), och den är också rättad.
+

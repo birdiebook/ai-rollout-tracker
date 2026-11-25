@@ -107,9 +107,14 @@ def _cached_get(url: str) -> bytes:
     raise RuntimeError("unreachable")
 
 
+# Not instances: the filing summary, and defnref.xml, a reference file of some filings 2009-2011 (Digital Realty,
+# Microsoft) whose short name used to win the sort below (review R18-4, register 2026-11-25, X15).
+NOT_INSTANCES = ("filingsummary.xml", "defnref.xml")
+
+
 def instance_name(items: list[str]) -> str | None:
     """The XBRL instance among a filing folder's file names (None if the filing has no XBRL)."""
-    xml = [n for n in items if n.lower().endswith(".xml") and n != "FilingSummary.xml"
+    xml = [n for n in items if n.lower().endswith(".xml") and n.lower() not in NOT_INSTANCES
            and not n.lower().endswith(("_cal.xml", "_def.xml", "_lab.xml", "_pre.xml"))
            and not (n[:1] == "R" and n[1:-4].isdigit())]
     extracted = [n for n in xml if n.lower().endswith("_htm.xml")]

@@ -6,7 +6,9 @@ instanser och summor ur samma inlämning). Kvartalslogik och versioner: `sources
 Tester: `tests/test_sec_avskrivningar.py` och `tests/test_r14_avskrivningar.py` (syntetiska fixturer och Microsofts
 rad som den lämnats in, inget nät). Taggvalen är förregistrerade i `docs/mattregister.md` (2026-11-24, P1), i en
 commit före den här beräkningen. Granskning: `docs/granskning/r14_avskrivningar.md`. Rättningsspåret X11 rättade
-`dep_msft` 2024Q3 och 2025Q3 och dokumentationen (se "Rättning efter R14"). Här finns ingen trendanalys.
+`dep_msft` 2024Q3 och 2025Q3 och dokumentationen (se "Rättning efter R14"). Spåret X15 rättade den gemensamma
+`sec_segment.instance_name`, vilket ger `dep_msft` tre kvartal till (se "Rättning efter R18-4"). Här finns ingen
+trendanalys.
 
 Syftet är att följa pengarna från capex in i resultaträkningen. Avskrivningarna är där capex 2024–2026 hamnar
 2026–2031, och nettot av anläggningstillgångarna är kapitalbasen för ett avkastningskrav. Serierna är underlag för
@@ -28,7 +30,7 @@ Hämtning 2026-11-24, ombyggd efter rättningen i X11. "Rev." är antalet kvarta
 
 | Nyckel | Innehåll | Kvartal | Från–till | Rader | Rev. |
 |---|---|---|---|---|---|
-| `dep_msft` | Depreciation, amortization, and other (egen tagg) | 65 | 2010Q3–2026Q3 | 70 | 5 |
+| `dep_msft` | Depreciation, amortization, and other (egen tagg) | 68 | 2009Q4–2026Q3 | 73 | 5 |
 | `dep_ppe_msft` | Depreciation expense (not om anläggningstillgångar) | 9 | 2024Q3–2026Q3 | 9 | 0 |
 | `ppe_net_msft` / `ppe_gross_msft` | netto / brutto | 70 / 70 | 2009Q2–2026Q3 | 70 / 70 | 0 |
 | `dep_googl` = `dep_ppe_googl` | Depreciation of property and equipment | 15 | 2023Q1–2026Q3 | 15 | 0 |
@@ -63,7 +65,7 @@ etiketten nedan är bolagets egen.
 
 | Bolag | `dep_<co>` | `dep_ppe_<co>` | Kommentar |
 |---|---|---|---|
-| MSFT | `msft:DepreciationAmortizationAndOther` ur instansen, i alla 10-Q och 10-K från 2011-07 | `Depreciation`, helår sedan 2008. Per kvartal taggas den först i 10-Q:n 2025-10-29, med FY2025 som jämförelse, så kvartalen i FY2025 (2024Q3–2025Q2) blir kända genom jämförelsetal | Inlämningarna 2009-10 till 2011-04 använder en annan tagg. Kvartal från 2010Q3 kommer från jämförelsetal |
+| MSFT | `msft:DepreciationAmortizationAndOther` ur instansen, i alla 10-Q och 10-K från 2011-07 | `Depreciation`, helår sedan 2008. Per kvartal taggas den först i 10-Q:n 2025-10-29, med FY2025 som jämförelse, så kvartalen i FY2025 (2024Q3–2025Q2) blir kända genom jämförelsetal | Inlämningarna 2009-10 till 2010-10 använder en annan tagg. 10-Q 2011-01-27 och 2011-04-28 har taggen, men lästes inte före X15 (filen `defnref.xml` valdes som instans). Serien börjar 2009Q4, med kvartalen 2009Q4–2010Q2 ur jämförelsetal |
 | GOOGL | `Depreciation`, perioder från 2021 | samma | Raden heter "Depreciation of property and equipment" från 10-K för 2023, som räknade om 2021–2022 utan nedskrivningar. Tidigare egna taggar (`goog:DepreciationAndImpairmentOnDispositionOfPropertyAndEquipment` m.fl., 2014–2022) har en annan definition och skarvas inte. Amortering på immateriella ligger i "Other" |
 | AMZN | `DepreciationDepletionAndAmortization`, perioder från 2019 | `Depreciation` | Raden fick operationella leasingtillgångar 2019 (ASC 842, utan omräkning). Före 2017 låg raden i `DepreciationAndAmortization`, och i 10-K 2011–2017 användes `DepreciationDepletionAndAmortization` också för en annan siffra (helåren 2008–2014 avviker 2–32 % från kassaflödesraden). Serien börjar 2019 |
 | META | `DepreciationDepletionAndAmortization` | `Depreciation`, per kvartal från 2019 | samma rad och tagg hela perioden |
@@ -186,7 +188,7 @@ Amazons `Depreciation` i 10-Q är summan av segmenten. I 10-K för 2025 är den 
   (Meta cirka 10 MUSD). Regeln för omräkning genom summorna tar hänsyn till avrundningen, så den ger inga versioner
   som bara är avrundning.
 - **Korta serier.** `dep_ppe_hyp4` har 9 kvartal och `dep_hyp4` 15. Långa serier per bolag: `dep_orcl` och `dep_ppe_orcl`
-  (73), `dep_msft` (65, med basbrottet ovan) och `dep_meta` (61).
+  (73), `dep_msft` (68, med basbrottet ovan) och `dep_meta` (61).
 - **Möjliga tillägg, inte byggda:** stängda nycklar för de äldre definitionerna (Alphabet 2014–2022 med nedskrivningar,
   Amazon 2008–2018 före ASC 842), helårsserier för avskrivning på anläggningstillgångar (MSFT och AMZN sedan 2008 och
   2014), och AWS-segmentets nettotillgångar. De senare visas i Amazons segmentnot i 10-Q (313 009 per 2026-09-30) men
@@ -209,3 +211,21 @@ Effekt i den senaste versionen: fyrkvartalsfönstret FY2025 (2024Q3–2025Q2) f�
 `dep_hyp4` (+23,2 % före). Talen visar bara storleken på rättningen. Fyrkvartalsfönster som slutar till och med 2024Q2
 ligger på den gamla basen, och fönster från 2025Q2 på den nya. Fönster som slutar 2024Q3–2025Q1 blandar baser, eftersom
 FY2024:s kvartal inte kan räknas om. Före rättningen blandade även fönstret 2025Q2 baser.
+
+## Rättning efter R18-4 (X15)
+
+Granskningen R18 (`docs/granskning/r18-kraft-datacenter.md`, R18-4) fann att `sec_segment.instance_name` valde filen
+`defnref.xml` som instans i sju av Microsofts inlämningar (10-Q 2009-10-23 till 10-Q 2011-04-28), eftersom namnet är
+kortast. Rättat i spåret X15 (registret 2026-11-25, X15, punkt 5). Ingen regel för `dep_msft` ändras.
+
+- Fem av inlämningarna (10-Q 2009-10-23 till 10-Q 2010-10-28) har inte `msft:DepreciationAmortizationAndOther`. Där
+  stämde P1:s "annan tagg".
+- 10-Q 2011-01-27 och 2011-04-28 har taggen. De lästes inte före rättningen.
+- Effekt efter ombyggnad (`--rebuild dep_msft`): 70 → 73 rader, 65 → 68 kvartal. Nya kvartal 2009Q4 (615, känt från
+  2011-01-27), 2010Q1 (694, 2011-04-28) och 2010Q2 (718, 2011-07-28). 2010Q4, 2011Q1 och 2011Q2 får sin första version
+  ett år tidigare (2011-01-27, 2011-04-28 och 2011-07-28 i stället för 2012-01-27 och 2012-04-19). Inga värden ändras,
+  och brottkontrollen hittar inget nytt brott. Kontrollerat i 10-Q 0001193125-11-015947: "Depreciation, amortization, and
+  other" 663 och 615 för tremånadersperioderna.
+- `dep_hyp4` ändras inte, eftersom summan börjar 2021. N7 och N7b ändras inte heller: en träningsrad behöver minst
+  J = 12 kvartal capex före kvartalet, och `capex_msft` börjar 2008Q3, så de tidigaste raderna är 2011Q3. De ändrade
+  kvartalen ligger före det.

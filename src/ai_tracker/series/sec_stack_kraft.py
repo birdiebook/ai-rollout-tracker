@@ -5,17 +5,19 @@ capex in G5, as CoreWeave). Quarterly, MUSD, release-dated: known_from = filing 
 vintage, YTD differencing, Q4 = FY - 9M and the midpoint calendar mapping of ai_tracker.sources.sec.
 
 - Total revenue and capex from companyfacts (sec.facts). Digital Realty's companyfacts lacks its 10-Qs filed
-  2026-07-31 and 2026-10-30, so its flows are read from every filing's own XBRL instance instead
-  (sec_custom.duration_facts: facts without dimensions = Digital Realty Trust, Inc.).
+  2026-07-31 and 2026-10-30, so its flows are read from every filing's own XBRL instance instead (facts without
+  dimensions = Digital Realty Trust, Inc.; in three filings of 2010-2011 LegalEntityAxis = ParentCompanyMember).
+  A lower-priority tag is not used from a filing where it holds another line (same_line).
 - Segment revenue from the instances: a fact counts only when its context dimensions are exactly one of the declared
   sets (segment member plus the consolidation marker the company uses), and lines are split into one key per
-  definition at declared breaks (as series/sec_segments.py).
+  definition at declared breaks (as series/sec_segments.py). Vertiv: gross (with intersegment sales) and external.
 - Remaining performance obligations (Eaton: its firm order backlog, tagged as RPO) as balances (sec_rpo): total only.
   Vertiv tags no RPO; the facts it tags as RevenueRemainingPerformanceObligation are the timing of noncurrent deferred
   revenue, so there is no rpo_vrt (BLOCKED in XBRL).
 
-Tag choice, members, breaks and checks are pre-registered in docs/mattregister.md (2026-11-25, S2) and documented in
-docs/kallor/sec_stack_kraft.md. Catalog series, not core series: they are not in the branch index.
+Tag choice, members, breaks and checks are pre-registered in docs/mattregister.md (2026-11-25, S2, and the amendment
+X15 after review R18) and documented in docs/kallor/sec_stack_kraft.md. Catalog series, not core series: they are not
+in the branch index.
 """
 
 from __future__ import annotations
@@ -67,9 +69,12 @@ COMPANIES = {
                    cik_since=((ETN, "2013-01-01"),)),
     "pwr": Company("Quanta Services", (PWR,), (RFCC, "SalesRevenueServicesNet"),
                    ("PaymentsToAcquirePropertyPlantAndEquipment",), "'Capital expenditures'", False, 61 + 92 + 30),
-    "eqix": Company("Equinix", (EQIX,), (RFCC, "Revenues"), ("PaymentsToAcquireOtherPropertyPlantAndEquipment",),
-                    "'Purchases of other property, plant and equipment' (raden 'Real estate acquisitions' ingår inte)",
-                    True, 61 + 92 + 30),
+    # The older capex tag is the same line in the 10-Qs 2010-2018; the two filings where it holds a property purchase
+    # instead (10-K 2011-02-25, 10-Q 2011-04-29) are dropped by same_line (register 2026-11-25, X15).
+    "eqix": Company("Equinix", (EQIX,), (RFCC, "Revenues"), ("PaymentsToAcquireOtherPropertyPlantAndEquipment",
+                                                              "PaymentsToAcquirePropertyPlantAndEquipment"),
+                    "'Purchases of other property, plant and equipment', i 10-Q 2010–2014 'Purchases of property, plant "
+                    "and equipment' (raden 'Real estate acquisitions' ingår inte)", True, 61 + 92 + 30),
     "dlr": Company("Digital Realty", (DLR,), ("Revenues",), ("PaymentsToDevelopRealEstateAssets",),
                    "'Improvements to investments in real estate' (förvärv och investeringar i intresseföretag ingår inte)",
                    True, 62 + 92 + 30, instances_since="2009-01-01"),
@@ -83,9 +88,11 @@ CIK_NOTE = {"vrt": "1674101 (f.d. GS Acquisition Holdings Corp; som Vertiv från
 
 # ------------------------------------------------------------------ fact filters
 
-# A 10-Q reports the current period and the same period a year earlier: a comparative ends about 13-15 months before
-# the filing date. A 10-Q fact ending more than this many days before its filing is a mis-dated context (Equinix's
-# 10-Q 2025-04-30 tags Q1 2025 revenue with the dates of Q1 2023) and is dropped (register 2026-11-25, S2 amendment).
+# A 10-Q's primary statements report the current period and the same period a year earlier: a comparative ends about
+# 13-15 months before the filing date. A 10-Q fact ending more than this many days before its filing is a mis-dated
+# context (Equinix's 10-Q 2025-04-30 tags Q1 2025 revenue with the dates of Q1 2023) and is dropped (register
+# 2026-11-25, S2 amendment). Flows and balances only: a segment note after a re-segmentation recasts older quarters
+# (Eaton's 10-Q 2020-04-30 has 2018), so segment revenue is not filtered (register 2026-11-25, X15, review R18-9).
 MAX_10Q_AGE_DAYS = 550
 
 
@@ -94,22 +101,56 @@ def plausible(f) -> bool:
     return not (f.form.startswith("10-Q") and (f.filed - f.end).days > MAX_10Q_AGE_DAYS)
 
 
-def kept(facts, cik: int, company: str) -> list:
-    """Facts that pass `plausible` and the company's per-CIK first filing date."""
+def kept(facts, cik: int, company: str, age_rule: bool = True) -> list:
+    """Facts that pass `plausible` (unless age_rule is False) and the company's per-CIK first filing date."""
     since = dict(COMPANIES[company].cik_since).get(cik)
-    return [f for f in facts if plausible(f) and (since is None or f.filed >= pd.Timestamp(since))]
+    return [f for f in facts if (not age_rule or plausible(f)) and (since is None or f.filed >= pd.Timestamp(since))]
+
+
+def same_line(sources: list[list[sec.Fact]]) -> list[list[sec.Fact]]:
+    """Drop a lower-priority tag's facts from every filing where it differs from a higher-priority tag (same period).
+
+    In such a filing the lower tag holds another line: Equinix's PaymentsToAcquirePropertyPlantAndEquipment is a
+    property purchase in the 10-K 2011-02-25 and the 10-Q 2011-04-29, the capex line in its other filings (register
+    2026-11-25, X15).
+    """
+    out: list[list[sec.Fact]] = []
+    for k, facts in enumerate(sources):
+        higher = {(f.accn, f.start, f.end): f.val for fs in sources[:k] for f in fs}
+        other_line = {f.accn for f in facts
+                      if (f.accn, f.start, f.end) in higher and abs(higher[(f.accn, f.start, f.end)] - f.val) > sec.TOL}
+        out.append([f for f in facts if f.accn not in other_line])
+    return out
 
 
 # ------------------------------------------------------------------ total revenue and capex
 
+# Digital Realty's 10-Q 2010-11-09, 10-K/A 2011-03-25 and 10-Q 2011-05-09 carry LegalEntityAxis on every fact: Digital
+# Realty Trust, Inc. as ParentCompanyMember, the partnership as DigitalRealtyTrustLPMember (same values). Used for a tag
+# only in a filing without undimensioned facts of it (register 2026-11-25, X15).
+PARENT = frozenset({("LegalEntityAxis", "ParentCompanyMember")})
+
+
+def instance_flow_facts(cik: int, tag: str, since: str) -> list[sec.Fact]:
+    """Per filing the undimensioned facts of `tag`, or else those with exactly LegalEntityAxis = ParentCompanyMember."""
+    out: list[sec.Fact] = []
+    for f, raw in sec_custom._filings(cik, since, "9999-12-31"):
+        dfs = sec_segment.parse_instance(raw, {tag})
+        out += sec_custom.plain_facts(dfs, f, [tag]) or exact_facts(dfs, f, (tag,), PARENT)
+    return out
+
 
 def flow_sources(company: str, tags: tuple[str, ...]) -> list[list[sec.Fact]]:
-    """One fact list per tag (priority order): companyfacts over all CIKs, or the instances' undimensioned facts."""
+    """One fact list per tag (priority order): companyfacts over all CIKs, or the instances (Digital Realty).
+
+    A lower-priority tag's facts are dropped from filings where it holds another line (same_line).
+    """
     c = COMPANIES[company]
     if c.instances_since:
-        return [kept(sec_custom.duration_facts(cik, (tag,), c.instances_since), cik, company)
-                for tag in tags for cik in c.ciks[:1]]
-    return [[f for cik in c.ciks for f in kept(sec.facts(sec.companyfacts(cik), tag), cik, company)] for tag in tags]
+        return same_line([kept(instance_flow_facts(cik, tag, c.instances_since), cik, company)
+                          for tag in tags for cik in c.ciks[:1]])
+    return same_line([[f for cik in c.ciks for f in kept(sec.facts(sec.companyfacts(cik), tag), cik, company)]
+                      for tag in tags])
 
 
 @lru_cache(maxsize=None)
@@ -140,10 +181,16 @@ class SegLine:
     label: str
     breaks: tuple[str, ...] = ()  # declared definition breaks (filing dates)
     regime_notes: tuple[str, ...] = ()
+    note: str = ""  # key into SEG_NOTE; default the company
 
 
 def _seg(member: str, marker: str | None = None) -> frozenset:
     return frozenset({(SEG, member)} | ({(CONS, marker)} if marker else set()))
+
+
+def _etn(stem: str) -> tuple[frozenset, ...]:
+    """Eaton's electrical segment: the name from 2021, then the name in the 10-Qs of 2020; no marker first."""
+    return tuple(_seg(m, k) for m in (f"{stem}SegmentMember", f"{stem}Member") for k in (None, "OperatingSegmentsMember"))
 
 
 GEV_MARKER = "OperatingSegmentsExcludingIntersegmentEliminationMember"
@@ -157,11 +204,11 @@ SEG_LINES = [
             regime_notes=("Segmentdefinition före omorganisationen 2026 (inlämnat 2024-04 till 2026-01).",
                           "Omräknad definition från 2026 (inlämnat från 2026-04): en del av Electrification Software "
                           "flyttades till Gas Power i Power-segmentet.")),
-    SegLine(("rev_etn_electrical_americas",), "etn", ETN, "2020-01-01",
-            (_seg("ElectricalAmericasSegmentMember"), _seg("ElectricalAmericasSegmentMember", "OperatingSegmentsMember")),
+    # The 10-Qs of 2020 name the segments ElectricalAmericasMember / ElectricalGlobalMember, the filings from the 10-K
+    # 2021-02-24 ...SegmentMember; identical values in the overlap (register 2026-11-25, X15, review R18-1).
+    SegLine(("rev_etn_electrical_americas",), "etn", ETN, "2020-01-01", _etn("ElectricalAmericas"),
             "Electrical Americas (Eaton)"),
-    SegLine(("rev_etn_electrical_global",), "etn", ETN, "2020-01-01",
-            (_seg("ElectricalGlobalSegmentMember"), _seg("ElectricalGlobalSegmentMember", "OperatingSegmentsMember")),
+    SegLine(("rev_etn_electrical_global",), "etn", ETN, "2020-01-01", _etn("ElectricalGlobal"),
             "Electrical Global (Eaton)"),
     SegLine(("rev_vrt_americas",), "vrt", VRT, "2020-01-01", (_seg("AmericasSegmentMember", "OperatingSegmentsMember"),),
             "Americas (Vertiv)"),
@@ -169,14 +216,27 @@ SEG_LINES = [
             "Asia Pacific (Vertiv)"),
     SegLine(("rev_vrt_emea",), "vrt", VRT, "2020-01-01", (_seg("EMEASegmentMember", "OperatingSegmentsMember"),),
             "Europe, Middle East & Africa (Vertiv)"),
+    # External sales per segment: the member without a marker (register 2026-11-25, X15, review R18-3)
+    SegLine(("rev_vrt_americas_net",), "vrt", VRT, "2020-01-01", (_seg("AmericasSegmentMember"),),
+            "Americas, extern försäljning (Vertiv)", note="vrt_net"),
+    SegLine(("rev_vrt_apac_net",), "vrt", VRT, "2020-01-01", (_seg("AsiaPacificSegmentMember"),),
+            "Asia Pacific, extern försäljning (Vertiv)", note="vrt_net"),
+    SegLine(("rev_vrt_emea_net",), "vrt", VRT, "2020-01-01", (_seg("EMEASegmentMember"),),
+            "Europe, Middle East & Africa, extern försäljning (Vertiv)", note="vrt_net"),
 ]
 SEG_NOTE = {
     "gev": "Segmentets intäkter före eliminering av interna intäkter (ConsolidationItemsAxis = "
            "OperatingSegmentsExcludingIntersegmentEliminationMember), som i segmentnoten.",
-    "etn": "Segmentets intäkter (medlemmen utan markör, annars med OperatingSegmentsMember; identiska). Bara "
-           "inlämningar från 2020, eftersom samma medlemsnamn användes för ett äldre segment i 10-K för 2012.",
+    "etn": "Segmentets intäkter (medlemmen utan markör, annars med OperatingSegmentsMember; identiska). Namnet utan "
+           "'Segment' i 10-Q 2020, med 'Segment' från 10-K 2021-02-24 (identiska i överlappet). Bara inlämningar från "
+           "2020, eftersom ElectricalAmericasMember användes för ett äldre segment i 10-K för 2012. Kvartalen 2018–2019 "
+           "är omräknade jämförelsetal i 10-Q 2020-04-30.",
     "vrt": "Segmentets intäkter inklusive försäljning till andra segment (ConsolidationItemsAxis = "
-           "OperatingSegmentsMember), som i segmentnoten; summan av segmenten är större än bolagets intäkter.",
+           "OperatingSegmentsMember), som i segmentnotens rad 'Sales'; summan av segmenten är större än bolagets "
+           "intäkter. Den interna andelen har vuxit (EMEA 5 % 2020Q1, 34 % 2026Q3). Extern försäljning: rev_vrt_*_net.",
+    "vrt_net": "Segmentets externa försäljning ('Net sales', medlemmen utan markör). Summan av de tre segmenten är "
+               "bolagets intäkter (rev_vrt). Bruttot med försäljning till andra segment: rev_vrt_americas, rev_vrt_apac "
+               "och rev_vrt_emea.",
 }
 
 
@@ -214,7 +274,7 @@ def line_facts_from(filings_facts, line: SegLine) -> list[sec.Fact]:
 @lru_cache(maxsize=None)
 def seg_facts(line: SegLine) -> tuple[sec.Fact, ...]:
     facts = line_facts_from(sec_segment.company_facts(line.cik, line.since, tuple(REVENUE)), line)
-    return tuple(kept(facts, line.cik, line.company))
+    return tuple(kept(facts, line.cik, line.company, age_rule=False))  # no 550-day rule for segments (X15)
 
 
 def checked_regimes(keys: tuple[str, ...], breaks: tuple[str, ...], facts: list[sec.Fact]) -> list[list[sec.Fact]]:
@@ -339,7 +399,7 @@ def _specs() -> list[Spec]:
         members = "; ".join(", ".join(f"{a}={m}" for a, m in sorted(d)) for d in line.dimsets)
         for i, key in enumerate(line.keys):
             closed = i < len(line.keys) - 1
-            note = f"Kontext (exakt): {members}. {SEG_NOTE[line.company]}"
+            note = f"Kontext (exakt): {members}. {SEG_NOTE[line.note or line.company]}"
             if line.regime_notes:
                 note += " " + line.regime_notes[i]
             if closed:

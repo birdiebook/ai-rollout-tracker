@@ -259,3 +259,7 @@ och här tillkommer 7 passerande tester.
 - Att Eatons omorganisation 2026 inte rör de elektriska segmenten bekräftas bara av att inga kvartal reviderats.
   Texten lästes inte.
 - Vilka andra serier än DLR och Microsoft som påverkas av R18-4.
+
+Rättat i auto14k/x15-kraft-datacenter: R18-1–R18-4, och anmärkningarna R18-5, R18-7–R18-10 i dokumentet och registret
+(tillägget "X15: rättning av S2 efter R18"). Effekter och avvikelser från förslagen: `docs/kallor/sec_stack_kraft.md`,
+avsnittet "Rättning efter R18 (X15)".

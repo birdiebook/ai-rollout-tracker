@@ -2,7 +2,8 @@
 
 Fixtures only, no network. The numbers are the companies' own figures as filed (USD millions), read off the
 documents on www.sec.gov for the review (accessions in the review doc). Passing tests pin properties that hold;
-every confirmed defect is a strict xfail that flips when it is fixed.
+every confirmed defect was a strict xfail. All were fixed in track X15 (auto14k/x15-kraft-datacenter) and are now
+ordinary tests.
 """
 
 from __future__ import annotations
@@ -128,8 +129,7 @@ def test_etn_member_names_from_2021_are_read():
     assert sorted((str(x.end.date()), x.val / M) for x in got) == [("2020-03-31", 1788), ("2021-03-31", 1622)]
 
 
-@pytest.mark.xfail(strict=True, reason="R18-1: the 2020 10-Qs use ElectricalAmericasMember/ElectricalGlobalMember")
-def test_etn_2020_10q_segment_names_are_read():
+def test_etn_2020_10q_segment_names_are_read():  # R18-1, fixed in X15
     # 10-Q 2020-04-30, 2020-07-29 and 2020-11-03 tag the new segments as ElectricalAmericasMember and
     # ElectricalGlobalMember (from the 10-K 2021-02-24: ...SegmentMember). The series takes 2020Q1-Q3 only from the
     # comparatives a year later, and the 2018-2019 recast quarters in 10-Q 2020-04-30 are lost.
@@ -172,16 +172,14 @@ def test_eqix_capex_never_differences_the_amsterdam_purchase(eqix_capex):
     assert latest(eqix_capex)["2016Q3"] == pytest.approx(279.477)
 
 
-@pytest.mark.xfail(strict=True, reason="R18-2: 10-Q facts under PaymentsToAcquirePropertyPlantAndEquipment are unused")
-def test_eqix_capex_first_version_from_the_10q_that_reports_it(eqix_capex):
+def test_eqix_capex_first_version_from_the_10q_that_reports_it(eqix_capex):  # R18-2, fixed in X15
     assert first_known(eqix_capex)["2016Q3"] == "2016-11-04"
 
 
 # ------------------------------------------------------------------ R18-4: shared instance selection
 
 
-@pytest.mark.xfail(strict=True, reason="R18-4: sec_segment.instance_name picks defnref.xml (2009-2011 filings)")
-def test_instance_name_skips_defnref():
+def test_instance_name_skips_defnref():  # R18-4, fixed in X15
     names = ["defnref.xml", "dlr-20100930.xml", "dlr-20100930_cal.xml", "dlr-20100930_def.xml",
              "dlr-20100930_lab.xml", "dlr-20100930_pre.xml", "FilingSummary.xml", "R1.xml", "d10q.htm"]
     assert sec_segment.instance_name(names) == "dlr-20100930.xml"
@@ -197,8 +195,7 @@ def test_instance_name_later_filings():
 # ------------------------------------------------------------------ misleading statements in the source doc
 
 
-@pytest.mark.xfail(strict=True, reason="R18-1/R18-2/R18-3: statements in docs/kallor/sec_stack_kraft.md")
-@pytest.mark.parametrize("claim", [
+@pytest.mark.parametrize("claim", [  # R18-1/R18-2/R18-3, fixed in X15
     # R18-1: 10-Q 2020-04-30 has Q1 2019 and all quarters of 2018-2019 for the new segments
     "2020 års 10-Q har inga kvartalsvisa jämförelsetal för 2019",
     # R18-2: the old tag is the 10-Q line 2010-2018; the one deviating overlap is FY2010 in the 10-K 2011-02-25

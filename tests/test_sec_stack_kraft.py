@@ -65,7 +65,7 @@ def test_10k_quarter_facts_are_ignored_and_first_concept_wins():
 
 def test_alternatives_first_dimension_set_per_filing():
     line = next(x for x in sk.SEG_LINES if x.keys[0] == "rev_etn_electrical_americas")
-    plain, marked = line.dimsets
+    plain, marked = line.dimsets[:2]  # the 2021 name; the 2020 name follows (X15)
     pairs = [(filing("2026-05-05", cik=sk.ETN), [dim("2026-01-01", "2026-03-31", 3600, plain),
                                                   dim("2026-01-01", "2026-03-31", 3600, marked)]),
              (filing("2026-07-31", cik=sk.ETN), [dim("2026-04-01", "2026-06-30", 3951, marked)])]  # marker only
@@ -150,19 +150,19 @@ def test_eaton_q4_2012_is_successor_fy_minus_predecessor_9m(monkeypatch):
 def test_dlr_flows_come_from_the_instances(monkeypatch):
     calls = []
 
-    def fake(cik, concepts, since):
-        calls.append((cik, concepts, since))
-        return (sec.Fact(T("2026-01-01"), T("2026-06-30"), 1784.229 * M, T("2026-07-31"), "10-Q", "q2"),
-                sec.Fact(T("2026-01-01"), T("2026-09-30"), 3166.212 * M, T("2026-10-30"), "10-Q", "q3"))
+    def fake(cik, tag, since):
+        calls.append((cik, tag, since))
+        return [sec.Fact(T("2026-01-01"), T("2026-06-30"), 1784.229 * M, T("2026-07-31"), "10-Q", "q2"),
+                sec.Fact(T("2026-01-01"), T("2026-09-30"), 3166.212 * M, T("2026-10-30"), "10-Q", "q3")]
 
-    monkeypatch.setattr(sk.sec_custom, "duration_facts", fake)
+    monkeypatch.setattr(sk, "instance_flow_facts", fake)
     monkeypatch.setattr(sk.sec, "companyfacts", lambda cik: pytest.fail("DLR must not read companyfacts"))
     sk.flow_vintages.cache_clear()
     try:
         df = sk.flow_vintages("capex", "dlr")
     finally:
         sk.flow_vintages.cache_clear()
-    assert calls == [(sk.DLR, ("PaymentsToDevelopRealEstateAssets",), "2009-01-01")]
+    assert calls == [(sk.DLR, "PaymentsToDevelopRealEstateAssets", "2009-01-01")]
     assert latest(df)["2026Q3"] == pytest.approx(1381.983)
     assert first_known(df)["2026Q3"] == "2026-10-30"
 
@@ -218,7 +218,7 @@ KEYS = {"rev_vrt", "capex_vrt", "rev_gev", "capex_gev", "rev_etn", "capex_etn", 
         "capex_eqix", "rev_dlr", "capex_dlr", "rev_gev_power", "rev_gev_wind", "rev_gev_electrification_fy24",
         "rev_gev_electrification_fy26", "rev_etn_electrical_americas", "rev_etn_electrical_global", "rev_vrt_americas",
         "rev_vrt_apac", "rev_vrt_emea", "rpo_gev", "rpo_gev_equipment", "rpo_gev_services", "rpo_pwr", "rpo_etn",
-        "rpo_eqix"}
+        "rpo_eqix", "rev_vrt_americas_net", "rev_vrt_apac_net", "rev_vrt_emea_net"}
 
 
 def test_catalog_entries():
