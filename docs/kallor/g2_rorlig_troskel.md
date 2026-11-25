@@ -444,5 +444,7 @@ tog just den. Medianen följer de tre andra. I 2026-02 ligger modellen vid minim
 ### Data
 
 Spårets tabell (`data/` i worktree `x19-rorlig-troskel`) har de fyra serierna omräknade: 27 + 33 + 39 + 18 rader.
-Datatesterna (`python -m ai_tracker.warehouse`) passerar. Q1:s spårtabell har de gamla raderna och ska inte slås ihop.
+Datatesterna (`python -m ai_tracker.warehouse`) passerar. Varje namn med rating ≥ tröskeln i b(m) är granskat i
+`arena_map` i alla versioner, också med medianens lägre trösklar. Q1:s spårtabell har de gamla raderna och ska inte
+slås ihop.
 Slå ihop X19:s tabell med `--replace` för de fyra serierna, så att Q1:s rader inte blir kvar om de redan finns i basen.
