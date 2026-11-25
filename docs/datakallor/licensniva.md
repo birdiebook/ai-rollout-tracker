@@ -5,8 +5,8 @@ varje serie får en klass för kommersiell användning, så att en kommersiellt 
 Nya spår väljer öppna licenser (public domain, CC0, CC BY, MIT) när det finns ett val.
 
 Kod: `src/ai_tracker/licenses.py`. Rapport: `PYTHONPATH=src python -m ai_tracker.licenses report [--markdown]`.
-Tabellerna nedan är genererade med `--markdown` på katalogen efter integrationen av körning 14, 2026-11-25 (805
-serier). Kör om rapporten när serier läggs till.
+Tabellerna nedan är genererade med `--markdown` på katalogen efter integrationen av KL1 (kreditlagret), 2026-11-25
+(858 serier). Kör om rapporten när serier läggs till.
 
 ## Klasserna
 
@@ -186,9 +186,11 @@ Länken går till dokumentet som citerar licenstexten.
 | F1: revideringar och överraskning (härledda) | 2 | ja | curated-reads | egen extraktion ur dokument på sec.gov: bolagets alla rader i curated/guidance_capex.csv kommer från sec.gov; alla komponenter är ja (bolag: googl, meta) | [kallor/guidance.md](../kallor/guidance.md) |
 | Fed G.17 | 2 | ja | public-domain | public domain (amerikansk myndighet): fri användning med källhänvisning | [kallor/fed_g17.md](../kallor/fed_g17.md) |
 | Indeed Hiring Lab | 9 | ja | cc-by | CC BY 4.0: kommersiell användning tillåten med källhänvisning | [kallor/indeed_vast_eia.md](../kallor/indeed_vast_eia.md) |
+| KL1: kreditlagret (härledda) | 52 | ja | sec | SEC: offentlig information som får kopieras och spridas vidare; egna siffror ur inlämnade dokument; alla komponenter är ja | [kallor/kreditlagret.md](../kallor/kreditlagret.md) |
 | Kurerad extraktion: AI-nyckeltal | 25 | ja | curated | egen extraktion ur dokument på sec.gov: seriens alla rader i curated/ai_kpis.csv kommer från sec.gov (bolag: amzn, googl, meta, msft, nvda) | [kallor/ai_nyckeltal.md](../kallor/ai_nyckeltal.md) |
 | Kurerad extraktion: Kinas textserier | 2 | ja | curated | egen extraktion ur dokument på sec.gov: bolagets alla rader i curated/china_text.csv kommer från sec.gov (bolag: bidu) | [kallor/kina_sec.md](../kallor/kina_sec.md) |
 | Kurerad extraktion: capex-guidance | 9 | ja | curated | egen extraktion ur dokument på sec.gov: bolagets alla rader i curated/guidance_capex.csv kommer från sec.gov (bolag: amzn, googl, meta) | [kallor/guidance.md](../kallor/guidance.md) |
+| Kurerad extraktion: kreditlagret | 1 | ja | curated | egen extraktion ur dokument på sec.gov: bolagets alla rader i curated/kreditlagret.csv kommer från sec.gov (bolag: crwv) | [kallor/kreditlagret.md](../kallor/kreditlagret.md) |
 | Kurerad extraktion: leasing som inte har börjat | 7 | ja | curated | egen extraktion ur dokument på sec.gov: bolagets alla rader i curated/lease_commitments.csv kommer från sec.gov (bolag: amzn, crwv, googl, meta, msft, orcl) | [kallor/finansiering.md](../kallor/finansiering.md) |
 | Kurerad extraktion: nyttjandeperioder | 30 | ja | curated | egen extraktion ur dokument på sec.gov: bolagets alla rader i curated/useful_lives.csv kommer från sec.gov (bolag: amzn, crwv, googl, meta, msft, orcl) | [kallor/nyttjandeperioder.md](../kallor/nyttjandeperioder.md) |
 | Kurerad extraktion: order och orderstock | 62 | ja | curated | egen extraktion ur dokument på sec.gov: seriens alla rader i curated/orders_backlog.csv kommer från sec.gov (bolag: dell, dlr, etn, gev, vrt) | [kallor/order_orderstock.md](../kallor/order_orderstock.md) |
@@ -225,12 +227,12 @@ Alla serier i katalogen.
 | G2 Kostnad | 16 | 8 | 0 | 8 | 5 |
 | G3 Användning | 135 | 75 | 13 | 47 | 38 |
 | G4 Intäkter | 76 | 70 | 0 | 6 | 4 |
-| G5 Investeringar och finansiering | 238 | 219 | 0 | 19 | 7 |
+| G5 Investeringar och finansiering | 291 | 272 | 0 | 19 | 7 |
 | G6 Utbud och halvledare | 153 | 152 | 0 | 1 | 0 |
 | G7 Fysiska flaskhalsar | 122 | 99 | 21 | 2 | 2 |
 | G8 Arbete och produktivitet | 9 | 9 | 0 | 0 | 0 |
 | G9 Forskning och öppet ekosystem | 32 | 2 | 0 | 30 | 0 |
-| Summa | 805 | 650 | 34 | 121 | 63 |
+| Summa | 858 | 703 | 34 | 121 | 63 |
 
 ## Kommersiellt ren delmängd
 

@@ -471,6 +471,9 @@ SOURCE_GROUPS: list[tuple[str, str, str]] = [
     ("Kurerad extraktion: spread vid emission", r"curated/credit_issuance\.csv", "kallor/kredit_emission.md"),
     ("Kurerad extraktion: Kinas textserier", r"curated/china_text\.csv", "kallor/kina_sec.md"),
     ("SEC EDGAR, Alibaba och Baidu 6-K", r"^SEC EDGAR, (?:Alibaba Group|Baidu) Form 6-K", "kallor/kina_sec.md"),
+    # followed question KL1 (run 15; groups added in its integration, as for KR1 and CN1 above)
+    ("Kurerad extraktion: kreditlagret", r"curated/kreditlagret\.csv", "kallor/kreditlagret.md"),
+    ("KL1: kreditlagret (härledda)", r"^Härledd \(KL1\)", "kallor/kreditlagret.md"),
     ("Anthropics nyhetsrum", r"anthropic\.com/news", "kallor/labbintakter.md"),
     ("BEA NIPA, releasearkivet", r"^BEA NIPA release archive", "kallor/makro_bea_bls.md"),
     ("BEA NIPA", r"^BEA NIPA", "kallor/census_eu.md"),

@@ -406,3 +406,19 @@ def test_every_source_group_in_the_catalog_links_a_doc_that_exists():
             absent.add(doc)
     assert not missing, f"source groups without a doc: {sorted(missing)}"
     assert not absent, f"docs that do not exist: {sorted(absent)}"
+
+
+def test_kl1_sources_fall_in_the_kreditlagret_groups():
+    """Integration of KL1 (run 15): its 52 derived series ('Härledd (KL1) ...') and the CoreWeave coupon series
+    (curated/kreditlagret.csv) each link the KL1 source doc, and no other catalog series falls in those groups."""
+    groups = {"Kurerad extraktion: kreditlagret", "KL1: kreditlagret (härledda)"}
+    hits = {}
+    for spec in catalog.by_key().values():
+        name, doc = L.source_group(spec.source)
+        if name in groups:
+            hits[spec.key] = (name, doc)
+    assert hits and all(k.startswith("kl_") for k in hits)
+    assert {k for k in catalog.by_key() if k.startswith("kl_")} == set(hits)
+    assert {doc for _, doc in hits.values()} == {"kallor/kreditlagret.md"}
+    assert hits["kl_coupon_out_crwv_q"][0] == "Kurerad extraktion: kreditlagret"
+    assert hits["kl_capex4_orcl"][0] == "KL1: kreditlagret (härledda)"
