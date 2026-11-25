@@ -825,6 +825,22 @@ republishing data"), npm och arXiv (`okänd`), och Microsofts capex-guidance ur 
   kärnserie för nät eller servrar är `rev_csco_networking` eller `rev_dell_isg` de längsta rena kandidaterna, men båda
   innehåller mycket utanför AI. Ingen av dem ska in före ögonblicksbilden 2026-11-30.
 
+## 2026-11-25 – KR1: spread vid emission som katalogserier (extraktion ur villkorsbilagor)
+
+- **Byggt:** 239 tranchar ur 39 villkorsbilagor (FWP) från Microsoft, Alphabet, Amazon, Meta och Oracle 2020–2026, i
+  `curated/credit_issuance.csv`. Elva katalogserier i G5: `issuance_<bolag>_q` (fem bolag), `spread_issue_ai_q`,
+  `spread_issue_ai_7_12y_q` och spread per emittent för Alphabet, Amazon, Meta och Oracle. Inte kärnserier, och
+  `publish=False` tills extraktionsgranskningen har godkänt. Regler i registret före kodningen
+  (`docs/kallor/kredit_emission.md`).
+- **Kontroll:** självkontrollen mot nyhämtade dokument gav 0 fel av 239. Alla 39 erbjudanden har samma tranchar som
+  det slutliga prospekttillägget. Kontrollen hittade en nolla för mycket i Oracles villkorsbilaga 2021, och raden är
+  kodad för hand.
+- **Inget marknadsindex.** ICE BofA och Moody's på FRED förbjuder vidarespridning. CoreWeave har inga registrerade
+  obligationer (144A), och Metas obligationer 2022 var 144A.
+- **Rekommendation till Johannes:** låt granskningen pröva semantiken (källa, valuta, referens) innan serierna
+  publiceras. Läs spreaden per emittent, inte den poolade serien, som till stor del visar vilken emittent som kom till
+  marknaden.
+
 ## 2026-11-25 – Ägarbeslut: spärrregeln, capex-guidance från sec.gov och nettobidraget för datorer
 
 Johannes svarade "kör på dina rekommendationer" på tre rekommendationer samma dag (spår `auto14k/agarbeslut`).
@@ -947,6 +963,21 @@ Johannes svarade "kör på dina rekommendationer" på tre rekommendationer samma
 - Nästa registerpost för testet (omkörningen, tidigast 2027-11) ska välja en annan baslinje vid 6 månader och räkna
   spärren för bakåtfyllda serier som i realtid.
 
+## 2026-11-25 – R20: KR1:s spread vid emission godkänd med anmärkningar
+
+- Granskningen R20 (`docs/granskning/r20-kredit-emission.md`) läste 72 slumpade rader (30 %) och ett helt dokument per
+  emittent i nyhämtade villkorsbilagor: 0 fel (95 % KI 0–5,0 %). Alla 239 rader prövades också med egen text och egen
+  indelning per tranche: 0 fel. Alla 39 erbjudanden har samma tranchar som sitt slutliga prospekttillägg, och inget
+  registrerat erbjudande 2020–2026 saknas.
+- Inget läckage. En oberoende omräkning ger samma 82 rader och samma `known_from`, och varje version går att bygga om ur
+  de rader som var inlämnade då.
+- Fem should_fix (R20-1 till R20-5): självkontrollen prövar inte talen i tranchens kolumn, dokument som inte kodas
+  listas inte, T+n räknar helgdagar som bankdagar, CSV:n skrivs med sex värdesiffror och avstämningen per kvartal
+  saknas. Ingen av dem ändrar ett värde i dag.
+- **Rekommendation till Johannes:** registrets villkor för granskningen är uppfyllt. Volymerna och spreaden per emittent
+  kan få `publish=True` med en daterad registerpost. Visa den poolade serien bara med noten om mixen. Rätta R-1 till R-5
+  före nästa ombyggnad av CSV:n.
+
 ## 2026-11-25 – X14: rättning av S1 efter R17
 
 - **R17-1 och R17-3 rättade.** `deferred_rev_anet` tar balansräkningens rader i Aristas 10-Q under 2018 (2018Q3 529,9 i
@@ -987,6 +1018,21 @@ Johannes svarade "kör på dina rekommendationer" på tre rekommendationer samma
   den gemensamma `instance_name` väljer `defnref.xml` i inlämningar 2009–2011 (R18-4, eget spår). Alla ger för sena
   första versioner eller saknad historik, alltså den konservativa sidan.
 - Ägarbeslut: ska Vertivs externa segmentförsäljning läggas till bredvid bruttot? Rekommendation: ja.
+
+## 2026-11-25 – X17: rättning av KR1 efter granskningen R20 (spread vid emission)
+
+- Registerposten "2026-11-25 – X17" committades före ombyggnaden. Den ändrar ingen regel. Den säger hur fem låsta regler
+  genomförs (R20-1 till R20-5) och preciserar helgdagarna i T+n: den federala kalendern i USA för USD. Långfredagen, en
+  lördagshelg som flyttas till fredagen och annan valuta än USD ger ingen framräknad likviddag, och raden kodas för hand.
+- Självkontrollen söker nu talen i tranchens del av blocket. Mutationsprov mot de cachade dokumenten: 1 229 av 1 234
+  tal från en annan tranche flaggas, mot 0 förut. Den första versionen gav ett falskt fel (en nyckel utan kolon), och
+  regeln för var en tranche börjar ändrades till parserns form (tillägg i registret).
+- Effekt: ingen. CSV:n och blocken är byte för byte desamma. De 107 dokumenten som inte kodas står med skäl i
+  `curated/credit_issuance_skipped.csv`, och de 39 paren FWP–prospekttillägg är exakt R20:s. Självkontrollen och
+  `--covers` åt båda hållen mot nyhämtade dokument gav 0 fel.
+- Serierna är fortfarande katalogserier med `publish=False`. **Rekommendation till Johannes:** som R20. Volymerna och
+  spreaden per emittent kan få `publish=True` med en daterad registerpost, och den poolade serien bara med noten om
+  mixen.
 
 ## 2026-11-25 – X15: rättning av S2 efter R18
 

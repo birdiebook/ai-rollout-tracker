@@ -1491,6 +1491,37 @@ tak ändras inte.
 3. **K0** räknar tillståndet "för få källor" (index v2, registret 2026-11-24) för sig, bredvid "för få serier", när det
    förekommer. Tidigare räknades det som "för få serier". Inget urval ändras.
 
+### 2026-11-25 – KR1: spread vid emission för AI-tunga emittenter (extraktion, inte kärnserier)
+
+Låst före kodningen. Inga dokument i korpusen var hämtade och inga värden lästa när posten skrevs. Agenten hade sett
+antalet inlämningar per bolag, år och formulär i EDGAR:s submissions-index och licenstexten i FRED:s serienoter för
+ICE BofA och Moody's. Regler i detalj: [`docs/kallor/kredit_emission.md`](kallor/kredit_emission.md), avsnittet
+"Kodningsregler".
+- **Vad:** belopp, kupong, förfallodag, referens, spread mot referensen (bp, som den står), avkastning och pris för
+  varje tranche i de registrerade obligationsemissionerna från Microsoft, Alphabet, Amazon, Meta, Oracle och CoreWeave,
+  2020-01-01–2026-11-25. Källan är FWP:n med de slutliga villkoren, annars det slutliga prospekttillägget (424B2 eller
+  424B5). En rad per tranche i `curated/credit_issuance.csv`, med plats och SHA-256 av blocket. Texten sparas bara
+  under `data/raw`.
+- **Serier (G5, kvartal):** `issuance_<bolag>_q` (summa av belopp i USD per kvartal efter prisdag, MUSD),
+  `spread_issue_ai_q` (principalvägt medelvärde av spreaden över alla emittenter, bp), `spread_issue_ai_7_12y_q`
+  (bara löptid avrundad till 7–12 år, 6,5 ≤ löptid < 12,5) och `spread_issue_<bolag>_q` för emittenter med minst fyra
+  kvartal med en spread. Spreadserierna tar bara tranchar i USD med fast ränta, en amerikansk statsobligation som
+  referens och en angiven spread. Rörlig ränta ingår i volymen men inte i spreaden. Annan valuta ingår i ingen serie.
+- **Vikt:** beloppet (MUSD). **Luckregeln:** ett kvartal utan tranche har inget värde, en lucka och inte noll.
+- **known_from** för ett kvartal = max(dagen efter kvartalets slut, senaste `filingDate` bland trancherna som ingår).
+  En senare inlämning ger en ny version. Ett kvartal som inte är slut har inget värde.
+- **Avstämning:** täckningsgraden mot `debt_issued_<bolag>` per bolag och år (efter likviddag och bolagets
+  räkenskapskvartal) redovisas i källdokumentet, inte som serie. Skillnaden är likvid mot nominellt belopp,
+  företagscertifikat, terminslån, kreditfaciliteter, 144A och annan valuta.
+- **Marknadsindex:** inget. ICE BofA och Moody's på FRED förbjuder vidarespridning utan tillstånd.
+- **Täckning, ärligt:** serierna visar bara den registrerade marknaden. Privata placeringar, 144A och SPV-finansiering
+  syns inte. Spreaden blandar emittenter med olika kreditbetyg, så den poolade serien rör sig också när mixen ändras.
+- **Inte kärnserier.** Ingen takt räknas. `publish=False` tills extraktionsgranskningen har godkänt (minst 30 % av
+  raderna, ett dokument per emittent, inga fel i talen). Ett förslag om kärnserie kräver godkänd granskning, minst 12
+  kvartal i `spread_issue_ai_7_12y_q` och en registrerad regel för emittentmixen.
+- **Tester:** syntetiska villkorsbilagor för parsern, löptiden, bandets gränser, vägningen, luckregeln, dateringen,
+  CSV-kontrollen och självkontrollen.
+
 ### 2026-11-25 – T1: test av tillståndsregeln (förregistrering, före körning)
 
 Spår T1 i körning 14 (`docs/riktning.md`, avsnitt 8, punkt 5). Testet prövar själva tillståndsregeln: avsnitt 2 med
@@ -2083,6 +2114,56 @@ körningen 2026-11-25.
 4. Om en enda version strax före V står för en grens revideringar redovisas det, med (a) också för V före den
    versionen (R24-6: G.17:s årsrevision 2026-11-24).
 
+### 2026-11-25 – X17: rättning av KR1 efter granskningen R20 (spread vid emission)
+
+Rättningsspår X17, körning 14, efter granskningen R20 (`docs/granskning/r20-kredit-emission.md`). Posten ändrar ingen
+regel i posten "2026-11-25 – KR1" eller i de låsta kodningsreglerna i `docs/kallor/kredit_emission.md`, och de skrivs
+inte om. Den säger hur fem regler som koden inte följde genomförs, och den preciserar en regel (helgdagar i T+n).
+Serierna är fortfarande katalogserier med `publish=False`. Grenindex och tillstånd ändras inte.
+
+**Vad som var känt före posten.** KR1:s 239 rader och elva serier, R20:s granskning med tabellen per kvartal i punkt 4,
+och en ombyggnad av CSV:n ur KR1:s cachade dokument med koden före rättningen (byte för byte samma fil, åtta FWP:er
+hoppade över). Inga nya värden räknades före posten.
+
+1. **Självkontrollen prövar talen i tranchens del av blocket** (R20-1). Regeln "i kolumnen när den anges" genomförs så.
+   För `col #j` i en gemensam tabell (tolkning 2) är tranchens del texten efter nyckel j ("2028 Notes:", eller "In the
+   case of the 2028 Floating Rate Notes") fram till nästa nyckel eller radens slut, på varje rad i blocket. Ett namn som
+   bara nämns ("the 2028 Notes") är ingen gräns. Nyckellistan läses med parserns `keys_of`, eftersom den definierar j.
+   Uppdelningen av texten är kontrollens egen. I en verklig kolumntabell är delen cell j på de rader som har lika många
+   värdeceller som beloppsraden. Belopp, förfallodag, kupong, avkastningar, pris och spread ska stå i tranchens del.
+   Prisdag och likviddag får också stå på en rad i blocket utan nyckel, eftersom de gäller hela erbjudandet. Ett avsnitt
+   (utan `col`) är tranchens eget block, som förut. Samma prövning gäller manuella rader. Omtolkningen med parsern ligger
+   kvar för parserrader.
+2. **Dokument som inte kodas listas med skäl, och det slutliga prospekttillägget är källan när FWP saknas** (R20-2).
+   Ombyggnaden läser också 424B2 och 424B5. Ett preliminärt tillägg, ett tillägg utan obligationer på omslaget och ett
+   slutligt tillägg till ett erbjudande som redan har en FWP som källa kodas inte och listas med skäl. Ett erbjudande har
+   redan en källa om en FWP från samma bolag, inlämnad 0–7 dagar före tillägget, har minst en tranche som står på
+   tilläggets omslag, eller om en källa har exakt omslagets tranchar. Ett slutligt tillägg för obligationer utan FWP blir
+   källan, om parserns tranchar är exakt omslagets. Annars stoppas ombyggnaden tills raderna kodas för hand. Alla
+   dokument som inte kodas skrivs till `curated/credit_issuance_skipped.csv` (bolag, formulär, inlämningsdag, accession,
+   skäl). `--covers` prövar också åt andra hållet: varje slutligt tillägg för obligationer i korpusen ska ha en källa i
+   CSV:n.
+3. **Helgdagar i T+n** (R20-3, precisering). För USD räknas vardagar med den federala helgdagskalendern i USA (pandas
+   `USFederalHolidayCalendar`). Långfredagen och en helgdag på lördag som kalendern flyttar till fredagen stänger inte
+   marknaderna lika (SIFMA:s rekommendation och Federal Reserve skiljer sig). Ligger en sådan dag efter prisdagen och
+   senast på den framräknade likviddagen, och för annan valuta än USD, räknas likviddagen inte fram. Parsern skriver då
+   en not, raden ska kodas för hand med likviddagen ur det slutliga prospekttillägget, och inläsningen av CSV:n stoppar
+   en parserrad med den noten.
+4. **Talen skrivs som de står** (R20-4). CSV:n skrivs med den kortaste decimalform som läses tillbaka till samma tal
+   (`repr`, ett heltal utan ".0"), inte med sex värdesiffror.
+5. **Avstämning per kvartal** (R20-5). `coverage` ger också en rad per kvartal med emission: USD-tranchar efter
+   likviddag i bolagets räkenskapskvartal (mittpunktsregeln) mot `debt_issued` för samma kvartal. Ett kvartal som XBRL
+   ännu inte har står under "senare". Källdokumentet får tabellen.
+
+**Väntad effekt:** ingen rad och inget värde ändras. Alla 39 erbjudanden har en FWP, ingen likviddag är framräknad, inget
+tal har fler än sex värdesiffror, och R20:s kontroll per nyckel godkände alla 239 rader. Ger ombyggnaden eller
+självkontrollen något annat redovisas det i källdokumentet, och de rader som ändras granskas igen.
+
+**Tester:** de fem strikta xfail-testerna i `tests/test_r20_kredit_emission.py` blir vanliga tester utan ändrade
+påståenden. Nya syntetiska tester: tranchens del med en titelrad och en rörlig tranche i samma tabell, kolumntabell,
+prospekttillägg som källa och som täckt, omvänd omslagskontroll, helgdagar och osäkra dagar, avstämning per kvartal och
+skrivning utan avrundning.
+
 ### 2026-11-25 – X15: rättning av S2 efter R18, före ny hämtning (rättning efter `docs/granskning/r18-kraft-datacenter.md`)
 
 Rättningsspår X15, körning 14. Granskningen R18 av S2 fann fyra fel att rätta (R18-1–R18-4) och sex anmärkningar.
@@ -2147,6 +2228,16 @@ med värden (YTD 2009–2019), och kassaflödesanalysen i 10-Q 2011-04-29. Digit
 (värden och dimensioner) i de fyra inlämningarna med `defnref.xml`, och vilka inlämningar som har
 `ParentCompanyMember`. Antalet fakta med Microsofts tagg i de sju inlämningarna. Nvidias indexfiler 2012–2013. Inga
 serier har byggts med reglerna ovan.
+
+### 2026-11-25 – X17 (tillägg): var en tranche börjar i självkontrollen
+
+Tillägg till posten "2026-11-25 – X17", punkt 1, efter den första körningen av den nya självkontrollen mot KR1:s cachade
+dokument. Den gav ett falskt fel: Amazons villkorsbilaga 2021 skriver "2024 Notes May 12, 2024" utan kolon, så
+förfallodagen räknades till 2023 Notes. En tranches text börjar därför vid nyckeln med kolon som tillval, eller vid "In
+the case of (the) <nyckel>", och bara på en rad där värdet (efter etiketten, eller hela fortsättningsraden) börjar med
+en nyckel. En nyckel efter "the" börjar ingenting. Andra rader i blocket räknas som rader utan nyckel, där bara prisdag
+och likviddag får stå. Det är parserns form. Tillägget gäller kontrollen, inget värde: efter det ger kontrollen 238
+rader rätt och den manuella raden med beloppet utanför blocket, som förut.
 
 ### 2026-11-25 – X15: utfall efter hämtningen
 

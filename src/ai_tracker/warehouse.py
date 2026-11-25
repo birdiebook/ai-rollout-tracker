@@ -62,6 +62,11 @@ from ai_tracker.series.guidance_revisions import KNOWN_GAPS as _F1_GAPS  # noqa:
 
 KNOWN_GAPS.update(_F1_GAPS)
 
+# Bond issuance and the spread at issuance (track KR1) are irregular: a quarter without a tranche has no value.
+from ai_tracker.series.credit_issuance import KNOWN_GAPS as _KR1_GAPS  # noqa: E402
+
+KNOWN_GAPS.update(_KR1_GAPS)
+
 # Accepted gaps per period: series -> {period: why}. The series passes no_gaps only if every missing period within
 # its span is listed, so a second gap is still reported. Prefer this to a whole-series exemption in KNOWN_GAPS.
 # BLS collected no CPI data for October 2025 (lapse in appropriations; track M1, docs/kallor/makro_bea_bls.md).
@@ -84,6 +89,9 @@ KNOWN_STALE: dict[str, tuple[str, str]] = {
     "g1_epoch_bench_runs_spireclimb": ("2027-01-07", "new series: first month known 2026-12-31"),
     # Track B5: own first-party price snapshots from 2026-11-23, no backfill; the first complete month (2026-11) is
     # known 2026-12-01 and computed by the first weekly run after that (Monday 2026-12-07).
+    # Track KR1: Microsoft's only registered issuance since 2020 was priced 2026-10-29; the quarter 2026Q4 is known
+    # 2027-01-01 (the day after the quarter), so the series has no row until then.
+    "issuance_msft_q": ("2027-01-15", "new series: first quarter (2026Q4) known 2027-01-01"),
 }
 
 PERIOD_DAYS = {"D": 1, "W": 7, "2W": 14, "M": 31, "Q": 92}

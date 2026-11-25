@@ -211,3 +211,8 @@ Exempel: MSFT 2026Q3, `LongTermDebt` 35 481 = 31 090 + 4 391.
 - **Nollfyllnaden börjar 2016.** Därför börjar Metas skuldflöden och `debt_*_hyp4` 2016Q1.
 - Seriernas definitioner skiljer sig mellan bolag (se noter i katalogen). Måtten för L5 låses i måttregistret
   (grind G-A) innan något räknas på dem.
+
+## Pris: spread vid emission
+
+Volymerna ovan har fått ett pris i spår KR1 (2026-11-25): spreaden vid emission och emitterat belopp per kvartal ur
+villkorsbilagorna på EDGAR, med täckningsgraden mot `debt_issued_<bolag>`. Se [kredit_emission.md](kredit_emission.md).
