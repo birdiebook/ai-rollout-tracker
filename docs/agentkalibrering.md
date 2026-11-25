@@ -70,6 +70,7 @@ En rad per spår, fylls på efter varje körning. Tumreglerna justeras när siff
 | 2026-11-25 | 14 | R-W3 neutralitet | granskning | ~20 | ~98 | ~230 | speglingstest symmetriskt; 3 mallasymmetrier rättade; 4 krav före byte av huvudsida |
 | 2026-11-25 | 14 | R-W2 tillgänglighet | granskning + rättning | ~56 | ~116 | ~270 | axe 0 i 54 körningar; 4 tangentbordsfel rättade; LCP 0,8 s; TBT kvar (P1) |
 | 2026-11-25 | 14 | Q2 öppna mot stängda, Kinas gap | 2 källor (Arena, ECI), klassning, namnklasser | ~150 | ~110 | – | 8 katalogserier, 27+20+13 kurerade namnbyten, 10 handkontroller, register före kod före värden, 21 tester |
+| 2026-11-25 | 14 | R23 granskning av Q2 | granskning (oberoende omräkning) | ~120 (två pass, kvotstopp) | ~95 | – | 326 av 330 rader lika; R23-1 sista tavlan i månaden faller bort (även `vintages.py`, kärnserie); ECI öppen före vikterna; 7 tester + 3 xfail |
 
 ## Körning 1, sammanfattning (2026-11-23, orkestrerare)
 

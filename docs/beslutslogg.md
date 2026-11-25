@@ -790,3 +790,16 @@ republishing data"), npm och arXiv (`okänd`), och Microsofts capex-guidance ur 
   stängda modell i samma månads tavla, vilket kan korta eftersläpningen.
 - **Rekommendation till Johannes:** låt serierna vara katalogserier tills en granskning har prövat ersättningsregeln och
   namnklasserna. ECI-varianterna kan räknas först när egna ögonblicksbilder finns.
+
+## 2026-11-25 – R23: granskning av Q2 (öppna mot stängda modeller, Kinas gap)
+
+- **Dom: godkänd med anmärkningar** (`docs/granskning/r23-oppen-stangd.md`). En oberoende omräkning ur rådata ger samma
+  värden, `known_from` och `source` i 326 av 330 rader. Arena-klassningen är samtida: 0 avvikelser i 42 712 par mot
+  Space-tabeller från samma tid.
+- **R23-1 (ska rättas):** en tavla som publiceras sista dagen i månaden och beläggs nästa dag räknas aldrig i den
+  månaden. Gapet 2026-04 och 2026-09 blir fel (2026-09: 27,06 i stället för 42,58). **R23-2:** samma fel finns sedan
+  tidigare i `sources/vintages.py` och ger fel värden i kärnserien `g1_arena_text_top` (2026-09: 1 517,79 i stället för
+  1 533,09). Det bör rättas före ögonblicksbilden 2026-11-30.
+- **R23-3:** ECI räknar Kimi K3.1 Pro som öppen i 2026-10, fast Epoch anger att vikterna kom 2026-11-04.
+  **Rekommendation till Johannes:** en daterad registerpost som räknar en ECI-modell som öppen från dokumenterat
+  viktsläpp. Ingen av serierna blir kärnserie före R23-1, R23-3 och R23-4.
