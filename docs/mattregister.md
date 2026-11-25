@@ -1778,3 +1778,59 @@ kupongserierna genomförs.
 5. **`kl_coupon_new_<bolag>_q`** = principalvägt medel av `coupon_pct` för nya lån med fast ränta efter kvartalet för
    `issue_date`. Konvertibler ingår inte, eftersom deras kupong också prissätter optionen på aktien. De och lån med
    rörlig ränta (marginal över SOFR) står kvar som tabellrader.
+
+### 2026-11-25 – X23: rättning av KL1 efter granskningen R26 (kreditlagret)
+
+Rättningsspår X23, körning 15, efter granskningen R26 (`docs/granskning/r26_kreditlagret.md`). Tillägg till posten
+"2026-11-25 – KL1" och dess tillägg, som inte skrivs om. Skrivet innan koden ändras och innan något dokument från SpaceX
+hämtas för värden. Inget mått, ingen läsregel och ingen gräns ändras. Serierna är fortfarande katalogserier med
+`publish=False`. Grenindex, kärnserier och tillstånd berörs inte.
+
+**Vad som var känt före tillägget.** Hela R26, med SpaceX:s totala skuld 38 006 MUSD per 2026-09-30 och köpet av xAI
+2026-02-02. EDGAR:s lista över SpaceX:s inlämningar (formulär, datum och poster, inga dokument). En ombyggnad av KL1:s
+CSV ur cachen och en omräkning av de 53 serierna med koden före rättningen: samma 400 rader och samma 1 870 rader. Hur ofta
+villkor A har gällt för Oracle (R26 och agentens egen räkning på samma serier).
+
+1. **Balansdag i ett tidigare dokument (R26-1).** Regeln för `known_from` i labbens korpus skärps för rader med full
+   balansdag (`period` ÅÅÅÅ-MM-DD). En sådan rad får det tidigaste dokument där både samma citat (samma SHA-256) och
+   samma balansdag står. Balansdagen står i dokumentet när den finns i citatet, eller som "as of <dag>" i de 30 raderna
+   före tabellen eller i tabellens noter (rader som börjar med "(n)" inom 30 rader efter tabellen). För en rad i löptext
+   gäller de 30 raderna före och efter citatet. Står dagen inte där, prövas nästa dokument, och ytterst stannar raden i
+   källan. Rader med bara månad eller utan period följer regeln som förut.
+2. **Okodade kandidater (R26-4).** Posten kräver redan att de räknas och listas med skäl. Listan är
+   `curated/kreditlagret_skipped.csv` med kolumnerna `company`, `accession`, `filed`, `form`, `locator`, `kind`,
+   `reason` och `reason_by`. Kandidaterna söks som i posten, i labbens källa (det senaste dokumentet) och i varje annat
+   dokument i korpusen. För Meta räknas också rader som nämner "Venture" och har ett belopp, eftersom Meta kallar
+   datacenterbolagen så. En kandidat är kodad när platsen för en kodad rad täcker den. Skälet sätts av en regel
+   (`reason_by` = `regel`) i fasta kategorier, i den här ordningen: bilageförteckning, aktier och konvertering till
+   aktier, verkligt värde och resultatposter, villkor utanför kodningsreglerna (inlösen, återköp, kovenanter,
+   säkringar, utfallshändelser), garanti och säkerhet för lånefaciliteter, andra rader i CoreWeaves skuldtabell (tillägget
+   punkt 3), andra tabeller och annan text i CoreWeaves och SpaceX:s 10-Q och 10-K. Övriga rader får ett skäl av agenten
+   (`agent`), en rad i taget. Det står i källdokumentet att kategorierna är regler och inte en läsning av varje rad.
+3. **SpaceX i labbdelen (R26-3).** Space Exploration Technologies Corp (CIK 1181412) äger xAI. Bolaget tas med som
+   tabellrader, som Anthropic, och ingår inte i lageraggregaten eller i läsregeln.
+   - Korpus: varje 10-Q och 10-K med `filingDate` 2026-06-12–2026-11-25, alltså efter noteringen. Prospekten (S-1, S-1/A
+     och 424B4) och 8-K kodas inte, eftersom 10-Q:erna redovisar skulden som innevarande period, som för CoreWeave. Ett
+     balansdatum kodas ur den första 10-Q eller 10-K som redovisar det som innevarande period.
+   - Kandidater: skuldmönstret i posten. Fält och regler som i posten: `outstanding`, `rate_pct`, `coupon_pct`,
+     `principal`, `commitment`, `margin_bp`, `maturity` och `issue_date` per instrument i skuldnoten, och den totala
+     skulden som `outstanding` för `spacex_total_debt`. Agenten kodar rad för rad, och varje rad stoppas om talet inte står
+     i citatet.
+   - Skulden gäller hela koncernen (uppskjutning, Starlink och xAI), och rapporten säger det. Kupongserierna följer
+     posten: en serie skapas först med fyra kvartal med värde. Med två balansdagar blir det ingen serie nu.
+4. **Rapportens text (R26-5 till R26-9).** Beskrivningar och förbehåll, inga nya serier och ingen ändrad regel:
+   - Läsregeln läser bara uppgång: A kräver att pris eller beroende stiger med minst gränsen. Ett fall i pris och
+     beroende följt av högre capex-takt blir "inget av mönstren". Rapporten anger hur ofta A har gällt: antalet kvartal
+     där minst ett mått når gränsen, av de kvartal där minst ett av måtten har en takt, i hela historiken som är känd på
+     läsdagen. En regel som läser båda riktningarna kräver en ny daterad post före nästa läsning.
+   - CoreWeaves vägda ränta visas också utan konvertibler, med konvertiblernas andel av utestående.
+   - Microsofts räntekostnad innehåller ränta på finansiell leasing. Microsoft står kvar i det inre lagrets ränta,
+     eftersom måttet är låst och läsregeln bara läser det yttre lagrets ränta. Förbehållet står i rapporten.
+   - Läsningarna per 2026-11-25 gjordes på kvartal som var sedda före posten. Den första läsningen på osedda kvartal
+     kommer med inlämningar efter 2026-11-25.
+   - Raderna i labbdelen visar notens förbehåll: kupong för lån före noteringen, marginal före ett tillägg.
+5. **Rättningar av kodningen, utan regeländring.** CoreWeaves 9,750 %-obligation 2031 kodas till 1 750 MUSD ur 8-K:n
+   2026-04-21 (R26-2). Metas största möjliga förlust per 2026-03-31 och 2026-06-30 kodas med samma tolkning som för
+   2026Q3. Anthropics åtaganden till SpaceXAI, Nscale och Lambda kodas som de till Microsoft, Google och Amazon. DDTL
+   3.0:s ram och marginalen för DDTL 2.0:s nya tranch kodas ur sina 8-K. Filtret mot konvertibler i `coupon_new` går på
+   kodningen och inte bara på instrumentets namn. Posten säger företagssökning "(JSON)", men sökningen görs i Atom-flödet.
