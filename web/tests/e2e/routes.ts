@@ -36,7 +36,19 @@ export function routes(): { name: string; path: string }[] {
     { name: 'metod', path: 'metod/' },
     { name: 'sok', path: 'sok/' },
     { name: 'katalog', path: '_katalog/' },
+    ...storyRoutes(),
     ...timeTravelRoutes(idx.series)
+  ];
+}
+
+/** W13: the latest monthly story, the latest month without any card (K9) and the latest story under time travel. */
+export function storyRoutes(): { name: string; path: string }[] {
+  const idx = JSON.parse(readFileSync('static/data/story/index.json', 'utf-8')) as { latest: string; months: { month: string; n_events: number }[] };
+  const quiet = [...idx.months].reverse().find((m) => m.n_events === 0 && m.month !== idx.months[0].month);
+  return [
+    { name: 'manad', path: `manad/${idx.latest}/` },
+    ...(quiet ? [{ name: 'manad-lugn', path: `manad/${quiet.month}/` }] : []),
+    { name: 'tt-manad', path: `manad/${idx.latest}/#as_of=${TT_DAY}` }
   ];
 }
 

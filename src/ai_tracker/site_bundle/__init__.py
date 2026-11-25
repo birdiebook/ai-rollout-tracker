@@ -21,6 +21,8 @@ Layout of the bundle (one JSON Schema per document type in schema/, copied into 
     regime.json              C4 regime section from the live snapshots
     method.json              register summary: rules, core series per branch, leads, nowcast variants, sources
     withheld.json            withheld series: names and reasons only
+    story/<YYYY-MM>.json     the monthly story: cards selected by the pre-registered rule (W13, site_bundle.story)
+    story/index.json         every month of the story with its card counts
     letters.json             index of the monthly letters and quarterly reports
     letters/<YYYY-MM>.json, reports/<YYYYQn>.json   the Markdown of each
 
@@ -28,4 +30,4 @@ Python owns all data and the licence gate (site_bundle.gate, which reuses site.d
 only this bundle, never the observation table.
 """
 
-VERSION = "1.0.0"
+VERSION = "1.1.0"

@@ -291,3 +291,80 @@ export interface Regime {
 
 export const BRANCH_CODES = ['G1', 'G2', 'G3', 'G4', 'G5', 'G6', 'G7', 'G8', 'G9'] as const;
 export type BranchCode = (typeof BRANCH_CODES)[number];
+
+// ---------- story/<YYYY-MM>.json and story/index.json (W13, schema story / story_index) ----------
+
+export type StoryEventType = 'K1' | 'K2' | 'K3' | 'K4' | 'K5' | 'K6';
+export type StoryCardType = 'K0' | StoryEventType | 'K9';
+export type PerType = Record<StoryEventType, number>;
+
+export interface StoryRule {
+  register: string;
+  entry: string;
+  cap: number;
+  type_caps: Record<string, number>;
+  high: number;
+  low: number;
+  order: StoryEventType[];
+}
+
+export interface StoryLink {
+  kind: 'start' | 'branch' | 'series' | 'nowcast' | 'regime' | 'method';
+  id: string | null;
+  slug: string | null;
+  label: string;
+}
+
+export interface StoryTrack {
+  field: 'pace' | 'change_percentile' | 'pace_percentile';
+  months: string[];
+  values: (number | null)[];
+}
+
+export interface StoryCard {
+  type: StoryCardType;
+  type_label: string;
+  id: string;
+  rank: number;
+  status: 'live' | 'reconstructed';
+  title: string;
+  text: string;
+  direction: -1 | 0 | 1 | null;
+  link: StoryLink;
+  facts: Record<string, any>;
+  track: StoryTrack | null;
+}
+
+export interface Story {
+  month: string;
+  month_sv: string;
+  kind: 'skarp' | 'rekonstruerad';
+  status: 'live' | 'reconstructed';
+  /** the day the month's record became known; nothing in the document is known later */
+  known: string;
+  previous: string | null;
+  rule: StoryRule;
+  headline: string;
+  n_events: number;
+  types: PerType;
+  qualified: PerType;
+  omitted: PerType;
+  withheld: PerType;
+  cards: StoryCard[];
+}
+
+export interface StoryIndexEntry {
+  month: string;
+  month_sv: string;
+  kind: 'skarp' | 'rekonstruerad';
+  known: string;
+  n_events: number;
+  types: PerType;
+  headline: string;
+}
+
+export interface StoryIndex {
+  rule: StoryRule;
+  latest: string | null;
+  months: StoryIndexEntry[];
+}

@@ -2,6 +2,7 @@
      data, the chain L1→L9 as the spine, three question cards, the state stripes and the ways on. Components and the
      view model live in $lib/start/; data comes only through the typed loaders (+page.server.ts). -->
 <script lang="ts">
+  import { resolve } from '$app/paths';
   import { dateLabel, fmt, periodLabel } from '$lib/design';
   import Calibration from '$lib/start/Calibration.svelte';
   import CalendarChart from '$lib/start/CalendarChart.svelte';
@@ -28,6 +29,11 @@
 </svelte:head>
 
 <Hero start={s} />
+
+<p class="story-entry">
+  <a href={resolve('/manad/[manad]', { manad: s.record.month })}>Månadens berättelse, {periodLabel(s.record.month, true)} →</a>
+  <span class="note">det som hände enligt den förregistrerade urvalsregeln, kort för kort</span>
+</p>
 
 <Chain start={s} />
 
@@ -89,5 +95,15 @@
   }
   .intro {
     margin: 0 0 10px;
+  }
+  .story-entry {
+    margin: 6px 0 18px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 12px;
+    align-items: baseline;
+  }
+  .story-entry a {
+    font-weight: 600;
   }
 </style>

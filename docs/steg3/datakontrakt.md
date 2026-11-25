@@ -51,6 +51,8 @@ Tester: `tests/test_site_bundle.py`.
 | `regime.json` | `regime` | C4 ur de skarpa ögonblicksbilderna: P(inbromsning) per block och månad, skiften, strukturbrott | `/regim` |
 | `method.json` | `method` | registrets regler, tillståndsnamn, kärnserier per gren, leden, nowcastvarianter, källor och licenser, registrets SHA-256 | `/metod` |
 | `withheld.json` | `withheld` | alla serier med `publish=False`: nyckel, etikett, källa, licens, skäl, gren | `/metod`, `/data` |
+| `story/<YYYY-MM>.json` | `story` | månadens berättelse (W13, från version 1.1.0): korten som den förregistrerade urvalsregeln valde (måttregistret 2026-11-25), med text, fakta, länk och spår per kort | `/manad/<månad>` |
+| `story/index.json` | `story_index` | alla månader i berättelsen med antal kort per typ | `/manad/*`, startsidans ingång |
 | `letters.json` | `letters` | index över månadsbrev och kvartalsrapporter, nyast först | `/brev`, `/rapport` |
 | `letters/<YYYY-MM>.json`, `reports/<YYYYQn>.json` | `publication` | ett brev eller en rapport med Markdown | `/brev/*`, `/rapport/*` |
 | `schema/*.json` | – | kopior av schemana som Python validerade mot | typer i frontend |
@@ -114,6 +116,25 @@ Tester: `tests/test_site_bundle.py`.
 `coverage[]` (skarp täckning med binomialband), `history` (målets senaste nivåer), `backtest_calibration` (täckning
 per nivå med band, Holm, CRPS, PIT och huvudmodellens MAE i backtesten, beräknad vid bygget och alltid märkt som
 backtest).
+
+### story/<YYYY-MM>.json (W13)
+
+Byggs av `site_bundle.story` för varje månad i posten. `select` är regeln: en ren funktion av månadens post, förra
+månadens post, avstämningarna (A5) för båda, de skarpa prognosfilernas scorecard och C4-sektionen. Samma indata ger samma
+dokument.
+
+| Fält | Betydelse |
+|---|---|
+| `month`, `month_sv`, `kind`, `status` | månaden och om posten är skarp eller rekonstruerad |
+| `known` | dagen månadens post blev känd (månadsslutet, eller den skarpa ögonblicksbildens datum om det är senare). Inget i dokumentet blev känt senare |
+| `previous` | jämförelsemånaden, `null` utan jämförelse |
+| `rule` | registrets avsnitt, tak (8), tak per typ, zonerna (≤ 5, ≥ 95) och typordningen |
+| `headline`, `n_events`, `types` | rubrikmeningen och antal kort per typ K1–K6 |
+| `qualified`, `omitted`, `withheld` | per typ: publicerbara kandidater före taken, de som ströks av taken, och inhållna serier som uppfyllde villkoret (räknas, namnges aldrig) |
+| `cards[]` | `type` (K0–K6, K9), `type_label`, `id`, `rank`, `status`, `title`, `text`, `direction` (bara riktning, för färgen), `link` (`kind`: start, branch, series, nowcast, regime, method), `facts` (schema per typ) och `track` (postens värde per månadsslut för kortets serie, K4–K6) |
+
+Sidan klipper varje figur till `known` med tidsresans gräns (`web/src/lib/timetravel/gate.ts`) och vägrar bygga om något
+på sidan blev känt senare.
 
 ## 3. Status: skarp eller rekonstruerad
 
@@ -220,6 +241,7 @@ Budgetar (rå storlek och gzip, GitHub Pages serverar gzip). Bygget stoppas om e
 | `manifest.json` | 300 kB | 60 kB |
 | `withheld.json` | 80 kB | 15 kB |
 | `letters/*`, `reports/*`, `letters.json` | 100–200 kB | 10–60 kB |
+| `story/*.json`, `story/index.json` | 60 kB | 12 kB |
 | `schema/*.json` | 60 kB | 12 kB |
 | **Totalt** | **20 MB** | **4 MB** |
 | **Startsidan** (`overview.json` + `flow.json`) | | **100 kB** (visionens "≤ 100 kB data") |

@@ -1,0 +1,164 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://birdiebook.github.io/ai-rollout-tracker/schema/v1/story.json",
+  "title": "story/<YYYY-MM>.json: the monthly story, cards selected by the pre-registered rule (docs/mattregister.md, 2026-11-25 W13)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["month", "month_sv", "kind", "status", "known", "previous", "rule", "headline", "n_events", "types",
+               "qualified", "omitted", "withheld", "cards"],
+  "properties": {
+    "month": {"$ref": "common.json#/$defs/month"},
+    "month_sv": {"type": "string"},
+    "kind": {"$ref": "common.json#/$defs/kind"},
+    "status": {"enum": ["live", "reconstructed"]},
+    "known": {"$ref": "common.json#/$defs/date", "description": "The day the month's record became known (month end, or the live snapshot's date if later). Nothing in the document is known later."},
+    "previous": {"oneOf": [{"$ref": "common.json#/$defs/month"}, {"type": "null"}], "description": "The comparison month (M-1), null without one."},
+    "rule": {"$ref": "#/$defs/rule"},
+    "headline": {"type": "string"},
+    "n_events": {"type": "integer", "minimum": 0, "maximum": 8},
+    "types": {"$ref": "#/$defs/per_type"},
+    "qualified": {"$ref": "#/$defs/per_type", "description": "Publishable candidates per type that met the condition, before the caps."},
+    "omitted": {"$ref": "#/$defs/per_type", "description": "Candidates per type cut by the type cap or the total cap."},
+    "withheld": {"$ref": "#/$defs/per_type", "description": "Withheld (publish=False) series or targets per type that met the condition: counted, never named."},
+    "cards": {"type": "array", "minItems": 2, "items": {"$ref": "#/$defs/card"}}
+  },
+  "$defs": {
+    "rule": {
+      "type": "object", "additionalProperties": false,
+      "required": ["register", "entry", "cap", "type_caps", "high", "low", "order"],
+      "properties": {
+        "register": {"type": "string"}, "entry": {"type": "string"}, "cap": {"type": "integer"},
+        "type_caps": {"type": "object", "additionalProperties": {"type": "integer"}},
+        "high": {"type": "number"}, "low": {"type": "number"},
+        "order": {"type": "array", "items": {"$ref": "#/$defs/event_type"}}
+      }
+    },
+    "event_type": {"enum": ["K1", "K2", "K3", "K4", "K5", "K6"]},
+    "per_type": {
+      "type": "object", "additionalProperties": false, "required": ["K1", "K2", "K3", "K4", "K5", "K6"],
+      "properties": {"K1": {"type": "integer"}, "K2": {"type": "integer"}, "K3": {"type": "integer"},
+                     "K4": {"type": "integer"}, "K5": {"type": "integer"}, "K6": {"type": "integer"}}
+    },
+    "num": {"$ref": "common.json#/$defs/num"},
+    "str_or_null": {"type": ["string", "null"]},
+    "link": {
+      "type": "object", "additionalProperties": false, "required": ["kind", "id", "slug", "label"],
+      "properties": {
+        "kind": {"enum": ["start", "branch", "series", "nowcast", "regime", "method"]},
+        "id": {"type": ["string", "null"]}, "slug": {"type": ["string", "null"]}, "label": {"type": "string"}
+      }
+    },
+    "track": {
+      "oneOf": [{"type": "null"}, {
+        "type": "object", "additionalProperties": false, "required": ["field", "months", "values"],
+        "description": "The record's value of `field` for the card's series per month end up to the story month.",
+        "properties": {
+          "field": {"enum": ["pace", "change_percentile", "pace_percentile"]},
+          "months": {"type": "array", "items": {"$ref": "common.json#/$defs/month"}},
+          "values": {"type": "array", "items": {"$ref": "#/$defs/num"}}
+        }
+      }]
+    },
+    "variant_ref": {
+      "oneOf": [{"type": "null"}, {
+        "type": "object", "additionalProperties": false, "required": ["variant", "forecast", "err"],
+        "properties": {"variant": {"type": "string"}, "forecast": {"$ref": "#/$defs/num"}, "err": {"$ref": "#/$defs/num"}}
+      }]
+    },
+    "card": {
+      "type": "object", "additionalProperties": false,
+      "required": ["type", "type_label", "id", "rank", "status", "title", "text", "direction", "link", "facts", "track"],
+      "properties": {
+        "type": {"enum": ["K0", "K1", "K2", "K3", "K4", "K5", "K6", "K9"]},
+        "type_label": {"type": "string"},
+        "id": {"type": "string", "pattern": "^k[0-9][A-Za-z0-9_.-]*$"},
+        "rank": {"type": "integer", "minimum": 0},
+        "status": {"enum": ["live", "reconstructed"]},
+        "title": {"type": "string"},
+        "text": {"type": "string"},
+        "direction": {"$ref": "common.json#/$defs/direction"},
+        "link": {"$ref": "#/$defs/link"},
+        "facts": {"type": "object"},
+        "track": {"$ref": "#/$defs/track"}
+      },
+      "allOf": [
+        {"if": {"properties": {"type": {"const": "K0"}}}, "then": {"properties": {"facts": {"$ref": "#/$defs/facts_k0"}}}},
+        {"if": {"properties": {"type": {"const": "K1"}}}, "then": {"properties": {"facts": {"$ref": "#/$defs/facts_k1"}}}},
+        {"if": {"properties": {"type": {"const": "K2"}}}, "then": {"properties": {"facts": {"$ref": "#/$defs/facts_k2"}}}},
+        {"if": {"properties": {"type": {"const": "K3"}}}, "then": {"properties": {"facts": {"$ref": "#/$defs/facts_k3"}}}},
+        {"if": {"properties": {"type": {"const": "K4"}}}, "then": {"properties": {"facts": {"$ref": "#/$defs/facts_k4"}}}},
+        {"if": {"properties": {"type": {"enum": ["K5", "K6"]}}}, "then": {"properties": {"facts": {"$ref": "#/$defs/facts_pct"}}}},
+        {"if": {"properties": {"type": {"const": "K9"}}}, "then": {"properties": {"facts": {"$ref": "#/$defs/facts_k9"}}}}
+      ]
+    },
+    "facts_k0": {
+      "type": "object", "additionalProperties": false, "required": ["counts", "n_with_state", "moves", "previous"],
+      "properties": {
+        "counts": {"type": "object", "additionalProperties": {"type": "integer"}},
+        "n_with_state": {"type": "integer"},
+        "moves": {"oneOf": [{"type": "null"}, {"type": "object", "additionalProperties": false, "required": ["up", "down", "same"],
+                  "properties": {"up": {"type": "integer"}, "down": {"type": "integer"}, "same": {"type": "integer"}}}]},
+        "previous": {"oneOf": [{"$ref": "common.json#/$defs/month"}, {"type": "null"}]}
+      }
+    },
+    "facts_k1": {
+      "type": "object", "additionalProperties": false,
+      "required": ["branch", "name", "from", "to", "index", "prev_index", "delta_index", "n_series", "n_up", "n_neutral", "n_down"],
+      "properties": {
+        "branch": {"$ref": "common.json#/$defs/branch_code"}, "name": {"type": "string"},
+        "from": {"$ref": "common.json#/$defs/state"}, "to": {"$ref": "common.json#/$defs/state"},
+        "index": {"$ref": "#/$defs/num"}, "prev_index": {"$ref": "#/$defs/num"}, "delta_index": {"$ref": "#/$defs/num"},
+        "n_series": {"$ref": "common.json#/$defs/int_or_null"}, "n_up": {"$ref": "common.json#/$defs/int_or_null"},
+        "n_neutral": {"$ref": "common.json#/$defs/int_or_null"}, "n_down": {"$ref": "common.json#/$defs/int_or_null"}
+      }
+    },
+    "facts_k2": {
+      "type": "object", "additionalProperties": false, "required": ["block", "label", "shift", "p_slow"],
+      "properties": {"block": {"type": "string"}, "label": {"type": "string"}, "shift": {"type": "string"}, "p_slow": {"$ref": "#/$defs/num"}}
+    },
+    "facts_k3": {
+      "type": "object", "additionalProperties": false,
+      "required": ["nowcast", "label", "title", "period", "origin", "file", "slug", "champion", "unit", "decimals", "error_unit",
+                   "forecast", "outcome", "known_from", "intervals", "interval_class", "err_champion", "baseline", "guidance"],
+      "properties": {
+        "nowcast": {"type": "string"}, "label": {"type": "string"}, "title": {"type": "string"},
+        "period": {"$ref": "common.json#/$defs/period"}, "origin": {"$ref": "common.json#/$defs/date"},
+        "file": {"$ref": "#/$defs/str_or_null"}, "slug": {"$ref": "#/$defs/str_or_null"},
+        "champion": {"type": "string"}, "unit": {"type": "string"}, "decimals": {"type": "integer"},
+        "error_unit": {"type": "string"}, "forecast": {"$ref": "#/$defs/num"}, "outcome": {"$ref": "#/$defs/num"},
+        "known_from": {"$ref": "common.json#/$defs/date"},
+        "intervals": {"oneOf": [{"type": "null"}, {"$ref": "common.json#/$defs/intervals"}]},
+        "interval_class": {"enum": [0, 1, 2, 3, null], "description": "Outcome against the champion's central intervals: 0 inside 50 %, 1 outside 50 %, 2 outside 80 %, 3 outside 95 %, null without stored intervals."},
+        "err_champion": {"$ref": "#/$defs/num"},
+        "baseline": {"$ref": "#/$defs/variant_ref"}, "guidance": {"$ref": "#/$defs/variant_ref"}
+      }
+    },
+    "facts_k4": {
+      "type": "object", "additionalProperties": false, "required": ["series", "label", "branch", "latest_period", "p_recent"],
+      "properties": {
+        "series": {"$ref": "common.json#/$defs/series_key"}, "label": {"type": "string"},
+        "branch": {"$ref": "#/$defs/str_or_null"}, "latest_period": {"$ref": "#/$defs/str_or_null"}, "p_recent": {"$ref": "#/$defs/num"}
+      }
+    },
+    "facts_pct": {
+      "type": "object", "additionalProperties": false,
+      "required": ["series", "label", "branch", "latest_period", "known_from", "method", "measure_freq", "pace", "pace_unit",
+                   "change_in_pace", "field", "percentile", "zone", "prev_percentile", "prev_note"],
+      "properties": {
+        "series": {"$ref": "common.json#/$defs/series_key"}, "label": {"type": "string"},
+        "branch": {"$ref": "#/$defs/str_or_null"}, "latest_period": {"$ref": "#/$defs/str_or_null"},
+        "known_from": {"$ref": "common.json#/$defs/date_or_null"}, "method": {"$ref": "#/$defs/str_or_null"},
+        "measure_freq": {"$ref": "#/$defs/str_or_null"}, "pace": {"$ref": "#/$defs/num"}, "pace_unit": {"$ref": "#/$defs/str_or_null"},
+        "change_in_pace": {"$ref": "#/$defs/num"}, "field": {"enum": ["change_percentile", "pace_percentile"]},
+        "percentile": {"type": "number", "minimum": 0, "maximum": 100}, "zone": {"enum": ["övre", "nedre"]},
+        "prev_percentile": {"$ref": "#/$defs/num"}, "prev_note": {"type": "string"}
+      }
+    },
+    "facts_k9": {
+      "type": "object", "additionalProperties": false, "required": ["conditions"],
+      "properties": {"conditions": {"type": "array", "items": {"type": "object", "additionalProperties": false,
+        "required": ["type", "label", "checked"],
+        "properties": {"type": {"$ref": "#/$defs/event_type"}, "label": {"type": "string"}, "checked": {"type": "boolean"}}}}}
+    }
+  }
+}
