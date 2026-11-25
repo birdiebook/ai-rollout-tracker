@@ -1608,3 +1608,74 @@ Gemini, Kimi och Muse). De 20 paren 2026-10-13 → 2026-10-15 ingår i den kurer
 (punkt 1 under Namnbyten), granskade för hand med samma normaliserade namn, organisation och licens. En kurerad rad i
 steg 4 kan ge bara organisationen och låta vikterna komma från Arena (Arcee AI:s Trinity-modeller har tom
 organisation i Arena).
+
+### 2026-11-25 – X20: första versionens brytdag är månadsslut + 1 dag (rättning efter granskning R23 av Q2)
+
+Spår X20, rättning efter `docs/granskning/r23-oppen-stangd.md` (R23-1 och R23-2). Posten ändrar en regel i Q2-posten
+ovan ("Versioner som i `sources/vintages.py`", brytdagen för första versionen) och samma regel i
+`sources/vintages.monthly`. Den regeln används av `g1_arena_text_top` (kärnserie i G1), `g1_arena_text_sc_top`,
+`g1_arena_text_top_gap_ref`, `g1_arena_webdev_top`, `g2_aws_a100_gpu_hour`, `g2_aws_h100_gpu_hour` och
+`g1_swebench_verified_top`, och av Q2:s fyra Arena-serier genom `series/open_gap.arena_build`.
+
+**Felet.** Regeln har två delar. Första versionen har `known_from` = månadsslut + 1 dag och räknar tillstånd (tavlor,
+prislistor) belagda ≤ månadsslut. Ett tillstånd som publicerades ≤ månadsslut men beläggs senare ger en ny version på
+beläggets dag. När belägget kommer just på månadsslut + 1 dag är de två dagarna samma dag. Koden räknade då dagen bara
+som första versionen, med brytdag månadsslut, och tillståndet kom aldrig in i månaden. Det strider mot regelns andra
+del.
+
+**Ny regel.** Första versionen räknar tillstånd belagda ≤ månadsslut + 1 dag och har `known_from` = månadsslut + 1 dag.
+Senare versioner är oförändrade: brytdagen är beläggets dag. `as_of` läser ett datum som slutet av dagen, så ett
+belägg på månadsslut + 1 dag är känt den dagen. Inget dateras före sitt belägg. Regeln gäller `sources/vintages.monthly`
+och `series/open_gap.arena_build`.
+
+- `g2_aws_*` och `g1_swebench_verified_top` kan inte påverkas: där är beläggsdagen lika med publiceringsdagen.
+- `series/arena_price.build` (G2, pris vid fast förmåga i Arena) säger i sin beskrivning att den följer
+  `sources/vintages.py`, men har en egen kopia av konstruktionen. Filen är skyddad i körning 14 och ändras inte här.
+  Där gäller den gamla koden tills ägaren beslutar. Effekten redovisas i X20:s leverans.
+
+**Vad som var känt före posten:** granskningens tabeller över raderna som ändras och deras rätta värden (gapen 2026-04
+och 2026-09 i Q2:s Arena-serier, och 2026-04, 2026-07 och 2026-09 i `g1_arena_text_top`, `g1_arena_text_sc_top` och
+`g1_arena_webdev_top`). Regeln väljs för att den följer regelns andra del, inte efter värdena. Effekten på
+`g1_arena_text_top_gap_ref` var inte känd.
+
+**Hämtning.** Serierna byggs om (`python -m ai_tracker.observations --rebuild`), eftersom det rätta värdet var belagt
+på månadsslut + 1 dag och det gamla värdet var ett kodfel, inte en revidering i källan. Alla lagrade rader i serierna
+kommer från en enda hämtning 2026-11-24, så ombyggnaden tar inte bort några `fetch`- eller `revision`-rader.
+
+### 2026-11-25 – X20: en ECI-modell räknas som öppen från sitt dokumenterade viktsläpp (rättning efter granskning R23 av Q2)
+
+Spår X20, rättning efter `docs/granskning/r23-oppen-stangd.md` (R23-3). Posten ändrar steg 1 i "Klassning, Epoch" i
+Q2-posten ovan, för måttet öppna mot stängda (`g1_open_lag_months_eci`, `g1_open_gap_eci`). Kina-måttet ändras inte.
+
+**Felet.** Q2-posten tar `Accessibility group` som den är i dag, utan tidsdimension. En modell vars vikter släpptes
+efter dess `date` räknas då som öppen innan vikterna fanns.
+
+**Ny regel.** För en modell som steg 1 klassar som öppen bestäms viktdatumet w i den här ordningen:
+1. En kurerad rad i `model_origin.ECI_WEIGHTS_RELEASE` (datum och referens).
+2. Annars ett datum i Epochs `Accessibility notes` (samma `Model` i `all_ai_models.csv`), i en mening som säger att
+   vikterna har släppts ("weights released", "weights were released"). Datumet skrivs som ÅÅÅÅ-MM-DD, ÅÅÅÅ/MM/DD
+   eller med månadens namn ("June 4, 2026").
+3. Säger anteckningen att vikterna kommer senare ("will", "soon") och ger steg 1–2 inget datum, är w okänt. Då lämnas
+   modellen utanför måttet öppna mot stängda. Antalet redovisas.
+4. Annars w = `date`, som förut.
+
+Modellen är öppen från max(`date`, w). Före det räknas den som stängd från sitt `date`. Epoch räknar API-åtkomst som
+stängda vikter, och Arenas etikett per tavla gör samma sak. O(t), C(t), s0 och den första månaden räknas med
+klassningen per månad. Inget annat ändras. Historiken är fortfarande `backfill` med nominellt `known_from` = månadsslut
++ 7 dagar.
+
+**Kurerad rad.** GLM-5.3: Epochs anteckning säger "The model weights of GLM-5.3 will be publicly available soon in two
+weeks." (as of 2026/08/14). Hugging Face-repot `zai-org/GLM-5.3` skapades 2026-08-25 enligt API-fältet `createdAt`
+(läst 2026-11-25). w = 2026-08-25. Begränsning: `createdAt` är dagen då repot skapades, inte dagen då det blev
+publikt. Arena listar `glm-5.3-max` med licensen MIT från tavlan 2026-08-19.
+
+**Vad som lästes före posten** (metadata, inga värden i serierna med den nya regeln): granskningens uppgift att
+2026-10 blir 7 månader och gapet 10,60 i stället för 6 och 8,01 utan Kimi K3.1 Pro; texten i `Accessibility notes`
+för de 113 öppna modellerna i `eci_scores.csv` (tre nämner när vikterna kom: Kimi K3.1 Pro 2026-11-04 med `date`
+2026-10-23, Nemotron 3 Ultra "June 4, 2026" med samma `date`, och GLM-5.3 ovan); `createdAt` för repona
+`zai-org/GLM-5.3` och `moonshotai/Kimi-K3.1-Pro` (2026-11-02); och Arenas licensetikett per tavla för GLM-5.3,
+Nemotron 3 Ultra och Mistral Large 4.
+
+**Kända fall som regeln inte fångar:** MiniMax-M3 och Mistral Large 4 är öppna i ECI före Arenas etikett för öppna
+vikter. Epochs anteckningar daterar inte deras vikter, så steg 4 gäller. Enligt granskningen är ingen av dem topp i
+någon månad. Arenas etikett används inte som viktdatum för ECI, eftersom den kan komma efter släppet.
