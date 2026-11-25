@@ -443,7 +443,8 @@ paket 1.3.0) och rättningarna efter granskningen L1/L3. Paketet är 1.4.0. Siff
 (20 röda tester), som inte räknade med det riktiga paketet.
 - **Gröna mot fixturerna:** `npm ci`, `npm run check` (0 fel, 0 varningar), `npm run build` med
   `BASE_PATH=/ai-rollout-tracker/next`, `python -m ai_tracker.site_bundle scan-build web/build --src web/src` (0 träffar)
-  och Playwright (PLAYWRIGHT_RESULT).
+  och Playwright med `PW_PORT=4319` (548 gröna, 2 överhoppade). Bygget mot det riktiga paketet och
+  skanningen av det är också gröna.
 - **`npm test` mot fixturerna: 20 röda av 396**, i två filer.
   - `src/lib/method/engine.test.ts`, 18 tester. "dead band: golden values from state.branch with the dead band moved":
     "every probed dead band" och "the index steps agree with the probes" för G1, G2, G5, G6, G7 och G8 (12). "registered
