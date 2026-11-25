@@ -848,3 +848,16 @@ Johannes svarade "kör på dina rekommendationer" på tre rekommendationer samma
   stickproven på extraktionen för Amazon, Alphabet och Meta är R2 (5 av 5 för Amazon). R5 kontrollerade bara att
   planerna för nästa år var fullständiga. Hänvisningen "R2: 5 av 5 stickprov rätt, R5" i posten ovan ska läsas så.
   `docs/kallor/guidance.md` är rättad.
+
+## 2026-11-25 – Tokenekonomi och personligt värde (Johannes)
+
+- Projektet byggs i första hand för Johannes. Tokens ska gå till det han läser och använder (`docs/riktning.md`,
+  avsnitt 10). Johannes sa ja till båda rekommendationerna.
+- **Granskning efter hur mycket han förlitar sig på resultatet.** Full oberoende granskning bara för kärnserier,
+  tillståndsregeln, prognoser och extraktioner han agerar på. Katalogserier får spårets egna kontroller och datatester.
+  Kraven i CLAUDE.md på stickprov och på en granskning per positivt resultat står kvar. Färre och större spår, 4–5 per
+  körning.
+- **Personligt läslager:** först "mina lager" på sidan, valt i webbläsaren och sparat bara lokalt, så att inga innehav
+  hamnar i repot. Sedan en privat byggning som också visar inhållna serier och aldrig publiceras.
+- Användningen loggas i "Värde för Johannes" i `docs/agentkalibrering.md`. Nästa körning efter 14 bygger läsprodukten,
+  en lagervy med vad som ändrades per månad, i stället för fler serier.

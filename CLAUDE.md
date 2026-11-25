@@ -47,6 +47,10 @@ Förklara inte det.
 - Bedöm arbete i agentlinsen: parallella spår, inte människotimmar. Enheten är ett **agentspår**, en
   avgränsad leverans med tester i egen worktree. Kostnad per spår står i
   [`docs/agentkalibrering.md`](docs/agentkalibrering.md).
+- **Värde för Johannes först** ([`docs/riktning.md`](docs/riktning.md), avsnitt 10): pröva varje spår mot
+  värdefiltret (läser han det inom en månad, är det ledande, vad kostar det per kvartal). Full oberoende granskning
+  för kärnserier, tillståndsregeln, prognoser och extraktioner han agerar på. Katalogserier får spårets egna
+  kontroller och datatester. Färre och större spår (4–5 per körning).
 - De verkliga flaskhalsarna är statistisk budget, datatillgång och licenser (BLOCKED), verifiering
   (ett granskningsspår per positivt resultat) och kalendertid (kvartalsutfall).
 - Agenten får committa, merga och pusha till `main` när pytest är grönt på det sammanslagna resultatet och

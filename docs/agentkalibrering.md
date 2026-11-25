@@ -106,3 +106,10 @@ En rad per spår, fylls på efter varje körning. Tumreglerna justeras när siff
   utan att något arbete gick förlorat. Med webbspår är 3–4 samtidiga spår per 5-timmarsfönster rimligt.
 - Basvägsfelet (`/next` i stället för `/<repo>/next` på en projektsida) syntes inte i några lokala tester. Testa en gång
   mot den publicerade adressen efter första publiceringen.
+
+## Värde för Johannes (från 2026-11-25)
+
+Fylls i ungefär en månad efter leverans (`docs/riktning.md`, avsnitt 10). Det som inte används byggs inte vidare.
+
+| Leverans | Levererad | Används (ja/nej/delvis) | Vad det betydde | Löpande kostnad (CI/tokens per kvartal) |
+|---|---|---|---|---|
