@@ -18,8 +18,8 @@ grenens takt de närmaste 3 och 6 månaderna? Testet ändrar ingen skarp regel.
 
 1. **Revideringar (a).** Med v2 har 91 % av grenmånaderna samma tillstånd med dagens data. Kappa är 0,83 och det
    finns inga hårda byten (accelererar mot bromsar in). Det klarar den registrerade nivån (kappa ≥ 0,70, hårda byten
-   ≤ 2 %). Men G6 och G7 byter tillstånd i 6 respektive 8 av 34 månader, och bara 33 % av de räknade serierna har
-   reviderade värden alls. För resten är stabiliteten given av konstruktion, inte prövad.
+   ≤ 2 %). Men G6 och G7 byter tillstånd i 6 respektive 8 av 34 månader, och bara 33 % av de räknade serierna (räknat per
+   månad) har reviderade värden alls. För resten är stabiliteten given av konstruktion, inte prövad.
 2. **Information (b).** Tillstånden träffar i 74 % (3 månader) och 76 % (6 månader) av fallen. Slumpen ger 68 % och
    71 %, eftersom takten oftast gick upp i fönstret. Att den senaste riktningen fortsätter (persistens) ger 70 % och
    76 %. Holm-p är 0,37 för båda horisonterna. **Informationsvärdet är inte påvisat.** Testet kan bara upptäcka

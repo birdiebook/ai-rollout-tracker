@@ -784,7 +784,7 @@ republishing data"), npm och arXiv (`okänd`), och Microsofts capex-guidance ur 
   `docs/resultat/t1_tillstandsregeln.md`). Ingen skarp regel ändras, och ögonblicksbilden 2026-11-30 påverkas inte.
 - **Revideringar (a):** med v2 har 91 % av grenmånaderna samma tillstånd med dagens data, kappa 0,83 och inga hårda
   byten. Det klarar den registrerade nivån. G6 (Fed G.17) och G7 (EIA:s elförsäljning) byter i 6 och 8 av 34 månader.
-  Bara 33 % av de räknade serierna har reviderade värden alls, så resten är inte prövat.
+  Bara 33 % av de räknade serierna (räknat per månad) har reviderade värden alls, så resten är inte prövat.
 - **Information (b):** tillstånden träffar 0,74 (3 månader) och 0,76 (6 månader), mot slumpen 0,68 och 0,71 och
   persistensen 0,70 och 0,76. Holm-p 0,37. Inte avgjort. MDE var 0,28 och 0,44, alltså låg styrka, som sades före
   testet. Bromsar in träffade 1 av 6 och 1 av 4.

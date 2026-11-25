@@ -525,8 +525,8 @@ def markdown(res: dict) -> str:
     for rule in RULES:
         a = res["a"][rule][REGISTERED]
         L += [f"#### (a) {rule}: realtid mot dagens data", "",
-              "| Gren | Månader i S | Samma tillstånd | Kappa | Hårda byten | Ändrade | Medel abs. indexskillnad | "
-              "Räknade serier med reviderade värden |", "|---|---|---|---|---|---|---|---|"]
+              ("| Gren | Månader i S | Samma tillstånd | Kappa | Hårda byten | Ändrade | Medel abs. indexskillnad | "
+               "Räknade serier med reviderade värden |"), "|---|---|---|---|---|---|---|---|"]
         for code in [*br, "Alla"]:
             s = a["pooled"] if code == "Alla" else a["branches"][code]
             if code != "Alla" and s["n"] == 0:
@@ -538,16 +538,16 @@ def markdown(res: dict) -> str:
         L.append("")
     for rule in RULES:
         L += [f"#### (b) {rule}: tillståndet vid m mot riktningen i takt till m + h", "",
-              "| h | Prediktioner (acc./broms.) | Träffar | Träffkvot | Slumpnivå | Persistens samma månader | "
-              "p | Holm-p | p_ned (Holm) |", "|---|---|---|---|---|---|---|---|---|"]
+              ("| h | Prediktioner (acc./broms.) | Träffar | Träffkvot | Slumpnivå | Persistens samma månader | "
+               "p | Holm-p | p_ned (Holm) |"), "|---|---|---|---|---|---|---|---|---|"]
         for h in HORIZONS:
             t = res["b"][rule][REGISTERED][h]
             L.append(f"| {h} | {t['n']} ({t['n_accel']}/{t['n_brake']}) | {t['hits']} (acc. {t['hits_accel']}, "
                      f"broms. {t['hits_brake']}) | {_f(t['H'])} | {_f(t['chance'])} | {_f(t['persistence_same'])} | "
                      f"{_f(t['p'], 3)} | {_f(t['p_holm'], 3)} | {_f(t['p_low_holm'], 3)} |")
         L += ["", f"Per gren ({rule}):", "",
-              "| Gren | h | Prediktioner | Träffkvot | Acc.: träffar/antal | Broms.: träffar/antal | "
-              "Persistens samma månader | Andel upp i utfallen | Månader med utfall |",
+              ("| Gren | h | Prediktioner | Träffkvot | Acc.: träffar/antal | Broms.: träffar/antal | "
+               "Persistens samma månader | Andel upp i utfallen | Månader med utfall |"),
               "|---|---|---|---|---|---|---|---|---|"]
         for code in br:
             for h in HORIZONS:
@@ -559,8 +559,8 @@ def markdown(res: dict) -> str:
                          f"{v['n_outcomes']} av {v['months']} |")
         L.append("")
     L += ["#### (c) Andel månader per tillstånd (realtid, 2024-01–2026-10)", "",
-          "| Gren | v2 acc. | v2 stabil | v2 broms. | v2 för få källor | Familjer (medel) | v1 acc. | v1 stabil | "
-          "v1 broms. | v1 för få serier | Serier (medel) |", "|---|---|---|---|---|---|---|---|---|---|---|"]
+          ("| Gren | v2 acc. | v2 stabil | v2 broms. | v2 för få källor | Familjer (medel) | v1 acc. | v1 stabil | "
+           "v1 broms. | v1 för få serier | Serier (medel) |"), "|---|---|---|---|---|---|---|---|---|---|---|"]
     s2, s1 = res["c"]["shares"]["v2"][REGISTERED], res["c"]["shares"]["v1"][REGISTERED]
     for code in [*br, "alla"]:
         x, y = s2[code], s1[code]
@@ -568,8 +568,8 @@ def markdown(res: dict) -> str:
                  f"{_pct(x[R.STATE_BRAKE])} | {_pct(x[FEW])} | {_f(x['mean_families'], 1)} | {_pct(y[R.STATE_ACCEL])} | "
                  f"{_pct(y[R.STATE_STABLE])} | {_pct(y[R.STATE_BRAKE])} | {_pct(y[FEW])} | {_f(y['mean_series'], 1)} |")
     L += ["", "#### (c) Andra trösklar (beskrivning, inga p-värden)", "",
-          "| Regel | Trösklar | Acc. | Stabil | Broms. | Samma som 0,67/0,33 | (a) kappa | (a) hårda byten | "
-          "(b) h = 3: träffkvot (slump) | (b) h = 6: träffkvot (slump) |", "|---|---|---|---|---|---|---|---|---|---|"]
+          ("| Regel | Trösklar | Acc. | Stabil | Broms. | Samma som 0,67/0,33 | (a) kappa | (a) hårda byten | "
+           "(b) h = 3: träffkvot (slump) | (b) h = 6: träffkvot (slump) |"), "|---|---|---|---|---|---|---|---|---|---|"]
     for rule in RULES:
         for thr in THRESHOLDS:
             x = res["c"]["shares"][rule][thr]["alla"]
