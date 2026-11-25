@@ -778,6 +778,22 @@ republishing data"), npm och arXiv (`okänd`), och Microsofts capex-guidance ur 
 - Loggarna och registret har båda sidornas poster i tidsordning. `quarterly.py` har mains omskrivning med "för få
   källor" i tillståndsordningen.
 
+## 2026-11-25 – S1: nät, optik och servrar ur SEC XBRL
+
+- 42 katalogserier i G6 för lagren mellan chip och datacenter: Arista, Cisco, Coherent, Lumentum, Super Micro, Dell,
+  HPE och Celestica (totala intäkter, lager, segment- och produktrader, inköpsåtaganden, Aristas kontraktsskulder och
+  RPO). Inte kärnserier. Förregistrerat före hämtningen. Källa och kontroller: `docs/kallor/sec_stack_nat.md`.
+- **Omfattningsbrott i totala intäkter.** Dell (VMware) och HPE (Enterprise Services och mjukvara) räknade om tidigare
+  år när verksamheter blev avvecklade, och versionsregeln blandade då omfattningar i den senaste versionen. `rev_dell`
+  börjar därför 2021Q1 och `rev_hpe` 2017Q1 (tillägg i registret). Segmentserierna påverkas inte.
+- **Dells AI-rad** (`rev_dell_ai_servers`, från 10-K 2026-03-16) är den enda raden som ett bolag självt kallar AI. Den
+  har bara två kvartal nu och växer till sex när 10-Q i december 2026 ger nio månader för FY2026.
+- **Två taggningsfel rättade i koden:** Aristas RPO i tre 10-Q 2025 har en kontext ett år för tidigt (omdateras), och
+  HPE:s Server delas vid omorganisationen 2026-03-10 trots att kontrollen slår till först 2026-06-02.
+- **Rekommendation till Johannes:** låt serierna vara katalogserier tills de har granskats. Om G6 ska få en
+  kärnserie för nät eller servrar är `rev_csco_networking` eller `rev_dell_isg` de längsta rena kandidaterna, men båda
+  innehåller mycket utanför AI. Ingen av dem ska in före ögonblicksbilden 2026-11-30.
+
 ## 2026-11-25 – Ägarbeslut: spärrregeln, capex-guidance från sec.gov och nettobidraget för datorer
 
 Johannes svarade "kör på dina rekommendationer" på tre rekommendationer samma dag (spår `auto14k/agarbeslut`).
@@ -825,6 +841,21 @@ Johannes svarade "kör på dina rekommendationer" på tre rekommendationer samma
 - **Kvar:** `docs/datakallor/licensniva.md`:s genererade tabeller är från före beslutet. Två serier har bytt från
   `okänd` till `ja`, och en serie har tillkommit. Kör om rapporten vid nästa integration.
 
+## 2026-11-25 – R17: granskning av S1 (nät, optik och servrar)
+
+- **Godkänd med anmärkningar** (`docs/granskning/r17-nat-servrar.md`). Ombygget är identiskt (42 serier, 1 327 rader),
+  alla `known_from` är inlämningsdatum, 85 Q4-rader stämmer med helår − 9M, och 12 bolagskvartal i alla åtta bolag
+  kontrollerades mot huvuddokumenten. Registerposten kom före hämtningen, och tillägget efter första bygget är inte
+  styrt av seriernas förlopp.
+- **Fel (R17-1):** `deferred_rev_anet` 2018Q3 är 221,9 i stället för 529,9. I 10-Q 2018-11-05 är den taggade
+  kortfristiga kontraktsskulden en annan post (10,9 i övriga skulder).
+- **Fel (R17-2):** första versionen av `rev_dell_isg` 2021Q4 (9 595) är helår på ny bas minus 9M på gammal bas. Rätt
+  värde på samma bas är 9 219. Samma sak för `rev_dell_servers_networking` (4 797 mot 4 720). Versionen stod i ett år.
+- Fyra anmärkningar om dokumentationen: 2017Q4 i `deferred_rev_anet` är ASC 605, EMC-fusionen saknas för Dells ISG,
+  det är inte visat att Aristas åtaganden 2016–2017 har samma definition, och HPE:s RPO är förutbetalda intäkter.
+- **Rekommendation:** rätta R17-1 och R17-2 med en daterad registerpost före eller vid mergen. `rev_dell_isg` är inte
+  en ren kandidat från 2015, utan från 2017Q1 (38 kvartal). Ingen serie ska bli kärnserie före 2026-11-30.
+
 ## 2026-11-25 – Rättning efter granskning R25 (spår `auto14k/x22-agarbeslut`)
 
 - **R25-1: överraskningsindexet.** `f1_surprise_index` och `f1_surprise_index_n` listar nu bara Metas och Alphabets
@@ -848,6 +879,23 @@ Johannes svarade "kör på dina rekommendationer" på tre rekommendationer samma
   stickproven på extraktionen för Amazon, Alphabet och Meta är R2 (5 av 5 för Amazon). R5 kontrollerade bara att
   planerna för nästa år var fullständiga. Hänvisningen "R2: 5 av 5 stickprov rätt, R5" i posten ovan ska läsas så.
   `docs/kallor/guidance.md` är rättad.
+
+## 2026-11-25 – X14: rättning av S1 efter R17
+
+- **R17-1 och R17-3 rättade.** `deferred_rev_anet` tar balansräkningens rader i Aristas 10-Q under 2018 (2018Q3 529,9 i
+  stället för 221,9) och börjar 2018Q1, den första ASC 606-balansen vid ett kvartalsslut. 2017Q4 (ASC 605) utgår.
+- **R17-2 rättat med en smalare regel än granskningens.** I segment- och produktraderna används inte Q4 = helår − 9M
+  när 10-K:t räknar om tidigare värden och 9M:s egen inlämning inte gjorde det. Då väntar kvartalet på nästa 10-K.
+  `rev_dell_isg` och `rev_dell_servers_networking` 2021Q4 har bara 9 219 och 4 720, kända från 2023-03-30. Villkoret
+  om 9M:s inlämning finns för att granskningens förslag också hade hållit tillbaka fem Q4-rader där 10-Q:na redan låg
+  på den nya basen. Tre av dem hade försvunnit för gott, och `rev_csco_infra_platforms` hade kortats till tre
+  kvartal. `sec.vintages` fick en valfri kontroll, så andra serier är oförändrade.
+- **Noterna rättade** (R17-4 till R17-6): EMC i Dells ISG, ordalydelsen för Aristas åtaganden 2016–2017 och att HPE:s RPO
+  är förutbetalda intäkter. Rekommendationen i S1:s post ovan gäller med en ändring: `rev_dell_isg` är jämförbar över
+  tid från 2017Q1 (38 kvartal), inte från 2015.
+- Effekt på datat: 1 324 rader i stället för 1 327, och fyra rader ändrade eller borttagna. Alla 42 serier byggdes om i
+  spårets `data/`. Den tabellen ska mergas i stället för S1:s. Om S1:s redan är mergad krävs `--replace` för
+  `deferred_rev_anet`, `rev_dell_isg` och `rev_dell_servers_networking`.
 
 ## 2026-11-25 – Tokenekonomi och personligt värde (Johannes)
 

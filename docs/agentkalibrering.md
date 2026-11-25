@@ -69,12 +69,15 @@ En rad per spår, fylls på efter varje körning. Tumreglerna justeras när siff
 | 2026-11-25 | 14 | RW1-X rättning | rättning (schema, CI, scan) | ~43 | ~132 | ~285 | backfill_fetched, commit per skarp prognos, scan-build, tidlös citering |
 | 2026-11-25 | 14 | R-W3 neutralitet | granskning | ~20 | ~98 | ~230 | speglingstest symmetriskt; 3 mallasymmetrier rättade; 4 krav före byte av huvudsida |
 | 2026-11-25 | 14 | R-W2 tillgänglighet | granskning + rättning | ~56 | ~116 | ~270 | axe 0 i 54 körningar; 4 tangentbordsfel rättade; LCP 0,8 s; TBT kvar (P1) |
+| 2026-11-25 | 14 | S1 nät, optik och servrar | bygge (SEC XBRL, 8 bolag) | ~50 + tester | ~95 | – | 42 serier, 1 327 rader; register före hämtning; 2 taggningsfel och omfattningsbrott hittade; 11 handkontroller |
 | 2026-11-25 | 14 | WX2 rättning | webbrättning (R-W2/R-W3) | ~115 | ~280 | – | TBT 142–256 ms, uppskjutna tabeller, pilar dolda för skärmläsare |
 | 2026-11-25 | 14 | W14 kvartalsrapport | webbspår | ~48 | ~152 | – | report/ i paketet (1.3), /kvartal/[kvartal] |
 | 2026-11-25 | 15 | WV2 webb till index v2 | webbspår | ~80 | ~210 | ~420 | för få källor, metodmotor v2, tio avstämningar, förväntningar (paket 1.5.0), DOM 3893 → 2763 |
 | 2026-11-25 | 14 | Ägarbeslut (spärrregeln, R11-4, BB01RY) | tre ägarbeslut: publiceringsregel, uppdelad spärr, ny serie (förregistrerad) | ~45 | ~100 | – | guid_capex för GOOGL/META/AMZN publicerade via klassregeln, MSFT inhållen; 2 F1-överraskningar avgränsade med bevistest; spärr per bolag i ögonblicksbilden; BB01RY (493 rader, 24 kvartal för hand, 194 mot flatfil, bara avsnitt 1 omhämtat); 14 nya tester |
 | 2026-11-25 | 14 | R25 granskning av ägarbesluten | granskning (publika utdata, licensgrind, primärkälla BEA) | ~75 | ~95 | – | GODKÄND MED ANMÄRKNINGAR: inga Microsoft-siffror i ögonblicksbilder (2026-10, 2026-11), paket, gamla sidan och två månadsbrev; 21 kvartal BB01RY i tre andra releaser för hand; R25-1 och R25-2 (bör, strikt xfail), 4 noter; 7 tester |
+| 2026-11-25 | 14 | R17 granskning av S1 | granskning mot primärkälla (13 huvuddokument, ombygge offline) | ~90 | ~95 | – | 12 handkontroller i 8 bolag, 85 Q4-rader med egen kod, 2 must_fix (fel post 2018Q3, Q4 över basbyte), 4 should_fix, 23 tester varav 6 strikt xfail |
 | 2026-11-25 | 14 | X22 rättning efter R25 | rättning (katalog, notering, brev, dokument) | ~40 | ~60 | – | R25-1 och R25-2 rättade (3 strikta xfail nu vanliga tester), R25-3–R25-5 också; indexet inhållet med skäl (`Spec.withheld_reason`), definitionsbyte i not och brev; torrkörning brev 2026-10 och paket; 5 nya tester |
+| 2026-11-25 | 14 | X14 rättning av S1 efter R17 | rättning (kod, register, noter, ombygge) | ~45 + 13 tester | ~100 | – | 2 must_fix och 4 should_fix rättade, 6 strikta xfail passerar; smalare Q4-regel än förslaget (5 rader räddade); 42 serier ombyggda, 1 324 rader (4 ändrade) |
 
 ## Körning 1, sammanfattning (2026-11-23, orkestrerare)
 

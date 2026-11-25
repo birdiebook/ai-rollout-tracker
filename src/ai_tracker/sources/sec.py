@@ -27,6 +27,7 @@ about one month (see docs/kallor/sec.md).
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from functools import lru_cache
 
@@ -89,7 +90,12 @@ def _is_quarter(start: pd.Timestamp, end: pd.Timestamp) -> bool:
     return QUARTER_DAYS[0] <= days <= QUARTER_DAYS[1]
 
 
-def _difference(cur: list[Fact], base: list[Fact]) -> tuple[float, pd.Timestamp]:
+# Optional check of a (closing fact, base fact) pair before it is differenced; False drops the quarter at that cutoff.
+BasisCheck = Callable[[Fact, Fact], bool]
+
+
+def _difference(cur: list[Fact], base: list[Fact],
+                basis_ok: BasisCheck | None = None) -> tuple[float, pd.Timestamp] | None:
     """C(e_k) - C(e_{k-1}) from version lists (sorted by rank): (value, latest input filed).
 
     The latest version of the closing fact is used, with the base version that was on file when it was
@@ -98,6 +104,9 @@ def _difference(cur: list[Fact], base: list[Fact]) -> tuple[float, pd.Timestamp]
     (Meta restated full-year 2015 cash flows, never the 9M): the previous version is used, so a
     whole-year restatement is not dumped into one quarter. A restatement that truly hits only the last
     quarter is then missed; that is the conservative side.
+
+    `basis_ok(closing, base)` (default: none) can reject the pair, e.g. a full year on a new basis with a 9M on the old
+    one (series/sec_stack_nat.py, review R17); the quarter then has no value at this cutoff (None).
     """
     restated = [b.filed for k, b in enumerate(base) if k and abs(b.val - base[k - 1].val) > TOL]
     c = cur[0]
@@ -106,10 +115,13 @@ def _difference(cur: list[Fact], base: list[Fact]) -> tuple[float, pd.Timestamp]
             c = this
     on_file = [b for b in base if b.filed <= c.filed]
     b = on_file[-1] if on_file else base[0]
+    if basis_ok is not None and not basis_ok(c, b):
+        return None
     return c.val - b.val, max(c.filed, b.filed)
 
 
-def _quarters(sources: list[list[Fact]], cutoff: pd.Timestamp | None) -> dict[pd.Timestamp, Quarter]:
+def _quarters(sources: list[list[Fact]], cutoff: pd.Timestamp | None,
+              basis_ok: BasisCheck | None = None) -> dict[pd.Timestamp, Quarter]:
     versions: dict[tuple, list[Fact]] = {}
     for fs in sources:
         own: dict[tuple, list[Fact]] = {}
@@ -133,17 +145,20 @@ def _quarters(sources: list[list[Fact]], cutoff: pd.Timestamp | None) -> dict[pd
             if _is_quarter(q_start, end):
                 if prev is None:
                     c = versions[(start, end)][-1]
-                    value, filed = c.val, c.filed
+                    got = (c.val, c.filed)
                 else:
-                    value, filed = _difference(versions[(start, end)], versions[(start, prev)])
-                cand = (prev is None, filed, Quarter(value, q_start, end, filed))
-                if end not in best or cand[:2] > best[end][:2]:
-                    best[end] = cand
+                    got = _difference(versions[(start, end)], versions[(start, prev)], basis_ok)
+                if got is not None:
+                    value, filed = got
+                    cand = (prev is None, filed, Quarter(value, q_start, end, filed))
+                    if end not in best or cand[:2] > best[end][:2]:
+                        best[end] = cand
             prev = end
     return {e: c[2] for e, c in best.items()}
 
 
-def quarters_at(sources: list[list[Fact]], cutoff: pd.Timestamp | None = None) -> dict[pd.Timestamp, Quarter]:
+def quarters_at(sources: list[list[Fact]], cutoff: pd.Timestamp | None = None,
+                basis_ok: BasisCheck | None = None) -> dict[pd.Timestamp, Quarter]:
     """Fiscal-quarter values known at `cutoff` (facts filed later are ignored), keyed by quarter end.
 
     Within a `start` group of facts, consecutive end dates about one quarter apart give quarter k =
@@ -154,14 +169,14 @@ def quarters_at(sources: list[list[Fact]], cutoff: pd.Timestamp | None = None) -
     compute it on its own. Only quarters no single tag can compute are taken from all tags together
     (spliced per fact period), e.g. Nvidia FY2019 Q4 = full year under the new revenue tag minus 9M
     under the old one. Per-tag first keeps a restated full year under a new tag from being differenced
-    against an old-basis 9M under the old tag (Microsoft FY2016 revenue, ASC 606).
+    against an old-basis 9M under the old tag (Microsoft FY2016 revenue, ASC 606). `basis_ok`: see _difference.
     """
     out: dict[pd.Timestamp, Quarter] = {}
     for fs in sources:
-        for end, q in _quarters([fs], cutoff).items():
+        for end, q in _quarters([fs], cutoff, basis_ok).items():
             out.setdefault(end, q)
     if len(sources) > 1:
-        for end, q in _quarters(sources, cutoff).items():
+        for end, q in _quarters(sources, cutoff, basis_ok).items():
             out.setdefault(end, q)
     return out
 
@@ -171,21 +186,21 @@ def calendar_quarter(start: pd.Timestamp, end: pd.Timestamp) -> pd.Period:
     return (start + (end - start) / 2).to_period("Q-DEC")
 
 
-def vintages(sources: list[list[Fact]], scale: float = 1e-6) -> pd.DataFrame:
+def vintages(sources: list[list[Fact]], scale: float = 1e-6, basis_ok: BasisCheck | None = None) -> pd.DataFrame:
     """Release-dated quarterly rows from one or more tags (priority list, see quarters_at).
 
     For every filing date d, quarters are computed from facts filed <= d and a row is emitted when a
     calendar quarter's value is new or changed by more than TOL (smaller changes are rounding). If two
     fiscal quarter ends fall in one calendar quarter (an end date tagged one day off), the one with the
     latest inputs wins. Returns columns period (calendar quarter, str), value (USD * scale),
-    known_from and fiscal_end, sorted by known_from.
+    known_from and fiscal_end, sorted by known_from. `basis_ok`: see _difference (default: every pair is used).
     """
     cutoffs = sorted({f.filed for fs in sources for f in fs})
     last: dict[str, float] = {}
     rows = []
     for d in cutoffs:
         by_period: dict[str, Quarter] = {}
-        for q in quarters_at(sources, d).values():
+        for q in quarters_at(sources, d, basis_ok).values():
             p = str(calendar_quarter(q.start, q.end))
             if p not in by_period or (q.filed, q.end) > (by_period[p].filed, by_period[p].end):
                 by_period[p] = q
