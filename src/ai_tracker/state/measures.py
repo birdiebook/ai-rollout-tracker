@@ -320,7 +320,7 @@ def measure_path(key: str, when, ctx: Context) -> tuple[dict, pd.DataFrame | Non
     else:
         if method == "log":
             y = 100.0 * np.log(x.where(x > 0))
-            out["pace_unit"] = "log x100 per år"
+            out["pace_unit"] = "log ×100 per år"
         elif method == "share":
             fraction = bool(re.search(r"0\s*[-–]\s*1\b", ctx.specs[key].unit)) if key in ctx.specs else False
             y = 100.0 * x if fraction else x  # a 0-1 share in percentage points

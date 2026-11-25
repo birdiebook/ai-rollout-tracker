@@ -276,3 +276,101 @@ def test_no_withheld_key_in_any_story(tmp_path):
 def test_a_quiet_fixture_month_exists(month):
     d = load(f"story/{month}.json")
     assert [c["type"] for c in d["cards"]] == ["K0", "K9"]
+
+
+# ------------------------------------------------------------------ R-W3a-c (register: "Ändring av W13 (R-W3a–c)")
+
+
+def test_the_amendment_is_in_the_register_after_the_rule():
+    text = REGISTER.read_text(encoding="utf-8")
+    i = text.index("### " + ST.ENTRY)
+    j = text.index("Ändring av W13 (R-W3a–c)")
+    assert j > i
+    amend = text[j:]
+    for needle in ("R-W3a", "R-W3b", "R-W3c", "N/10", "dubblett"):
+        assert needle in amend, needle
+
+
+def test_same_quantity_matches_the_a5_table():
+    """SAME_QUANTITY is exactly the A5 rows defined as an existing core series ("befintlig `<key>`")."""
+    text = REGISTER.read_text(encoding="utf-8")
+    a5 = text[text.index("A5: avstämningar mellan leden"):]
+    a5 = a5[:a5.index("\n### ")]
+    rows = dict(re.findall(r"^\| `(x_\w+)` \| befintlig `(\w+)` \|", a5, flags=re.M))
+    assert rows == ST.SAME_QUANTITY
+
+
+def dup_world(p_core=98.0, p_recon=99.0, core_shown=True, others=0):
+    core = [measure("capex_ocf_hyp4", p_core, direction=1)]
+    core += [measure(f"s{i}", 99.5 - i * 0.1, direction=1) for i in range(others)]
+    cur = {"G1": branch("stabil", 0.5, core)}
+    prev = {"G1": branch("stabil", 0.5, [measure(m["series"], 50.0) for m in core])}
+    recon = [measure("x_capex_ocf", p_pace=p_recon), measure("x_other", p_pace=1.0)]
+    prev_recon = [measure("x_capex_ocf", p_pace=50.0), measure("x_other", p_pace=50.0)]
+    return inp(branches=cur, prev_branches=prev, recon=recon, prev_recon=prev_recon)
+
+
+def test_r_w3a_a_reconciliation_that_is_a_shown_k5_series_gets_no_card():
+    doc = sel(dup_world())
+    ids = [c["id"] for c in events(doc)]
+    assert "k5-capex_ocf_hyp4" in ids and "k6-x_capex_ocf" not in ids and "k6-x_other" in ids
+    assert doc["duplicates"]["K6"] == 1 and doc["omitted"]["K6"] == 0 and doc["qualified"]["K6"] == 2
+    k5 = next(c for c in events(doc) if c["id"] == "k5-capex_ocf_hyp4")
+    assert "Samma storhet är avstämningen Etikett x_capex_ocf" in k5["text"]
+    assert k5["facts"]["same_quantity"] == {"series": "x_capex_ocf", "label": "Etikett x_capex_ocf",
+                                            "percentile": 99.0, "zone": "övre"}
+    # no direction is read: the mirrored world drops the same card
+    mirrored = sel(dup_world(p_core=2.0, p_recon=1.0))
+    assert [c["id"] for c in events(mirrored)] == ids and mirrored["duplicates"]["K6"] == 1
+
+
+def test_r_w3a_the_reconciliation_stays_when_the_core_card_is_not_shown():
+    # the core series is struck by K5's cap (three series further from 50 come first)
+    doc = sel(dup_world(p_core=96.0, others=3))
+    ids = [c["id"] for c in events(doc)]
+    assert "k5-capex_ocf_hyp4" not in ids and "k6-x_capex_ocf" in ids and doc["duplicates"]["K6"] == 0
+    # the core series is not in a zone: no K5 card, the K6 card stays
+    doc = sel(dup_world(p_core=60.0))
+    assert "k6-x_capex_ocf" in [c["id"] for c in events(doc)] and doc["duplicates"]["K6"] == 0
+
+
+def test_r_w3b_chance_level():
+    doc = sel(dup_world(others=3))
+    assert doc["chance"]["K5"] == {"n": 4, "expected": 0.4, "met": 4}
+    assert doc["chance"]["K6"] == {"n": 2, "expected": 0.2, "met": 2}
+    withheld = sel(dup_world(others=3), withheld=("s0",))
+    assert withheld["chance"]["K5"] == {"n": 4, "expected": 0.4, "met": 4}  # withheld ones count, unnamed
+    assert sel(inp(previous=None, prev_branches=None, prev_recon=None))["chance"] is None
+
+
+def test_r_w3c_struck_cards_are_listed_with_name_and_direction_in_the_rules_order():
+    s = [measure(f"s{i}", 96.0 + i * 0.5 if i % 2 else 4.0 - i * 0.5, direction=1 if i % 2 else -1) for i in range(6)]
+    doc = sel(inp(branches={"G1": branch("stabil", 0.5, s)}, prev_branches={"G1": branch("stabil", 0.5)}))
+    shown = [c["id"] for c in events(doc)]
+    struck = doc["omitted_cards"]
+    assert len(struck) == doc["omitted"]["K5"] == 3
+    assert {c["id"] for c in struck}.isdisjoint(shown)
+    assert all(c["type"] == "K5" and c["label"].endswith("(G1)") and c["direction"] in (1, -1) for c in struck)
+    dist = {c["facts"]["series"]: abs(c["facts"]["percentile"] - 50) for c in events(doc)}
+    assert min(dist.values()) >= max(abs((96.0 + i * 0.5 if i % 2 else 4.0 - i * 0.5) - 50)
+                                     for i in range(6) if f"k5-s{i}" in {c["id"] for c in struck})
+    # the total cap: K5 cards struck after K1 filled the cap are listed too, after the struck K1 card
+    cur = {f"G{i}": branch("accelererar", 0.8, s if i == 1 else ()) for i in range(1, 10)}
+    prev = {f"G{i}": branch("stabil", 0.5) for i in range(1, 10)}
+    doc = sel(inp(branches=cur, prev_branches=prev))
+    types = [c["type"] for c in doc["omitted_cards"]]
+    assert types == ["K1"] + ["K5"] * 6 and sum(doc["omitted"].values()) == len(types)
+    assert doc["omitted_cards"][0]["label"] == f"G9 {catalog.BRANCHES['G9']}"
+
+
+def test_no_internal_codes_in_reader_texts():
+    regime = {"blocks": [{"block": "capex", "label": "capex", "shift": "expansion", "p_slow": 0.1}],
+              "breaks": [{"series": "s", "branch": "G1", "latest_period": "2026-09", "p_recent": 0.9}]}
+    doc = sel(dup_world(p_core=60.0) | {"regime": regime})
+    for t in ST.texts(doc):
+        assert not re.search(r"\((A5|G-D, C4|BOCPD, G-D)\)|\bC4\b|\bG-D\b", t), t
+    k5 = sel(dup_world())
+    first = next(c for c in events(k5) if c["type"] == "K5")["text"]
+    assert first.startswith("Förändringen i takt är högre än i 98 % av seriens egen historik.")
+    low = next(c for c in events(sel(dup_world(p_core=1.6))) if c["type"] == "K5")["text"]
+    assert low.startswith("Förändringen i takt är lägre än i 98 % av seriens egen historik.")

@@ -28,6 +28,10 @@ HIGH, LOW = 95.0, 5.0  # extreme percentile zones (K5, K6): >= HIGH or <= LOW
 ZONE_BOUND = {"övre": "≥ 95", "nedre": "≤ 5"}  # a card names only its own zone's bound (R-W3)
 CAP = 8  # event cards (K1-K6) per month
 TYPE_CAPS = {"K4": 3, "K5": 3, "K6": 2}
+# R-W3a: a reconciliation that A5 defines as an existing core series ("befintlig `<key>`" in the register's table)
+# is the same quantity; it gets no K6 card of its own when that core series has a shown K5 card the same month.
+SAME_QUANTITY = {"x_capex_ocf": "capex_ocf_hyp4"}
+CHANCE_SHARE = 0.10  # R-W3b: share of uniformly distributed percentiles in the zones (<= 5 or >= 95)
 EVENT_TYPES = ("K1", "K2", "K3", "K4", "K5", "K6")
 TYPE_LABEL = {
     "K0": "Läget",
@@ -41,9 +45,9 @@ TYPE_LABEL = {
 }
 CONDITION_TEXT = {
     "K1": "tillståndsskifte i en gren",
-    "K2": "regimskifte enligt C4",
+    "K2": "regimskifte enligt regimmodellen",
     "K3": "nytt skarpt utfall",
-    "K4": "strukturbrott enligt C4",
+    "K4": "strukturbrott enligt regimmodellen",
     "K5": "räknad kärnserie i extrem percentil för förändring i takt (≤ 5 eller ≥ 95)",
     "K6": "avstämning i extrem percentil för takt (≤ 5 eller ≥ 95)",
 }
@@ -130,6 +134,7 @@ def texts(doc: dict) -> list[str]:
     out = [doc.get("headline") or ""]
     for c in doc.get("cards", []):
         out += [c.get("title") or "", c.get("text") or "", (c.get("link") or {}).get("label") or ""]
+    out += [c.get("label") or "" for c in doc.get("omitted_cards") or []]
     return out
 
 
@@ -249,7 +254,8 @@ def select(inp: dict, publishable: Callable[[str], bool], label: Callable[[str],
                      if shift == "inbromsning" else
                      "Ett skifte till expansion rapporteras när P(inbromsning) är högst 0,2 två månader i rad")
         card = {"type": "K2", "id": f"k2-{b.get('block')}", "title": f"Regimskifte i blocket {b.get('label')}: {shift}",
-                "text": f"P(inbromsning) är {num(p, 2)} i {month_sv(month)}. {rule_text} (G-D, C4).",
+                "text": (f"Regimmodellens sannolikhet för en period med lägre takt, P(inbromsning), är {num(p, 2)} i "
+                         f"{month_sv(month)}. {rule_text}."),
                 "direction": SHIFT_DIRECTION.get(shift), "link": _link("regime", "Till regimsidan"),
                 "facts": {"block": b.get("block"), "label": b.get("label"), "shift": shift, "p_slow": _r(p, 3)},
                 "track": None}
@@ -261,7 +267,8 @@ def select(inp: dict, publishable: Callable[[str], bool], label: Callable[[str],
             continue
         p = x.get("p_recent")
         card = {"type": "K4", "id": f"k4-{key}", "title": f"Strukturbrott i {label(key)} ({x.get('branch')})",
-                "text": (f"C4 rapporterar ett brott i takten (BOCPD, G-D) för senaste perioden "
+                "text": (f"Regimmodellens brottsdetektor (BOCPD, som skattar sannolikheten att takten nyss bytt "
+                         f"nivå) rapporterar ett brott i takten för senaste perioden "
                          f"{period_sv(x.get('latest_period'))}. Sannolikheten för en kort körlängd (0–2 perioder) "
                          f"är {num(p, 2)}."),
                 "direction": None, "link": _link("series", "Till serien", key),
@@ -322,7 +329,8 @@ def select(inp: dict, publishable: Callable[[str], bool], label: Callable[[str],
             pp, note = _previous_note(pm, "change_percentile", z)
             d = m.get("direction")
             inv = m.get("method") in ("doubling", "halving")
-            text = (f"Takten är {pace_text(m, with_unit=True)}, och förändringen i takt är {change_text(m)}. Det är "
+            text = (f"{_plain(p, 'Förändringen i takt', 'seriens')} "
+                    f"Takten är {_pace(m)}, och förändringen i takt är {change_text(m)}. Det är "
                     f"percentil {pct(p)} av seriens egen historik, i den {z} zonen ({ZONE_BOUND[z]}). Jämförelse: "
                     f"{note}. Seriens riktning i {code}: {DIRECTION_WORD.get(d, '–')}."
                     + (" För fördubblings- och halveringstid betyder en högre percentil en längre tid." if inv else ""))
@@ -351,9 +359,11 @@ def select(inp: dict, publishable: Callable[[str], bool], label: Callable[[str],
             pp, note = _previous_note(pm, "pace_percentile", z)
             if pm is None:
                 note = "inget mått förra månaden"
-            text = (f"Takten i kvoten är {pace_text(m, with_unit=True)}. Det är percentil {pct(p)} av kvotens egen "
-                    f"historik, i den {z} zonen ({ZONE_BOUND[z]}). Jämförelse: {note}. Avstämningarna räknas inte i "
-                    f"grenarnas diffusionsindex (A5).")
+            text = (f"{_plain(p, 'Takten i kvoten', 'kvotens')} "
+                    f"Takten i kvoten är {_pace(m)}. Det är percentil {pct(p)} av kvotens egen "
+                    f"historik, i den {z} zonen ({ZONE_BOUND[z]}). Jämförelse: {note}. Avstämningar har ingen riktning "
+                    f"i grenarnas index: kortet säger bara att kvotens takt ligger {'högt' if z == 'övre' else 'lågt'} "
+                    f"i sin egen historik.")
             card = {"type": "K6", "id": f"k6-{key}", "title": f"{label(key)}: takten i percentil {pct(p)}",
                     "text": text, "direction": 1 if z == "övre" else -1,
                     "link": _link("series", "Till avstämningen", key),
@@ -365,15 +375,47 @@ def select(inp: dict, publishable: Callable[[str], bool], label: Callable[[str],
     qualified = {t: len(cand[t]) for t in EVENT_TYPES}
     events: list[dict] = []
     omitted = {t: 0 for t in EVENT_TYPES}
+    duplicates = {t: 0 for t in EVENT_TYPES}
+    struck: list[dict] = []
     for t in EVENT_TYPES:
         ordered = [c for _, c in sorted(cand[t], key=lambda kc: kc[0])]
+        if t == "K6":  # R-W3a: after K1-K5 are chosen, before K6's cap
+            shown_k5 = {c["facts"]["series"]: c for c in events if c["type"] == "K5"}
+            rest = []
+            for c in ordered:
+                k5 = shown_k5.get(SAME_QUANTITY.get(c["facts"]["series"]))
+                if k5 is None:
+                    rest.append(c)
+                    continue
+                duplicates["K6"] += 1
+                f = c["facts"]
+                k5["text"] += (f" Samma storhet är avstämningen {f['label']}: takten i kvoten är percentil "
+                               f"{pct(f['percentile'])} av sin egen historik, i den {f['zone']} zonen. Den visas inte "
+                               f"som ett eget kort.")
+                k5["facts"]["same_quantity"] = {"series": f["series"], "label": f["label"],
+                                                "percentile": f["percentile"], "zone": f["zone"]}
+            ordered = rest
         keep = ordered[:TYPE_CAPS.get(t, len(ordered))]
         omitted[t] += len(ordered) - len(keep)
+        struck += ordered[len(keep):]
         for c in keep:
             if len(events) < CAP:
                 events.append(c)
             else:
                 omitted[t] += 1
+                struck.append(c)
+    order = {t: i for i, t in enumerate(EVENT_TYPES)}
+    struck.sort(key=lambda c: order[c["type"]])  # the rule's order: by type, then the type's own order
+    omitted_cards = [{"type": c["type"], "id": c["id"], "label": _short_name(c), "direction": c["direction"]}
+                     for c in struck]
+    chance = None
+    if has_prev:  # R-W3b: how many hits chance gives, N/10 of the series tested
+        n5 = sum(1 for _, m in _counted(branches).values()
+                 if m.get("valid") and _finite(m.get("change_percentile")))
+        n6 = sum(1 for m in inp.get("recon") or [] if _finite(m.get("pace_percentile"))) \
+            if inp.get("prev_recon") is not None else 0
+        chance = {t: {"n": n, "expected": round(n * CHANCE_SHARE, 1), "met": qualified[t] + withheld[t]}
+                  for t, n in (("K5", n5), ("K6", n6))}
 
     cards = [_k0(inp, has_prev, status)]
     if not events:
@@ -395,7 +437,41 @@ def select(inp: dict, publishable: Callable[[str], bool], label: Callable[[str],
     return {"month": month, "month_sv": month_sv(month), "kind": inp["kind"], "status": status, "known": known,
             "previous": prev_month if has_prev else None, "rule": rule(), "headline": headline,
             "n_events": n_events, "types": by_type, "qualified": qualified, "omitted": omitted,
-            "withheld": withheld, "cards": cards}
+            "withheld": withheld, "duplicates": duplicates, "omitted_cards": omitted_cards, "chance": chance,
+            "cards": cards}
+
+
+def _finite(x) -> bool:
+    try:
+        return x is not None and math.isfinite(float(x))
+    except (TypeError, ValueError):
+        return False
+
+
+def _pace(m: dict) -> str:
+    """The letter's pace phrase with the unit written out ("pe" is an abbreviation the page does not explain)."""
+    return pace_text(m, with_unit=True).replace(" pe per år", " procentenheter per år")
+
+
+def _plain(p: float, what: str, whose: str) -> str:
+    """R-W3: the percentile in plain words first, symmetric for the two zones."""
+    if p >= 50:  # rounded down, so the sentence never claims more than the percentile
+        return f"{what} är högre än i {math.floor(p + 1e-9)} % av {whose} egen historik."
+    return f"{what} är lägre än i {math.floor(100 - p + 1e-9)} % av {whose} egen historik."
+
+
+def _short_name(c: dict) -> str:
+    """The name of a card in the compact list of cards struck by a cap (R-W3c)."""
+    f = c.get("facts") or {}
+    if c["type"] == "K1":
+        return f"{f.get('branch')} {f.get('name')}"
+    if c["type"] == "K2":
+        return f"blocket {f.get('label')}"
+    if c["type"] == "K3":
+        return f"{f.get('label')} {period_sv(f.get('period'))}"
+    if c["type"] in ("K4", "K5") and f.get("branch"):
+        return f"{f.get('label')} ({f.get('branch')})"
+    return str(f.get("label"))
 
 
 def _percentile_facts(key, lab, code, m, field, zone, pp, note) -> dict:
@@ -453,8 +529,7 @@ def _k9(month: str, has_prev: bool) -> dict:
     text = (f"Regelns villkor som prövades: {'; '.join(checked)}. Inget av dem uppfylldes i {month_sv(month)}, "
             "och regeln väljer inga ersättare.")
     if not has_prev:
-        text += (" Utan föregående månad kunde tillståndsskiften och extrema percentiler (K1, K5 och K6) inte "
-                 "prövas.")
+        text += " Utan föregående månad kunde tillståndsskiften och extrema percentiler inte prövas."
     return {"type": "K9", "id": "k9", "title": f"Inga utslag i {month_sv(month)}", "text": text, "direction": None,
             "link": _link("method", "Till metoden"), "facts": {"conditions": conds}, "track": None}
 

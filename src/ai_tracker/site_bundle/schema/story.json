@@ -20,7 +20,15 @@
     "qualified": {"$ref": "#/$defs/per_type", "description": "Publishable candidates per type that met the condition, before the caps."},
     "omitted": {"$ref": "#/$defs/per_type", "description": "Candidates per type cut by the type cap or the total cap."},
     "withheld": {"$ref": "#/$defs/per_type", "description": "Withheld (publish=False) series or targets per type that met the condition: counted, never named."},
-    "cards": {"type": "array", "minItems": 2, "items": {"$ref": "#/$defs/card"}}
+    "cards": {"type": "array", "minItems": 2, "items": {"$ref": "#/$defs/card"}},
+    "duplicates": {"$ref": "#/$defs/per_type", "description": "R-W3a (register 2026-11-25): candidates that met the condition but are the same quantity as a shown card (a K6 reconciliation defined as an existing core series with a K5 card). Optional: absent in documents from before the amendment."},
+    "omitted_cards": {"type": "array", "description": "R-W3c: the cards struck by a cap, in the rule's order: type, name and direction, no figure. Withheld series are never here.",
+      "items": {"type": "object", "additionalProperties": false, "required": ["type", "id", "label", "direction"],
+                "properties": {"type": {"$ref": "#/$defs/event_type"}, "id": {"type": "string"}, "label": {"type": "string"},
+                               "direction": {"$ref": "common.json#/$defs/direction"}}}},
+    "chance": {"description": "R-W3b: per K5/K6, the series tested (n), the hits expected from chance (n/10) and how many met the condition (also withheld and duplicates). Null without a comparison month.",
+      "oneOf": [{"type": "null"}, {"type": "object", "additionalProperties": false, "required": ["K5", "K6"],
+        "properties": {"K5": {"$ref": "#/$defs/chance"}, "K6": {"$ref": "#/$defs/chance"}}}]}
   },
   "$defs": {
     "rule": {
@@ -39,6 +47,8 @@
       "properties": {"K1": {"type": "integer"}, "K2": {"type": "integer"}, "K3": {"type": "integer"},
                      "K4": {"type": "integer"}, "K5": {"type": "integer"}, "K6": {"type": "integer"}}
     },
+    "chance": {"type": "object", "additionalProperties": false, "required": ["n", "expected", "met"],
+               "properties": {"n": {"type": "integer"}, "expected": {"type": "number"}, "met": {"type": "integer"}}},
     "num": {"$ref": "common.json#/$defs/num"},
     "str_or_null": {"type": ["string", "null"]},
     "link": {
@@ -151,7 +161,11 @@
         "measure_freq": {"$ref": "#/$defs/str_or_null"}, "pace": {"$ref": "#/$defs/num"}, "pace_unit": {"$ref": "#/$defs/str_or_null"},
         "change_in_pace": {"$ref": "#/$defs/num"}, "field": {"enum": ["change_percentile", "pace_percentile"]},
         "percentile": {"type": "number", "minimum": 0, "maximum": 100}, "zone": {"enum": ["övre", "nedre"]},
-        "prev_percentile": {"$ref": "#/$defs/num"}, "prev_note": {"type": "string"}
+        "prev_percentile": {"$ref": "#/$defs/num"}, "prev_note": {"type": "string"},
+        "same_quantity": {"type": "object", "additionalProperties": false, "required": ["series", "label", "percentile", "zone"],
+          "description": "R-W3a: the reconciliation that is the same quantity as this K5 card's series and therefore has no card of its own.",
+          "properties": {"series": {"$ref": "common.json#/$defs/series_key"}, "label": {"type": "string"},
+                         "percentile": {"type": "number"}, "zone": {"enum": ["övre", "nedre"]}}}
       }
     },
     "facts_k9": {
