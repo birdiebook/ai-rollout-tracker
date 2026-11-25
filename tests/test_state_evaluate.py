@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import functools
 import json
 import random
 from fractions import Fraction
@@ -180,12 +181,55 @@ def test_persistent_world_states_carry_information(persistent):
         assert t["p_low_holm"] > 0.5
 
 
+RANDOM_SEEDS = tuple(range(1, 11))  # R24-3: the size over many seeds, not one chosen seed
+RANDOM_BRANCHES = ("G4", "G5", "G6")  # three branches: both horizons have >= 20 predictions in most seeds
+
+
+@functools.lru_cache(maxsize=1)
+def random_world_tests() -> tuple[dict, ...]:
+    """The registered v2 test at h = 3 and 6 in the random world for every seed in RANDOM_SEEDS (199 permutations),
+    with the registered Holm adjustment and the 'godkänt' criterion. Computed once per session."""
+    months = list(pd.period_range(START, END, freq="M"))
+    out = []
+    for seed in RANDOM_SEEDS:
+        ctx, br = world("random", branches=RANDOM_BRANCHES, seed=seed)
+        rows = EV.information_rows(EV.records(ctx, months, br), EV.PathCache(ctx), END, br)
+        tests = {h: EV.information(rows[h], "v2", EV.REGISTERED, br, 199) for h in EV.HORIZONS}
+        ph = EV.holm({h: t["p"] for h, t in tests.items()})
+        passed = [h for h, t in tests.items() if ph[h] < EV.ALPHA and t["H"] > (t["persistence_same"] or 0.0)]
+        out.append({"seed": seed, "tests": tests, "p_holm": ph, "positive": bool(passed)})
+    return tuple(out)
+
+
 def test_random_world_states_carry_no_information(random_world):
+    """R24-3: without information the registered test keeps its size over many seeds, and it actually runs. The run
+    passed in (any seed) only has to be consistent: a horizon is tested exactly when it has >= 20 predictions."""
     for h in EV.HORIZONS:
         t = random_world["b"]["v2"][EV.REGISTERED][h]
-        assert abs(t["H"] - t["chance"]) < 0.1 and t["p_holm"] > 0.10 and t["p_low_holm"] > 0.10
-    d = random_world["decision"]
-    assert not d["positive_result"] and d["b_verdict"] == "inte avgjort"
+        assert t["tested"] == (t["n"] >= EV.MIN_PRED)
+        if not t["tested"]:
+            assert t["p"] == 1.0 and t["p_low"] == 1.0
+    runs = random_world_tests()
+    tests = [t for r in runs for t in r["tests"].values()]
+    tested = [t for t in tests if t["tested"]]
+    assert len(tested) >= 0.8 * len(tests)  # the test ran in most seeds and horizons
+    p = np.array([t["p"] for t in tested])
+    p_low = np.array([t["p_low"] for t in tested])
+    assert (p < 0.10).mean() <= 0.25 and (p_low < 0.10).mean() <= 0.25  # nominal 0.10 one-sided, each tail
+    assert np.mean([t["H"] - t["chance"] for t in tested]) < 0.05  # no information on average
+    assert sum(r["positive"] for r in runs) <= 2  # 'godkänt' at most rarely
+
+
+def test_description_after_r24_constant_up_and_persistence_against_the_state(persistent):
+    """R24-2 and R24-1 (description, decides nothing): the up share on the predicted months is the hit rate of a
+    constant 'up' there, and at h = 6 (the change lag) persistence never points against the state."""
+    for h in EV.HORIZONS:
+        t = persistent["b"]["v2"][EV.REGISTERED][h]
+        rows = [r for r in persistent["rows"][h]
+                if r[f"pred_v2_{EV.REGISTERED}"] != 0 and r["outcome_v2"] not in (None, 0)]
+        assert len(rows) == t["n"] == sum(t["persistence_vs_state"].values())
+        assert t["up_share_predicted"] == pytest.approx(np.mean([r["outcome_v2"] == 1 for r in rows]))
+    assert persistent["b"]["v2"][EV.REGISTERED][6]["persistence_vs_state"]["opposite"] == 0
 
 
 def test_permutation_p_is_roughly_uniform_without_information():
@@ -276,7 +320,8 @@ def test_decision_rule_is_applied_mechanically():
 
 def test_markdown_and_cli(persistent, tmp_path, monkeypatch, capsys):
     md = EV.markdown(persistent)
-    for needle in ("#### (a) v2", "#### (b) v1", "Andra trösklar", "Delperioder", "Beslutsregeln, mekaniskt"):
+    for needle in ("#### (a) v2", "#### (b) v1", "Andra trösklar", "Delperioder", "Beslutsregeln, mekaniskt",
+                   "Baslinjer och basfrekvens (v2", "Persistens alla månader med utfall"):
         assert needle in md
     monkeypatch.setattr(EV, "run", lambda **kw: persistent)
     out = tmp_path / "t1.json"

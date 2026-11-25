@@ -285,9 +285,6 @@ def ph_round(d):
 # ------------------------------------------------------------------ point 6: the committed synthetic tests
 
 
-@pytest.mark.xfail(strict=True, reason="R24-3: the committed random-world test holds for its seed (2), not in "
-                                       "general: with seeds 1-40 it holds in 15, four of them with an untested "
-                                       "horizon (n < 20)")
 def test_committed_random_world_test_holds_for_another_seed():
     ctx, br = TE.world("random", seed=1)
     res = EV.run(ctx, start=TE.START, end=TE.END, vintage=TE.VINTAGE, n_perm=199, branches=br)
@@ -303,21 +300,15 @@ def _paragraphs() -> list[str]:
     return [" ".join(p.split()) for p in parts if p.strip()]
 
 
-@pytest.mark.xfail(strict=True, reason="R24-1: the result doc reads H = persistence at h = 6 (and in G4/G5) as a "
-                                       "finding; it is the same comparison by construction")
 def test_result_doc_says_persistence_at_h6_is_the_state_by_construction():
     assert any("persistens" in p.lower() and "h = 6" in p and "konstruktion" in p for p in _paragraphs())
 
 
-@pytest.mark.xfail(strict=True, reason="R24-2: the registered persistence over all months with an outcome "
-                                       "(0,61 and 0,56) is not reported")
 def test_result_doc_reports_persistence_over_all_months():
     assert any("persistens" in p.lower() and "alla månader" in p and "0,61" in p and "0,56" in p
                for p in _paragraphs())
 
 
-@pytest.mark.xfail(strict=True, reason="R24-4: the pre-entry backcast file held the state, index and direction per "
-                                       "series for every month, not only the counts")
 def test_result_doc_discloses_what_the_pre_entry_backcast_file_held():
     text = RESULT_DOC.read_text(encoding="utf-8")
     start = text.index("**Synligt före posten:**")

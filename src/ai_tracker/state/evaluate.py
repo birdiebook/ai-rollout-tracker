@@ -373,14 +373,27 @@ def information(rows: list[dict], rule: str, thr: str, branches, n_perm: int, wi
         if n:
             res["chance"] = permutation_test(groups, n_perm=min(n_perm, 999))["chance"]
     pc = pn = pc_all = pn_all = 0.0
+    # Description added after review R24 (not registered, decides nothing): the up share on the months with a
+    # prediction and an outcome (= the hit rate of a constant "up" there, R24-2), and how often the persistence
+    # direction equals the prediction (at h = the change lag it is the state's own comparison without the deadband,
+    # R24-1).
+    up = n_pred = 0
+    vs_state = {"same": 0, "none": 0, "opposite": 0}
     for code in per:
         pred, out, pers = _arrays(rows, code, rule, thr)
         a, b = _persistence_credit(pred, out, pers, True)
         c, d = _persistence_credit(pred, out, pers, False)
         pc, pn, pc_all, pn_all = pc + a, pn + b, pc_all + c, pn_all + d
+        ok = (pred != 0) & (out != 0)
+        n_pred += int(ok.sum())
+        up += int((out[ok] == 1).sum())
+        for p, q in zip(pred[ok], pers[ok]):
+            vs_state["none" if np.isnan(q) else "same" if q == p else "opposite"] += 1
     res["persistence_same"] = pc / pn if pn else None
     res["persistence_all"] = pc_all / pn_all if pn_all else None
     res["n_outcomes_all"] = int(pn_all)
+    res["up_share_predicted"] = up / n_pred if n_pred else None
+    res["persistence_vs_state"] = vs_state
     res["n_accel"] = sum(v["n_accel"] for v in per.values())
     res["hits_accel"] = sum(v["hits_accel"] for v in per.values())
     res["n_brake"] = sum(v["n_brake"] for v in per.values())
@@ -545,6 +558,16 @@ def markdown(res: dict) -> str:
             L.append(f"| {h} | {t['n']} ({t['n_accel']}/{t['n_brake']}) | {t['hits']} (acc. {t['hits_accel']}, "
                      f"broms. {t['hits_brake']}) | {_f(t['H'])} | {_f(t['chance'])} | {_f(t['persistence_same'])} | "
                      f"{_f(t['p'], 3)} | {_f(t['p_holm'], 3)} | {_f(t['p_low_holm'], 3)} |")
+        L += ["", f"Baslinjer och basfrekvens ({rule}, beskrivning, avgör inget):", "",
+              ("| h | Persistens samma månader | Persistens alla månader med utfall (antal) | "
+               "Andel upp på prediktionsmånaderna (= konstant \"upp\") | "
+               "Persistensens riktning mot tillståndets (samma/ingen/motsatt) |"), "|---|---|---|---|---|"]
+        for h in HORIZONS:
+            t = res["b"][rule][REGISTERED][h]
+            vs = t.get("persistence_vs_state") or {}
+            L.append(f"| {h} | {_f(t['persistence_same'])} | {_f(t['persistence_all'])} ({t['n_outcomes_all']}) | "
+                     f"{_pct(t.get('up_share_predicted'))} | "
+                     f"{vs.get('same', 0)}/{vs.get('none', 0)}/{vs.get('opposite', 0)} |")
         L += ["", f"Per gren ({rule}):", "",
               ("| Gren | h | Prediktioner | Träffkvot | Acc.: träffar/antal | Broms.: träffar/antal | "
                "Persistens samma månader | Andel upp i utfallen | Månader med utfall |"),

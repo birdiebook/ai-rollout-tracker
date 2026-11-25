@@ -8,8 +8,15 @@ grenens takt de närmaste 3 och 6 månaderna? Testet ändrar ingen skarp regel.
   körning)", commit `7b008b3`. Koden kom efter (`841f92b`, bara syntetiska tester), och körningen på riktiga data
   efter den (körlogg `experiments/runs/20261125T092201Z_t1_state_rule.csv`).
 - **Synligt före posten:** tabellerna i `docs/resultat/tillstand.md`, tillstånden 2026-10-31, antalet månader per
-  tillstånd och gren 2024-01–2026-10 (för MDE) och antalet versioner per kärnserie. Inga utfall, inga reviderade
-  tillstånd och inga träffar.
+  tillstånd och gren 2024-01–2026-10 (för MDE) och antalet versioner per kärnserie. Antalen kom ur
+  `snapshot.backcast`, och den skrevs till filen `bc_realtime.csv` i den delade kladdkatalogen 09:04, fyra minuter före
+  posten (R24-4). Filen har mer än antalen: per månad och gren tillståndet, indexet och riktningen för varje räknad
+  serie (306 rader, samma tillstånd som i realtid nedan). Vid h = 6 innehåller den nästan utfallen. Seriens riktning
+  vid m + 6 har samma tecken som seriens utfall i 776 fall, motsatt tecken i 14 och är 0 (inom dödbandet) i 323.
+  Riktningen vid m är persistensen vid h = 6. Att bara antalen lästes är spårets egen uppgift och går inte att
+  kontrollera. Valen som filen kunde påverka är få: horisonterna, blocklängden och nivåerna i beslutsregeln för (b).
+  (a) kräver reviderade tillstånd, och dem har filen inte. Inga reviderade tillstånd och inga träffar räknades före
+  posten.
 - **Kod:** `src/ai_tracker/state/evaluate.py`, `python -m ai_tracker.state evaluate`. Tillståndsmotorn läses men ändras
   inte. Tester: `tests/test_state_evaluate.py` (syntetiska data, inget nätverk).
 - Allt är **rekonstruerat** (as-of-backcast) på den delade bastabellen 2026-11-25. Det är inget skarpt register.
@@ -21,14 +28,18 @@ grenens takt de närmaste 3 och 6 månaderna? Testet ändrar ingen skarp regel.
    ≤ 2 %). Men G6 och G7 byter tillstånd i 6 respektive 8 av 34 månader, och bara 33 % av de räknade serierna (räknat per
    månad) har reviderade värden alls. För resten är stabiliteten given av konstruktion, inte prövad.
 2. **Information (b).** Tillstånden träffar i 74 % (3 månader) och 76 % (6 månader) av fallen. Slumpen ger 68 % och
-   71 %, eftersom takten oftast gick upp i fönstret. Att den senaste riktningen fortsätter (persistens) ger 70 % och
-   76 %. Holm-p är 0,37 för båda horisonterna. **Informationsvärdet är inte påvisat.** Testet kan bara upptäcka
-   mycket stora skillnader (MDE 0,28 och 0,44), så resultatet visar inte heller att tillstånden saknar information.
+   71 %, eftersom takten oftast gick upp i fönstret. På månaderna med en prediktion gick takten upp i 81 % och 80 %,
+   så en konstant prognos "upp" hade träffat oftare än tillstånden. Att den senaste riktningen fortsätter
+   (persistens) ger 70 % och 76 % på samma månader, och 61 % och 56 % över alla månader med utfall. Vid 6 månader är
+   persistensen samma jämförelse som tillståndet, bara utan dödband, så likheten där är byggd in i testet. Holm-p är
+   0,37 för båda horisonterna. **Informationsvärdet är inte påvisat.** Testet kan bara upptäcka mycket stora
+   skillnader (MDE 0,28 och 0,44), så resultatet visar inte heller att tillstånden saknar information.
 3. **Bromsar in** förekom 6 gånger (3 månader) och 4 gånger (6 månader) och träffade en gång var. Det är för få fall
    för att säga något.
 4. **Beslutsregeln, mekaniskt:** ingen granskning av regeln rekommenderas, och (b) är inte avgjort. Inget positivt
    resultat. Marginalen är liten: vid 3 månader ligger tillstånden 2 träffar över persistensen. Med 2 träffar färre
-   hade regeln rekommenderat en granskning (villkor 2).
+   hade regeln rekommenderat en granskning (villkor 2). Villkor 2 och "godkänt" avgörs i praktiken bara vid 3
+   månader, eftersom tillstånd och persistens är samma jämförelse vid 6 månader.
 
 **Hur tillstånden kan läsas:** som en beskrivning av riktningen i den senaste förändringen i takt för de räknade
 källorna, inte som en prognos. Att de pekar ut vad som händer de närmaste månaderna bättre än slumpen eller "samma
@@ -83,7 +94,20 @@ in, åt båda hållen. Handkontroll av två månader:
 - **G7 2025-06:** realtid accelererar (0,70), med dagens data stabil (0,59). EIA:s elförsäljning till kommersiell
   sektor har reviderats för Arizona och Georgia, som gick från +1 till −1.
 
-Spärrade bakåtfyllda serier räknas inte i någon av de två i fönstret (0 grenmånader), som väntat.
+**G6:s revideringar hänger på en version dagen före V (R24-6).** I G6 har bara Fed G.17 (`us_ip_semis_m` och
+`us_ip_computers_m`) ändrade värden, i alla 34 månader. TSMC, ASML och Broadcom har flera rader, men inget värde som var
+känt vid m har ändrats i fönstret. G.17:s årsrevision 2026-11-24 byter basår till 2022 och ger alla perioder ett nytt
+värde, en dag före V. Därför räknar exponeringen basårsbytet som en revidering i varje månad, också där tillväxttalen
+inte ändras. Med V = 2026-11-23 (före årsrevisionen, med de månatliga revideringarna kvar) byter G6 med v2 i 3
+månader i stället för 6: 2024-05 och 2024-09 byter med båda, 2024-11, 2025-07, 2025-10 och 2025-12 bara med
+årsrevisionen och 2026-01 bara utan den. G6:s resultat i (a) beror alltså mycket på en enda version, och det säger
+inget om hur ofta G6 revideras över tid. (Räknat av rättningsspåret X21 efter R24, beskrivning.)
+
+Spärrade bakåtfyllda serier räknas inte i någon av de två i fönstret (0 grenmånader), som väntat. Räkningen i dagens
+data kan bli fel när en bakåtfylld historik senare revideras av egna rader: perioderna får då källan från den nya
+raden och datumet från den gamla, och spärren öppnas i dagens data men inte i realtid (R24-5). Här har det ingen
+effekt, eftersom de fyra spärrade serierna bara har `backfill`-rader. Omkörningen ska räkna spärren i dagens data med
+samma antal egna månader som i realtid vid m.
 
 ## (b) Information om vad som kommer
 
@@ -150,8 +174,24 @@ G1 och G2 har inga tillstånd med v1 heller och står inte i tabellen.
 - Träffkvoten är till största delen basfrekvens. I G4, G5 och G6 gick takten upp i 68–91 % av månaderna, och där var
   nästan alla prediktioner accelererar. Slumpnivån tar hänsyn till det, eftersom permutationen bara flyttar
   tillstånden inom grenen.
-- I G4 och G5 är tillståndens träffkvot exakt densamma som persistensens. Där säger tillstånden inget utöver "samma
-  riktning som senast".
+- **Vid 6 månader är persistensen tillståndet självt (R24-1).** Förändringen i takt är takten vid den senaste
+  perioden minus takten 6 månader (2 kvartal) tidigare. Persistensen vid h = 6 jämför samma två takter ur samma
+  version, bara utan dödband. Med v2 har persistensen tillståndets riktning i 46 av 46 prediktioner, och med v1 i 72
+  av 78 (i 6 saknar den riktning, aldrig motsatt). Att H är lika med persistensen vid h = 6 (35 mot 35,0) följer
+  alltså av konstruktion och är inget fynd. Kriteriet för godkänt (H över persistensen) kan i praktiken bara nås vid
+  h = 3, och villkor 2 avgörs av h = 3. Även i den syntetiska tröga världen, där tillstånden bär information, ger
+  regeln därför en rekommendation om granskning. Vid h = 3 är jämförelsen verklig: persistensen har tillståndets
+  riktning i 49 av 57, motsatt i 6 och ingen riktning i 2.
+- I G4 och G5 är tillståndens träffkvot vid 3 månader densamma som persistensens (0,87 och 0,78). Där träffar
+  tillstånden inte oftare än "samma riktning som de senaste 3 månaderna". Likheten vid 6 månader i alla grenar är
+  byggd in (punkten ovan) och säger inget.
+- **Basfrekvensen på prediktionsmånaderna (R24-2).** På månaderna där tillstånden har en prediktion gick takten upp i
+  46 av 57 (81 %) vid 3 månader och 37 av 46 (80 %) vid 6 månader. En konstant prognos "upp" hade träffat 0,81 och
+  0,80, alltså oftare än tillstånden (0,74 och 0,76). Det är ingen registrerad baslinje och avgör inget, men det visar
+  hur mycket av träffkvoten som är basfrekvens. Persistensen över alla månader med utfall, som posten säger ska
+  redovisas, är 0,61 vid 3 månader (231 grenmånader) och 0,56 vid 6 månader (210). Den är lägre än på tillståndens
+  månader (0,70 och 0,76): både tillstånd och persistens träffar mest där takten gick upp nästan hela tiden (G4–G6).
+  Över alla grenmånader med utfall gick takten upp i 61 % (3 månader) och 63 % (6 månader).
 - Där tillstånden är blandade och basfrekvensen nära hälften (G7, och G9 med v1) är träffkvoten låg: 0,14–0,50. Det
   pekar på återgång, men p_ned är inte signifikant, och fallen är få.
 - G8 med v1 har nästan bara accelererar och träffar 92–100 %. Det säger inget om regeln: tillståndet byter nästan
@@ -226,8 +266,9 @@ Delperioderna har 15–50 prediktioner var. Skillnaderna mellan dem ligger inom 
 - **(b) är inte avgjort.** Tillstånden läses som en beskrivning av läget, och deras informationsvärde är inte påvisat.
 - **Inget positivt resultat**, så inget granskningsspår krävs för ett fynd.
 - Villkor 2 avgörs av en liten marginal. Vid 3 månader har tillstånden 42 träffar och persistensen 40,0. Vid 6 månader
-  är de lika (35 mot 35,0). Två träffar färre vid 3 månader hade gett en rekommendation om granskning. Det beslutet
-  vilar alltså på en skillnad av slumpens storlek.
+  är de lika (35 mot 35,0), men det är byggt in: persistensen vid 6 månader är tillståndets egen jämförelse utan
+  dödband (R24-1). Villkor 2 och godkänt avgörs därför i praktiken bara vid 3 månader. Två träffar färre vid 3 månader
+  hade gett en rekommendation om granskning. Det beslutet vilar alltså på en skillnad av slumpens storlek.
 
 ## Slump och förbehåll
 
@@ -235,8 +276,11 @@ Delperioderna har 15–50 prediktioner var. Skillnaderna mellan dem ligger inom 
   och grenarna följer delvis samma cykel. Det effektiva antalet oberoende fall är litet, ungefär 19 och 8 med v2.
   Skillnader på 5 procentenheter mot slumpen kan helt och hållet vara slump.
 - **Ett syntetiskt exempel på hur stor slumpen är.** I testvärlden där nivån är en ren slumpvandring (inget samband,
-  `world("random")` i `tests/test_state_evaluate.py`) gav fem olika frön träffkvoter mellan 0,22 och 0,77 med 22–39 prediktioner, och i ett fall ett rått p-värde på 0,048 vid en
-  horisont. Med så här få fall kan en enskild horisont se bra eller dålig ut av en slump.
+  `world("random")` i `tests/test_state_evaluate.py`) gav fem olika frön träffkvoter mellan 0,22 och 0,77 med 22–39
+  prediktioner, och i ett fall ett rått p-värde på 0,048 vid en horisont. Fröna är 3, 5 och 1 med grenarna G4–G6 och
+  1 och 2 med G4–G5. p = 0,048 är frö 3 med G4–G6 vid h = 6 och 499 permutationer (R24-7). Med så här få fall kan en
+  enskild horisont se bra eller dålig ut av en slump. Över 40 frön med G4–G6 förkastar testet inte för ofta (se
+  Rättningar efter R24).
 - **(a) är en övre gräns.** Många kärnserier har bara en version: `source = "backfill"` (EIA-930, FT-900-importen,
   Census C30, BEA, Eurostat, arXiv, npm, PyPI, Wikipedia, Cloudflare) eller en enda inlämning. För dem är realtid och
   dagens data lika av konstruktion. Flera versioner finns för Indeed (G8), Fed G.17, TSMC, ASML och Broadcom (G6),

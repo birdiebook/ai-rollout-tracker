@@ -1625,3 +1625,36 @@ värld med tröga tillstånd (takten följer långa cykler, så tillståndet hå
 där nivån är en slumpvandring (inget samband), och ett test att resultatet för ursprung m och horisont h blir detsamma
 när tabellen kapas vid m + h. Konstanterna i posten står i koden, och ett test jämför dem med posten. Körloggen skrivs
 till `experiments/runs/`, och resultatet till `docs/resultat/t1_tillstandsregeln.md`.
+
+### 2026-11-25 – T1: tillägg efter R24 (rättning efter granskning R24, ingen regel ändras)
+
+Rättningsspår X21 efter granskning R24 (`docs/granskning/r24-tillstandsregeln.md`). R24 fann inget
+implementationsfel, inget läckage och inga felaktiga värden. **Testet, konstanterna och beslutsregeln i posten
+"2026-11-25 – T1" ändras inte.** Utfallen är redan sedda, så posten får inte ändras i efterhand. Inget räknas om med en
+ny regel. Rättningen gäller texten i resultatet, några beskrivande siffror och ett syntetiskt test.
+
+- **R24-1. Persistensen vid h = 6 är tillståndets egen jämförelse.** Förändringen i takt (avsnitt 1) är takten vid den
+  senaste perioden minus takten 6 månader (2 kvartal) tidigare. Persistensen vid h = 6 jämför samma två takter ur samma
+  version, bara utan dödband. Med v2 har den tillståndets riktning i 46 av 46 prediktioner. Kriteriet för godkänt (H
+  högre än persistensen) kan därför i praktiken bara uppfyllas vid h = 3, och villkor 2 avgörs av h = 3. Det är inget
+  brott mot posten, men resultatet säger det nu. Effekt på beslutet: ingen.
+- **R24-2.** Persistensen över alla månader med utfall, som posten säger ska redovisas, står nu i resultatet: 0,61 vid
+  h = 3 och 0,56 vid h = 6. Två beskrivande tal läggs till. De är inte registrerade, räknades efter att utfallen var
+  sedda och avgör inget: andelen upp på månaderna med prediktion, som är träffkvoten för en konstant prognos "upp" (0,81
+  och 0,80), och hur ofta persistensen har tillståndets riktning (samma, ingen eller motsatt). `information()` räknar
+  dem och `markdown()` visar dem i en egen tabell.
+- **R24-3.** Det syntetiska testet för slumpvärlden prövade bara ett frö. Det prövar nu storleken över 10 frön med tre
+  grenar och kräver att testet faktiskt körs. Bara syntetiska data.
+- **R24-4.** Punkten "Vad som var synligt före posten" säger att bara antalen lästes ur `snapshot.backcast`. Filen som
+  backcasten skrevs till före posten (`bc_realtime.csv`) hade tillstånd, index och riktning per serie för varje månad.
+  Vid h = 6 innehåller den nästan utfallen. Vad som lästes går inte att kontrollera. Resultatet säger det.
+
+**Krav på nästa registerpost för testet** (omkörningen på det skarpa registret, tidigast 2027-11). De gäller inte
+körningen 2026-11-25.
+1. Baslinjen vid den horisont som är lika med laggen för förändring i takt får inte vara tillståndets egen jämförelse.
+   Välj en annan baslinje där, eller jämför med persistens bara vid de andra horisonterna (R24-1).
+2. Spärren för bakåtfyllda serier räknas i dagens data med samma antal egna månader som i realtid vid m, inte med
+   första `known_from` i den reviderade tabellen (R24-5).
+3. Filer med tillstånd, index eller serier per månad som finns före posten nämns med innehåll (R24-4).
+4. Om en enda version strax före V står för en grens revideringar redovisas det, med (a) också för V före den
+   versionen (R24-6: G.17:s årsrevision 2026-11-24).
