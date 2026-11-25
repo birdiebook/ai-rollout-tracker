@@ -69,6 +69,9 @@ En rad per spår, fylls på efter varje körning. Tumreglerna justeras när siff
 | 2026-11-25 | 14 | RW1-X rättning | rättning (schema, CI, scan) | ~43 | ~132 | ~285 | backfill_fetched, commit per skarp prognos, scan-build, tidlös citering |
 | 2026-11-25 | 14 | R-W3 neutralitet | granskning | ~20 | ~98 | ~230 | speglingstest symmetriskt; 3 mallasymmetrier rättade; 4 krav före byte av huvudsida |
 | 2026-11-25 | 14 | R-W2 tillgänglighet | granskning + rättning | ~56 | ~116 | ~270 | axe 0 i 54 körningar; 4 tangentbordsfel rättade; LCP 0,8 s; TBT kvar (P1) |
+| 2026-11-25 | 14 | WX2 rättning | webbrättning (R-W2/R-W3) | ~115 | ~280 | – | TBT 142–256 ms, uppskjutna tabeller, pilar dolda för skärmläsare |
+| 2026-11-25 | 14 | W14 kvartalsrapport | webbspår | ~48 | ~152 | – | report/ i paketet (1.3), /kvartal/[kvartal] |
+| 2026-11-25 | 15 | WV2 webb till index v2 | webbspår | ~80 | ~210 | ~420 | för få källor, metodmotor v2, tio avstämningar, förväntningar (paket 1.5.0), DOM 3893 → 2763 |
 
 ## Körning 1, sammanfattning (2026-11-23, orkestrerare)
 
