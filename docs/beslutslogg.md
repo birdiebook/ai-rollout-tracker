@@ -791,3 +791,15 @@ republishing data"), npm och arXiv (`okänd`), och Microsofts capex-guidance ur 
   att läsa (arena.ai nekas).
 - **Rekommendation till Johannes:** granska `g2_price_rolling12_arena` innan den blir kärnserie. Den skulle ersätta
   Arena-varianterna A och B, inte läggas till.
+
+## 2026-11-25 – R22: granskning av Q1 (pris vid rörlig förmågetröskel)
+
+- GODKÄND MED ANMÄRKNINGAR som katalogserier (`docs/granskning/r22-rorlig-troskel.md`). Registerposten kom före kod och
+  värden. Alla 118 rader räknades om oberoende, och 17 versioner och månader kontrollerades mot råfilerna. Inget
+  läckage och inga fel värden enligt registret.
+- Avvikelsen (referensen enligt det som är känt vid versionens datum) håller: alla tavlor i mätglappet finns bara i
+  bulkuppladdningen från 2026-04-02.
+- `g2_price_rolling12_arena` är inte redo som kärnserie. Efterföljarregeln använder Δ som är upp till 359 dagar gamla,
+  och i 5 av 22 månader beror värdet på vilken kandidat som står först (R22-3). Två namnbyten utan överlapp saknas
+  (R22-2). ECI-varianten ligger på golvet i 7 av 18 månader utan att dokumentet säger det (R22-4).
+- Fem should_fix med strikta xfail-tester, sex nya passerande tester. Grenindex och tillstånd ändras inte.
