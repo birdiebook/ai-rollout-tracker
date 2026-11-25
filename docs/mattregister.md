@@ -1490,3 +1490,34 @@ tak ändras inte.
    punkt 2 gäller inte längre.
 3. **K0** räknar tillståndet "för få källor" (index v2, registret 2026-11-24) för sig, bredvid "för få serier", när det
    förekommer. Tidigare räknades det som "för få serier". Inget urval ändras.
+
+### 2026-11-25 – KR1: spread vid emission för AI-tunga emittenter (extraktion, inte kärnserier)
+
+Låst före kodningen. Inga dokument i korpusen var hämtade och inga värden lästa när posten skrevs. Agenten hade sett
+antalet inlämningar per bolag, år och formulär i EDGAR:s submissions-index och licenstexten i FRED:s serienoter för
+ICE BofA och Moody's. Regler i detalj: [`docs/kallor/kredit_emission.md`](kallor/kredit_emission.md), avsnittet
+"Kodningsregler".
+- **Vad:** belopp, kupong, förfallodag, referens, spread mot referensen (bp, som den står), avkastning och pris för
+  varje tranche i de registrerade obligationsemissionerna från Microsoft, Alphabet, Amazon, Meta, Oracle och CoreWeave,
+  2020-01-01–2026-11-25. Källan är FWP:n med de slutliga villkoren, annars det slutliga prospekttillägget (424B2 eller
+  424B5). En rad per tranche i `curated/credit_issuance.csv`, med plats och SHA-256 av blocket. Texten sparas bara
+  under `data/raw`.
+- **Serier (G5, kvartal):** `issuance_<bolag>_q` (summa av belopp i USD per kvartal efter prisdag, MUSD),
+  `spread_issue_ai_q` (principalvägt medelvärde av spreaden över alla emittenter, bp), `spread_issue_ai_7_12y_q`
+  (bara löptid avrundad till 7–12 år, 6,5 ≤ löptid < 12,5) och `spread_issue_<bolag>_q` för emittenter med minst fyra
+  kvartal med en spread. Spreadserierna tar bara tranchar i USD med fast ränta, en amerikansk statsobligation som
+  referens och en angiven spread. Rörlig ränta ingår i volymen men inte i spreaden. Annan valuta ingår i ingen serie.
+- **Vikt:** beloppet (MUSD). **Luckregeln:** ett kvartal utan tranche har inget värde, en lucka och inte noll.
+- **known_from** för ett kvartal = max(dagen efter kvartalets slut, senaste `filingDate` bland trancherna som ingår).
+  En senare inlämning ger en ny version. Ett kvartal som inte är slut har inget värde.
+- **Avstämning:** täckningsgraden mot `debt_issued_<bolag>` per bolag och år (efter likviddag och bolagets
+  räkenskapskvartal) redovisas i källdokumentet, inte som serie. Skillnaden är likvid mot nominellt belopp,
+  företagscertifikat, terminslån, kreditfaciliteter, 144A och annan valuta.
+- **Marknadsindex:** inget. ICE BofA och Moody's på FRED förbjuder vidarespridning utan tillstånd.
+- **Täckning, ärligt:** serierna visar bara den registrerade marknaden. Privata placeringar, 144A och SPV-finansiering
+  syns inte. Spreaden blandar emittenter med olika kreditbetyg, så den poolade serien rör sig också när mixen ändras.
+- **Inte kärnserier.** Ingen takt räknas. `publish=False` tills extraktionsgranskningen har godkänt (minst 30 % av
+  raderna, ett dokument per emittent, inga fel i talen). Ett förslag om kärnserie kräver godkänd granskning, minst 12
+  kvartal i `spread_issue_ai_7_12y_q` och en registrerad regel för emittentmixen.
+- **Tester:** syntetiska villkorsbilagor för parsern, löptiden, bandets gränser, vägningen, luckregeln, dateringen,
+  CSV-kontrollen och självkontrollen.
