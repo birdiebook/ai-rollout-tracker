@@ -1684,5 +1684,7 @@ Reglerna i X15-posten ovan gjorde vid hämtningen det posten säger. Regeln för
 Equinix äldre capex-tagg (10-K 2011-02-25 och 10-Q 2011-04-29). Undantaget från 550-dagarsregeln behåller exakt sex
 segmentfakta, Eatons 2018Q1–Q3 för båda segmenten ur 10-Q 2020-04-30. Inga brott upptäcktes, och inga värden i
 tidigare hämtade kvartal ändrades. En rättelse av en detalj i punkt 2: kvartalen 2018Q1–Q3 slutar 578–761 dagar före
-inlämningen, inte "upp till 578". Effekterna per serie står i `docs/kallor/sec_stack_kraft.md` ("Rättning efter R18")
-och för `dep_msft` i `docs/kallor/sec_avskrivningar.md`.
+inlämningen, inte "upp till 578". Och i punkt 3: radens namn "Purchases of property, plant and equipment" gäller 10-Q
+2010–2014. I 10-Q 2016-11-04 och 2017–2018 heter samma rad "Purchases of other property, plant and equipment".
+Effekterna per serie står i `docs/kallor/sec_stack_kraft.md` ("Rättning efter R18") och för `dep_msft` i
+`docs/kallor/sec_avskrivningar.md`.
