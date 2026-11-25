@@ -5,8 +5,8 @@ varje serie får en klass för kommersiell användning, så att en kommersiellt 
 Nya spår väljer öppna licenser (public domain, CC0, CC BY, MIT) när det finns ett val.
 
 Kod: `src/ai_tracker/licenses.py`. Rapport: `PYTHONPATH=src python -m ai_tracker.licenses report [--markdown]`.
-Tabellerna nedan är genererade med `--markdown` på katalogen efter integrationen av ägarbesluten 2026-11-25 med main
-(634 serier). Kör om rapporten när serier läggs till.
+Tabellerna nedan är genererade med `--markdown` på katalogen efter integrationen av körning 14, 2026-11-25 (805
+serier). Kör om rapporten när serier läggs till.
 
 ## Klasserna
 
@@ -28,7 +28,8 @@ Tabellerna nedan är genererade med `--markdown` på katalogen efter integration
 I tur och ordning, och det första som gäller avgör:
 
 1. **Override per serienyckel** (`KEY_OVERRIDES`), med skäl. Den är slutlig. I dag gäller den Arenas två
-   prisserier (R10-2).
+   prisserier (R10-2) och Q1:s tre Arena-serier (`g2_price_rolling12_arena`, `g2_price_rolling6_arena` och
+   `g2_price_frontier_arena`).
 2. **Override per källa** (`SOURCE_OVERRIDES`, regex på `Spec.source`), där licenstexten ensam säger för mycket:
    kopior från FRED eller ALFRED, och LMArenas Space-filer.
 3. **Kurerade filer.** En serie vars källa nämner `curated/<fil>.csv` får den kurerade regeln på de rader den läser:
@@ -54,21 +55,24 @@ I tur och ordning, och det första som gäller avgör:
 |---|---|---|---|---|
 | 1 | nyckel | g2_price_at_arena_capability | okänd | tavlorna kommer från LMArenas Space-filer (arena.subset_boards("text")): datasetet är CC BY 4.0, men Space-filerna (belägg och kompletta tabeller) har ingen dokumenterad licens, och Arenas webbvillkor kunde inte läsas |
 | 2 | nyckel | g2_price_at_arena_capability_4o | okänd | tavlorna kommer från LMArenas Space-filer (arena.subset_boards("text")): datasetet är CC BY 4.0, men Space-filerna (belägg och kompletta tabeller) har ingen dokumenterad licens, och Arenas webbvillkor kunde inte läsas |
-| 3 | källa | alfred: /\b(?:AL)?FRED\b\|(?i:stlouisfed\.org)/ | okänd | kopian kommer från FRED eller ALFRED, vars villkor förbjuder användning i samband med maskininlärning; kommersiell användning är inte bedömd (primärkällan vore ja) |
-| 4 | källa | arena-space: /LMArena \(HF-dataset \+ Space-filer\)/ | okänd | datasetet är CC BY 4.0, men Space-filerna (belägg och kompletta tabeller) har ingen dokumenterad licens, och Arenas webbvillkor kunde inte läsas |
-| 5 | källa | curated: källan nämner curated/<fil>.csv | ja / okänd | raderna som serien läser: seriens egna (ROW_SERIES: ai_kpis.csv, lab_revenue.csv), annars bolagets (Kurerad extraktion (curated/<fil>.csv)), annars de som anges i CURATED_READS (13 serier). ja: egen extraktion ur dokument på sec.gov (alla raderna har source_url på sec.gov); okänd: egen extraktion, men ur bolagets egna sidor utan dokumenterade villkor; inga angivna rader: okänd, och validate ger fel. Den mest restriktiva av detta och licensreglerna avgör |
-| 6 | licens | derived-licence: /^derived: a + b/ | mest restriktiva delen | varje del klassas med reglerna nedan |
-| 7 | licens | unverified: /\bunverified\b/ | okänd | licensen är inte verifierad: villkoren saknas eller kunde inte läsas |
-| 8 | licens | cc-by-nc: /\bCC[ -]?BY-NC\b/ | nej | CC BY-NC: kommersiell användning är inte tillåten |
-| 9 | licens | pjm-republish: /non-?members are specifically prohibited from republishing/ | nej | PJM:s villkor: icke-medlemmar får inte vidarepublicera data |
-| 10 | licens | no-open-licence: /no open licen[cs]e\|no (?:data )?licen[cs]e stated\|redistribution not checked\|not checked for publication\|ej kontrollerad för publicering/ | okänd | ingen öppen licens, eller vidarespridning inte kontrollerad |
-| 11 | licens | restrictive-wording: /non-?commercial\|all rights reserved\|proprietary\|third[- ]party rights\|may be (?:under\|subject to) copyright\|not in the public domain\|not verified\|personal use only\|prohibit\|not (?:permitted\|allowed)\|does not (?:apply\|cover)\|\bunclear\b/ | okänd | texten begränsar eller reserverar användningen (icke-kommersiell, förbud, upphovsrätt, tredje parts rättigheter, oklar eller inte verifierad status); kommersiell användning är inte bedömd |
-| 12 | licens | cc0: /\bCC0\b/ | ja | CC0: fri användning, även kommersiell |
-| 13 | licens | cc-by: /\bCC[ -]BY[ -]4\.0\b\|Creative Commons Attribution 4\.0/ | ja | CC BY 4.0: kommersiell användning tillåten med källhänvisning |
-| 14 | licens | mit: /(?<![\w-])MIT(?=[ -]?\(?(?i:licen[cs]e)\|[,)])\|(?i:licen[cs]e)\s*:\s*MIT\b/ | ja | MIT: kommersiell användning tillåten med licenstexten |
-| 15 | licens | public-domain: /17 U\.S\.C\. § ?105\|\bpublic domain\b/ | ja | public domain (amerikansk myndighet): fri användning med källhänvisning |
-| 16 | licens | sec: /sec\.gov/privacy/ | ja | SEC: offentlig information som får kopieras och spridas vidare; egna siffror ur inlämnade dokument |
-| 17 | härledning | Spec.components och medlemmarna i *_hyp4 | mest restriktiva | egen klass och komponenternas; ja bara om alla är ja, nej före okänd |
+| 3 | nyckel | g2_price_rolling12_arena | okänd | tavlorna kommer från LMArenas Space-filer (arena.subset_boards("text")): datasetet är CC BY 4.0, men Space-filerna (belägg och kompletta tabeller) har ingen dokumenterad licens, och Arenas webbvillkor kunde inte läsas |
+| 4 | nyckel | g2_price_rolling6_arena | okänd | tavlorna kommer från LMArenas Space-filer (arena.subset_boards("text")): datasetet är CC BY 4.0, men Space-filerna (belägg och kompletta tabeller) har ingen dokumenterad licens, och Arenas webbvillkor kunde inte läsas |
+| 5 | nyckel | g2_price_frontier_arena | okänd | tavlorna kommer från LMArenas Space-filer (arena.subset_boards("text")): datasetet är CC BY 4.0, men Space-filerna (belägg och kompletta tabeller) har ingen dokumenterad licens, och Arenas webbvillkor kunde inte läsas |
+| 6 | källa | alfred: /\b(?:AL)?FRED\b\|(?i:stlouisfed\.org)/ | okänd | kopian kommer från FRED eller ALFRED, vars villkor förbjuder användning i samband med maskininlärning; kommersiell användning är inte bedömd (primärkällan vore ja) |
+| 7 | källa | arena-space: /LMArena \(HF-dataset \+ Space-filer\)/ | okänd | datasetet är CC BY 4.0, men Space-filerna (belägg och kompletta tabeller) har ingen dokumenterad licens, och Arenas webbvillkor kunde inte läsas |
+| 8 | källa | curated: källan nämner curated/<fil>.csv | ja / okänd | raderna som serien läser: seriens egna (ROW_SERIES: ai_kpis.csv, lab_revenue.csv, orders_backlog.csv), annars bolagets (Kurerad extraktion (curated/<fil>.csv)), annars de som anges i CURATED_READS (13 serier). ja: egen extraktion ur dokument på sec.gov (alla raderna har source_url på sec.gov); okänd: egen extraktion, men ur bolagets egna sidor utan dokumenterade villkor; inga angivna rader: okänd, och validate ger fel. Den mest restriktiva av detta och licensreglerna avgör |
+| 9 | licens | derived-licence: /^derived: a + b/ | mest restriktiva delen | varje del klassas med reglerna nedan |
+| 10 | licens | unverified: /\bunverified\b/ | okänd | licensen är inte verifierad: villkoren saknas eller kunde inte läsas |
+| 11 | licens | cc-by-nc: /\bCC[ -]?BY-NC\b/ | nej | CC BY-NC: kommersiell användning är inte tillåten |
+| 12 | licens | pjm-republish: /non-?members are specifically prohibited from republishing/ | nej | PJM:s villkor: icke-medlemmar får inte vidarepublicera data |
+| 13 | licens | no-open-licence: /no open licen[cs]e\|no (?:data )?licen[cs]e stated\|redistribution not checked\|not checked for publication\|ej kontrollerad för publicering/ | okänd | ingen öppen licens, eller vidarespridning inte kontrollerad |
+| 14 | licens | restrictive-wording: /non-?commercial\|all rights reserved\|proprietary\|third[- ]party rights\|may be (?:under\|subject to) copyright\|not in the public domain\|not verified\|personal use only\|prohibit\|not (?:permitted\|allowed)\|does not (?:apply\|cover)\|\bunclear\b/ | okänd | texten begränsar eller reserverar användningen (icke-kommersiell, förbud, upphovsrätt, tredje parts rättigheter, oklar eller inte verifierad status); kommersiell användning är inte bedömd |
+| 15 | licens | cc0: /\bCC0\b/ | ja | CC0: fri användning, även kommersiell |
+| 16 | licens | cc-by: /\bCC[ -]BY[ -]4\.0\b\|Creative Commons Attribution 4\.0/ | ja | CC BY 4.0: kommersiell användning tillåten med källhänvisning |
+| 17 | licens | mit: /(?<![\w-])MIT(?=[ -]?\(?(?i:licen[cs]e)\|[,)])\|(?i:licen[cs]e)\s*:\s*MIT\b/ | ja | MIT: kommersiell användning tillåten med licenstexten |
+| 18 | licens | public-domain: /17 U\.S\.C\. § ?105\|\bpublic domain\b/ | ja | public domain (amerikansk myndighet): fri användning med källhänvisning |
+| 19 | licens | sec: /sec\.gov/privacy/ | ja | SEC: offentlig information som får kopieras och spridas vidare; egna siffror ur inlämnade dokument |
+| 20 | härledning | Spec.components och medlemmarna i *_hyp4 | mest restriktiva | egen klass och komponenternas; ja bara om alla är ja, nej före okänd |
 
 ## Bedömningar att känna till
 
@@ -112,7 +116,7 @@ I tur och ordning, och det första som gäller avgör:
   program or system or machine learning" ([datakallor/g6_g7_g8.md](../datakallor/g6_g7_g8.md)). Med en Census
   API-nyckel och primärkällan blir serien `ja`. Samma override gäller en kopia direkt från FRED (`fredgraph.csv`,
   stlouisfed.org), inte bara ALFRED (R10-4).
-- **LMArena med Space-filer är `okänd`** (5 serier, bland dem G1:s kärnserie `g1_arena_text_top`). Datasetet är
+- **LMArena med Space-filer är `okänd`** (12 serier efter körning 14, bland dem G1:s kärnserie `g1_arena_text_top`). Datasetet är
   CC BY 4.0, men Space-filerna, som ger belägg och kompletta tabeller, har ingen dokumenterad licens, och Arenas
   webbvillkor kunde inte läsas ([kallor/g1g2_nya.md](../kallor/g1g2_nya.md)). Serien som bara läser datasetet är `ja`.
   Arenas två prisserier (`g2_price_at_arena_capability` och `_4o`) läser samma texttavlor, och månaderna
@@ -157,8 +161,8 @@ Länken går till dokumentet som citerar licenstexten.
 | Kurerad extraktion: AI-nyckeltal | 2 | okänd | curated | egen extraktion, men ur bolagets egna sidor utan dokumenterade villkor: seriens rader i curated/ai_kpis.csv kommer också från www.microsoft.com, och bara sec.gov är kontrollerad (bolag: msft) | [kallor/ai_nyckeltal.md](../kallor/ai_nyckeltal.md) |
 | Kurerad extraktion: capex-guidance | 6 | okänd | curated | egen extraktion, men ur bolagets egna sidor utan dokumenterade villkor: bolagets rader i curated/guidance_capex.csv kommer från www.microsoft.com, och bara sec.gov är kontrollerad (bolag: msft) | [kallor/guidance.md](../kallor/guidance.md) |
 | Kurerad extraktion: planer | 7 | okänd | curated | egen extraktion, men ur bolagets egna sidor utan dokumenterade villkor: bolagets rader i curated/plans.csv kommer från www.microsoft.com, och bara sec.gov är kontrollerad (bolag: msft) | [kallor/planer.md](../kallor/planer.md) |
-| LMArena, dataset och Space-filer | 3 | okänd | arena-space | datasetet är CC BY 4.0, men Space-filerna (belägg och kompletta tabeller) har ingen dokumenterad licens, och Arenas webbvillkor kunde inte läsas | [kallor/g1g2_nya.md](../kallor/g1g2_nya.md) |
-| LiteLLM × LMArena | 2 | okänd | key-override | tavlorna kommer från LMArenas Space-filer (arena.subset_boards("text")): datasetet är CC BY 4.0, men Space-filerna (belägg och kompletta tabeller) har ingen dokumenterad licens, och Arenas webbvillkor kunde inte läsas | [kallor/g2_arena_pris.md](../kallor/g2_arena_pris.md) |
+| LMArena, dataset och Space-filer | 7 | okänd | arena-space | datasetet är CC BY 4.0, men Space-filerna (belägg och kompletta tabeller) har ingen dokumenterad licens, och Arenas webbvillkor kunde inte läsas | [kallor/g1g2_nya.md](../kallor/g1g2_nya.md) |
+| LiteLLM × LMArena | 5 | okänd | key-override | tavlorna kommer från LMArenas Space-filer (arena.subset_boards("text")): datasetet är CC BY 4.0, men Space-filerna (belägg och kompletta tabeller) har ingen dokumenterad licens, och Arenas webbvillkor kunde inte läsas | [kallor/g2_arena_pris.md](../kallor/g2_arena_pris.md) |
 | Manifold | 17 | okänd | unverified | licensen är inte verifierad: villkoren saknas eller kunde inte läsas | [kallor/forvantningar.md](../kallor/forvantningar.md) |
 | Polymarket | 8 | okänd | unverified | licensen är inte verifierad: villkoren saknas eller kunde inte läsas | [kallor/forvantningar.md](../kallor/forvantningar.md) |
 | SWE-bench | 1 | okänd | unverified | licensen är inte verifierad: villkoren saknas eller kunde inte läsas | [kallor/g1g2_nya.md](../kallor/g1g2_nya.md) |
@@ -175,7 +179,7 @@ Länken går till dokumentet som citerar licenstexten.
 | Census, årsfil per land och end-use | 21 | ja | public-domain | public domain (amerikansk myndighet): fri användning med källhänvisning | [kallor/census_hs.md](../kallor/census_hs.md) |
 | EIA Electric Power Monthly | 7 | ja | public-domain | public domain (amerikansk myndighet): fri användning med källhänvisning | [kallor/indeed_vast_eia.md](../kallor/indeed_vast_eia.md) |
 | EIA-930 | 12 | ja | public-domain | public domain (amerikansk myndighet): fri användning med källhänvisning | [kallor/el_datacenter.md](../kallor/el_datacenter.md) |
-| Epoch AI | 13 | ja | cc-by | CC BY 4.0: kommersiell användning tillåten med källhänvisning | [kallor/epoch_arxiv.md](../kallor/epoch_arxiv.md) |
+| Epoch AI | 17 | ja | cc-by | CC BY 4.0: kommersiell användning tillåten med källhänvisning | [kallor/epoch_arxiv.md](../kallor/epoch_arxiv.md) |
 | Eurostat | 4 | ja | cc-by | CC BY 4.0: kommersiell användning tillåten med källhänvisning | [kallor/census_eu.md](../kallor/census_eu.md) |
 | F1: revideringar och överraskning (härledda) | 3 | ja | sec | SEC: offentlig information som får kopieras och spridas vidare; egna siffror ur inlämnade dokument; alla komponenter är ja | [kallor/guidance.md](../kallor/guidance.md) |
 | F1: revideringar och överraskning (härledda) | 2 | ja | curated-reads | egen extraktion ur dokument på sec.gov: bolagens alla rader i curated/guidance_capex.csv kommer från sec.gov; alla komponenter är ja (bolag: googl/meta) | [kallor/guidance.md](../kallor/guidance.md) |
@@ -183,22 +187,28 @@ Länken går till dokumentet som citerar licenstexten.
 | Fed G.17 | 2 | ja | public-domain | public domain (amerikansk myndighet): fri användning med källhänvisning | [kallor/fed_g17.md](../kallor/fed_g17.md) |
 | Indeed Hiring Lab | 9 | ja | cc-by | CC BY 4.0: kommersiell användning tillåten med källhänvisning | [kallor/indeed_vast_eia.md](../kallor/indeed_vast_eia.md) |
 | Kurerad extraktion: AI-nyckeltal | 25 | ja | curated | egen extraktion ur dokument på sec.gov: seriens alla rader i curated/ai_kpis.csv kommer från sec.gov (bolag: amzn, googl, meta, msft, nvda) | [kallor/ai_nyckeltal.md](../kallor/ai_nyckeltal.md) |
+| Kurerad extraktion: Kinas textserier | 2 | ja | curated | egen extraktion ur dokument på sec.gov: bolagets alla rader i curated/china_text.csv kommer från sec.gov (bolag: bidu) | [kallor/kina_sec.md](../kallor/kina_sec.md) |
 | Kurerad extraktion: capex-guidance | 9 | ja | curated | egen extraktion ur dokument på sec.gov: bolagets alla rader i curated/guidance_capex.csv kommer från sec.gov (bolag: amzn, googl, meta) | [kallor/guidance.md](../kallor/guidance.md) |
 | Kurerad extraktion: leasing som inte har börjat | 7 | ja | curated | egen extraktion ur dokument på sec.gov: bolagets alla rader i curated/lease_commitments.csv kommer från sec.gov (bolag: amzn, crwv, googl, meta, msft, orcl) | [kallor/finansiering.md](../kallor/finansiering.md) |
 | Kurerad extraktion: nyttjandeperioder | 30 | ja | curated | egen extraktion ur dokument på sec.gov: bolagets alla rader i curated/useful_lives.csv kommer från sec.gov (bolag: amzn, crwv, googl, meta, msft, orcl) | [kallor/nyttjandeperioder.md](../kallor/nyttjandeperioder.md) |
+| Kurerad extraktion: order och orderstock | 62 | ja | curated | egen extraktion ur dokument på sec.gov: seriens alla rader i curated/orders_backlog.csv kommer från sec.gov (bolag: dell, dlr, etn, gev, vrt) | [kallor/order_orderstock.md](../kallor/order_orderstock.md) |
 | Kurerad extraktion: planer | 32 | ja | curated | egen extraktion ur dokument på sec.gov: bolagets alla rader i curated/plans.csv kommer från sec.gov (bolag: amzn, crwv, googl, meta, orcl) | [kallor/planer.md](../kallor/planer.md) |
+| Kurerad extraktion: spread vid emission | 9 | ja | curated | egen extraktion ur dokument på sec.gov: bolagets alla rader i curated/credit_issuance.csv kommer från sec.gov (bolag: amzn, googl, meta, msft, orcl) | [kallor/kredit_emission.md](../kallor/kredit_emission.md) |
+| Kurerad extraktion: spread vid emission | 2 | ja | curated | egen extraktion ur dokument på sec.gov: filens alla rader i curated/credit_issuance.csv kommer från sec.gov (bolag: alla bolag) | [kallor/kredit_emission.md](../kallor/kredit_emission.md) |
 | LMArena, dataset | 1 | ja | cc-by | CC BY 4.0: kommersiell användning tillåten med källhänvisning | [kallor/g1g2_nya.md](../kallor/g1g2_nya.md) |
-| LiteLLM × Epoch AI | 6 | ja | derived-licence | härledd ur LiteLLM model_prices_and_context_window.json ja, Epoch AI benchmarking hub ja; alla delar är ja | [kallor/pris_formaga.md](../kallor/pris_formaga.md) |
+| LiteLLM × Epoch AI | 7 | ja | derived-licence | härledd ur LiteLLM model_prices_and_context_window.json ja, Epoch AI benchmarking hub ja; alla delar är ja | [kallor/pris_formaga.md](../kallor/pris_formaga.md) |
 | METR | 1 | ja | cc-by | CC BY 4.0: kommersiell användning tillåten med källhänvisning | [kallor/epoch_arxiv.md](../kallor/epoch_arxiv.md) |
 | PyPI | 24 | ja | cc-by | CC BY 4.0: kommersiell användning tillåten med källhänvisning | [kallor/utvecklaradoption.md](../kallor/utvecklaradoption.md) |
 | SCB | 2 | ja | cc0 | CC0: fri användning, även kommersiell | [kallor/census_eu.md](../kallor/census_eu.md) |
-| SEC EDGAR XBRL, RPO | 13 | ja | sec | SEC: offentlig information som får kopieras och spridas vidare; egna siffror ur inlämnade dokument | [kallor/rpo.md](../kallor/rpo.md) |
+| SEC EDGAR XBRL, RPO | 19 | ja | sec | SEC: offentlig information som får kopieras och spridas vidare; egna siffror ur inlämnade dokument | [kallor/rpo.md](../kallor/rpo.md) |
 | SEC EDGAR XBRL, RPO | 1 | ja | sec | SEC: offentlig information som får kopieras och spridas vidare; egna siffror ur inlämnade dokument; alla komponenter är ja | [kallor/rpo.md](../kallor/rpo.md) |
-| SEC EDGAR XBRL, companyfacts | 96 | ja | sec | SEC: offentlig information som får kopieras och spridas vidare; egna siffror ur inlämnade dokument | [kallor/sec.md](../kallor/sec.md) |
+| SEC EDGAR XBRL, companyfacts | 128 | ja | sec | SEC: offentlig information som får kopieras och spridas vidare; egna siffror ur inlämnade dokument | [kallor/sec.md](../kallor/sec.md) |
 | SEC EDGAR XBRL, companyfacts | 12 | ja | sec | SEC: offentlig information som får kopieras och spridas vidare; egna siffror ur inlämnade dokument; alla komponenter är ja | [kallor/sec.md](../kallor/sec.md) |
-| SEC EDGAR XBRL, instanser (Nvidias inköpsåtaganden, P1:s egna taggar) | 4 | ja | sec | SEC: offentlig information som får kopieras och spridas vidare; egna siffror ur inlämnade dokument | [kallor/sec.md](../kallor/sec.md) |
-| SEC EDGAR XBRL, segment | 19 | ja | sec | SEC: offentlig information som får kopieras och spridas vidare; egna siffror ur inlämnade dokument | [kallor/sec_segment.md](../kallor/sec_segment.md) |
+| SEC EDGAR XBRL, instanser (åtaganden, RPO och egna taggar) | 10 | ja | sec | SEC: offentlig information som får kopieras och spridas vidare; egna siffror ur inlämnade dokument | [kallor/sec.md](../kallor/sec.md) |
+| SEC EDGAR XBRL, segment | 47 | ja | sec | SEC: offentlig information som får kopieras och spridas vidare; egna siffror ur inlämnade dokument | [kallor/sec_segment.md](../kallor/sec_segment.md) |
 | SEC EDGAR, ASML 6-K | 4 | ja | sec | SEC: offentlig information som får kopieras och spridas vidare; egna siffror ur inlämnade dokument | [kallor/halvledare.md](../kallor/halvledare.md) |
+| SEC EDGAR, Alibaba och Baidu 6-K | 8 | ja | sec | SEC: offentlig information som får kopieras och spridas vidare; egna siffror ur inlämnade dokument | [kallor/kina_sec.md](../kallor/kina_sec.md) |
+| SEC EDGAR, Alibaba och Baidu 6-K | 4 | ja | derived-licence | härledd ur SEC: "Information presented on sec.gov is considered public information and may be copied or further distributed by users of the web site without the SEC's permission. Please consider appropriate citation to the SEC as the source." ja, Public domain ja; alla delar är ja | [kallor/kina_sec.md](../kallor/kina_sec.md) |
 | SEC EDGAR, Anthropics S-1/A | 1 | ja | curated | egen extraktion ur dokument på sec.gov: seriens alla rader i curated/lab_revenue.csv kommer från sec.gov (bolag: anthropic) | [kallor/labbintakter.md](../kallor/labbintakter.md) |
 | SEC EDGAR, Nebius 6-K | 3 | ja | sec | SEC: offentlig information som får kopieras och spridas vidare; egna siffror ur inlämnade dokument | [kallor/neoclouds.md](../kallor/neoclouds.md) |
 | SEC EDGAR, Nvidias 8-K (guidance) | 5 | ja | sec | SEC: offentlig information som får kopieras och spridas vidare; egna siffror ur inlämnade dokument | [kallor/ai_nyckeltal.md](../kallor/ai_nyckeltal.md) |
@@ -211,16 +221,16 @@ Alla serier i katalogen.
 
 | Gren | Serier | ja | nej | okänd | publish=True men inte ja |
 |---|---|---|---|---|---|
-| G1 Förmåga | 16 | 12 | 0 | 4 | 3 |
-| G2 Kostnad | 12 | 7 | 0 | 5 | 2 |
+| G1 Förmåga | 24 | 16 | 0 | 8 | 7 |
+| G2 Kostnad | 16 | 8 | 0 | 8 | 5 |
 | G3 Användning | 135 | 75 | 13 | 47 | 38 |
-| G4 Intäkter | 54 | 48 | 0 | 6 | 4 |
-| G5 Investeringar och finansiering | 218 | 199 | 0 | 19 | 7 |
-| G6 Utbud och halvledare | 108 | 107 | 0 | 1 | 0 |
-| G7 Fysiska flaskhalsar | 50 | 27 | 21 | 2 | 2 |
+| G4 Intäkter | 76 | 70 | 0 | 6 | 4 |
+| G5 Investeringar och finansiering | 238 | 219 | 0 | 19 | 7 |
+| G6 Utbud och halvledare | 153 | 152 | 0 | 1 | 0 |
+| G7 Fysiska flaskhalsar | 122 | 99 | 21 | 2 | 2 |
 | G8 Arbete och produktivitet | 9 | 9 | 0 | 0 | 0 |
 | G9 Forskning och öppet ekosystem | 32 | 2 | 0 | 30 | 0 |
-| Summa | 634 | 486 | 34 | 114 | 56 |
+| Summa | 805 | 650 | 34 | 121 | 63 |
 
 ## Kommersiellt ren delmängd
 

@@ -392,3 +392,17 @@ def test_cli_report(capsys):
 def test_report_flags_unclassified_series():
     text, n = L.report(specs=[spec("zz_new", license="terms on the website")])
     assert n == 1 and "EJ KLASSAD zz_new" in text
+
+
+def test_every_source_group_in_the_catalog_links_a_doc_that_exists():
+    """Integration of run 14: the KR1 and CN1 sources had no group, so the licence table showed them without a link to
+    the doc that quotes the licence text. Every catalog source now falls in a listed group with an existing doc."""
+    missing, absent = set(), set()
+    for spec in catalog.by_key().values():
+        name, doc = L.source_group(spec.source)
+        if not doc:
+            missing.add(name)
+        elif not (config.REPO / "docs" / doc).exists():
+            absent.add(doc)
+    assert not missing, f"source groups without a doc: {sorted(missing)}"
+    assert not absent, f"docs that do not exist: {sorted(absent)}"

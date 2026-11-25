@@ -467,6 +467,10 @@ SOURCE_GROUPS: list[tuple[str, str, str]] = [
     ("Kurerad extraktion: nyttjandeperioder", r"curated/useful_lives\.csv", "kallor/nyttjandeperioder.md"),
     # track S3 (run 14)
     ("Kurerad extraktion: order och orderstock", r"curated/orders_backlog\.csv", "kallor/order_orderstock.md"),
+    # tracks KR1 and CN1 (run 14; groups added in the run-14 integration so that every group links its licence text)
+    ("Kurerad extraktion: spread vid emission", r"curated/credit_issuance\.csv", "kallor/kredit_emission.md"),
+    ("Kurerad extraktion: Kinas textserier", r"curated/china_text\.csv", "kallor/kina_sec.md"),
+    ("SEC EDGAR, Alibaba och Baidu 6-K", r"^SEC EDGAR, (?:Alibaba Group|Baidu) Form 6-K", "kallor/kina_sec.md"),
     ("Anthropics nyhetsrum", r"anthropic\.com/news", "kallor/labbintakter.md"),
     ("BEA NIPA, releasearkivet", r"^BEA NIPA release archive", "kallor/makro_bea_bls.md"),
     ("BEA NIPA", r"^BEA NIPA", "kallor/census_eu.md"),
