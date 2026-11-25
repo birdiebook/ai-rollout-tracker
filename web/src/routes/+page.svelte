@@ -37,7 +37,7 @@
 </p>
 {#if data.report}
   <p class="report-entry">
-    <a href={resolve('/kvartal/[kvartal]', { kvartal: data.report.quarter })}>Kvartalsrapporten, {data.report.quarter_sv}{data.report.kind === 'rekonstruerad' ? ' (rekonstruerad)' : ''} →</a>
+    <a href={resolve('/kvartal/[kvartal]', { kvartal: data.report.quarter })}>Kvartalsrapporten, {data.report.quarter_sv}{data.report.kind === 'rekonstruerad' ? ' (rekonstruerad)' : ''} <span aria-hidden="true">→</span></a>
     <span class="note">kedjan, flödena, prognoserna och regimen över kvartalet</span>
   </p>
 {/if}

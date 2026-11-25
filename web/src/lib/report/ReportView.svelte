@@ -118,8 +118,8 @@
       orsaksslutsatser.
     </p>
     <nav class="qnav" aria-label="Föregående och nästa kvartal">
-      {#if prev}<a href={quarterHref(prev.quarter)} rel="prev">← {prev.quarter_sv}</a>{:else}<span></span>{/if}
-      {#if next}<a href={quarterHref(next.quarter)} rel="next">{next.quarter_sv} →</a>{/if}
+      {#if prev}<a href={quarterHref(prev.quarter)} rel="prev"><span aria-hidden="true">←</span> {prev.quarter_sv}</a>{:else}<span></span>{/if}
+      {#if next}<a href={quarterHref(next.quarter)} rel="next">{next.quarter_sv} <span aria-hidden="true">→</span></a>{/if}
     </nav>
   </header>
 
@@ -148,7 +148,7 @@
                 <li><Glyph state={g.state} /> <span class="codes">{g.codes.join(', ')}</span></li>
               {/each}
             </ul>
-            <p class="go"><a href={at(startHref(), day)} data-tt-own={day ? '' : undefined}>Öppna läget{day ? ` som det var känt ${dateLabel(day)}` : ''} →</a></p>
+            <p class="go"><a href={at(startHref(), day)} data-tt-own={day ? '' : undefined}>Öppna läget{day ? ` som det var känt ${dateLabel(day)}` : ''} <span aria-hidden="true">→</span></a></p>
           </div>
           <div class="fig">
             <div class="figure"><StoryStripes id="rp-stripes" stripes={page.stripes} highlight={page.highlight} {status} /></div>
@@ -227,7 +227,7 @@
                 {:else}
                   <p class="note">Kvoten har inget publicerat seriedokument.</p>
                 {/if}
-                <p class="go"><a href={at(seriesHref(x.ratio.key), day)} data-tt-own={day ? '' : undefined}>Till kvoten →</a></p>
+                <p class="go"><a href={at(seriesHref(x.ratio.key), day)} data-tt-own={day ? '' : undefined}>Till kvoten <span aria-hidden="true">→</span></a></p>
               </div>
             {/each}
           </div>
@@ -268,7 +268,7 @@
               {:else}
                 <p class="note">Målet hade inget publicerat värde {dateLabel(page.day)}.</p>
               {/if}
-              <p class="go"><a href={nowcastHref(x.n.id)}>Till {x.n.label} →</a></p>
+              <p class="go"><a href={nowcastHref(x.n.id)}>Till {x.n.label} <span aria-hidden="true">→</span></a></p>
             </div>
           {/each}
         </div>
