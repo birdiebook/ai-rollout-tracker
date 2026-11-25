@@ -204,6 +204,67 @@ def test_segment_split_at_the_realignment_when_detection_comes_later(monkeypatch
     assert pd.Timestamp("2026-03-10") <= new["known_from"].min()
 
 
+def basis_data(recast_in_10qs: bool):
+    """A segment line around a basis change that the 10-K brings (Dell ISG 2022) or that the 10-Qs already had (Dell
+    ASC 606 2019, HPE Server FY2025, Cisco). 10-K 2022-03-24 recasts FY1 (+1%); FY2 = 1,300 and 9M FY2 = 960. On the
+    first path the next year's 10-Qs recast FY2's quarters (+5 each, 9M 975); on the second the year-2 10-Qs recast
+    FY1's quarters (+1%) and the year-3 10-Qs re-file FY2's quarters unchanged."""
+    m = (SEG, "ServerSegmentMember")
+    q = lambda d, form="10-Q": ss.Filing(1, f"acc-{d}", d, form)  # noqa: E731
+    f = lambda start, end, v: dimfact([m], start, end, v)  # noqa: E731
+    k = 1.01 if recast_in_10qs else 1.0
+    r = 0 if recast_in_10qs else 5
+    return (
+        (q("2020-06-05"), (f("2020-02-01", "2020-05-01", 300),)),
+        (q("2020-09-04"), (f("2020-05-02", "2020-07-31", 300), f("2020-02-01", "2020-07-31", 600))),
+        (q("2020-12-04"), (f("2020-08-01", "2020-10-30", 300), f("2020-02-01", "2020-10-30", 900))),
+        (q("2021-03-26", "10-K"), (f("2020-02-01", "2021-01-29", 1_200),)),
+        (q("2021-06-07"), (f("2021-01-30", "2021-04-30", 310), f("2020-02-01", "2020-05-01", 300 * k))),
+        (q("2021-09-03"), (f("2021-05-01", "2021-07-30", 320), f("2021-01-30", "2021-07-30", 630),
+                           f("2020-05-02", "2020-07-31", 300 * k), f("2020-02-01", "2020-07-31", 600 * k))),
+        (q("2021-12-03"), (f("2021-07-31", "2021-10-29", 330), f("2021-01-30", "2021-10-29", 960),
+                           f("2020-08-01", "2020-10-30", 300 * k), f("2020-02-01", "2020-10-30", 900 * k))),
+        (q("2022-03-24", "10-K"), (f("2021-01-30", "2022-01-28", 1_300), f("2020-02-01", "2021-01-29", 1_212))),
+        (q("2022-06-06"), (f("2021-01-30", "2021-04-30", 310 + r),)),
+        (q("2022-09-01"), (f("2021-05-01", "2021-07-30", 320 + r), f("2021-01-30", "2021-07-30", 630 + 2 * r))),
+        (q("2022-12-05"), (f("2021-07-31", "2021-10-29", 330 + r), f("2021-01-30", "2021-10-29", 960 + 3 * r))),
+        (q("2023-03-30", "10-K"), (f("2021-01-30", "2022-01-28", 1_300),)),
+    )
+
+
+@pytest.mark.parametrize("recast_in_10qs,q4", [(False, [(325, "2023-03-30")]), (True, [(340, "2022-03-24")])])
+def test_q4_waits_for_one_basis_when_the_10k_brings_the_recast(monkeypatch, recast_in_10qs, q4):
+    monkeypatch.setattr(ss, "company_facts", lambda cik, since, concepts: basis_data(recast_in_10qs))
+    monkeypatch.setitem(s.COMPANIES, "tst", s.Company("Test", 1, tuple(s.REVENUE), "2020-01-01", 25, 212, "test"))
+    line = s.SegLine(("basis_tst",), "tst", (s.dims((SEG, "ServerSegmentMember")),), "x")
+    s.line_series.cache_clear()
+    try:
+        (df,) = s.line_series(line)
+    finally:
+        s.line_series.cache_clear()
+    got = df[df["period"] == "2021Q4"].sort_values("known_from")
+    # 10-K 2022-03-24 recasts FY1 (+1%). Without a recast in the 10-Qs, 1,300 - 960 mixes bases: Q4 waits for the 10-K
+    # that re-files FY2 after the 9M was recast (1,300 - 975). With the recast already in the 10-Qs, 1,300 - 960 is one
+    # basis and is used at once.
+    assert [(round(v, 3), str(d.date())) for v, d in zip(got["value"], got["known_from"])] == q4
+    assert set(df["known_from"]) <= {T(f.filed) for f, _ in basis_data(recast_in_10qs)}
+
+
+def test_restating_filings_and_the_basis_check():
+    a = sec.Fact(T("2021-01-30"), T("2022-01-28"), 1_300 * M, T("2022-03-24"), "10-K", "k")
+    nine = sec.Fact(T("2021-01-30"), T("2021-10-29"), 960 * M, T("2021-12-03"), "10-Q", "q")
+    old = sec.Fact(T("2020-02-01"), T("2021-01-29"), 1_200 * M, T("2021-03-26"), "10-K", "k0")
+    new = sec.Fact(T("2020-02-01"), T("2021-01-29"), 1_212 * M, T("2022-03-24"), "10-K", "k")
+    tiny = sec.Fact(T("2020-02-01"), T("2021-01-29"), 1_212.4 * M, T("2023-03-30"), "10-K", "k2")  # below sec.TOL
+    facts = [old, nine, a, new, tiny]
+    assert s.restating_filings(facts) == {T("2022-03-24")}
+    ok = s.same_basis(facts)
+    assert not ok(a, nine)  # the closing 10-K recasts, the 9M's filing did not
+    assert ok(a, a) and ok(nine, old)  # same filing; a closing filing that restated nothing
+    # without a basis check, sec.vintages is unchanged (S1's totals and every other SEC series)
+    assert sec.vintages([facts]).equals(sec.vintages([facts], basis_ok=None))
+
+
 def test_catalog_lines_declare_their_regimes():
     for line in s.LINES:
         assert len(line.keys) == len(line.breaks) + 1
@@ -288,8 +349,21 @@ def test_arista_contract_liabilities_sum_parts_of_one_filing():
         DeferredRevenueNoncurrent=[instant("2016-12-31", 100, "2017-02-17", "10-K"),
                                    instant("2018-09-30", 200, "2018-11-05")])
     got = s.anet_contract_liabilities(cf)
-    # 2018-09-30: current from the new tag, noncurrent from the old tag of the same filing; 2016 is before ASC 606
-    assert [(str(f.end.date()), f.val / M) for f in got] == [("2018-09-30", 700), ("2018-12-31", 730)]
+    # 2018-09-30: the 2018 10-Q's DeferredRevenue* lines win over ContractWithCustomerLiabilityCurrent of the same filing
+    # (another item, review R17-1); 2018-12-31: the ContractWithCustomerLiability* tags; 2016 is before ASC 606
+    assert [(str(f.end.date()), f.val / M) for f in got] == [("2018-09-30", 699), ("2018-12-31", 730)]
+
+
+def test_arista_contract_liabilities_fall_back_to_the_new_tags_and_drop_the_asc605_comparative():
+    cf = companyfacts(
+        # a 2018 10-Q where only one part has the old tag: the other part comes from the new tag of the same filing
+        ContractWithCustomerLiabilityCurrent=[instant("2018-06-30", 260, "2018-08-08"),
+                                              instant("2017-12-31", 327.706, "2019-02-15", "10-K")],
+        ContractWithCustomerLiabilityNoncurrent=[instant("2017-12-31", 187.556, "2019-02-15", "10-K")],
+        DeferredRevenueNoncurrent=[instant("2018-06-30", 186, "2018-08-08")])
+    got = s.anet_contract_liabilities(cf)
+    # the 2017-12-31 comparative in the 10-K of 2019 is ASC 605 and is left out (review R17-3)
+    assert [(str(f.end.date()), f.val / M) for f in got] == [("2018-06-30", 446)]
 
 
 def test_from_filed_and_first_per_filing():

@@ -14,7 +14,8 @@ Arista, Cisco, Coherent, Lumentum, Super Micro, Dell, HPE and Celestica, quarter
 
 Definition breaks (sec_segment.definition_breaks, a restatement of an earlier-filed value by more than 2%) are checked
 for every segment line and every balance series except inventories, and must equal the declared ones, otherwise the
-fetch fails (DefinitionBreakError). A declared segment break splits the line into separate keys (never spliced); a
+fetch fails (DefinitionBreakError). Segment lines also skip a Q4 = FY - 9M across a basis change below 2% (same_basis,
+register amendment after review R17). A declared segment break splits the line into separate keys (never spliced); a
 declared balance restatement is a version unless the filing's text says the definition changed. Tags, members, breaks,
 calendars and hand checks are pre-registered in docs/mattregister.md (2026-11-25, S1) and documented in
 docs/kallor/sec_stack_nat.md.
@@ -166,13 +167,18 @@ LINES = [
     SegLine(("rev_lite_systems",), "lite", (_seg("SystemsMember"),), "Systems (Lumentum)",
             description="Intäktsrad från FY2026 (ett rapporterbart segment), med FY2025 som jämförelse."),
     SegLine(("rev_dell_isg",), "dell", (dims(ISG), dims(ESG)), "Segmentet Infrastructure Solutions Group (Dell)",
-            description="Servrar, nät och lagring. Hette Enterprise Solutions Group till 10-Q 2018-06-12."),
+            description="Servrar, nät och lagring. Hette Enterprise Solutions Group till 10-Q 2018-06-12. EMC ingår från "
+                        "fusionen 2016-09-07 (10-Q 2016-12-09), och nivån mer än fördubblas från 2016Q2 till 2016Q4. "
+                        "Det är inte organisk tillväxt, och serien är jämförbar över tid först från 2017Q1."),
     SegLine(("rev_dell_servers_networking",), "dell",
             (dims((PROD, "ServersAndNetworkingMember"), ISG), dims((PROD, "ServersAndNetworkingMember"), ESG)),
             "Servers and networking inom ISG (Dell, till FY2026 Q3)",
             discontinued="Dell delar raden i AI-optimerade och traditionella servrar och nät från 10-K för FY2026 "
                          "(2026-03-16).",
-            description="Alla servrar och nätprodukter i ISG, både traditionella och AI-optimerade."),
+            description="Alla servrar och nätprodukter i ISG, både traditionella och AI-optimerade. ISG omfattar EMC "
+                        "från fusionen 2016-09-07 (10-Q 2016-12-09). I raden syns inget nivåskifte av samma storlek "
+                        "som i ISG, men hur mycket av EMC som ingår går inte att skilja ut, så kvartalen före 2017Q1 "
+                        "jämförs bara med förbehåll."),
     SegLine(("rev_dell_ai_servers",), "dell", (dims((PROD, "AIOptimizedServersAndNetworkingMember"), ISG),),
             "AI-optimerade servrar och nät inom ISG (Dell)",
             description="Rad från 10-K för FY2026 (2026-03-16), med FY2025 som jämförelse.",
@@ -245,11 +251,41 @@ def checked_regimes(name: str, facts: list[sec.Fact], declared: tuple[str, ...],
     return sec_segment.regimes(facts, [pd.Timestamp(b) for b in declared])
 
 
+def restating_filings(facts: list[sec.Fact]) -> set[pd.Timestamp]:
+    """Filing dates that change an earlier-filed value of the same (start, end) by more than sec.TOL."""
+    latest: dict[tuple, float] = {}
+    out = set()
+    for filed in sorted({f.filed for f in facts}):
+        batch = [f for f in facts if f.filed == filed]
+        if any((f.start, f.end) in latest and abs(f.val - latest[(f.start, f.end)]) > sec.TOL for f in batch):
+            out.add(filed)
+        for f in batch:
+            latest[(f.start, f.end)] = f.val
+    return out
+
+
+def same_basis(facts: list[sec.Fact]) -> sec.BasisCheck:
+    """sec.vintages basis check (register amendment 2026-11-25 after review R17).
+
+    A differenced quarter (in practice Q4 = FY - 9M) is not used when the closing fact's filing restates earlier-filed
+    values of the line, the base was filed before it, and the base's own filing restated nothing: the 10-K then brings
+    a new basis that the 9M is not on (Dell ISG, 10-K 2022-03-24). When the base's filing restated values too, the new
+    basis was already in the 10-Qs and the 10-K only carries it back to earlier years (Dell ASC 606, HPE Server FY2025,
+    Cisco's yearly reclassifications). The quarter then waits for a pair on one basis (the next 10-K, by sec's pairing).
+    """
+    restating = restating_filings(facts)
+
+    def ok(closing: sec.Fact, base: sec.Fact) -> bool:
+        return not (base.filed < closing.filed and closing.filed in restating and base.filed not in restating)
+
+    return ok
+
+
 @lru_cache(maxsize=None)
 def line_series(line: SegLine) -> tuple[pd.DataFrame, ...]:
     """Release-dated quarterly rows (MUSD) per definition regime, each without gaps."""
     regs = checked_regimes(line.keys[0], line_facts(line), line.breaks, line.detected)
-    return tuple(sec.contiguous_tail(sec.vintages([reg])) for reg in regs)
+    return tuple(sec.contiguous_tail(sec.vintages([reg], basis_ok=same_basis(reg))) for reg in regs)
 
 
 # ------------------------------------------------------------------ totals (companyfacts)
@@ -309,8 +345,13 @@ ANET_RPO_SINCE = "2023-02-14"  # first filing of Arista's total RPO tag (the nar
 # March 31, 2025" in a 2024-03-31 context). In those filings the fact is re-dated to the filing's own balance date.
 ANET_RPO_REDATED = {"2025-05-07": ("2024-03-31", "2025-03-31"), "2025-08-06": ("2024-06-30", "2025-06-30"),
                     "2025-11-05": ("2024-09-30", "2025-09-30")}
-ANET_ASC606 = "2018-04-01"  # filings after the ASC 606 adoption (2018-01-01) may tag a part as DeferredRevenue*
-ANET_CL_FIRST = "2017-12-31"  # first ASC 606 balance date
+# Filings after the ASC 606 adoption (2018-01-01): the three 10-Qs of 2018 tag the balance sheet lines "Deferred revenue"
+# and "Deferred revenue, non-current" as DeferredRevenue*, and use ContractWithCustomerLiabilityCurrent for another item
+# (10-Q 2018-11-05: 10.9 of contract liabilities in other current liabilities; review R17-1).
+ANET_ASC606 = "2018-04-01"
+# First ASC 606 quarter-end balance. Modified retrospective adoption: the 2017-12-31 comparative is ASC 605, and the
+# 2018-01-01 opening balance is not a quarter end (review R17-3).
+ANET_CL_FIRST = "2018-03-31"
 
 
 def first_per_filing(sources: list[list[sec_instant.Instant]]) -> list[sec_instant.Instant]:
@@ -339,11 +380,16 @@ def redated(facts: list[sec_instant.Instant], fixes: dict[str, tuple[str, str]])
 
 
 def anet_contract_liabilities(cf: dict) -> list[sec_instant.Instant]:
-    """Current + noncurrent contract liabilities from the same filing (ASC 606 basis, balance dates from 2017-12-31)."""
+    """Current + noncurrent contract liabilities from the same filing (ASC 606 basis, balance dates from 2018-03-31).
+
+    Per filing and balance date, DeferredRevenueCurrent/-Noncurrent (filings from ANET_ASC606) come before
+    ContractWithCustomerLiabilityCurrent/-Noncurrent: in the 2018 10-Qs the DeferredRevenue* tags are the balance sheet
+    lines.
+    """
     parts = []
     for new, old in (("ContractWithCustomerLiabilityCurrent", "DeferredRevenueCurrent"),
                      ("ContractWithCustomerLiabilityNoncurrent", "DeferredRevenueNoncurrent")):
-        parts.append(first_per_filing([sec_instant.facts(cf, new), from_filed(sec_instant.facts(cf, old), ANET_ASC606)]))
+        parts.append(first_per_filing([from_filed(sec_instant.facts(cf, old), ANET_ASC606), sec_instant.facts(cf, new)]))
     first = pd.Timestamp(ANET_CL_FIRST)
     return [f for f in sec_custom.summed_instants(parts) if f.end >= first]
 
@@ -361,7 +407,12 @@ class BalanceSeries:
 BALANCES = [
     BalanceSeries("purchase_oblig_anet", "anet", "purchase_oblig",
                   f"Tagg: {PCOMMIT} utan dimension ur instanserna, i inlämningar från {ANET_PO_SINCE} ('non-cancellable "
-                  "purchase commitments', till kontraktstillverkare och leverantörer, inte bokförda).", SOURCE_INST),
+                  "purchase commitments', inte bokförda). Ordalydelsen ändras: 10-K 2016-02-25 och 10-Q 2016-05-05 "
+                  "knyter beloppet till 'our contract manufacturers and suppliers', 10-Q 2016-08-05 till 10-Q 2017-11-03 "
+                  "anger ett odelat belopp, och från 10-K 2018-02-20 anges totalen och delen till kontraktstillverkare "
+                  "och leverantörer var för sig (taggen är totalen; delen var 147,9 av 195,1 MUSD 2017-12-31). Om "
+                  "beloppen 2015Q4–2017Q3 är totalen eller delen går inte att avgöra ur texten, och det finns inga "
+                  "jämförelsetal att pröva.", SOURCE_INST),
     BalanceSeries("purchase_oblig_csco", "csco", "purchase_oblig",
                   f"Tagg: {UUPO} med {UUPO_AXIS} = InventoriesMember, och samma tagg utan dimension, ur instanserna, i "
                   f"inlämningar från {CSCO_PO_SINCE} ('inventory purchase commitments with contract manufacturers and "
@@ -373,9 +424,12 @@ BALANCES = [
                   "Tagg: PurchaseObligation utan dimension ('remaining non-cancelable commitments' för lager och annat, "
                   "inklusive närstående)."),
     BalanceSeries("deferred_rev_anet", "anet", "deferred_rev",
-                  "ContractWithCustomerLiabilityCurrent + ContractWithCustomerLiabilityNoncurrent ur samma inlämning; i "
-                  f"inlämningar från {ANET_ASC606} tas en del som saknas från DeferredRevenueCurrent/-Noncurrent. "
-                  f"Balanser från {ANET_CL_FIRST} (ASC 606)."),
+                  "Balansräkningens 'Deferred revenue' + 'Deferred revenue, non-current' ur samma inlämning: "
+                  "DeferredRevenueCurrent + DeferredRevenueNoncurrent i 10-Q under 2018 (inlämningar från "
+                  f"{ANET_ASC606}), annars ContractWithCustomerLiabilityCurrent + ContractWithCustomerLiabilityNoncurrent. "
+                  "I 10-Q 2018-11-05 är ContractWithCustomerLiabilityCurrent en annan post (övriga kortfristiga skulder). "
+                  f"Balanser från {ANET_CL_FIRST}, den första ASC 606-balansen vid ett kvartalsslut: Arista bytte "
+                  "2018-01-01 med den modifierade retroaktiva metoden, så balansen 2017-12-31 är ASC 605 och ingår inte."),
     BalanceSeries("rpo_anet", "anet", "rpo",
                   f"Egen tagg anet:{ANET_RPO} ur instanserna, från 10-K {ANET_RPO_SINCE}: 'deferred revenue, contract "
                   "liabilities and other performance obligations'. Den smalare us-gaap-taggen före dess ingår inte. "
@@ -385,7 +439,12 @@ BALANCES = [
     BalanceSeries("rpo_csco", "csco", "rpo", f"Tagg: {RPO} utan dimension."),
     BalanceSeries("rpo_smci", "smci", "rpo", f"Tagg: {RPO} utan dimension."),
     BalanceSeries("rpo_dell", "dell", "rpo", f"Tagg: {RPO} utan dimension."),
-    BalanceSeries("rpo_hpe", "hpe", "rpo", f"Tagg: {RPO} utan dimension."),
+    BalanceSeries("rpo_hpe", "hpe", "rpo",
+                  f"Tagg: {RPO} utan dimension. Enligt HPE:s egen text är det förutbetalda intäkter (deferred revenue): "
+                  "'the aggregate amount of remaining performance obligations, or deferred revenue' (10-K 2022-12-08 "
+                  "till 10-Q 2024-03-05) och 'the aggregate amount of deferred revenue' (från 10-Q 2024-06-05). Dells och "
+                  "Ciscos RPO är förutbetalda plus ofakturerade belopp, så nivåerna är inte jämförbara. Juniper ingår "
+                  "från förvärvet 2025-07-02 (cirka 2,5 mdr USD 2025-10-31 enligt 10-K 2025-12-18)."),
 ]
 BALANCE_BY_KEY = {b.key: b for b in BALANCES}
 

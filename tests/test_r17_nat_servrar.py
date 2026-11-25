@@ -1,7 +1,9 @@
-"""Review R17 of track S1 (network, optics and servers): properties that hold, and strict xfails for the defects.
+"""Review R17 of track S1 (network, optics and servers): properties that hold, and the confirmed defects.
 
-Synthetic companyfacts and instance fixtures modelled on the filings named in docs/granskning/r17-nat-servrar.md, no
-network. Values in USD millions (x 1e6 in XBRL facts).
+The tests named after a finding (test_r17_<n>_...) were strict xfails for confirmed defects; R17-1 to R17-6 were fixed
+in track X14 (auto14k/x14-nat-servrar), and the markers removed with the assertions unchanged. Synthetic companyfacts
+and instance fixtures modelled on the filings named in docs/granskning/r17-nat-servrar.md, no network. Values in USD
+millions (x 1e6 in XBRL facts).
 """
 
 from __future__ import annotations
@@ -118,11 +120,9 @@ def test_every_s1_series_says_it_is_not_ai_revenue_and_carries_the_sec_licence()
         assert "inte AI" in x.note or "Dells egen avgränsning" in x.note, x.key
 
 
-# ------------------------------------------------------------------ confirmed defects (strict xfail)
+# ------------------------------------------------------------------ confirmed defects (fixed in X14)
 
 
-@pytest.mark.xfail(strict=True, reason="R17-1: deferred_rev_anet takes a different line item as its current part "
-                                       "(Arista 10-Q 2018-11-05: 10.9 contract liabilities in other current liabilities)")
 def test_r17_1_arista_deferred_revenue_2018q3_is_the_balance_sheet_line():
     # 10-Q 2018-11-05 (0001596532-18-000233): balance sheet "Deferred revenue 318,850" and "Deferred revenue,
     # non-current 211,005" (= "Deferred revenue, ending balance $529,855"); ContractWithCustomerLiabilityCurrent 10.9 is
@@ -135,8 +135,6 @@ def test_r17_1_arista_deferred_revenue_2018q3_is_the_balance_sheet_line():
     assert [(str(f.end.date()), round(f.val / M, 3)) for f in got] == [("2018-09-30", 529.855)]
 
 
-@pytest.mark.xfail(strict=True, reason="R17-3: the 2017-12-31 balance is ASC 605 (modified retrospective adoption), "
-                                       "spliced with the ASC 606 balances")
 def test_r17_3_arista_contract_liabilities_start_with_the_first_asc606_balance():
     # 10-Q 2018-11-05: ASC 606 adopted 2018-01-01 with the modified retrospective method; $16.5 million of deferred
     # revenue reclassified to other liabilities at 2018-01-01 (beginning balance 498,740 vs 515,262 at 2017-12-31)
@@ -172,16 +170,19 @@ def test_dell_fixture_restatements_stay_below_the_break_threshold(monkeypatch):
     monkeypatch.setattr(ss, "company_facts", lambda cik, since, concepts: dell_isg_fy2022())
     monkeypatch.setitem(s.COMPANIES, "tst", s.Company("Test", 1, tuple(s.REVENUE), "2016-06-01", 25, 212, "test"))
     line = s.SegLine(("isg_tst",), "tst", (s.dims((SEG, "InfrastructureSolutionsGroupMember")),), "x")
+    facts = s.line_facts(line)
+    assert ss.definition_breaks(facts) == []  # every restatement is below 2%, so the break check sees nothing
+    # sec.py's rule alone (what S1 published): the first Q4 FY2022 is 34,366 - 24,771 (old-basis 9M), the second
+    # 34,366 - 25,147; with S1's basis check (X14) only the second remains, from the 10-K that re-files FY2022
+    assert versions(sec.vintages([facts]), "2021Q4") == [9_595, 9_219]
     s.line_series.cache_clear()
     (df,) = s.line_series(line)
     s.line_series.cache_clear()
-    # what the S1 code publishes: the first Q4 FY2022 is 34,366 - 24,771 (old-basis 9M), the second 34,366 - 25,147
-    assert versions(df, "2021Q4") == [9_595, 9_219]
+    assert versions(df, "2021Q4") == [9_219]
+    assert df[df["period"] == "2021Q4"]["known_from"].tolist() == [T("2023-03-30")]
     assert versions(df, "2021Q3") == [8_428, 8_564]
 
 
-@pytest.mark.xfail(strict=True, reason="R17-2: Q4 = FY (new basis, 10-K 2022-03-24) - 9M (old basis, 10-Q 2021-12-03) "
-                                       "is published as the first version of rev_dell_isg 2021Q4")
 def test_r17_2_q4_is_not_computed_across_a_basis_change(monkeypatch):
     monkeypatch.setattr(ss, "company_facts", lambda cik, since, concepts: dell_isg_fy2022())
     monkeypatch.setitem(s.COMPANIES, "tst", s.Company("Test", 1, tuple(s.REVENUE), "2016-06-01", 25, 212, "test"))
@@ -195,20 +196,16 @@ def test_r17_2_q4_is_not_computed_across_a_basis_change(monkeypatch):
     assert set(versions(df, "2021Q4")) == {9_219}
 
 
-@pytest.mark.xfail(strict=True, reason="R17-4: rev_dell_isg includes the EMC merger (2016-09-07) without saying so")
 def test_r17_4_dell_isg_note_names_the_emc_merger():
     spec = next(x for x in s.SPECS if x.key == "rev_dell_isg")
     assert "EMC" in spec.note
 
 
-@pytest.mark.xfail(strict=True, reason="R17-5: Arista's purchase commitments change wording in 10-K 2018-02-20 (total "
-                                       "and the part to contract manufacturers), not documented")
 def test_r17_5_arista_purchase_commitments_note_names_the_2018_wording_change():
     spec = next(x for x in s.SPECS if x.key == "purchase_oblig_anet")
     assert "2018-02-20" in spec.note
 
 
-@pytest.mark.xfail(strict=True, reason="R17-6: HPE's tagged RPO is its deferred revenue by its own text")
 def test_r17_6_hpe_rpo_note_says_it_is_deferred_revenue():
     spec = next(x for x in s.SPECS if x.key == "rpo_hpe")
     assert "deferred revenue" in spec.note or "förutbetalda intäkter" in spec.note
