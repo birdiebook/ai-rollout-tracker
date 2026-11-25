@@ -299,3 +299,5 @@ Hela sviten på grenens huvud: 2 207 passerade, 2 fel, 1 överhoppad, 6 xfail. D
 Det andra är `test_data_quality.py::test_data_quality`: den delade bastabellen har fått serien
 `us_gdp_contrib_final_sales_computers` från ett annat spår i körning 14 (`auto14k/agarbeslut`), och den finns inte i
 den här grenens katalog. Felet hör inte till CN1 eller R21 och försvinner vid sammanslagningen.
+
+Rättat i auto14k/x18-kina-sec

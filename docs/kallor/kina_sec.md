@@ -2,7 +2,8 @@
 
 Spår CN1, körning 14. Byggt och kontrollerat 2026-11-25 mot riktiga inlämningar. Bara data: inga takter, samband
 eller prognosvärden är beräknade. Registerpost: `docs/mattregister.md`, "2026-11-25 – CN1" och ändringen av
-dateringsregeln samma dag.
+dateringsregeln samma dag. Granskat av R21 (`docs/granskning/r21-kina-sec.md`) och rättat i X18 samma dag
+(registerändringen "CN1: korskontrollen av Alibabas capex körs som registrerad").
 
 Utan Kina stämmer inte "världen" i projektets syfte. Alibaba och Baidu lämnar 20-F varje år och sina
 kvartalsrapporter som 6-K. Därför går molnintäkter och capex att följa med samma 6-K-teknik som för TSMC, ASML och
@@ -30,7 +31,7 @@ Alla är katalogserier, inte kärnserier. Kvartal, release-daterade, MRMB som ra
 | `rev_baba_cloud_v2` | G4 | Alibaba, Cloud computing / Cloud med DingTalk | 2020Q2 | 2023Q1 | 12 | ja (avslutad) |
 | `rev_baba_cloud_v3` | G4 | Alibaba, Cloud Intelligence Group utan DingTalk | 2022Q3 | 2026Q1 | 15 | ja (avslutad) |
 | `rev_baba_cloud_v4` | G4 | Alibaba, AI Cloud and Compute Services | 2026Q2 | 2026Q3 | 2 | ja |
-| `capex_baba_v1` | G5 | Alibaba, köp av anläggningstillgångar och immateriella tillgångar | 2013Q4 | 2018Q1 | 18 | ja (avslutad) |
+| `capex_baba_v1` | G5 | Alibaba, köp av anläggningstillgångar, immateriella tillgångar och licensierade upphovsrätter | 2013Q4 | 2018Q1 | 18 | ja (avslutad) |
 | `capex_baba_v2` | G5 | Alibaba, köp av anläggningstillgångar utan kontorscampus | 2017Q3 | 2026Q3 | 37 | ja |
 | `capex_bidu` | G5 | Baidu, Inc., capital expenditures | 2018Q4 | 2026Q3 | 32 | ja |
 | `capex_bidu_core` | G5 | Baidu utan iQIYI, capital expenditures | 2018Q4 | 2026Q3 | 32 | ja |
@@ -56,7 +57,7 @@ Alibabas räkenskapsår slutar 31 mars, men kvartalen slutar på kalenderkvartal
 | `v1` | 2016-08-11 – 2021-05-13 | "Cloud computing" | segmentet från FY2017 |
 | `v2` | 2021-08-03 – 2023-05-18 | "Cloud computing", från 2022-02-24 "Cloud" | "Beginning on April 1, 2021, we reclassified the results of our DingTalk business, which was previously reported under the innovation initiatives and others segment, to the cloud computing segment. ... Comparative figures were reclassified" |
 | (ingen serie) | 2023-08-10 | "Cloud Intelligence Group" | sex affärsgrupper; segmentintäkt "before consolidation adjustments, which primarily relate to inter-segment adjustments"; DingTalk ingår. Bara ett pressmeddelande (2022Q2 och 2023Q2) |
-| `v3` | 2023-11-16 – 2026-05-13 | "Cloud Intelligence Group" | "Starting from the quarter ended September 30, 2023, we reclassified the revenue of our DingTalk business, which was previously reported under Cloud Intelligence Group, to All others" (citerat ur 2024-08-15) |
+| `v3` | 2023-11-16 – 2026-05-13 | "Cloud Intelligence Group" | "Starting from the quarter ended September 30, 2023, we reclassified the revenue of our DingTalk business, which was previously reported under Cloud Intelligence Group to All others" och "Comparative figures were reclassified" (pressmeddelandet 2023-11-16, där gränsen står första gången; samma text 2024-08-15) |
 | `v4` | från 2026-08-20 | "AI Cloud and Compute Services" | "Cloud Intelligence Group and T-Head were combined to form AI Cloud and Compute Services." AI-modellabben och Qwen ligger i ett nytt segment, "AI Labs and Applications" |
 
 Bytet från "Cloud computing" till "Cloud" 2022-02 är bara ett nytt namn. Jämförelsetalen är oförändrade (till exempel
@@ -72,6 +73,30 @@ Bytet från "Cloud computing" till "Cloud" 2022-02 är bara ett nytt namn. Jämf
 
 Bytet från "campus" till "campuses" 2020-02 ändrade inga jämförelsetal. 2021-08 – 2022-08 har avstämningen också en
 egen rad för immateriella tillgångar, men PP&E-raden är densamma.
+
+**`capex_baba_v1` innehåller licensierade upphovsrätter till videoinnehåll**, åtminstone från FY2017. Begreppet för
+årsraden i 20-F FY2017 heter `PaymentsToAcquireOtherPropertyEquipmentIntangibleAssetsAndLicensedCopyrightsOfVideoContent`.
+Pressmeddelandet 2018-11-02 delar upp 2017Q3: 5 322 MRMB anläggningstillgångar och 2 680 MRMB upphovsrätter och
+immateriella tillgångar, sammanlagt `v1`:s 8 002. Det kvartalet var alltså en tredjedel av `v1` upphovsrätter och
+immateriella tillgångar, inte datacenter och servrar. `v2` har bara anläggningstillgångar.
+
+**Omräkningar vid gränserna.** Samma kvartal i det sista pressmeddelandet på den gamla definitionen och det första på
+den nya (MRMB). Räknat ur pressmeddelandena med `china_sec.figures`. Talen är desamma som i R21:s granskning.
+
+| Gräns | Kvartal | Före | Efter | Ändring |
+|---|---|---|---|---|
+| DingTalk in (`v1` → `v2`) | 2020Q2, 2020Q3, 2020Q4, 2021Q1 | 12 345, 14 899, 16 115, 16 761 | 12 437, 15 029, 16 227, 16 865 | +0,6 till +0,9 % |
+| Omorganisationen 2023 (`v2` → pressmeddelandet 2023-08-10) | 2022Q2 | 17 685 | 24 127 | +36,4 % |
+| Omorganisationen 2023 (`v2` → `v3`) | 2022Q3, 2022Q4, 2023Q1 | 20 757, 20 179, 18 582 | 27 035, 27 364, 24 742 | +30,2, +35,6, +33,2 % |
+| DingTalk ut (2023-08-10 → `v3`) | 2023Q2 | 25 123 | 25 065 | −0,2 % |
+| T-Head in (`v3` → `v4`) | 2025Q2, 2025Q3 | 33 398, 39 824 | 33 418, 39 914 | +0,1, +0,2 % |
+| Capex (`capex_baba_v1` → pressmeddelandet 2018-08-23) | 2017Q2 | 3 162 | 3 162 | 0 % |
+| Capex (`capex_baba_v1` → `v2`) | 2017Q3, 2017Q4, 2018Q1 | 8 002, 9 029, 5 616 | 5 322, 6 463, 2 603 | −33,5, −28,4, −53,7 % |
+| Capex (2018-08-23 → `v2`) | 2018Q2 | 9 759 | 5 005 | −48,7 % |
+
+Vid DingTalk och T-Head är omräkningarna under 1 %. Vid omorganisationen 2023 är de +30 till +36 %, bland annat för
+att segmentet från 2023-08 redovisas före koncernelimineringar. Vid capex 2018 är de −28 till −54 %, främst för att
+upphovsrätter och immateriella tillgångar bryts ut. Serierna går alltså inte att skarva, och nivåer över en gräns är inte jämförbara.
 
 **Baidus capex** är raden "Less: Capital expenditures" i kassaflödestabellen (tre månader, RMB). Den finns från
 pressmeddelandet 2020-03-04 (Q4 2019, med jämförelsetal för 2018Q4 och 2019Q3). Baidu definierar fritt kassaflöde som
@@ -117,8 +142,11 @@ under kalenderkvartalet. Det är samma data som FRED:s DEXCHUS, men den hämtas 
 yuan per U.S. dollar)", från 2000-01-03, "ND" på dagar utan kurs). FRED:s villkor förbjuder användning med
 maskininlärning, och projektet klassar därför FRED-kopior som `okänd` (`ai_tracker.licenses`, regeln alfred). Fed:s
 egen sida är public domain. Ett kvartal med färre än 55 noterade dagar får ingen kurs. `known_from` = max(RMB-radens
-`known_from`, kvartalets slut + 10 dagar). Sidan har bara aktuell vintage. Att kurserna inte revideras är ett
-antagande, inte kontrollerat mot arkiverade releaser. Bolagens egna US$-belopp i pressmeddelandena använder kursen på
+`known_from`, kvartalets slut + 10 dagar). Sidan har bara aktuell vintage. Fed skriver på H.10:s sida
+(`releases/h10/about.htm`) att "past releases are not revised and may not reflect subsequent revisions to the data".
+Revideringar är alltså möjliga. R21 jämförde 15 arkiverade veckoreleaser 2017–2026 (en per år nära kvartalsslut) med
+dagens historiksida: 75 av 75 dagskurser var lika. Att kurserna inte revideras är ett antagande som stickprovet
+stöder, inte en kontroll av varje dag. Bolagens egna US$-belopp i pressmeddelandena använder kursen på
 kvartalets sista dag och är därför inte samma sak som vyn här.
 
 ## Kontroller
@@ -152,19 +180,35 @@ year 2025". 4 är tabeller i miljarder RMB i 2026 års pressmeddelanden (se neda
 mönstret för rubriken titeln i fjärde kvartalets pressmeddelanden, och inga meningar där kodades. Det var ett fel i
 koden, inte i regeln, och det är rättat (registret, samma dag).
 
-**Korskontroll mot 20-F** (`python -m ai_tracker.china_crosscheck`):
+**Korskontroll mot 20-F** (`python -m ai_tracker.china_crosscheck`, 20-F från 2016). Utskriften har en rad per
+20-F och serie, med kolumnen `check` (`segment`, `exact` eller `ratio`), och en sammanfattning per serie:
 - *Alibabas moln:* summan av fyra kvartal (april–mars) stämmer exakt (0 MRMB) med segmentposten i 20-F:ns XBRL för
-  varje räkenskapsår på samma definition: `v1` FY2017–FY2021 (20-F 2019–2021, CloudComputingSegmentMember), `v2`
+  varje räkenskapsår på samma definition: `v1` FY2016–FY2021 (20-F 2017–2021, CloudComputingSegmentMember), `v2`
   FY2021–FY2023 (20-F 2022–2023) och `v3` FY2024–FY2026 (20-F 2024–2026, CloudIntelligenceGroupMember). På olika
-  definitioner skiljer det som väntat: FY2021 är 60 120 i `v1` och 60 558 i `v2` (DingTalk). 20-F för FY2024 räknar
-  om FY2023 till Cloud Intelligence Group, 103 497, mot 77 203 för Cloud i `v2`.
-- *Alibabas capex:* summan av fyra kvartal av `capex_baba_v2` är 76–98 % av 20-F:ns
-  `PaymentsToAcquireLandUseRightsPropertyAndEquipment` (FY2019–FY2026). Skillnaden är väntad: bolagets rad räknar
-  inte med mark och bygge av kontorscampus. Den används inte för att justera något.
+  definitioner skiljer det som väntat: 20-F 2022 räknar om FY2020 och FY2021 med DingTalk (40 301 och 60 558 mot
+  40 016 och 60 120 i `v1`). 20-F för FY2024 räknar om FY2023 till Cloud Intelligence Group, 103 497, mot 77 203 för
+  Cloud i `v2`.
+- FY2023 går inte att pröva för `v3`, eftersom 2022Q2 saknas i `v3`. 20-F:ns 103 497 ger ett implicit 2022Q2 på
+  24 356 på `v3`:s grund, mot 24 127 med DingTalk i pressmeddelandet 2023-08-10. Skillnaden har motsatt tecken mot
+  DingTalk-effekten 2023Q2 (−58). Definitionen 2023-08-10 skiljer sig alltså från `v3` på mer än DingTalk, eller så
+  har 20-F:n en annan grund för FY2023. Ingen serie påverkas.
+- *Alibabas capex* (den registrerade kontrollen, rättad efter R21): summan av fyra kvartal stämmer exakt (0 MRMB)
+  där det finns en rad på samma definition. `capex_baba_v1` FY2015–FY2018 (4 770, 5 438, 12 220 och 25 809) mot
+  bolagets egen rad i 20-F FY2016–FY2018 och, för FY2017–FY2018, mot companyfacts
+  `PaymentsToAcquireOtherPropertyPlantAndEquipment` plus `PaymentsToAcquireIntangibleAssets` (5 680 + 6 540 och
+  15 601 + 10 208). `capex_baba_v2` FY2019–FY2020 (32 336 och 24 662) mot companyfacts
+  `PaymentsToAcquireOtherPropertyPlantAndEquipment`.
+- För FY2021–FY2026 finns ingen rad på `capex_baba_v2`:s definition, varken i companyfacts eller i 20-F-instanserna
+  (inget odimensionerat årsbelopp i CNY stämmer med summan). Där redovisas bara kvoten mot den bredare raden
+  `PaymentsToAcquireLandUseRightsPropertyAndEquipment`, som också har mark och bygge av kontorscampus: 79–98 %. Den
+  används inte för att justera något.
 - *Baidus capex:* summan av fyra kvartal av `capex_bidu` stämmer exakt med companyfacts
   `PaymentsToAcquirePropertyPlantAndEquipment` för 2019–2025.
-- companyfacts har Alibabas capex bara för FY2017–FY2020 (`PaymentsToAcquireOtherPropertyPlantAndEquipment`). Senare
-  år finns bara i 20-F:ns egen XBRL-instans, som korskontrollen läser.
+- Bolagets egen rad för `capex_baba_v1` i 20-F FY2016–FY2018 är ett tilläggsbegrepp och finns bara i instanserna, inte
+  i companyfacts. companyfacts har Alibabas PP&E-rad bara för FY2017–FY2020.
+- Kontrollen av Alibabas capex skrevs ut i en daterad registerändring (X18) innan den kördes. Före ändringen hade X18
+  läst R21:s granskning, som redan redovisade utfallet, listan i companyfacts för PP&E och immateriella tillgångar och
+  namnen på begreppen i 20-F FY2016–FY2018. Ingen summa av kvartal räknades före ändringen.
 
 ## Licens
 
@@ -178,8 +222,13 @@ kommersiell användning: `ja` för alla serier (regeln sec, de kurerade raderna 
 ## Förbehåll
 
 - **Segmentdefinitioner.** Fyra definitioner av Alibabas moln på tio år, och varje är en egen serie. Att jämföra
-  nivåer över en gräns är fel. Gränserna kommer från bolagets egen text. Omräkningarna vid gränserna är små (under 1 %) och
-  hade inte syntes med en procentgräns. Ett nytt omklassat pressmeddelande som inte deklareras stoppar hämtningen med fel.
+  nivåer över en gräns är fel. Gränserna kommer från bolagets egen text. Omräkningarna vid gränserna är små för
+  DingTalk och T-Head (−0,2 till +0,9 %), och de hade inte synts med en procentgräns. Vid omorganisationen 2023 är de
+  +30 till +36 % och för capex 2018 −28 till −54 % (tabellen under Definitioner per period). Ett nytt omklassat
+  pressmeddelande som inte deklareras stoppar hämtningen med fel.
+- **Upphovsrätter i `capex_baba_v1`.** Raden innehåller licensierade upphovsrätter till videoinnehåll, åtminstone från
+  FY2017. I 2017Q3 var 2 680 av 8 002 MRMB upphovsrätter och immateriella tillgångar. `v1` mäter alltså inte bara
+  datacenter och servrar.
 - **Intäkter mellan segment.** Från 2023-08 redovisas Alibabas segment före koncernelimineringar. Cloud Intelligence
   Group innehåller alltså intäkter från Alibabas egna verksamheter. För FY2023 är skillnaden mot den gamla
   definitionen (utan interna intäkter och med DingTalk) 34 %. Flera pressmeddelanden nämner intäkter från externa kunder
@@ -212,6 +261,9 @@ daterad registerpost. Textserierna uppdateras inte av sig själva: efter ett nyt
 - Alibabas "AI-related product revenue" (från 2026-05, i text) är en kandidat för en egen extraktion med
   registerpost och kodningsregler.
 - Kingsoft Cloud (6-K) hanns inte med.
-- Ingen av serierna föreslås som kärnserie nu. `capex_baba_v2` (37 kvartal, en definition sedan 2018, exakt mot 20-F
-  på kassaflödets definition med kända undantag) är den bästa kandidaten för G5 om Kina ska vägas in. Det kräver en
+- Pressmeddelandet 2018-08-23 kan vara samma mått som `capex_baba_v1`: jämförelsetalet 2017Q2 är 3 162 i båda. Då
+  kunde `v1` sluta 2018Q2 (9 759, känt 2018-08-23) i stället för att 2018Q2 blir känt först i `v2` ett år senare.
+  Gränsen registrerades före värdena och ändras inte här. Det kräver ett andra belägg och en daterad registerändring.
+- Ingen av serierna föreslås som kärnserie nu. `capex_baba_v2` (37 kvartal, en definition sedan 2018, exakt mot
+  companyfacts FY2019–FY2020) är den bästa kandidaten för G5 om Kina ska vägas in. Det kräver en
   egen registerpost och en granskning.

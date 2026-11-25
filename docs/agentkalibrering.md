@@ -71,6 +71,7 @@ En rad per spår, fylls på efter varje körning. Tumreglerna justeras när siff
 | 2026-11-25 | 14 | R-W2 tillgänglighet | granskning + rättning | ~56 | ~116 | ~270 | axe 0 i 54 körningar; 4 tangentbordsfel rättade; LCP 0,8 s; TBT kvar (P1) |
 | 2026-11-25 | 14 | CN1 Kina via SEC | källa (6-K-tabeller, textextraktion, valuta, korskontroll) | ~190 (två pass, kvotstopp) | ~110 | – | 14 katalogserier, 4 molndefinitioner, 26 textrader kontrollerade, exakt mot 20-F, 29 tester |
 | 2026-11-25 | 14 | R21 granskning av CN1 | granskning (oberoende omräkning, nyhämtning) | ~90 (två pass, kvotstopp) | ~120 | – | 301 av 301 rader lika; 22 pressmeddelanden byte-lika; 54 tal; exakt mot 20-F även för Alibabas capex; R21-1–4 dok, etikett, korskontroll; 12 tester + 4 xfail |
+| 2026-11-25 | 14 | X18 rättning av CN1 | rättning (korskontroll, dokument, etiketter) | ~27 | ~65 | – | R21-1–4 rättade; registerändring före koden; Alibabas capex exakt FY2015–FY2020; 301 rader oförändrade; 4 xfail → pass, 3 nya tester |
 
 ## Körning 1, sammanfattning (2026-11-23, orkestrerare)
 

@@ -807,3 +807,17 @@ republishing data"), npm och arXiv (`okänd`), och Microsofts capex-guidance ur 
   etiketten för `rev_baba_cloud_v4` säger 2025Q2, men serien börjar 2026Q2.
 - **Rekommendation till Johannes:** R21 har läst alla 26 textrader, och mått och kvartal stämmer. Baidus två textserier
   kan få `publish=True` med en daterad ändring. Ingen serie blir kärnserie nu.
+
+## 2026-11-25 – X18: rättning av CN1 efter R21
+
+- **R21-2:** CN1-posten ovan säger att omräkningarna vid gränserna är under 1 %. Det gäller DingTalk och T-Head
+  (−0,2 till +0,9 %). Vid omorganisationen 2023 är de +30 till +36 % och för capex 2018 −28 till −54 %.
+  `docs/kallor/kina_sec.md` har nu en tabell per gräns. Inget värde ändras, men nivåer över en gräns går inte att
+  jämföra.
+- **R21-3:** korskontrollen av Alibabas capex körs nu som registrerad, efter en daterad registerändring. `capex_baba_v1`
+  stämmer exakt FY2015–FY2018 och `capex_baba_v2` FY2019–FY2020. För FY2021–FY2026 finns ingen rad på samma
+  definition, och där redovisas bara kvoten mot den bredare raden (79–98 %). Molnet prövas nu också för FY2016, och det
+  stämmer exakt.
+- **R21-4 och R21-1:** etiketten och noten för `capex_baba_v1` säger att serien innehåller licensierade upphovsrätter
+  till videoinnehåll. Etiketten för `rev_baba_cloud_v4` har inget startkvartal.
+- En omräkning ger samma 301 rader som CN1. Inga serier blir kärnserier.
