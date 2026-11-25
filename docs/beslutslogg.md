@@ -793,3 +793,18 @@ republishing data"), npm och arXiv (`okänd`), och Microsofts capex-guidance ur 
 - **Rekommendation till Johannes:** låt serierna vara katalogserier tills de har granskats. Om G6 ska få en
   kärnserie för nät eller servrar är `rev_csco_networking` eller `rev_dell_isg` de längsta rena kandidaterna, men båda
   innehåller mycket utanför AI. Ingen av dem ska in före ögonblicksbilden 2026-11-30.
+
+## 2026-11-25 – R17: granskning av S1 (nät, optik och servrar)
+
+- **Godkänd med anmärkningar** (`docs/granskning/r17-nat-servrar.md`). Ombygget är identiskt (42 serier, 1 327 rader),
+  alla `known_from` är inlämningsdatum, 85 Q4-rader stämmer med helår − 9M, och 11 bolagskvartal i alla åtta bolag
+  kontrollerades mot huvuddokumenten. Registerposten kom före hämtningen, och tillägget efter första bygget är inte
+  styrt av seriernas förlopp.
+- **Fel (R17-1):** `deferred_rev_anet` 2018Q3 är 221,9 i stället för 529,9. I 10-Q 2018-11-05 är den taggade
+  kortfristiga kontraktsskulden en annan post (10,9 i övriga skulder).
+- **Fel (R17-2):** första versionen av `rev_dell_isg` 2021Q4 (9 595) är helår på ny bas minus 9M på gammal bas. Rätt
+  värde på samma bas är 9 219. Samma sak för `rev_dell_servers_networking` (4 797 mot 4 720). Versionen stod i ett år.
+- Fyra anmärkningar om dokumentationen: 2017Q4 i `deferred_rev_anet` är ASC 605, EMC-fusionen saknas för Dells ISG,
+  det är inte visat att Aristas åtaganden 2016–2017 har samma definition, och HPE:s RPO är förutbetalda intäkter.
+- **Rekommendation:** rätta R17-1 och R17-2 med en daterad registerpost före eller vid mergen. `rev_dell_isg` är inte
+  en ren kandidat från 2015, utan från 2017Q1 (38 kvartal). Ingen serie ska bli kärnserie före 2026-11-30.
