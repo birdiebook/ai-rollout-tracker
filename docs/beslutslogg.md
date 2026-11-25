@@ -841,6 +841,20 @@ republishing data"), npm och arXiv (`okänd`), och Microsofts capex-guidance ur 
   publiceras. Läs spreaden per emittent, inte den poolade serien, som till stor del visar vilken emittent som kom till
   marknaden.
 
+## 2026-11-25 – Q1: pris vid rörlig förmågetröskel i G2 (katalogserier)
+
+- Fyra katalogserier: `g2_price_rolling12_arena` (huvudvariant), `g2_price_rolling6_arena`, `g2_price_frontier_arena`
+  (sammanhang) och `g2_price_rolling12_eci` (backfill). Registerposten committades före värdena
+  (`docs/kallor/g2_rorlig_troskel.md`). Grenindex och tillstånd ändras inte.
+- **Referensen är ettan för m − L enligt det som är känt vid versionens datum**, inte vid slutet av m − L. Annars blir
+  fördröjningen upp till L + 7 månader i mätglappet. Känsligheten visar att valet ändrar L = 6 i 2026-05 – 2026-09.
+- **Efterföljarregeln är central:** ettan är ofta ett experimentnamn som tas bort ur tavlan. 9 av 22 månader (L = 12)
+  använder en efterföljare med G2A:s överlappsregel. Namn hittas även efter bytet till visningsnamn (normaliserad form).
+- **Kostnad per uppgift är BLOCKED:** Agent Arena har kostnad per uppgift först från 2026-11-02, och metoden går inte
+  att läsa (arena.ai nekas).
+- **Rekommendation till Johannes:** granska `g2_price_rolling12_arena` innan den blir kärnserie. Den skulle ersätta
+  Arena-varianterna A och B, inte läggas till.
+
 ## 2026-11-25 – Ägarbeslut: spärrregeln, capex-guidance från sec.gov och nettobidraget för datorer
 
 Johannes svarade "kör på dina rekommendationer" på tre rekommendationer samma dag (spår `auto14k/agarbeslut`).
@@ -931,6 +945,18 @@ Johannes svarade "kör på dina rekommendationer" på tre rekommendationer samma
 - **Rekommendation till Johannes:** låt extraktionsgranskningen pröva Baidus textserier innan de publiceras. Ingen
   serie föreslås som kärnserie nu. `capex_baba_v2` är den bästa kandidaten för G5.
 
+## 2026-11-25 – R22: granskning av Q1 (pris vid rörlig förmågetröskel)
+
+- GODKÄND MED ANMÄRKNINGAR som katalogserier (`docs/granskning/r22-rorlig-troskel.md`). Registerposten kom före kod och
+  värden. Alla 118 rader räknades om oberoende, och 17 versioner och månader kontrollerades mot råfilerna. Inget
+  läckage och inga fel värden enligt registret.
+- Avvikelsen (referensen enligt det som är känt vid versionens datum) håller: alla tavlor i mätglappet finns bara i
+  bulkuppladdningen från 2026-04-02.
+- `g2_price_rolling12_arena` är inte redo som kärnserie. Efterföljarregeln använder Δ som är upp till 359 dagar gamla,
+  och i 5 av 22 månader beror värdet på vilken kandidat som står först (R22-3). Två namnbyten utan överlapp saknas
+  (R22-2). ECI-varianten ligger på golvet i 7 av 18 månader utan att dokumentet säger det (R22-4).
+- Fem should_fix med strikta xfail-tester, sex nya passerande tester. Grenindex och tillstånd ändras inte.
+
 ## 2026-11-25 – S3: order och orderstock ur resultatpressmeddelanden
 
 - Kodningsreglerna låstes och committades före kodningen (471c67b). 575 värden och 42 stopp för Vertiv, GE Vernova,
@@ -966,6 +992,21 @@ Johannes svarade "kör på dina rekommendationer" på tre rekommendationer samma
   stickproven på extraktionen för Amazon, Alphabet och Meta är R2 (5 av 5 för Amazon). R5 kontrollerade bara att
   planerna för nästa år var fullständiga. Hänvisningen "R2: 5 av 5 stickprov rätt, R5" i posten ovan ska läsas så.
   `docs/kallor/guidance.md` är rättad.
+
+## 2026-11-25 – X19: rättning av Q1 efter granskningen R22 (pris vid rörlig förmågetröskel)
+
+- Registerposten "2026-11-25 – X19" committades före omräkningen. Den ändrar tre regler efter att värdena setts, med
+  granskningens fynd som skäl: två namnbyten utan överlapp till (`chatgpt-4o-latest`, `claude-opus-4-6-thinking`),
+  tröskeln som median över alla giltiga efterföljare i stället för den första, och versionen på månadsslut + 1 med
+  tavlor belagda samma dag. `docs/kallor/g2_rorlig_troskel.md` avsnitt 11.
+- **Medianen gäller alltid, utan åldersgräns för Δ.** Villkoret "median när Δ är äldre än 90 dagar" ger samma rader på
+  dagens data, och en lucka hade tagit bort 2026-03 – 2026-05 för L = 12. Utan gräns väljs ingen gräns i efterhand.
+- Effekt: L = 12 ändras i 4 av 22 månader (2025-08 0,13125 → 0,175, 2026-02, 2026-04 och 2026-05). L = 6, frontpriset och
+  ECI-varianten ändras inte. Värdet beror inte längre på kandidatordningen, men kandidaternas spridning gör 2026-02 –
+  2026-05 osäkra (förbehåll 5).
+- Den delade versionsregeln i `vintages.monthly` och `arena_price.build` ändras inte (kärnserier, skyddade moduler). Den
+  rättningen hör hemma i ett eget spår.
+- Serierna är fortfarande katalogserier. Grenindex och tillstånd ändras inte.
 
 ## 2026-11-25 – X21: T1 rättat efter R24
 

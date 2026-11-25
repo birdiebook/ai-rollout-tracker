@@ -126,6 +126,14 @@ KEY_OVERRIDES: dict[str, tuple[str, str]] = {
        for k in ("g2_price_at_arena_capability", "g2_price_at_arena_capability_4o")},
 }
 
+# ---- begin track Q1 (run 14, q1-rorlig-troskel): the rolling-threshold price series (series/price_rolling.py) read
+# the same text boards as the G2A price series, Space files included, so they get the same class as R10-2.
+KEY_OVERRIDES.update({
+    k: (OKAND, f"tavlorna kommer från LMArenas Space-filer (arena.subset_boards(\"text\")): {ARENA_SPACE_REASON}")
+    for k in ("g2_price_rolling12_arena", "g2_price_rolling6_arena", "g2_price_frontier_arena")
+})
+# ---- end track Q1
+
 # By source (regex on Spec.source), before the licence rules.
 SOURCE_OVERRIDES: list[Rule] = [
     # R10-4: also a direct FRED copy (fredgraph.csv, fred.stlouisfed.org), not only ALFRED. The acronyms are
