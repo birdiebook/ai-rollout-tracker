@@ -102,6 +102,27 @@ def test_board_documented_later_adds_a_vintage_on_its_evidence_date():
     assert mar["known_from"].tolist() == [T("2024-04-01"), T("2024-04-02")]
 
 
+def test_board_on_the_last_day_documented_the_next_day_enters_its_month():
+    """Register 2026-11-25, Integration 14 (R23-2, the X20 rule): the first version on month end + 1 day counts the
+    boards documented through that day. Before the fix the board below never entered February: its evidence day is
+    the first version's day, which only counted evidence <= month end."""
+    boards = [board("2024-02-05", {"ref": 1200, "other": 1210}),
+              board("2024-02-29", {"ref": 1200, "cheap": 1201}, evidence="2024-03-01")]
+    t = build(boards, last="2024-03")
+    feb = t[t["period"] == "2024-02"]
+    assert len(feb) == 1  # one version, not a first version without the board plus a second on the same day
+    r = feb.iloc[0]
+    assert r["board"] == T("2024-02-29") and r["key"] == "k-cheap"
+    assert r["known_from"] == T("2024-03-01")  # never before its evidence
+    # documented two days later: the first version is without it, a second version comes on its evidence day
+    late = build([boards[0], board("2024-02-29", {"ref": 1200, "cheap": 1201}, evidence="2024-03-02")], last="2024-02")
+    assert late["known_from"].tolist() == [T("2024-03-01"), T("2024-03-02")]
+    assert late["key"].tolist() == ["k-other", "k-cheap"]
+    # same for a board published mid-month and documented on month end + 1 (it was already in; unchanged)
+    mid = build([boards[0], board("2024-02-20", {"ref": 1200, "cheap": 1201}, evidence="2024-03-01")], last="2024-02")
+    assert mid["known_from"].tolist() == [T("2024-03-01")] and mid["key"].tolist() == ["k-cheap"]
+
+
 def test_no_future_data_later_boards_and_prices_do_not_change_past_months():
     boards = [board("2024-02-05", {"ref": 1200, "cheap": 1201})]
     base = build(boards, last="2024-02")

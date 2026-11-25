@@ -11,8 +11,8 @@ A successor is used only when the reference is missing from a board, offset by t
 difference over the latest 3 earlier boards that hold both (earlier boards only: no future data).
 
 Vintages follow sources/vintages.py: the first row of a month is known month end + 1 day from boards documented by
-month end; a board published by month end but documented later adds a row on its evidence date when the value
-changes. known_from = max(board vintage date, price known_from = month end + 1). Rows whose board exists only in the
+month end + 1 day (register 2026-11-25, Integration 14, R23-2, the X20 rule); a board published by month end but
+documented later adds a row on its evidence date when the value changes. known_from = max(board vintage date, price known_from = month end + 1). Rows whose board exists only in the
 dataset's bulk upload are source="backfill".
 A key that LiteLLM's month-end file lists with `deprecation_date` <= month end does not count (retired model; rule added
 2026-11-24 after the first build, docs/kallor/g2_arena_pris.md section 2).
@@ -248,11 +248,12 @@ def build(boards: list[Board], snaps: pd.DataFrame, chain: tuple[tuple[str, str]
             prices = prices[~prices["key"].isin(exclude_keys)]
         pairs = pairs_at(end)
         base = max(end + pd.Timedelta(days=1), end + pd.Timedelta(days=PRICE_LAG_DAYS))
-        days = sorted({base} | {b[2] for b in cand if b[2] > end})
+        days = sorted({base} | {b[2] for b in cand if b[2] > base})
         prev = None
         for day in days:
-            cutoff = end if day == base else day
-            known = [b for b in cand if b[2] <= cutoff]
+            # the first version (on `base`) uses every board documented through that day, so a board published on the
+            # last day and documented the next enters its month (register 2026-11-25, Integration 14, R23-2; X20)
+            known = [b for b in cand if b[2] <= day]
             if not known:
                 continue
             board = known[-1]  # latest published (ties: latest evidence)
