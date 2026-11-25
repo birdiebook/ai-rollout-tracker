@@ -1490,3 +1490,46 @@ tak ändras inte.
    punkt 2 gäller inte längre.
 3. **K0** räknar tillståndet "för få källor" (index v2, registret 2026-11-24) för sig, bredvid "för få serier", när det
    förekommer. Tidigare räknades det som "för få serier". Inget urval ändras.
+
+### 2026-11-25 – M1: nettobidrag för datorer efter import (BB01RY), ägarbeslut
+
+Ägarbeslut 2026-11-25 (beslutsloggen samma dag): BEA:s nettobidrag för datorer förregistreras, som granskningen R12
+föreslog (R-3). Posten skrivs och committas innan något värde för `BB01RY` hämtas. Reglerna i M1-posterna ovan gäller
+oförändrade också för den nya serien.
+
+**Vad som har setts före registreringen.** Granskningen R12 läste `BB01RY` i tre releaser (2017-10-27, 2023-06-29 och
+2026-10-29) för att visa att premissen spelade roll. För 2026Q3 var bidraget −0,61 procentenheter i releasen
+2026-10-29, mot +0,72 för `B935RY`. Ingen historik och ingen takt har räknats, och inga andra kvartal har lästs.
+
+**Definition.**
+- `us_gdp_contrib_final_sales_computers` = bidraget till procentuell förändring i real BNP från slutlig försäljning av
+  datorer ("Final sales of computers", NIPA-tabell 1.2.2 rad 17, `BB01RY`). Procentenheter i årstakt (SAAR), med de två
+  decimaler som BEA publicerar.
+- Samma releasearkiv och samma datering som de andra bidragsserierna i M1. known_from = "Data published" i
+  tabellhuvudet. Värden som publicerades före 2017-10-27 får det datumet. Bara perioder som finns i den senaste
+  vintage visas (R12, R-2). Koden läses ur tabellens kodkolumn, inte ur radnumret, som kan flyttas mellan vintages.
+  Saknas koden i en arkiverad release stoppar hämtningen med ett fel.
+- Gren G5, som `us_gdp_contrib_computers`. Det är en katalogserie, inte en kärnserie, och den räknas inte i någon grens
+  index. Om den ska bli kärnserie är det ett G-A-beslut senare, med en egen post.
+
+**Vad den omfattar.** Datorer och kringutrustning i all slutlig användning, minus importen. Enligt BEA:s
+`SeriesRegister.txt` (R12) består `BB01RC` av privata investeringar i datorer (`B935RC`), hushållens köp (`DCPPRC`) och
+export (`B850RC`), minus import av datorer, kringutrustning och delar (`B852RC`). Resten är troligen offentliga
+investeringar i datorer, men det är inte verifierat. Serien omfattar inte programvara och inte övrig
+informationsbehandlingsutrustning (kommunikationsutrustning, instrument, kontorsutrustning). Den är alltså inget
+nettomått för `ai_invest_contrib_gross`, och något sådant registreras inte. Kategorin är bredare än AI, som i M1.
+
+**Hur den läses.**
+- Bredvid `us_gdp_contrib_computers` (`B935RY`, tabell 1.5.2 rad 32). Den serien är bruttobidraget från privata
+  investeringar i datorer och räknar utrustningen oavsett om den är importerad. `BB01RY` drar ifrån importen och tar med
+  hushållens och den offentliga sektorns köp och exporten. När investeringarna växer och till stor del möts av import kan
+  bruttobidraget vara positivt och nettobidraget nära noll eller negativt.
+- Skillnaden mellan de två serierna definieras inte som en egen serie. Den blandar flera poster (hushåll, offentlig
+  sektor, export och import) och är inte granskad.
+- Bredvid `us_imp_computers_contrib_imp` (`B852RZ`). Den serien är datorimportens bidrag till den reala importens
+  tillväxt, inte till BNP:s, så skalan är en annan. Den visar om en förändring i nettobidraget följer med importen.
+- Ingen kvot mot BNP-tillväxten definieras, av samma skäl som i M1. Ett bidrag på x procentenheter betyder inte att AI
+  bidrog med x.
+
+**Kontroll efter hämtningen.** Minst tre kvartal kontrolleras för hand mot tabell 1.2.2 i den arkiverade releasen.
+Resultatet står i `docs/kallor/makro_bea_bls.md`.
