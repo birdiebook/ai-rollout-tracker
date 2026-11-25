@@ -1,8 +1,8 @@
 """Review R23 of track Q2 (open against closed weights and the China gap, G1): docs/granskning/r23-oppen-stangd.md.
 
-Synthetic fixtures, no network. Passing tests pin properties that the review verified on real data. Strict xfail tests
-mark confirmed defects (R23-1 to R23-3); each one flips to a failure when the defect is fixed, so the marker can be
-removed with the assertion unchanged.
+Synthetic fixtures, no network. Passing tests pin properties that the review verified on real data. The tests for the
+confirmed defects R23-1 to R23-3 were strict xfail; fix track X20 fixed them and removed the markers with the
+assertions unchanged (tests/test_x20_oppen_stangd.py has the fix's own tests).
 """
 
 from __future__ import annotations
@@ -47,8 +47,6 @@ def _meta(rows):
 
 # ------------------------------------------------------------------ R23-1 (must_fix): board documented on month end + 1
 
-@pytest.mark.xfail(strict=True, reason="R23-1: a board published on the last day of the month and documented the next "
-                                       "day never enters that month (cutoff = month end on the base day)")
 def test_last_day_board_documented_next_day_enters_its_month():
     # Real case: text 2026-09-30 (top gemini-4-argon-high), evidence 2026-10-01; the gap for 2026-09 stays at the
     # 2026-09-25 board's 27.06 instead of 42.58 (2026-04 likewise).
@@ -61,8 +59,6 @@ def test_last_day_board_documented_next_day_enters_its_month():
     assert last_value(t, "open", "gap", "2026-09")["value"] == pytest.approx(40)  # c3 1530 - o1 1490
 
 
-@pytest.mark.xfail(strict=True, reason="R23-2 (pre-existing, sources/vintages.py): a state documented on month end + "
-                                       "1 day adds no vintage; g1_arena_text_top 2026-09 is 1517.79, not 1533.09")
 def test_vintages_monthly_keeps_a_last_day_state_documented_next_day():
     ev = pd.DataFrame({"published": [T("2026-09-25"), T("2026-09-30")], "value": [1.0, 2.0],
                        "evidence": [T("2026-09-26"), T("2026-10-01")], "source": ["release", "release"]})
@@ -85,9 +81,6 @@ def test_vintages_monthly_adds_a_version_for_evidence_two_days_after():
 
 # ------------------------------------------------------------------ R23-3 (should_fix): ECI open before the weights
 
-@pytest.mark.xfail(strict=True, reason="R23-3: ECI counts a model as open from its date even when Epoch documents the "
-                                       "weights release after the month end (Kimi K3.1 Pro: API 2026-10-23, weights "
-                                       "2026-11-04)")
 def test_eci_model_with_weights_after_month_end_is_not_open_that_month():
     rows = pd.DataFrame([
         ("GPT-A", 160.3, "2026-03-05", "Closed weights", US),

@@ -17,6 +17,8 @@ documented fallbacks and the identities the fields cannot give:
   `arena_meta.display_switch_pairs` do not match.
 - ECI_MODELS: Epoch models whose `Accessibility group` or `Country (of organization)` is missing both in
   eci_scores.csv and in all_ai_models.csv.
+- ECI_WEIGHTS_RELEASE and `weights_release`: the date an open ECI model's weights were released, when it is after
+  the model's `date` or Epoch's note leaves it open (register 2026-11-25, X20, after review R23).
 
 Pure data and pure functions; no network.
 """
@@ -81,8 +83,8 @@ ORG_COUNTRY: dict[str, tuple[str, str]] = {
     "moonshot": _e("Moonshot", CHINA),
     "mosaicml": _e("MosaicML", US),
     "nexusflow": _e("Nexusflow", US),
-    "nousresearch": _e("NousResearch", US),
-    "nvidia": _e("NVIDIA", US),
+    "nousresearch": _e("Nous Research", US),  # X20 (R23-9): Epoch's spelling
+    "nvidia": _e("Nvidia", US),  # X20 (R23-9): Epoch's spelling
     "openai": _e("OpenAI", US),
     "openbmb": _e("OpenBMB (Open Lab for Big Model Base)", CHINA),
     "openchat": (CHINA, "Arena 'OpenChat' lists OpenChat 3.5, which Epoch lists as 'OpenChat 3.5-7B' under Tsinghua "
@@ -277,6 +279,60 @@ ECI_MODELS: dict[str, tuple[str | None, str | None, str]] = {
 # Left out (no field in either Epoch file and no documented answer): Qwen 3.6 Max (Preview), Qwen 3.6 Flash,
 # Qwen 3.5 Plus (hosted 397B-A17B) and Qwen 3.5 Flash (hosted 35B-A3B), Alibaba's hosted API models (whether
 # their weights are the published ones is not documented). Their country is in eci_scores.csv (China).
+
+
+# ------------------------------------------------------------------ Epoch: weights release date (X20, R23-3)
+# Register 2026-11-25, X20: an open ECI model is open from max(date, w); before that it counts as closed (Epoch counts
+# API access as closed weights). w comes from this table, else from a past-tense weights sentence with a date in
+# Epoch's `Accessibility notes`; a note that says the weights come later and gives no date leaves the model out of the
+# open-vs-closed measure. Epoch model -> (w, reference).
+ECI_WEIGHTS_RELEASE: dict[str, tuple[str, str]] = {
+    "GLM-5.3": ("2026-08-25", ("Epoch note (all_ai_models.csv, 2026-11-25): 'The model weights of GLM-5.3 will be "
+                               "publicly available soon in two weeks.' (as of 2026/08/14); huggingface.co/zai-org/"
+                               "GLM-5.3 created 2026-08-25 (API createdAt, read 2026-11-25; creation, not proven public "
+                               "that day); Arena lists glm-5.3-max as MIT from the board 2026-08-19")),
+}
+
+_MONTHS = "jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec"
+_DATE = re.compile(rf"\b(\d{{4}}[-/]\d{{2}}[-/]\d{{2}}|(?:{_MONTHS})[a-z]*\.? \d{{1,2}},? \d{{4}}|"
+                   rf"\d{{1,2}} (?:{_MONTHS})[a-z]* \d{{4}})\b", re.IGNORECASE)
+_SENTENCE = re.compile(r"(?<=[.;])\s+")
+_WEIGHTS = re.compile(r"\bweights?\b", re.IGNORECASE)
+_RELEASED = re.compile(r"\breleased\b", re.IGNORECASE)
+_LATER = re.compile(r"\b(?:will|soon)\b", re.IGNORECASE)  # the register's words for "the weights come later"
+PENDING = "pending"
+
+
+def weights_release(note) -> str | None:
+    """Release date of the weights in an Epoch `Accessibility notes` text: 'YYYY-MM-DD' from the first sentence that
+    mentions weights, says they were released and has a date; PENDING when a weights sentence says they come later
+    and no sentence dates the release; None when the note says nothing about it."""
+    if not isinstance(note, str) or not note.strip():
+        return None
+    pending = False
+    for sentence in _SENTENCE.split(note):
+        if not _WEIGHTS.search(sentence):
+            continue
+        if _LATER.search(sentence):
+            pending = True
+            continue
+        if _RELEASED.search(sentence) and (m := _DATE.search(sentence)):
+            return _iso(m.group(1))
+    return PENDING if pending else None
+
+
+def _iso(text: str) -> str:
+    from datetime import datetime
+
+    t = text.replace("/", "-").replace(",", "").replace(".", "")
+    for fmt in ("%Y-%m-%d", "%B %d %Y", "%b %d %Y", "%d %B %Y", "%d %b %Y"):
+        try:
+            return datetime.strptime(t, fmt).date().isoformat()
+        except ValueError:
+            continue
+    import pandas as pd
+
+    return pd.Timestamp(t).date().isoformat()  # e.g. "Sept 4 2026"; raises on a text that is no date
 
 
 class Classes:

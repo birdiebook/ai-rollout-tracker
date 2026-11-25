@@ -6,9 +6,9 @@ Catalog series, not core series.
 Two groups per measure: the follower F (open weights; Chinese labs) and the leader L (closed weights; every other
 classified lab).
 
-Arena, within one board (`arena.subset_boards("text")`, overall). For a version of month m with cut-off c (month end
-for the first version, else the evidence day), the known boards are those published <= end of m with evidence <= c;
-b(s) is the latest known board published <= end of s, for each month s from s0 to m.
+Arena, within one board (`arena.subset_boards("text")`, overall). For a version of month m with cut-off c (month end +
+1 day for the first version, register 2026-11-25 X20; else the evidence day), the known boards are those published <=
+end of m with evidence <= c; b(s) is the latest known board published <= end of s, for each month s from s0 to m.
 - F(m), L(m): the top rating of each group in b(m). gap = L(m) - F(m), context only.
 - The leader frontier at month s is the leader model of b(s) with the highest rating there (ties: name); its rating is
   read in b(m) under any name of its class (sources/arena_meta.name_classes). If it is not in b(m), the next leader
@@ -20,6 +20,9 @@ b(s) is the latest known board published <= end of s, for each month s from s0 t
 
 Epoch ECI (one scale over time): F(t), L(t) = the best ECI of each group among models with `date` <= end of t;
 lag = t - min{s >= s0: L(s) >= F(t)} months, floor 0 when F(t) > L(t), censored when s* = s0; gap = L(t) - F(t).
+For open vs closed, an open model is open from max(date, weights release) and closed before (register 2026-11-25,
+X20 after review R23: model_origin.ECI_WEIGHTS_RELEASE, else Epoch's `Accessibility notes`; a note that says the
+weights come later without a date leaves the model out of that measure).
 ECI is re-estimated and the classification is today's: the history is a backfill (Series, observations dates it
 month end + lag_days), later fetches add fetch and revision rows.
 """
@@ -150,8 +153,7 @@ def arena_build(boards: list[Board], classify, last_month: pd.Period, find=lambd
         base = end + pd.Timedelta(days=1)
         days = sorted({base} | {bs[i][2] for i in cand if bs[i][2] > end})
         for day in days:
-            cutoff = end if day == base else day
-            known = [i for i in cand if bs[i][2] <= cutoff]
+            known = [i for i in cand if bs[i][2] <= day]  # first version: evidence <= end + 1 day (X20, R23-1)
             if not known:
                 continue
             bm = known[-1]  # latest published (ties: latest evidence)
@@ -204,14 +206,25 @@ def arena_series(table: pd.DataFrame, kind: str, column: str) -> pd.DataFrame:
 
 # ------------------------------------------------------------------ Epoch ECI (pure)
 
+ECI_COLUMNS = ["model", "date", "eci", "weights", "chinese", "step_weights", "step_country", "open_from",
+               "step_release"]
+
+
 def eci_frame(eci_scores: pd.DataFrame, all_models: pd.DataFrame | None = None,
-              curated: dict | None = None) -> pd.DataFrame:
-    """model, date, eci, weights, chinese, step_weights, step_country (register order: eci_scores.csv, then
-    all_ai_models.csv for the same Model, then model_origin.ECI_MODELS, else left out)."""
+              curated: dict | None = None, releases: dict | None = None) -> pd.DataFrame:
+    """model, date, eci, weights, chinese, step_weights, step_country, open_from, step_release (register order:
+    eci_scores.csv, then all_ai_models.csv for the same Model, then model_origin.ECI_MODELS, else left out).
+
+    open_from (open models only) = max(date, weights release), the release from `releases` (default
+    model_origin.ECI_WEIGHTS_RELEASE, step_release "curated"), else from the model's `Accessibility notes` in
+    all_ai_models.csv ("note"), else the date ("date"). A note that says the weights come later and gives no date
+    leaves the model out of the open-vs-closed measure (weights None, step_weights "pending_release")."""
     curated = mo.ECI_MODELS if curated is None else curated
+    releases = mo.ECI_WEIGHTS_RELEASE if releases is None else releases
     am = pd.DataFrame(columns=["Model", "Open model weights?", "Country (of organization)"]) if all_models is None \
         else all_models
     am = am.dropna(subset=["Model"]).drop_duplicates("Model").set_index("Model")
+    notes = am["Accessibility notes"] if "Accessibility notes" in am.columns else pd.Series(dtype=object)
     rows = []
     for _, r in eci_scores.iterrows():
         model = str(r["Model"])
@@ -237,8 +250,20 @@ def eci_frame(eci_scores: pd.DataFrame, all_models: pd.DataFrame | None = None,
                 w, sw = cw, "curated"
             if cn is None and ccountry:
                 cn, sc = mo.is_chinese(ccountry), "curated"
-        rows.append((model, date.normalize(), float(eci), w, cn, sw or "none", sc or "none"))
-    return pd.DataFrame(rows, columns=["model", "date", "eci", "weights", "chinese", "step_weights", "step_country"])
+        date = date.normalize()
+        open_from, sr = pd.NaT, ""
+        if w == mo.OPEN:
+            if model in releases:
+                release, sr = releases[model][0], "curated"
+            else:
+                release = mo.weights_release(notes.get(model))
+                sr = "note" if release else "date"
+            if release == mo.PENDING:
+                w, sw, sr = None, "pending_release", "pending"
+            else:
+                open_from = max(date, pd.Timestamp(release).normalize()) if release else date
+        rows.append((model, date, float(eci), w, cn, sw or "none", sc or "none", open_from, sr))
+    return pd.DataFrame(rows, columns=ECI_COLUMNS)
 
 
 def eci_build(frame: pd.DataFrame, kind: str, last_month: pd.Period) -> pd.DataFrame:
@@ -247,13 +272,24 @@ def eci_build(frame: pd.DataFrame, kind: str, last_month: pd.Period) -> pd.DataF
     grp = [group_open(w) for w in frame["weights"]] if kind == "open" else [group_china(c) for c in frame["chinese"]]
     f = frame.assign(group=grp).dropna(subset=["group"]).sort_values(["date", "model"])
     cols = ["period", "lag", "gap", "follow", "lead", "follow_model", "lead_model", "s_star", "reach_model", "status"]
-    if f.empty or f["group"].nunique() < 2:
+    # open vs closed: an open model is a follower from open_from and a leader (closed) from its date until then
+    no_dates = pd.Series(pd.NaT, index=f.index, dtype="datetime64[ns]")
+    opens = pd.to_datetime(f["open_from"]) if kind == "open" and "open_from" in f else no_dates
+    follow = f["group"] == FOLLOW
+    f = f.assign(follow_from=opens.fillna(f["date"]).where(follow),
+                 lead_until=opens.where(follow & (opens > f["date"])).where(follow, pd.Timestamp.max))
+    if f.empty or f["follow_from"].isna().all() or f["lead_until"].isna().all():
         return pd.DataFrame(columns=cols)
-    first = max(f.loc[f["group"] == FOLLOW, "date"].min(), f.loc[f["group"] == LEAD, "date"].min()).to_period("M")
-    s0 = f.loc[f["group"] == LEAD, "date"].min().to_period("M")
+    lead_start = f.loc[f["lead_until"].notna(), "date"].min()
+    first = max(f["follow_from"].min(), lead_start).to_period("M")
+    s0 = lead_start.to_period("M")
 
     def top(which: str, s: pd.Period):
-        g = f[(f["group"] == which) & (f["date"] <= s.end_time.normalize())]
+        end = s.end_time.normalize()
+        if which == FOLLOW:
+            g = f[f["follow_from"] <= end]
+        else:
+            g = f[(f["date"] <= end) & (f["lead_until"] > end)]
         if g.empty:
             return np.nan, None
         best = g.sort_values(["eci", "model"], ascending=[False, True]).iloc[0]
@@ -345,9 +381,11 @@ _ARENA_NOTE = ("Inom en tavla (Arena text, overall): eftersläpningen är antale
                "inte kärnserie. Se docs/kallor/g1_oppen_stangd.md")
 _ECI_NOTE = ("Epoch ECI, en skala över tiden: eftersläpning = månader sedan den ledande gruppens bästa ECI först "
              "nådde den följande gruppens bästa. Golvet 0, censurerad när fronten nåddes första månaden. Klassning ur "
-             "Accessibility group och Country (of organization), reserv all_ai_models.csv. ECI skattas om och "
-             "klassningen är dagens: historiken är återfylld (source=backfill, known_from nominellt månadsslut + 7 "
-             "dagar), senare hämtningar ger revisioner. Katalogserie. Se docs/kallor/g1_oppen_stangd.md")
+             "Accessibility group och Country (of organization), reserv all_ai_models.csv. En öppen modell räknas "
+             "som öppen från sitt dokumenterade viktsläpp och som stängd före det. ECI skattas om och klassningen är "
+             "dagens: historiken är återfylld (source=backfill, known_from nominellt månadsslut + 7 dagar), senare "
+             "hämtningar ger revisioner. Kina-måttets värden 2023-09 – 2024-04 är undre gränser. Katalogserie. Se "
+             "docs/kallor/g1_oppen_stangd.md")
 
 _DEFS = [
     ("open", "lag", "g1_open_lag_months_{}", "{}: öppna modellers eftersläpning mot stängda", "månader",
