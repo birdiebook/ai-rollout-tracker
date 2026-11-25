@@ -643,7 +643,12 @@ def test_snapshot_writer_refuses_overwrite_future_and_non_month_end(tmp_path, mo
 
 
 def test_snapshot_contains_measures_and_is_json_clean(tmp_path, monkeypatch):
+    import dataclasses
+
     table, specs, core = _world()
+    # "a" may be shown; the others keep Spec's default publish=False, so the public record has no values for them
+    # (review L3-1, beslutsloggen 2026-11-25)
+    specs = [dataclasses.replace(s, publish=True, license="CC BY 4.0 (test)") if s.key == "a" else s for s in specs]
     monkeypatch.setattr(R, "CORE_SERIES", core)
     real = M.Context
 
@@ -659,6 +664,7 @@ def test_snapshot_contains_measures_and_is_json_clean(tmp_path, monkeypatch):
     assert g6["n_series"] == 4 and g6["state"] in (R.STATE_ACCEL, R.STATE_STABLE, R.STATE_BRAKE)
     used = {m["series"]: m for m in g6["series_used"]}
     assert {"latest_period", "known_from", "pace", "change_in_pace", "direction", "deadband"} <= set(used["a"])
+    assert {"latest_period", "known_from", "direction"} <= set(used["b"]) and not set(S.VALUE_FIELDS) & set(used["b"])
     assert d["branches"]["G1"]["state"] == "inga registrerade kärnserier"
     assert d["rules"]["index_rule"] == "v2" and d["rules"]["min_families"] == 3 and d["rules"]["min_series"] == 3
     assert d["rules"]["families"]["G8"] == R.FAMILIES["G8"] and set(d["rules"]["families"]) == set(catalog.BRANCHES)

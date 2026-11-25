@@ -226,7 +226,10 @@ def test_one_story_per_record_month_and_the_index():
 
 def test_fixture_live_month_has_every_live_card_type():
     d = load("story/2026-10.json")
-    assert [c["type"] for c in d["cards"]] == ["K0", "K1", "K1", "K2", "K3", "K4"]
+    # index v2 (K1, merged 2026-11-25): the synthetic G9 has two source families, so it is "för få källor" in both
+    # 2026-09 and 2026-10 and has no state change; G6's change (accelererar -> stabil) is the one K1 card
+    assert [c["type"] for c in d["cards"]] == ["K0", "K1", "K2", "K3", "K4"]
+    assert d["cards"][1]["facts"]["branch"] == "G6"
     assert d["status"] == "live" and d["withheld"]["K4"] == 1  # the withheld break is counted, not named
     k3 = next(c for c in d["cards"] if c["type"] == "K3")
     assert k3["facts"]["baseline"]["variant"] == "B1" and k3["facts"]["guidance"]["variant"] == "B2"
