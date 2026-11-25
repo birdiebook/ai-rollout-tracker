@@ -63,3 +63,15 @@ def test_web_dependencies_are_pinned_and_locked():
         for name, ver in pkg.get(section, {}).items():
             assert ver[0].isdigit(), f"{name}@{ver} is not an exact version"
     assert (ROOT / "web" / "package-lock.json").exists()
+
+
+def test_share_images_are_drawn_in_the_build_with_chromium_installed_first():
+    """W12: `npm run build` rasterises the share images (web/scripts/og-png.mjs) with Playwright's Chromium, so CI
+    installs Chromium before the build step."""
+    pkg = json.loads((ROOT / "web" / "package.json").read_text(encoding="utf-8"))
+    assert "og-png.mjs" in pkg["scripts"]["build"]
+    steps = _load("pages-next.yml")["jobs"]["web"]["steps"]
+    runs = [s.get("run", "") for s in steps]
+    i_chromium = next(i for i, r in enumerate(runs) if "playwright install" in r)
+    i_build = next(i for i, r in enumerate(runs) if r.strip() == "npm run build")
+    assert i_chromium < i_build

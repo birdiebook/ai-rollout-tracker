@@ -1,37 +1,34 @@
-<!-- Site shell (W4): tokens, header with navigation and theme toggle, testdata banner, footer. Pages own their main. -->
+<!-- Site shell (W4): tokens, header with navigation and theme toggle, testdata banner, footer. Pages own their main.
+     W12: navigation, search (⌘K), share tags and the citation line are components in $lib/nav. -->
 <script lang="ts">
   import '$lib/design/base.css';
   import { tokensCss } from '$lib/design/tokens';
-  import { page } from '$app/state';
   import { resolve } from '$app/paths';
   import ThemeToggle from '$lib/components/ThemeToggle.svelte';
   import TimeTravel from '$lib/timetravel/TimeTravel.svelte';
+  import MainNav from '$lib/nav/MainNav.svelte';
+  import PageMeta from '$lib/nav/PageMeta.svelte';
+  import SearchButton from '$lib/nav/SearchButton.svelte';
+  import ShareCite from '$lib/nav/ShareCite.svelte';
 
   let { data, children } = $props();
   const css = `<style>${tokensCss()}</style>`;
-  const nav = [
-    { href: resolve('/'), label: 'Läget', match: (p: string) => p === resolve('/') },
-    { href: resolve('/flode'), label: 'Flödet', match: (p: string) => p.startsWith(resolve('/flode')) || p.startsWith(resolve('/gren')) },
-    { href: resolve('/prognoser'), label: 'Prognoser', match: (p: string) => p.startsWith(resolve('/prognoser')) },
-    { href: resolve('/metod'), label: 'Metod', match: (p: string) => p.startsWith(resolve('/metod')) }
-  ];
-  const path = $derived(page.url.pathname.replace(/\/?$/, '/'));
 </script>
 
 <svelte:head>
   <!-- eslint-disable-next-line svelte/no-at-html-tags -- generated from tokens.ts at build time, no user input -->
   {@html css}
 </svelte:head>
+<PageMeta meta={data.meta} />
 
 <a class="skip" href="#main">Hoppa till innehållet</a>
 <header class="top wrap">
   <a class="brand" href={resolve('/')}>AI-utrullningen</a>
-  <nav aria-label="Huvudmeny">
-    {#each nav as n (n.href)}
-      <a href={n.href} aria-current={n.match(path) ? 'page' : undefined}>{n.label}</a>
-    {/each}
-  </nav>
-  <ThemeToggle />
+  <MainNav />
+  <div class="tools">
+    <SearchButton />
+    <ThemeToggle />
+  </div>
 </header>
 
 {#if data.site.testdata}
@@ -42,6 +39,7 @@
 
 <main id="main" class="wrap">
   <TimeTravel>{@render children()}</TimeTravel>
+  <ShareCite cite={data.meta.cite} url={data.meta.url} />
 </main>
 
 <footer class="wrap">
@@ -80,28 +78,18 @@
     letter-spacing: -0.01em;
     text-decoration: none;
   }
-  nav {
+  header.top :global(.main-nav) {
     order: 3;
     width: 100%;
-    display: flex;
-    gap: 4px 14px;
-    flex-wrap: wrap;
     font-size: var(--fs-small);
-    color: var(--c-ink-2);
   }
-  nav a {
-    text-decoration: none;
-    display: inline-flex;
+  .tools {
+    display: flex;
     align-items: center;
-    min-height: var(--hit);
+    gap: 8px;
   }
-  nav a[aria-current='page'] {
-    color: var(--c-ink);
-    font-weight: 600;
-    text-decoration: underline;
-  }
-  @media (min-width: 561px) {
-    nav {
+  @media (min-width: 641px) {
+    header.top :global(.main-nav) {
       order: 0;
       width: auto;
       font-size: 14px;

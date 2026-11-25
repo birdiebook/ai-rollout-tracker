@@ -9,13 +9,14 @@
   "scripts": {
     "sync-bundle": "node scripts/sync-bundle.mjs",
     "dev": "npm run sync-bundle && vite dev",
-    "build": "npm run sync-bundle && vite build",
+    "build": "npm run sync-bundle && vite build && node scripts/og-png.mjs",
     "preview": "vite preview --port 4173 --strictPort",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings",
     "test": "svelte-kit sync && vitest run",
     "test:e2e": "playwright test",
     "budget": "node scripts/budget.mjs",
-    "external-hosts": "node scripts/check-external-hosts.mjs"
+    "external-hosts": "node scripts/check-external-hosts.mjs",
+    "og-png": "node scripts/og-png.mjs"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.14.1",

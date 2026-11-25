@@ -132,6 +132,31 @@ Varje sida i skelettet är en platshållare. Den är kopplad till laddarna och h
 6. Klart när `npm run check`, `npm test`, `npm run build`, `npm run budget`, `npm run external-hosts` och
    `npx playwright test` är gröna, och du har granskat skärmbilderna själv.
 
+## Navigering och delning (`web/src/lib/nav/`, W12)
+
+- **Toppnavigeringen** (`MainNav`, `SearchButton`, temaväxlaren) ligger i `+layout.svelte`. På mobil står märket, Sök
+  och temat på första raden och menyn på andra. "Flödet" är markerat också på led-, gren- och seriesidor.
+- **Sök** (`⌘K`/`Ctrl K`, `/` utanför textfält, eller knappen): en modal `<dialog>` med WAI-ARIA-mönstret combobox med
+  listbox (`aria-activedescendant`, ↑/↓, PageUp/PageDown, Enter, Esc rensar och stänger). Indexet `/next/sok.json`
+  byggs vid förrenderingen ur `series/index.json`, `overview.json`, `flow.json` och `nowcast/*.json` (bara
+  publicerbara serier) och hämtas först när sökningen öppnas. Dialogen laddas också lat. Matchningen bryr sig inte
+  om versaler eller accenter, alla ord måste träffa, och en exakt kod (G6, L3, N2, en serienyckel) kommer först.
+  Utan JavaScript är knappen en länk till `/next/sok/`, som är ett förrenderat register över allt sökbart.
+- **Djuplänkar:** avsnittet ligger i hashen som `avsnitt=<id>` bredvid vyns tillstånd, enligt samma konvention som
+  `permalink.ts` (okända nycklar bevaras), till exempel `/next/serie/us_ip_semis_m/#fonster=5&avsnitt=rev-h`. Ett
+  vanligt ankare (`#rev-h`) fungerar också. Varje synlig `h2` i `<main>` är ett avsnitt. Id:t är sidans eget, annars
+  en slug utan datum. Sidägare: ge rubriker ett eget stabilt `id`, så är länken stabil.
+- **Delningsbilder:** `og/<sida>.svg` ritas vid förrenderingen ur samma data som sidan (`describe.server.ts`, `og.ts`),
+  och `scripts/og-png.mjs` gör en PNG av varje (1200×630, Playwrights Chromium, cache på innehållets hash). Därför
+  installeras Chromium före bygget i CI. Titel och beskrivning genereras ur data. `og:url` och `og:image` är absoluta
+  och utgår från `SITE_URL`, annars från GitHub Pages för repot i manifestet. Budget: 120 kB per PNG och 40 kB per SVG
+  (bygget stoppas om en bild går över).
+- **Citeringsrad** längst ned på varje sida ("Dela och citera"): `AI-utrullningen, <sidan eller serie X (nyckel; källa:
+  …)>, version per <datum>, <permalänk>`. Permalänken tar med vyns hash, och `as_of` i hashen blir versionsdatumet.
+  Den kan kopieras, och samma ruta listar sidans avsnitt.
+- En ny route behöver inget av W12 för att fungera: den får en generisk beskrivning och delningsbild. Lägg den i
+  `describe()` i `describe.server.ts` för en egen.
+
 ## Tidsresa (W9)
 
 `as_of=ÅÅÅÅ-MM-DD` i URL:ens hash (samma nyckel som seriesidans permalänk) är det globala tillståndet. Komponenten

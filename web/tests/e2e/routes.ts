@@ -34,6 +34,7 @@ export function routes(): { name: string; path: string }[] {
     { name: 'avstamningar', path: 'avstamningar/' },
     { name: 'regim', path: 'regim/' },
     { name: 'metod', path: 'metod/' },
+    { name: 'sok', path: 'sok/' },
     { name: 'katalog', path: '_katalog/' },
     ...timeTravelRoutes(idx.series)
   ];

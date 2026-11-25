@@ -103,7 +103,11 @@ jobs:
       - name: Unit and component tests (vitest)
         working-directory: web
         run: npm test
-      - name: Build (prerender every page under /next/)
+      # before the build: it also rasterises the share images (scripts/og-png.mjs, track W12)
+      - name: Install Chromium for Playwright
+        working-directory: web
+        run: npx playwright install --with-deps chromium
+      - name: Build (prerender every page under /next/ and draw the share images)
         working-directory: web
         run: npm run build
       - name: No external hosts in the build
@@ -112,9 +116,6 @@ jobs:
       - name: Performance budget
         working-directory: web
         run: BUDGET_REPORT="$RUNNER_TEMP/budget.json" npm run budget
-      - name: Install Chromium for Playwright
-        working-directory: web
-        run: npx playwright install --with-deps chromium
       - name: Playwright smoke, axe and screenshots (1280 and 375 px)
         working-directory: web
         run: SHOTS_DIR="$RUNNER_TEMP/web-shots" npx playwright test
