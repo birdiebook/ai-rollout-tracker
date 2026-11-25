@@ -441,6 +441,7 @@ def test_tsmc_capex_vintages_drop_repeats():
 
 def test_catalog_contract():
     specs = {s.key: s for s in GR.SPECS}
+    specs_all = catalog.by_key()
     assert catalog.validate(GR.SPECS) == []
     assert set(GR.KEYS) <= set(catalog.by_key())
     gate = GR.csv_component_keys()
@@ -448,8 +449,11 @@ def test_catalog_contract():
     for key in GR.KEYS:
         s = specs[key]
         assert s.max_age_days and s.note.startswith("Grupp") and s.branch in ("G5", "G6")
-        if key in GR.CSV_BASED:  # reads the curated CSV: declares it and follows its publish gate (R11-4)
-            assert s.components == GR.COMPONENTS + gate and not s.publish
+        if key in GR.CSV_BASED:  # reads the curated CSV: declares the rows it reads and follows their gate (R11-4)
+            reads = GR.CSV_READS.get(key)
+            assert s.components == GR.COMPONENTS + GR.csv_component_keys(reads)
+            assert s.publish == (all(specs_all[k].publish for k in GR.csv_component_keys(reads))
+                                 and key not in GR.AWAITING_OWNER)
         else:
             assert s.publish and s.components == GR.COMPONENTS
     assert {"tsmc_guid_capex_lo", "tsmc_guid_capex_hi", "tsmc_rev_usd_q"} <= set(specs)

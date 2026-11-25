@@ -91,9 +91,9 @@
   {
    "path": "expectations.json",
    "schema": "expectations",
-   "bytes": 3707,
-   "gzip_bytes": 1099,
-   "sha256": "9b999a36ae58d9614e469e22c8fe272c1b3e4fa660261687041c840c4e21a48b"
+   "bytes": 3962,
+   "gzip_bytes": 1197,
+   "sha256": "c3548b941533dd8a02109ad96e3c56adc16f575cced3f7730d6622ef337d48f9"
   },
   {
    "path": "flow.json",
@@ -120,8 +120,8 @@
    "path": "method.json",
    "schema": "method",
    "bytes": 10436,
-   "gzip_bytes": 3022,
-   "sha256": "9f1673dc53ac310aa4c841ddd84ca7a7854f8c39229a674e0fd9ba7a73f4fc1e"
+   "gzip_bytes": 3023,
+   "sha256": "49fb89809c372bcde532901c87014466b6726b710ef7ef40cd7c711b3ea60bd1"
   },
   {
    "path": "nowcast/d2.json",
@@ -539,9 +539,9 @@
   {
    "path": "schema/expectations.json",
    "schema": "json-schema",
-   "bytes": 2197,
-   "gzip_bytes": 791,
-   "sha256": "42e9cea0c17f5fde06db36be9d2f24757f60ce816f5414f65672003b97ce647c"
+   "bytes": 2404,
+   "gzip_bytes": 868,
+   "sha256": "aadd47417619995e2a503c1a8bd1f8f1621ca134adad294060a95dbc7b87e77a"
   },
   {
    "path": "schema/flow.json",
@@ -666,8 +666,8 @@
   {
    "group": "expectations.json",
    "files": 1,
-   "bytes": 3707,
-   "gzip_bytes": 1099
+   "bytes": 3962,
+   "gzip_bytes": 1197
   },
   {
    "group": "flow.json",
@@ -691,7 +691,7 @@
    "group": "method.json",
    "files": 1,
    "bytes": 10436,
-   "gzip_bytes": 3022
+   "gzip_bytes": 3023
   },
   {
    "group": "nowcast",
@@ -726,8 +726,8 @@
   {
    "group": "schema",
    "files": 19,
-   "bytes": 89982,
-   "gzip_bytes": 21710
+   "bytes": 90189,
+   "gzip_bytes": 21787
   },
   {
    "group": "series",
@@ -750,8 +750,8 @@
  ],
  "totals": {
   "files": 90,
-  "bytes": 804178,
-  "gzip_bytes": 212998
+  "bytes": 804640,
+  "gzip_bytes": 213174
  },
  "budgets": {
   "per_file": [

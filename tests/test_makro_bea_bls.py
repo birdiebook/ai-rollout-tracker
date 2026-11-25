@@ -79,6 +79,11 @@ SECTION1 = {
                   (38, "        Software\\4\\", "B985RY", [0.2, 0.21, 0.23])]),
     "T10102-Q": ("Table 1.1.2", "Data published October 29, 2026", ["2026Q3"],
                  [(1, "GDP", "A191RL", [99.0])]),  # another table with the same code: not read
+    # table 1.2.2 (register 2026-11-25): final sales of computers, net of imports; A191RL here too, not read
+    "T10202-Q": ("Table 1.2.2. Contributions to Percent Change in Real Gross Domestic Product by Major Type of Product",
+                 "Data published October 29, 2026", ["2026Q1", "2026Q2", "2026Q3"],
+                 [(1, "Gross domestic product", "A191RL", [98.0, 98.0, 98.0]),
+                  (17, "        Final sales of computers\\1\\", "BB01RY", [-0.1, 0.05, -0.61])]),
 }
 SECTION4 = {
     "T40202-Q": ("Table 4.2.2", "Data published October 29, 2026", ["2026Q2", "2026Q3"],
@@ -99,6 +104,7 @@ def test_parse_workbook_reads_codes_from_the_named_tables():
     assert out["A191RL"].to_dict() == {P("2026Q1", "Q"): 1.0, P("2026Q2", "Q"): 2.0, P("2026Q3", "Q"): 3.4}
     assert list(out["B935RY"].index.astype(str)) == ["2026Q2", "2026Q3"]  # '.....' = not available
     assert out["Y034RY"].index.freqstr == "Q-DEC"
+    assert out["BB01RY"].to_dict() == {P("2026Q1", "Q"): -0.1, P("2026Q2", "Q"): 0.05, P("2026Q3", "Q"): -0.61}
     pub4, out4 = bea_nipa.parse_workbook(_workbook(SECTION4), wanted[4])
     assert out4["B852RC"].to_dict() == {P("1998Q3", "Q"): 50000.0, P("1998Q4", "Q"): 51000.0,
                                         P("2026Q3", "Q"): 751292.0}  # 4.2.5A and 4.2.5B joined
@@ -162,6 +168,77 @@ def test_archive_vintages_dates_by_published_line_and_caches(monkeypatch, tmp_pa
     assert again[T("2025-12-23")]["B852RC"].equals(got[T("2025-12-23")]["B852RC"])
 
 
+def _one_release(monkeypatch, tmp_path, s1: bytes, s4: bytes) -> list[str]:
+    monkeypatch.setattr(bea_nipa, "CACHE_DIR", tmp_path)
+    payload = [{"FileArray": [bea_nipa.ARCHIVE_FILES + "GDP_and_PI\\2026\\Q3\\Advance_October-29-2026"]}]
+    calls = []
+
+    def fake_get(url, source, params=None, save=True, timeout=60, **kw):
+        calls.append(url)
+        if url == bea_nipa.ARCHIVE_API:
+            return _Resp(payload=payload)
+        return _Resp(content=s1 if "Section1" in url else s4)
+
+    monkeypatch.setattr(http, "get", fake_get)
+    return calls
+
+
+def test_a_code_added_later_reads_only_its_section_again_and_keeps_the_cached_codes(monkeypatch, tmp_path):
+    """BB01RY (register 2026-11-25) was added after the extracts were written: only Section 1 is downloaded again,
+    the extract gains the code, and the codes it already held must come back unchanged."""
+    calls = _one_release(monkeypatch, tmp_path, _workbook(SECTION1), _workbook(SECTION4))
+    without = {k: v for k, v in bea_nipa.ARCHIVE_CODES.items() if k != "BB01RY"}
+    monkeypatch.setattr(bea_nipa, "ARCHIVE_CODES", without)
+    first = bea_nipa.archive_vintages(since=T("2026-01-01"))[T("2026-10-29")]
+    assert "BB01RY" not in first and sum("Section" in c for c in calls) == 2
+    monkeypatch.setattr(bea_nipa, "ARCHIVE_CODES", {**without, "BB01RY": (1, "T10202")})
+    calls.clear()
+    got = bea_nipa.archive_vintages(since=T("2026-01-01"))[T("2026-10-29")]
+    assert [c.rsplit("/", 1)[-1] for c in calls if "Section" in c] == ["Section1all_xls.xlsx"]
+    assert got["BB01RY"].iloc[-1] == -0.61 and got["B852RC"].equals(first["B852RC"])
+    calls.clear()
+    bea_nipa.archive_vintages(since=T("2026-01-01"))
+    assert [c for c in calls if "Section" in c] == []  # the extract now holds every code
+
+
+def test_a_cached_extract_that_differs_from_the_archived_workbook_stops_the_fetch(monkeypatch, tmp_path):
+    calls = _one_release(monkeypatch, tmp_path, _workbook(SECTION1), _workbook(SECTION4))
+    without = {k: v for k, v in bea_nipa.ARCHIVE_CODES.items() if k != "BB01RY"}
+    monkeypatch.setattr(bea_nipa, "ARCHIVE_CODES", without)
+    bea_nipa.archive_vintages(since=T("2026-01-01"))
+    changed = dict(SECTION1)
+    title, pub, periods, rows = changed["T10502-Q"]
+    changed["T10502-Q"] = (title, pub, periods, [r if r[2] != "Y034RY" else (31, r[1], "Y034RY", [0.5, 0.6, 0.9])
+                                                 for r in rows])
+    _one_release(monkeypatch, tmp_path, _workbook(changed), _workbook(SECTION4))
+    monkeypatch.setattr(bea_nipa, "ARCHIVE_CODES", {**without, "BB01RY": (1, "T10202")})
+    with pytest.raises(ValueError, match="Y034RY differs from the cached extract"):
+        bea_nipa.archive_vintages(since=T("2026-01-01"))
+    assert calls  # the first run did download
+
+
+def test_a_release_without_the_new_code_stops_the_fetch(monkeypatch, tmp_path):
+    no_122 = {k: v for k, v in SECTION1.items() if k != "T10202-Q"}
+    _one_release(monkeypatch, tmp_path, _workbook(no_122), _workbook(SECTION4))
+    with pytest.raises(ValueError, match="BB01RY not in tables T10202"):
+        bea_nipa.archive_vintages(since=T("2026-01-01"))
+
+
+def test_net_contribution_of_computers_uses_the_archive_rules(monkeypatch):
+    """Register 2026-11-25: BB01RY with the same dating and newest-vintage rule as the other M1 contributions."""
+    q = lambda *ps: pd.PeriodIndex(ps, freq="Q-DEC")  # noqa: E731
+    v = {T("2017-10-27"): {"BB01RY": pd.Series([0.02, -0.03], q("2017Q2", "2017Q3"))},
+         T("2017-11-29"): {"BB01RY": pd.Series([0.02, -0.05], q("2017Q2", "2017Q3"))}}
+    monkeypatch.setattr(bea_nipa, "_VINTAGES", v)
+    spec = catalog.by_key()["us_gdp_contrib_final_sales_computers"]
+    rows = spec.fetch()
+    assert [(str(p), x, k.date().isoformat()) for p, x, k in rows.itertuples(index=False)] == [
+        ("2017Q2", 0.02, "2017-10-27"), ("2017Q3", -0.03, "2017-10-27"), ("2017Q3", -0.05, "2017-11-29")]
+    assert rows.attrs[observations.COMPLETE]
+    assert spec.branch == "G5" and spec.freq == "Q" and spec.publish and "BB01RY" in spec.source
+    assert "tabell 1.2.2 rad 17" in spec.source and "kärnserie" in spec.note
+
+
 def _vintages():
     q = lambda *ps: pd.PeriodIndex(ps, freq="Q-DEC")  # noqa: E731
     v1 = {"Y034RY": pd.Series([0.5, 0.6], q("2026Q1", "2026Q2")), "B985RY": pd.Series([0.2, 0.21], q("2026Q1", "2026Q2"))}
@@ -203,6 +280,7 @@ def test_archive_specs_in_catalog():
     assert specs["us_imp_computers_real"].branch == "G6"
     assert {k for k in specs if k.startswith(("us_gdp_contrib", "us_imp_computers"))} == {
         "us_gdp_contrib_info_proc_eq", "us_gdp_contrib_computers", "us_gdp_contrib_software",
+        "us_gdp_contrib_final_sales_computers",  # register 2026-11-25 (BB01RY)
         "us_imp_computers_nom", "us_imp_computers_real", "us_imp_computers_contrib_imp"}
 
 

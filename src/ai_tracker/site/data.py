@@ -200,6 +200,8 @@ def source_family(source: str) -> str:
 def why_withheld(spec: catalog.Spec | None) -> str:
     if spec is None:
         return "okänd serie"
+    if spec.withheld_reason.strip():
+        return spec.withheld_reason.strip()
     if spec.license.strip().lower().startswith("unverified"):
         return "licensen är inte kontrollerad"
     return "inte godkänd för publicering i katalogen (publish=False)"

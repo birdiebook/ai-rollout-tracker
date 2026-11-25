@@ -10,7 +10,8 @@ känsligheter (rättning efter granskning R11)". Det viktigaste:
   (−2,9). **Rullande 2026Q4 är 0,62 (n 13: 4/8/1), inte 0,67.**
 - Metas utsikt för 2020 (cirka 16 mdr) saknades. Den ändrar 2020Q4–2021Q3 något.
 - Två känsligheter redovisas bredvid huvudmåttet: indexet med bara siffror, och TSMC:s överraskning i US$.
-- Serierna som läser CSV:n har `publish=False`, som `guid_capex_*`.
+- Serierna som läser CSV:n hade `publish=False`, som `guid_capex_*`. Från 2026-11-25 (ägarbeslut R11-4) publiceras
+  `guid_capex_*` för Alphabet, Amazon och Meta och Metas och Alphabets överraskningar. Se Publicering nedan.
 
 **Ordning.** Registerposten "F1: revideringar av guidance och överraskning mot guidance" committades först (commit
 `b28905b`), därefter koden (`b1e3c2e`), och sist beräkningen på verklig data (denna fil). Före posten var bara detta
@@ -30,7 +31,12 @@ kvartal i CSV:n (för valet av fönster) och TSMC:s capex-meningar (för att kon
   - **Publicering (R11-4).** Serierna som läser `curated/guidance_capex.csv` (revideringsserierna, Metas och Alphabets
     överraskning och överraskningsindexet) listar `guid_capex_*` som komponenter och har därför `publish=False`, som
     de. De avslöjar samma värden: G = U × e^(−s/100). `f1_surprise_tsmc`, `f1_surprise_tsmc_usd` och
-    `f1_surprise_nvda` har `publish=True`. Ägaren avgör om `guid_capex_meta/googl` ska publiceras.
+    `f1_surprise_nvda` har `publish=True`. **Ägarbeslut 2026-11-25:** `guid_capex_*` för Alphabet, Amazon och Meta
+    publiceras (alla rader från sec.gov, klass `ja`). Metas och Alphabets överraskningar läser bara bolagets egna rader
+    och listar nu bara dess serier, så de publiceras också. Revideringsserierna listar Microsofts serier och har kvar
+    `publish=False`. Överraskningsindexet läser bara Metas och Alphabets rader och listar från granskningen R25 bara
+    deras serier (klass `ja`), men har `publish=False` tills ägaren beslutar. I ögonblicksbildens avsnitt
+    `expectations` visas värdena per bolag, och Microsofts och de poolade måtten har bara period och datum.
 - `src/ai_tracker/sources/tsmc_capex_guidance.py`: TSMC:s capex-budget för året, en deterministisk tolkning av samma
   6-K som `tsmc_guidance` läser. Serierna `tsmc_guid_capex_lo/hi` (G6, år). Se `docs/kallor/guidance.md`.
 - `src/ai_tracker/sources/tsmc_usd_revenue.py` (X8): TSMC:s kvartalsintäkt i US$ ur pressmeddelandet i samma 6-K,

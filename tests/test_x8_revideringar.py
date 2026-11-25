@@ -176,8 +176,11 @@ def test_new_series_and_the_publish_gate():
     assert usd.publish and usd.freq == "Q" and not usd.components
     s = specs["f1_surprise_tsmc_usd"]
     assert s.publish and "tsmc_rev_usd_q" in s.components
-    for key in GR.CSV_BASED:
-        assert not specs[key].publish and set(GR.csv_component_keys()) <= set(specs[key].components)
+    for key in GR.CSV_BASED:  # owner decision 2026-11-25 (R11-4): per company, see tests/test_agarbeslut.py
+        reads = GR.CSV_READS.get(key)
+        assert set(GR.csv_component_keys(reads)) <= set(specs[key].components)
+        # the pooled series read Microsoft's rows; the surprise index waits for the owner (R25-1)
+        assert specs[key].publish == (reads is not None and key not in GR.AWAITING_OWNER)
     assert catalog.validate() == []
 
 

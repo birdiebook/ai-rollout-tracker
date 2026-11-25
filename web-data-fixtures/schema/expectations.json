@@ -16,6 +16,7 @@
     "note": {"type": "string"},
     "error": {"type": "string"},
     "values_withheld": {"type": "string"},
+    "values_withheld_companies": {"type": "array", "items": {"type": "string"}, "description": "CSV companies whose rows carry ids only (owner decision R11-4: not every row of the company is on sec.gov)."},
     "rules": {"type": "object"},
     "revisions": {"type": "object", "additionalProperties": {"$ref": "#/$defs/index_entry"}},
     "revisions_numeric_only": {"type": "object", "additionalProperties": {"$ref": "#/$defs/index_entry"}},

@@ -49,8 +49,8 @@ for _s in SPECS:
     publication.LATE_RELEASES.setdefault(_s.key, {}).update(LATE)
 
 # ------------------------------------------------------------------ track M1: release archive, real vintages
-# GDP contributions (NIPA table 1.5.2), real GDP growth, and imports of computers, peripherals and parts (tables
-# 4.2.2, 4.2.5, 4.2.6). Release-dated: known_from = "Data published" of each archived release since 2017-10-27;
+# GDP contributions (NIPA table 1.5.2; final sales of computers, net of imports, from table 1.2.2), real GDP growth,
+# and imports of computers, peripherals and parts (tables 4.2.2, 4.2.5, 4.2.6). Release-dated: known_from = "Data published" of each archived release since 2017-10-27;
 # values first published earlier get that first archived date. Definitions in docs/mattregister.md (2026-11-24, M1).
 # Not core series. The categories are broader than AI. See docs/kallor/makro_bea_bls.md.
 
@@ -69,6 +69,11 @@ ARCHIVE_SERIES = [  # key, branch, codes, label, unit, table, question
      "Bidrag till real BNP-tillväxt från datorer och kringutrustning",
      "procentenheter, årstakt (SAAR)", "tabell 1.5.2 rad 32",
      "Hur mycket bidrar investeringar i datorer och servrar till BNP-tillväxten?"),
+    # register 2026-11-25 (owner decision after R12 R-3): net of imports, computers and peripherals only
+    ("us_gdp_contrib_final_sales_computers", "G5", "BB01RY",
+     "Bidrag till real BNP-tillväxt från slutlig försäljning av datorer, netto efter import",
+     "procentenheter, årstakt (SAAR)", "tabell 1.2.2 rad 17",
+     "Hur mycket bidrar datorer och kringutrustning till BNP-tillväxten när importen dras ifrån?"),
     ("us_gdp_contrib_software", "G5", "B985RY",
      "Bidrag till real BNP-tillväxt från programvara",
      "procentenheter, årstakt (SAAR)", "tabell 1.5.2 rad 38",
@@ -108,7 +113,11 @@ SPECS += [
         note=ARCHIVE_NOTE + (" Summan tas ur samma vintage; BEA avrundar till två decimaler."
                              if isinstance(codes, tuple) else "")
              + (" Basåret för kedjade dollar byts vid omläggningar: jämför nivåer bara inom en vintage."
-                if codes == "B852RX" else ""),
+                if codes == "B852RX" else "")
+             + (" Datorer och kringutrustning i all slutlig användning (privata investeringar, hushåll, export) minus "
+                "import; inte programvara. Läses bredvid us_gdp_contrib_computers (brutto, privata investeringar) "
+                "och us_imp_computers_contrib_imp (bidrag till importtillväxten). Katalogserie, inte kärnserie "
+                "(registret 2026-11-25)." if codes == "BB01RY" else ""),
     )
     for key, branch, codes, label, unit, table, question in ARCHIVE_SERIES
 ]

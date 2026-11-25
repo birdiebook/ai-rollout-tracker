@@ -5,8 +5,8 @@ varje serie får en klass för kommersiell användning, så att en kommersiellt 
 Nya spår väljer öppna licenser (public domain, CC0, CC BY, MIT) när det finns ett val.
 
 Kod: `src/ai_tracker/licenses.py`. Rapport: `PYTHONPATH=src python -m ai_tracker.licenses report [--markdown]`.
-Tabellerna nedan är genererade med `--markdown` på katalogen efter integrationen av körning 13 (633 serier,
-2026-11-24), med rättningarna efter granskning R10 (spår X7). Kör om rapporten när serier läggs till.
+Tabellerna nedan är genererade med `--markdown` på katalogen efter integrationen av ägarbesluten 2026-11-25 med main
+(634 serier). Kör om rapporten när serier läggs till.
 
 ## Klasserna
 
@@ -19,7 +19,7 @@ Tabellerna nedan är genererade med `--markdown` på katalogen efter integration
 - **Den kommersiellt rena delmängden är bara `ja`.** `okänd` räknas inte som `ja`.
 - **`publish` och klassen är oberoende.** `publish` styr vad den icke-kommersiella sidan visar. `publish=True` med
   `nej` är tillåtet, t.ex. Cloudflare Radar (CC BY-NC). `publish=False` med `ja` är också tillåtet, t.ex.
-  capex-guidance som väntar på granskning.
+  standardfelen för Census BTOS (`btos_ai_*_se`). Capex-guidancen var ett exempel tills ägarbeslutet 2026-11-25.
 - **Varje serie måste ha en klass.** `catalog.validate()` ger fel för en licenstext som ingen regel eller override
   klassar. En ny serie kan alltså inte läggas till utan klass.
 
@@ -87,10 +87,19 @@ I tur och ordning, och det första som gäller avgör:
   De räknar alla rader i `guidance_capex.csv`, också Microsofts från microsoft.com. Det står i `CURATED_READS`, och
   likaså att överraskningen för Meta och Alphabet bara läser bolagens egna rader (`ja`), och att TSMC:s och Nvidias
   inte läser filen alls (R10-1). Det gäller också känsligheten i US$ (`f1_surprise_tsmc_usd`, X8), som läser TSMC:s
-  6-K och är `ja`. Efter X8 har de tio F1-serier som läser filen alla `guid_capex_*` som komponenter (R11-4). Därför
-  blir också överraskningarna för Meta och Alphabet `okänd`, via Microsofts rader. `ja` är TSMC:s, Nvidias och US$-
-  känsligheten.
-- **Körning 13:s nya serier är `ja`, utom de tio F1-serier som läser den kurerade filen.** Avskrivningar och PP&E (P1),
+  6-K och är `ja`. Efter X8 hade de tio F1-serier som läser filen alla `guid_capex_*` som komponenter (R11-4), och
+  därför blev också överraskningarna för Meta och Alphabet `okänd`, via Microsofts rader. **Ägarbeslut 2026-11-25:**
+  Metas och Alphabets överraskningar listar nu bara bolagets egna `guid_capex_*` (`guidance_revisions.CSV_READS`,
+  bevisat med ett test som ändrar de andra bolagens rader), så de är `ja` och publiceras. Revideringsserierna listar
+  fortfarande alla bolags serier och är `okänd`. Överraskningsindexet och dess antal listar från granskningen R25 bara
+  Metas och Alphabets serier, som i `CURATED_READS`, och är `ja`. De har `publish=False` tills ägaren beslutar
+  (`Spec.withheld_reason`). `guid_capex_*` för Alphabet, Amazon och
+  Meta publiceras, eftersom klassen är `ja`, och Microsofts gör det inte (`publish` följer klassen,
+  [kallor/guidance.md](../kallor/guidance.md)). Tabellerna nedan är körda efter beslutet: fyra serier har bytt från
+  `okänd` till `ja` (de två överraskningarna och, efter R25, indexet och dess antal), och
+  `us_gdp_contrib_final_sales_computers` (BEA, `ja`) har tillkommit.
+- **Körning 13:s nya serier är `ja`, utom F1-serierna som läser alla rader i den kurerade filen.** Före ägarbeslutet
+  2026-11-25 var det de tio F1-serier som läser filen. Nu är det de sex revideringsserierna. Avskrivningar och PP&E (P1),
   avstämningarna för intäktskravet (P2b) och TSMC:s capex-utsikt och US$-intäkt (F1) kommer från sec.gov.
   Nyttjandeperioderna (P2a) är en egen extraktion, och alla rader i `curated/useful_lives.csv` har källa på sec.gov.
   BEA:s releasearkiv och BLS flatfiler (M1) är federala verk, och BLS säger "public domain material"
@@ -143,7 +152,6 @@ Länken går till dokumentet som citerar licenstexten.
 | Anthropics prissida × Epoch AI | 1 | okänd | derived-licence | härledd ur Anthropic pricing page okänd, Epoch AI benchmarking hub ja; den mest restriktiva delen avgör (ingen öppen licens, eller vidarespridning inte kontrollerad) | [kallor/priser.md](../kallor/priser.md) |
 | Census M3 via ALFRED | 1 | okänd | alfred | kopian kommer från FRED eller ALFRED, vars villkor förbjuder användning i samband med maskininlärning; kommersiell användning är inte bedömd (primärkällan vore ja) | [datakallor/g6_g7_g8.md](../datakallor/g6_g7_g8.md) |
 | F1: revideringar och överraskning (härledda) | 6 | okänd | curated-reads | egen extraktion, men ur bolagets egna sidor utan dokumenterade villkor: filens rader i curated/guidance_capex.csv kommer också från www.microsoft.com, och bara sec.gov är kontrollerad (bolag: alla bolag) | [kallor/guidance.md](../kallor/guidance.md) |
-| F1: revideringar och överraskning (härledda) | 4 | okänd | derived | härledd: komponenten guid_capex_msft_cy_lo är okänd (egen extraktion, men ur bolagets egna sidor utan dokumenterade villkor: bolagets rader i curated/guidance_capex.csv kommer från www.microsoft.com, och bara sec.gov är kontrollerad (bolag: msft)) | [kallor/guidance.md](../kallor/guidance.md) |
 | GH Archive | 12 | okänd | no-open-licence | ingen öppen licens, eller vidarespridning inte kontrollerad | [kallor/github_ai.md](../kallor/github_ai.md) |
 | Kurerad extraktion: AI-nyckeltal | 29 | okänd | curated | egen extraktion, men ur bolagets egna sidor utan dokumenterade villkor: seriens rader i curated/ai_kpis.csv kommer från www.microsoft.com, och bara sec.gov är kontrollerad (bolag: msft) | [kallor/ai_nyckeltal.md](../kallor/ai_nyckeltal.md) |
 | Kurerad extraktion: AI-nyckeltal | 2 | okänd | curated | egen extraktion, men ur bolagets egna sidor utan dokumenterade villkor: seriens rader i curated/ai_kpis.csv kommer också från www.microsoft.com, och bara sec.gov är kontrollerad (bolag: msft) | [kallor/ai_nyckeltal.md](../kallor/ai_nyckeltal.md) |
@@ -158,7 +166,7 @@ Länken går till dokumentet som citerar licenstexten.
 | npm | 10 | okänd | unverified | licensen är inte verifierad: villkoren saknas eller kunde inte läsas | [kallor/utvecklaradoption.md](../kallor/utvecklaradoption.md) |
 | Avstämningar A5 (härledda ur SEC) | 10 | ja | sec | SEC: offentlig information som får kopieras och spridas vidare; egna siffror ur inlämnade dokument; alla komponenter är ja | [kallor/avstamning.md](../kallor/avstamning.md) |
 | BEA NIPA | 4 | ja | public-domain | public domain (amerikansk myndighet): fri användning med källhänvisning | [kallor/census_eu.md](../kallor/census_eu.md) |
-| BEA NIPA, releasearkivet | 8 | ja | public-domain | public domain (amerikansk myndighet): fri användning med källhänvisning | [kallor/makro_bea_bls.md](../kallor/makro_bea_bls.md) |
+| BEA NIPA, releasearkivet | 9 | ja | public-domain | public domain (amerikansk myndighet): fri användning med källhänvisning | [kallor/makro_bea_bls.md](../kallor/makro_bea_bls.md) |
 | BLS, flatfiler (KPI och PPI) | 4 | ja | public-domain | public domain (amerikansk myndighet): fri användning med källhänvisning | [kallor/makro_bea_bls.md](../kallor/makro_bea_bls.md) |
 | Census BTOS | 12 | ja | public-domain | public domain (amerikansk myndighet): fri användning med källhänvisning | [kallor/census_eu.md](../kallor/census_eu.md) |
 | Census C30 | 2 | ja | public-domain | public domain (amerikansk myndighet): fri användning med källhänvisning | [kallor/census_eu.md](../kallor/census_eu.md) |
@@ -170,6 +178,8 @@ Länken går till dokumentet som citerar licenstexten.
 | Epoch AI | 13 | ja | cc-by | CC BY 4.0: kommersiell användning tillåten med källhänvisning | [kallor/epoch_arxiv.md](../kallor/epoch_arxiv.md) |
 | Eurostat | 4 | ja | cc-by | CC BY 4.0: kommersiell användning tillåten med källhänvisning | [kallor/census_eu.md](../kallor/census_eu.md) |
 | F1: revideringar och överraskning (härledda) | 3 | ja | sec | SEC: offentlig information som får kopieras och spridas vidare; egna siffror ur inlämnade dokument; alla komponenter är ja | [kallor/guidance.md](../kallor/guidance.md) |
+| F1: revideringar och överraskning (härledda) | 2 | ja | curated-reads | egen extraktion ur dokument på sec.gov: bolagens alla rader i curated/guidance_capex.csv kommer från sec.gov; alla komponenter är ja (bolag: googl/meta) | [kallor/guidance.md](../kallor/guidance.md) |
+| F1: revideringar och överraskning (härledda) | 2 | ja | curated-reads | egen extraktion ur dokument på sec.gov: bolagets alla rader i curated/guidance_capex.csv kommer från sec.gov; alla komponenter är ja (bolag: googl, meta) | [kallor/guidance.md](../kallor/guidance.md) |
 | Fed G.17 | 2 | ja | public-domain | public domain (amerikansk myndighet): fri användning med källhänvisning | [kallor/fed_g17.md](../kallor/fed_g17.md) |
 | Indeed Hiring Lab | 9 | ja | cc-by | CC BY 4.0: kommersiell användning tillåten med källhänvisning | [kallor/indeed_vast_eia.md](../kallor/indeed_vast_eia.md) |
 | Kurerad extraktion: AI-nyckeltal | 25 | ja | curated | egen extraktion ur dokument på sec.gov: seriens alla rader i curated/ai_kpis.csv kommer från sec.gov (bolag: amzn, googl, meta, msft, nvda) | [kallor/ai_nyckeltal.md](../kallor/ai_nyckeltal.md) |
@@ -205,12 +215,12 @@ Alla serier i katalogen.
 | G2 Kostnad | 12 | 7 | 0 | 5 | 2 |
 | G3 Användning | 135 | 75 | 13 | 47 | 38 |
 | G4 Intäkter | 54 | 48 | 0 | 6 | 4 |
-| G5 Investeringar och finansiering | 217 | 196 | 0 | 21 | 7 |
-| G6 Utbud och halvledare | 108 | 105 | 0 | 3 | 0 |
+| G5 Investeringar och finansiering | 218 | 199 | 0 | 19 | 7 |
+| G6 Utbud och halvledare | 108 | 107 | 0 | 1 | 0 |
 | G7 Fysiska flaskhalsar | 50 | 27 | 21 | 2 | 2 |
 | G8 Arbete och produktivitet | 9 | 9 | 0 | 0 | 0 |
 | G9 Forskning och öppet ekosystem | 32 | 2 | 0 | 30 | 0 |
-| Summa | 633 | 481 | 34 | 118 | 56 |
+| Summa | 634 | 486 | 34 | 114 | 56 |
 
 ## Kommersiellt ren delmängd
 
@@ -254,8 +264,8 @@ familjer, varav 31 har minst en `ja`-post kvar.
 - **Ny serie:** licenstexten i `Spec.license` ska träffa en regel. Annars ger `catalog.validate()` fel. Lägg då till en
   regel eller en override med skäl, och citera licenstexten i `docs/kallor/`.
 - **Från `okänd` till `ja`:** läs och citera villkoren i källans dokument, uppdatera `Spec.license`, och kör rapporten.
-  Klassen följer texten. Det som skulle flytta flest serier: microsoft.com-villkoren (44 serier, och de tio F1-serier
-  som läser den kurerade filen), npm:s villkor (10), arXiv:s API-villkor (5), Space-licensen hos LMArena (5) och en Census
+  Klassen följer texten. Det som skulle flytta flest serier: microsoft.com-villkoren (44 serier, och de sex F1-serier
+  som läser alla rader i den kurerade filen), npm:s villkor (10), arXiv:s API-villkor (5), Space-licensen hos LMArena (5) och en Census
   API-nyckel för M3 (1).
 - **Serie som läser en kurerad fil utan att vara en extraktion av den:** ange vilka bolags rader den läser i
   `CURATED_READS`, eller koppla raderna till serien i `ROW_SERIES`. Annars blir serien `okänd`, och

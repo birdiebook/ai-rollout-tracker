@@ -15,6 +15,12 @@ direction_code: +2 increase significantly/meaningfully, +1 increase, 0 roughly f
 decrease, -2 decrease significantly; direction_base says against what: qoq (vs the previous quarter), yoy (vs the
 same period a year earlier), prior_fy (the fiscal year vs the previous fiscal year), growth_vs_prior (the growth
 rate vs the previous year's growth rate). Definitions: DEFINITIONS below, documented in docs/kallor/guidance.md.
+
+Publication (owner decision R11-4, 2026-11-25): a company's series are published when every row of the company comes
+from a document on sec.gov, which is what gives them the licence class "ja" (ai_tracker.licenses, curated rule).
+Alphabet, Amazon and Meta qualify; Microsoft's rows come from microsoft.com (class "okänd") and stay withheld. A new
+row from another host withholds that company's series again. A new company needs a change to COMPANIES (and a review
+of its extraction) first. tests/test_agarbeslut.py checks that publish equals class "ja" for every series.
 """
 
 from __future__ import annotations
@@ -22,7 +28,10 @@ from __future__ import annotations
 import csv
 import hashlib
 import re
+from functools import lru_cache
 from pathlib import Path
+
+from urllib.parse import urlparse
 
 import pandas as pd
 
@@ -163,13 +172,8 @@ def _period(row) -> str:
     return str(end.to_period("Q-DEC")) if row["horizon"] == "Q" else str(end.year)
 
 
-def series_frame(df: pd.DataFrame, company: str, horizon: str, measure: str, base: str | None = None) -> pd.DataFrame:
-    """Release-dated rows (period, value, known_from) for one company/horizon/measure (and direction base).
-
-    `lo`/`hi`: the guided numbers (a point or approx value fills both; a minimum fills lo only). `dir`: the coded
-    direction against `base`. A value repeated in a later document adds no row; several statements in one
-    document for the same period: the last row in file order wins.
-    """
+def _versions(df: pd.DataFrame, company: str, horizon: str, measure: str, base: str | None = None) -> pd.DataFrame:
+    """series_frame's rows with the definition of the CSV row behind each version."""
     col = MEASURES[measure]
     d = df[(df["company"] == company) & (df["horizon"] == horizon)].copy()
     if measure == "dir":
@@ -180,13 +184,87 @@ def series_frame(df: pd.DataFrame, company: str, horizon: str, measure: str, bas
     d["period"] = [_period(r) for _, r in d.iterrows()]
     d = d.sort_values("known_from", kind="stable")
     out, last = [], {}
-    for p, v, kf in d[["period", col, "known_from"]].itertuples(index=False):
-        if p in last and last[p][0] == v:
+    for p, v, kf, definition in d[["period", col, "known_from", "definition"]].itertuples(index=False):
+        if p in last and last[p] == v:
             continue
-        last[p] = (v, kf)
-        out.append((p, float(v), kf))
-    res = pd.DataFrame(out, columns=["period", "value", "known_from"])
+        last[p] = v
+        out.append((p, float(v), kf, definition))
+    res = pd.DataFrame(out, columns=["period", "value", "known_from", "definition"])
     return res.drop_duplicates(["period", "known_from"], keep="last").reset_index(drop=True)
+
+
+def series_frame(df: pd.DataFrame, company: str, horizon: str, measure: str, base: str | None = None) -> pd.DataFrame:
+    """Release-dated rows (period, value, known_from) for one company/horizon/measure (and direction base).
+
+    `lo`/`hi`: the guided numbers (a point or approx value fills both; a minimum fills lo only). `dir`: the coded
+    direction against `base`. A value repeated in a later document adds no row; several statements in one
+    document for the same period: the last row in file order wins.
+    """
+    return _versions(df, company, horizon, measure, base)[["period", "value", "known_from"]]
+
+
+def definition_switches(df: pd.DataFrame, company: str, horizon: str, measure: str,
+                        base: str | None = None) -> list[tuple[str, str, str, str]]:
+    """(period, known_from day, old definition, new definition) for every version of the series whose row has
+    another definition than the version before it of the same period (Amazon 2026: AMZN_CAPEX_UNSPEC, then
+    AMZN_CASH_CAPEX). The register (F1) does not count such a change as a revision, so the series' note names it
+    and the monthly letter does not call the earlier value "tidigare" (review R25-2)."""
+    out, prev = [], {}
+    for p, kf, definition in _versions(df, company, horizon, measure, base)[
+            ["period", "known_from", "definition"]].itertuples(index=False):
+        if p in prev and prev[p] != definition:
+            out.append((p, str(pd.Timestamp(kf).date()), prev[p], definition))
+        prev[p] = definition
+    return out
+
+
+def series_key(company: str, horizon: str, measure: str, base: str | None = None) -> str:
+    return f"guid_capex_{company}_{horizon.lower()}_{measure}" + (f"_{base}" if base else "")
+
+
+VARIANTS = [("lo", None), ("hi", None)] + [("dir", b) for b in DIRECTION_BASES]
+
+
+def switch_note(switches: list[tuple[str, str, str, str]]) -> str:
+    """The note's sentence on definition switches ("" without any)."""
+    if not switches:
+        return ""
+    return ("Definitionsbyte inom en period, inte en revidering (F1): "
+            + "; ".join(f"{p}: {old} → {new} ({kf})" for p, kf, old, new in switches) + ". ")
+
+
+@lru_cache(maxsize=4)
+def _switches_by_key(path: str, mtime: float) -> dict[str, dict[tuple[str, str], tuple[str, str]]]:
+    df = load(Path(path))
+    out: dict[str, dict[tuple[str, str], tuple[str, str]]] = {}
+    for (company, horizon), _grp in df.groupby(["company", "horizon"], sort=True):
+        for measure, base in VARIANTS:
+            for p, kf, old, new in definition_switches(df, company, horizon, measure, base):
+                out.setdefault(series_key(company, horizon, measure, base), {})[(p, kf)] = (old, new)
+    return out
+
+
+def definition_switch(key: str, period, known_from, path: Path | None = None) -> tuple[str, str] | None:
+    """(old, new) definition when the version of guid_capex series `key` for `period` known from `known_from` comes
+    from a row with another definition than the version before it; None otherwise (and for any other series)."""
+    path = path or PATH
+    if not str(key).startswith("guid_capex_") or not path.exists():
+        return None
+    switches = _switches_by_key(str(path), path.stat().st_mtime).get(key, {})
+    return switches.get((str(period), str(pd.Timestamp(known_from).date())))
+
+
+SEC_HOSTS = frozenset({"www.sec.gov", "sec.gov"})  # as ai_tracker.licenses.SEC_HOSTS (a test checks they agree)
+
+
+def published_companies(df: pd.DataFrame) -> set[str]:
+    """Companies whose every row has its source_url on sec.gov: their series are published (R11-4, module doc)."""
+    out = set()
+    for company, urls in df.groupby("company")["source_url"]:
+        hosts = {urlparse(str(u).strip()).netloc.lower() for u in urls}
+        if hosts and hosts <= SEC_HOSTS:
+            out.add(company)
+    return out
 
 
 def specs(path: Path | None = None) -> list:
@@ -197,20 +275,21 @@ def specs(path: Path | None = None) -> list:
     if not path.exists():
         return []
     df = load(path)
+    shown = published_companies(df)
     out = []
     names = {"msft": "Microsoft", "googl": "Alphabet", "amzn": "Amazon", "meta": "Meta"}
     hz_label = {"Q": "kvartal", "FY": "räkenskapsår (MSFT: juli–juni, period = året då det slutar)", "CY": "kalenderår"}
     for (company, horizon), grp in df.groupby(["company", "horizon"], sort=True):
         freq = "Q" if horizon == "Q" else "A"
-        variants = [("lo", None), ("hi", None)] + [("dir", b) for b in DIRECTION_BASES]
-        for measure, base in variants:
+        for measure, base in VARIANTS:
             if series_frame(df, company, horizon, measure, base).empty:
                 continue
             sel = grp[grp["kind"] == "direction"] if measure == "dir" else grp[grp["kind"] != "direction"]
             if base:
                 sel = sel[sel["direction_base"] == base]
             defs = ", ".join(sorted(set(sel["definition"])))
-            key = f"guid_capex_{company}_{horizon.lower()}_{measure}" + (f"_{base}" if base else "")
+            key = series_key(company, horizon, measure, base)
+            switches = switch_note(definition_switches(df, company, horizon, measure, base))
             what = {"lo": "lägsta/punktvärde", "hi": "högsta/punktvärde",
                     "dir": f"riktning mot {base} (kod −2..+2)"}[measure]
 
@@ -224,7 +303,11 @@ def specs(path: Path | None = None) -> list:
                        "egna sidor", fetch=fetch, lag_days=LAG[freq],
                 license="SEC EDGAR: public information (sec.gov/privacy). Bolagssidor: bara extraherade siffror "
                         "med källhänvisning, aldrig text",
-                revised=True, publish=False,
+                revised=True, publish=company in shown,
                 question="Vad sa bolaget att capex skulle bli (baslinje B2 för N1)?",
-                note=f"Definition(er): {defs}. Agentextraherat, stickprovsgranskat. Se docs/kallor/guidance.md."))
+                note=f"Definition(er): {defs}. {switches}Agentextraherat, stickprovsgranskat. "
+                     + ("Publiceras: bolagets alla rader kommer från sec.gov (ägarbeslut R11-4, 2026-11-25). "
+                        if company in shown else
+                        "Visas inte: bolagets rader kommer inte alla från sec.gov (R11-4). ")
+                     + "Se docs/kallor/guidance.md."))
     return out

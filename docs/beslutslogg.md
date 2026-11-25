@@ -777,3 +777,74 @@ republishing data"), npm och arXiv (`okänd`), och Microsofts capex-guidance ur 
   regeln bakom dem ändras, och fälten är tillägg (`docs/steg3/datakontrakt.md`, Ändringar).
 - Loggarna och registret har båda sidornas poster i tidsordning. `quarterly.py` har mains omskrivning med "för få
   källor" i tillståndsordningen.
+
+## 2026-11-25 – Ägarbeslut: spärrregeln, capex-guidance från sec.gov och nettobidraget för datorer
+
+Johannes svarade "kör på dina rekommendationer" på tre rekommendationer samma dag (spår `auto14k/agarbeslut`).
+
+- **1. Spärrregeln står kvar (granskning L3-1).** Ägaren godkände regeln i posten "Inga värden för inhållna serier i
+  den publika ögonblicksbilden" ovan. En serie med `publish=False` har bara nyckel, familj, giltighet, skäl och
+  riktning i den publika ögonblicksbilden, inga värden. Koden ändras inte. Ögonblicksbilden 2026-11-30 skrivs med
+  regeln.
+- **2. Capex-guidance ur dokument på sec.gov publiceras (R11-4).**
+  - `guid_capex_*` för Alphabet och Meta publiceras. Ägarens uttryckliga godkännande behövdes före N1:s första skarpa
+    fil 2027-01-20, eftersom dess indata innehåller serierna (B2).
+  - **Amazon ingår med samma regel.** Klassen är `ja`, alla Amazons rader kommer från 10-K, 10-Q och 8-K på sec.gov,
+    och extraktionen granskades på samma sätt (E1, R2: 5 av 5 stickprov rätt, R5). Amazon ingår inte i N1:s B2, men
+    det finns inget licensskäl att hålla tillbaka serierna.
+  - **Regeln står i koden, inte som en lista.** Ett bolag publiceras när alla dess rader i
+    `curated/guidance_capex.csv` har källa på sec.gov, vilket är samma villkor som ger klassen `ja`. Ett test kräver
+    att `publish` är lika med klassen `ja` för varje serie. En ny rad från en annan värd gör bolagets serier inhållna
+    igen.
+  - **Microsoft står kvar med `publish=False`.** Raderna kommer från transkripten på microsoft.com, vars villkor inte
+    är dokumenterade (klass `okänd`).
+  - **F1.** Metas och Alphabets överraskningar läser bara bolagets egna rader. `capex_surprises` väljer bolagets
+    rader, och z delar med bolagets egna tidigare överraskningar. Ett test ändrar alla andra bolags rader och kräver
+    samma serie. Komponenterna är därför bara bolagets egna `guid_capex_*`, och serierna publiceras. Revideringsindexet,
+    medianen och antalen läser alla bolags rader, också Microsofts, och har kvar `publish=False`. Överraskningsindexet
+    läser bara Metas och Alphabets rader (och TSMC:s och Nvidias SEC-serier), men står kvar bakom den poolade grinden,
+    eftersom beslutet gällde `guid_capex_*` och bolagens egna överraskningar. **Rekommendation:** publicera
+    överraskningsindexet med samma bevis, om Johannes vill. Det är en ändring av listan i `CSV_READS`.
+  - **Ögonblicksbilden** visar avsnittet `expectations` per bolag. Alphabet, Amazon och Meta har sina värden:
+    händelser, antal per år och överraskningar. Microsoft har bara bolag, period, definition och datum, och brottraden
+    saknar storlek och skälstext. Revideringsindexet, medianen, antalen, sammansättningen och överraskningsindexet har
+    bara period och datum. Det nya fältet `values_withheld_companies` anger bolagen (i dag `msft`). Torrkörning för
+    2026-10-31 i en tillfällig katalog: Metas guidance för 2025 (71 000 MUSD, överraskning +1,70, z 1,90), Alphabets
+    (92 000 MUSD, −0,60) och revideringarna för 2026 (Meta +7,70, +1,83, +1,80, Alphabet +2,74, Amazon 0,0) syns.
+    Ingen av Microsofts siffror och inte skälstexten syns.
+  - **Webbplatserna** följer `site.data.publishable` utan ändring i grinden. Paketet byggt mot den riktiga tabellen
+    har 0 problem i `validate` och `scan-build`, serierna för Alphabet, Amazon och Meta och de två överraskningarna har
+    egna seriesidor, och Microsofts sex serier och åtta F1-serier står bara i `withheld.json`. Den gamla sidan nämner
+    Microsofts serier bara i listan över inhållna serier på metodsidan.
+- **3. Nettobidraget för datorer förregistreras (R12, R-3).** Registerposten "M1: nettobidrag för datorer efter import
+  (BB01RY), ägarbeslut" committades innan något värde hämtades. Serien `us_gdp_contrib_final_sales_computers`
+  (tabell 1.2.2 rad 17) har samma arkiv, datering och vintageregel som de andra bidragen i M1. Den är en katalogserie
+  och ingen kärnserie. 493 rader, 1978Q2–2026Q3. 24 kvartal i fyra arkiverade releaser lästes för hand, och den
+  senaste vintage är lika med flatfilen i alla 194 kvartal. För 2026Q3 är nettobidraget −0,61 procentenheter mot +0,72
+  brutto (`us_gdp_contrib_computers`). Cachen laddade bara ned avsnitt 1 igen, och inget extrakt avvek.
+- **Kvar:** `docs/datakallor/licensniva.md`:s genererade tabeller är från före beslutet. Två serier har bytt från
+  `okänd` till `ja`, och en serie har tillkommit. Kör om rapporten vid nästa integration.
+
+## 2026-11-25 – Rättning efter granskning R25 (spår `auto14k/x22-agarbeslut`)
+
+- **R25-1: överraskningsindexet.** `f1_surprise_index` och `f1_surprise_index_n` listar nu bara Metas och Alphabets
+  `guid_capex_*` som komponenter. Det är de rader de läser (`guidance_revisions.CSV_READS`, samma som
+  `licenses.CURATED_READS`), och testet i R25 visar det. Klassen blir `ja`. Indexet publiceras ändå inte än, eftersom
+  ägarbeslutet i dag gällde `guid_capex_*` och bolagens egna överraskningar. Det står nu uttryckligen
+  (`guidance_revisions.AWAITING_OWNER`, nytt fält `Spec.withheld_reason`). Listan över inhållna serier på sidan säger
+  "väntar på ägarbeslut" i stället för att namnge Microsofts serier. Ögonblicksbilden visar som förut bara period och
+  datum för indexet. **Rekommendation till Johannes:** publicera indexet. Det avslöjar inget som inte redan är publikt,
+  eftersom z per bolag går att räkna fram ur de publicerade `f1_surprise_*`. Ändringen är att ta bort nycklarna ur
+  `AWAITING_OWNER`.
+- **R25-2: definitionsbyte i Amazons serie.** En ny version av en `guid_capex_*`-serie från en rad med en annan
+  definition än versionen före är ett definitionsbyte. F1 räknar det inte som en revidering. Seriens not anger nu bytet
+  (`guidance_capex.definition_switches`), och månadsbrevet skriver "definitionsbyte från AMZN_CAPEX_UNSPEC till
+  AMZN_CASH_CAPEX, inte en revidering" i stället för "tidigare 200 000". I dag gäller det bara Amazons 2026
+  (2026-10-29). Torrkörningen av brevet för oktober visar den nya texten. Serien delas inte per definition. Det skulle
+  ändra nycklar och rader för en publicerad serie i bastabellen. Paketets versioner räknar fortfarande perioden som
+  reviderad (`n_revised_periods`), eftersom paketet saknar ett fält för noten. Att visa noten där är en ändring av
+  kontraktet och webben, och hör till ett webbspår.
+- **Noterna.** R25-3 rättas i en ny registerpost samma dag. R25-4 står i `docs/drift.md` (Delad data). R25-5:
+  stickproven på extraktionen för Amazon, Alphabet och Meta är R2 (5 av 5 för Amazon). R5 kontrollerade bara att
+  planerna för nästa år var fullständiga. Hänvisningen "R2: 5 av 5 stickprov rätt, R5" i posten ovan ska läsas så.
+  `docs/kallor/guidance.md` är rättad.

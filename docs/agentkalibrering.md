@@ -72,6 +72,9 @@ En rad per spår, fylls på efter varje körning. Tumreglerna justeras när siff
 | 2026-11-25 | 14 | WX2 rättning | webbrättning (R-W2/R-W3) | ~115 | ~280 | – | TBT 142–256 ms, uppskjutna tabeller, pilar dolda för skärmläsare |
 | 2026-11-25 | 14 | W14 kvartalsrapport | webbspår | ~48 | ~152 | – | report/ i paketet (1.3), /kvartal/[kvartal] |
 | 2026-11-25 | 15 | WV2 webb till index v2 | webbspår | ~80 | ~210 | ~420 | för få källor, metodmotor v2, tio avstämningar, förväntningar (paket 1.5.0), DOM 3893 → 2763 |
+| 2026-11-25 | 14 | Ägarbeslut (spärrregeln, R11-4, BB01RY) | tre ägarbeslut: publiceringsregel, uppdelad spärr, ny serie (förregistrerad) | ~45 | ~100 | – | guid_capex för GOOGL/META/AMZN publicerade via klassregeln, MSFT inhållen; 2 F1-överraskningar avgränsade med bevistest; spärr per bolag i ögonblicksbilden; BB01RY (493 rader, 24 kvartal för hand, 194 mot flatfil, bara avsnitt 1 omhämtat); 14 nya tester |
+| 2026-11-25 | 14 | R25 granskning av ägarbesluten | granskning (publika utdata, licensgrind, primärkälla BEA) | ~75 | ~95 | – | GODKÄND MED ANMÄRKNINGAR: inga Microsoft-siffror i ögonblicksbilder (2026-10, 2026-11), paket, gamla sidan och två månadsbrev; 21 kvartal BB01RY i tre andra releaser för hand; R25-1 och R25-2 (bör, strikt xfail), 4 noter; 7 tester |
+| 2026-11-25 | 14 | X22 rättning efter R25 | rättning (katalog, notering, brev, dokument) | ~40 | ~60 | – | R25-1 och R25-2 rättade (3 strikta xfail nu vanliga tester), R25-3–R25-5 också; indexet inhållet med skäl (`Spec.withheld_reason`), definitionsbyte i not och brev; torrkörning brev 2026-10 och paket; 5 nya tester |
 
 ## Körning 1, sammanfattning (2026-11-23, orkestrerare)
 

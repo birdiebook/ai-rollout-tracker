@@ -394,6 +394,13 @@ En minor, bara tillägg. Nytt dokument `expectations.json` (schema `expectations
   värden.
 - `in_diffusion` är alltid `false`. Ett paket utan dokumentet (1.4.0 och äldre) läses som förut, och sidan visar då
   inget sådant avsnitt.
+- Tillägg vid mergen med ägarbesluten 2026-11-25 (R11-4): spärren gäller per bolag. Alphabet, Amazon och Meta har
+  sina värden i `expectations.json` (alla deras rader kommer från sec.gov). Microsoft (microsoft.com) har bara bolag,
+  period, definition och datum, och står i det nya fältet `values_withheld_companies`. Revideringsindexet, medianen,
+  antalen och sammansättningen läser alla bolags rader och har bara period och datum. Överraskningsindexet har bara
+  period och datum tills ägaren beslutar (R25-1). `csv_public` är `false` så länge någon serie som läser filen är
+  inhållen. Webben avgör per rad om den har värden, så sidan behöver ingen ändring. Schemat tillät redan fältet och
+  beskriver det nu, så versionen är kvar på 1.5.0.
 
 ## Läsanvisningar för körning 13
 
@@ -410,8 +417,11 @@ källor"), och med få familjer väger varje familj tungt, så indexet kan röra
 av bolagens egen guidance (oförändrad räknas som en halv), över fyra kvartal och med minst tre revideringar. Över 0,5
 betyder fler höjningar än sänkningar. Överraskningen är utfallet mot bolagets guidance i log ×100, och
 överraskningsindexet är medel av standardiserade överraskningar (z) över minst två bolag. Förbehåll: få händelser per
-kvartal (n står bredvid), ingen takt, och serierna som läser `curated/guidance_capex.csv` har `publish=False` tills
-ägaren beslutar (R11-4). Avsnittet finns i ögonblicksbilden och från paket 1.5.0 i `expectations.json`.
+kvartal (n står bredvid), ingen takt. Från 2026-11-25 (ägarbeslut R11-4) visas värdena ur `curated/guidance_capex.csv`
+per bolag: Alphabet, Amazon och Meta (alla rader från sec.gov) med värden, Microsoft (microsoft.com) bara med period
+och datum. Revideringsindexet och överraskningsindexet har bara period och datum, eftersom deras serier har
+`publish=False` (överraskningsindexet väntar på ägarbeslut, R25-1). Avsnittet finns i ögonblicksbilden och från paket
+1.5.0 i `expectations.json`.
 
 **Intäktskravet (`x_dep_rev`, `x_capcost_rev_r08`, `x_capcost_rev_r12`, `x_dep_capex`, `x_dep_rev_aws`).**
 Avskrivningar, och avskrivningar plus 8 eller 12 % på det bokförda nettot, som procent av intäkterna för MSFT, GOOGL,

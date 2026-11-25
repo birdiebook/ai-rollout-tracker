@@ -10,7 +10,9 @@ tabellhuvuden och det senaste kvartalets värde i BEA:s förhandsberäkningar f�
 16 månaderna i BLS-filerna för de fyra prisserierna, för att hitta koder och filformat. Tre faktauppgifter i
 registerposten var fel och är rättade i en egen post efteråt. Reglerna ändrades inte. Efter granskningen R12
 ([granskning/r12_makro.md](../granskning/r12_makro.md)) rättade spåret X9 två fel och några brister i en daterad post
-i registret ("M1: rättningar efter granskning R12"). Avsnitten nedan beskriver läget efter rättningen.
+i registret ("M1: rättningar efter granskning R12"). Avsnitten nedan beskriver läget efter rättningen. Nettobidraget
+för datorer (`BB01RY`) är ett ägarbeslut 2026-11-25. Registerposten ("M1: nettobidrag för datorer efter import",
+commit `ed1eceb`) committades innan något värde för `BB01RY` hämtades.
 
 ## Sammanfattning
 
@@ -20,6 +22,7 @@ i registret ("M1: rättningar efter granskning R12"). Avsnitten nedan beskriver 
 | `us_gdp_contrib_info_proc_eq` | G5 | tabell 1.5.2 rad 31 (`Y034RY`) | Q | 1947Q2– | som ovan | release |
 | `us_gdp_contrib_computers` | G5 | tabell 1.5.2 rad 32 (`B935RY`) | Q | 1959Q2– | som ovan | release |
 | `us_gdp_contrib_software` | G5 | tabell 1.5.2 rad 38 (`B985RY`) | Q | 1959Q2– | som ovan | release |
+| `us_gdp_contrib_final_sales_computers` | G5 | tabell 1.2.2 rad 17 (`BB01RY`), netto efter import | Q | 1978Q2– | som ovan | release |
 | `us_gdp_real_growth` | G5 | tabell 1.5.2 rad 1 (`A191RL`) | Q | 1947Q2– | som ovan | release |
 | `us_imp_computers_nom` | G6 | tabell 4.2.5 och 4.2.5A/B (`B852RC`) | Q | 1972Q1– | som ovan | release |
 | `us_imp_computers_real` | G6 | tabell 4.2.6 och 4.2.6B (`B852RX`) | Q | 2007Q1– (perioderna i senaste vintage) | som ovan | release |
@@ -70,8 +73,18 @@ minustecken). Resten, cirka 31 mdr USD 2026Q3, är troligen offentliga investeri
 bidraget −0,61 procentenheter, mot +0,72 för privata investeringar i datorer (`B935RY`), så skillnaden är stor.
 `BB01RY` omfattar inte programvara eller övrig informationsbehandlingsutrustning, så ett nettomått för hela
 `ai_invest_contrib_gross` finns inte. M1:s premiss "BEA publicerar inget BNP-bidrag för datorimport" var alltså
-ofullständig (R12, R-3). Om `BB01RY` ska förregistreras som nettobidrag för datorer är ett ägarbeslut. Tills vidare
-visas datorimporten separat, nominellt, realt och som bidrag till importtillväxten.
+ofullständig (R12, R-3).
+
+**Nettobidraget för datorer (`us_gdp_contrib_final_sales_computers`, ägarbeslut 2026-11-25).** Serien är `BB01RY` ur
+samma arkiv och med samma datering som de andra bidragen (registret 2026-11-25). Koden finns i tabell 1.2.2 (bladet
+`T10202-Q` i avsnitt 1) i alla 107 releaser, annars hade hämtningen stoppat. I de fyra releaser som lästes för hand
+står den på rad 17 med etiketten "Final sales of computers" och BEA:s fotnot "Some components of final sales of
+computers include computer parts". Historiken börjar 1978Q2. Den läses bredvid
+`us_gdp_contrib_computers` (brutto, bara privata investeringar, också importerad utrustning) och
+`us_imp_computers_contrib_imp` (bidrag till importens tillväxt, inte till BNP:s). Det är en katalogserie, inte en
+kärnserie. Ingen skillnadsserie mellan brutto och netto definieras. När extrakten i cachen saknar en ny kod laddas bara
+arbetsböckerna för det avsnittet ned igen (här avsnitt 1), och koderna som redan fanns i extraktet måste komma tillbaka
+med samma värden. Hämtningen 2026-11-25 gav 493 rader, och inget extrakt avvek.
 
 **Kedjade dollar:** basåret följer vintage (2009, 2012 och sedan 2017 dollar). Vid omläggningarna 2018-07-27 och
 2023-09-28 tog BEA också bort de äldsta kvartalen i tabell 4.2.6 (start 1999Q1, sedan 2002Q1, nu 2007Q1). Alla
@@ -132,6 +145,8 @@ också 1952-01.
 | Kontroll | Resultat |
 |---|---|
 | BEA: senaste vintage mot flatfilen `NipaDataQ.txt` (en oberoende BEA-fil) | alla 7 koder lika över hela historiken (största skillnad 0,0) |
+| `BB01RY` för hand i tabell 1.2.2 i fyra arkiverade releaser (2017-10-27, 2020-07-30, 2023-06-29, 2026-10-29), arbetsböckerna nedladdade och lästa separat | 24 av 24 kvartal lika med vyn på publiceringsdagen, t.ex. 2017Q3 −0,14, 2020Q2 −0,04, 2023Q1 0,09 och 2026Q3 −0,61. Raden är 17 och koden `BB01RY` i alla fyra. 2020Q2 och 2023Q1 Third dateras med "Data published" (2020-07-30 och 2023-06-29), inte med katalogens 2020-07-31 och 2023-06-20 |
+| `BB01RY`, senaste vintage mot flatfilen `NipaDataQ.txt` (hämtad 2026-11-24) | 194 av 194 kvartal lika (1978Q2–2026Q3, största skillnad 0,0) |
 | BEA: releasetexten för 2026Q3 ("GDP (Advance Estimate), 3rd Quarter 2026", 2026-10-29) | texten: 3,4 procent i årstakt, 2,2 procent kvartalet före. Vintage 2026-10-29: `A191RL` 3,4 och 2,2. Texten säger att ökningen inom utrustning leddes av informationsbehandlingsutrustning, "mainly computers and peripheral equipment", vilket stämmer med att `B935RY` är största delen av `Y034RY` |
 | BEA: publiceringsdatum mot `LATE` i `series/bea_nipa.py` (ALFRED-belagda sena releaser) | 2018Q4 2019-02-28, 2025Q3 2025-12-23, 2025Q4 2026-02-20: lika |
 | BEA: första skattningen efter kvartalets slut | 25–84 dagar, median 28. Över 31 dagar: 2018Q4 (59), 2025Q4 (51), 2025Q3 (84) |
@@ -142,7 +157,8 @@ också 1952-01.
 | `python -m ai_tracker.warehouse` på spårets vy | alla datatester ok (basen var tom vid körningen) |
 
 **Revideringar, beskrivande:** för `ai_invest_contrib_gross` var skillnaden mellan första och senaste värde i
-genomsnitt 0,14 procentenheter och högst 0,45 (33 kvartal, 2017Q4–2025Q4). Inga takter är beräknade.
+genomsnitt 0,14 procentenheter och högst 0,45 (33 kvartal, 2017Q4–2025Q4). För `us_gdp_contrib_final_sales_computers`
+var den i genomsnitt 0,09 och högst 0,35 (2021Q1), samma 33 kvartal. Inga takter är beräknade.
 
 ## Förbehåll
 
@@ -176,7 +192,7 @@ genomsnitt 0,14 procentenheter och högst 0,45 (33 kvartal, 2017Q4–2025Q4). In
 | BLS API | dagskvoten för den delade IP-adressen slut (25 anrop per dag utan nyckel) | behövs inte, flatfilerna räcker. En v2-nyckel om API:t behövs för G8 |
 | `data.bls.gov` | proxyn nekar | – (behövs inte) |
 | BEA-vintages 2002–2017 | arkivet har bara .xls | en .xls-läsare (`xlrd`) om längre historik behövs |
-| Nettobidrag efter import | BEA:s `BB01RY` ("Final sales of computers") täcker datorer men inte programvara | ägarbeslut: förregistrera `BB01RY` ur samma arkiv och med samma datering |
+| Nettobidrag efter import för hela `ai_invest_contrib_gross` | BEA publicerar ett nettobidrag bara för datorer (`BB01RY`), inte för programvara och övrig utrustning | – (`BB01RY` är förregistrerat och hämtat som `us_gdp_contrib_final_sales_computers`, ägarbeslut 2026-11-25) |
 | Census HS 8471/8473/8542 | Census API-nyckel saknas | spår M2 |
 
 De befintliga serierna `us_pfi_*` (flatfilen, bakåtfylld) skulle kunna få riktiga vintages ur samma arkiv (tabell 5.3.5).
