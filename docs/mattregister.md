@@ -663,3 +663,35 @@ ordning, byte för byte.
 **Utanför regeln:** revideringar, nya serier och nya prognoser utan utfall blir inga kort. De visas på serie- och
 prognossidorna och i månadsbrevet. En ändring av regeln (trösklar, typer, ordning eller tak) görs som ett nytt daterat
 avsnitt här, och den gäller då för alla månader, även de som redan visats.
+
+#### 2026-11-25 – Ändring av W13 (R-W3a–c): dubbletter, slumpnivå och strukna kort
+
+Motivering: granskningen R-W3 (`docs/granskning/rw3_neutralitet.md`, punkt 3) visade att samma storhet kan visas två
+gånger samma månad (K5 för `capex_ocf_hyp4` och K6 för `x_capex_ocf` i oktober 2026), att K5 ger ungefär lika många
+utslag som slumpen skulle ge, och att läsaren inte kan se vilka kort taket strök. Ändringen skrivs innan den
+implementeras. Den gäller för alla månader, även de som redan visats. Trösklar, korttyper, ordning och tak ändras inte.
+
+1. **R-W3a, dubbletter.** En avstämning vars definition i A5-tabellen är "befintlig `<kärnserie>`" (i dag bara
+   `x_capex_ocf` = `capex_ocf_hyp4`) blir inget eget K6-kort när den kärnserien har ett K5-kort som visas samma
+   månad. K5-kortet får i stället en mening om avstämningen: dess percentil för takt och om den ligger i en ytterzon.
+   Prövningen görs när K1–K5 har valts (efter K5:s tak och det totala taket) och före K6:s tak, så att en struken
+   dubblett inte tar någon plats. Den räknas som "uppfyllde villkoret" och redovisas i Om urvalet som "ströks som
+   dubblett", inte som struken av taket. Har kärnserien inget visat K5-kort gäller K6 som förut. Regeln läser ingen
+   riktning.
+2. **R-W3b, slumpnivå.** När jämförelse finns anger Om urvalet för K5 och K6 hur många utslag som väntas av en slump:
+   med N prövade serier ligger i snitt N/10 i en ytterzon (≤ 5 eller ≥ 95) om percentilerna är jämnt fördelade. N är
+   för K5 de räknade och giltiga kärnserierna med percentil för förändring i takt i M, och för K6 avstämningarna med
+   percentil för takt i M, publicerbara eller inte. Bredvid står hur många som uppfyllde villkoret (också inhållna
+   och dubbletter). Kravet att serien inte låg i samma zon månaden innan gör att slumpens antal för själva villkoret
+   är något lägre än N/10, och sidan säger det. Siffran väljer inte bort några kort.
+3. **R-W3c, de som ströks.** Kort som uppfyllde villkoren men ströks av typens tak eller det totala taket listas i Om
+   urvalet i regelns ordning, med typ, namn (gren eller serie, med grenkod för K5) och riktning med glyf (▲ eller ▼,
+   ingen glyf när kortet saknar riktning), utan figur och utan färg. Inhållna serier namnges fortfarande inte.
+4. **Texter (följer av R-W3 punkt 4 och 5).** Interna koder står inte i läsartexten: "(A5)", "(G-D, C4)" och
+   "(BOCPD, G-D)" ersätts med vanliga ord och en länk till metoden. K5-texten börjar med en mening i klartext om
+   percentilen ("Förändringen i takt är högre än i 98 % av seriens egen historik", nedre zonen "lägre än i …").
+   K6:s fält `direction` anger zonen (+1 övre, −1 nedre) och ritas i bläckfärg med ▲/▼ och orden "kvotens takt högt
+   i egen historik" eller "lågt i egen historik", eftersom avstämningarna saknar riktning i ett index (A5). Blått och
+   orange betyder därmed bara riktning i ett diffusionsindex.
+5. **Rekonstruerat.** På månadssidan står statusen (rekonstruerad eller skarp) i rubrikraden, i samma storlek som
+   månadsnamnet, och för rekonstruerade månader en mening om vad det betyder. Det ändrar inget urval.
