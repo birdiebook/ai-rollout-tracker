@@ -1626,3 +1626,44 @@ gäller bara dateringen. Den görs innan någon serie analyseras, och inga mått
 Rättelse av koden, inte av regeln: i den första kodningskörningen matchade mönstret för rubriken "Fiscal Year <år>
 Results" titeln ("Fourth Quarter and Fiscal Year <år> Results"). Då kodades inga meningar i fjärde kvartalets
 pressmeddelanden. Koden följer nu regel 4 som den är skriven, och utfallet är redovisat i dokumentet.
+
+### 2026-11-25 – CN1: korskontrollen av Alibabas capex körs som registrerad (rättning efter R21, granskningen av CN1)
+
+Rättningsspår X18 efter granskning R21 (`docs/granskning/r21-kina-sec.md`, R21-3). Registerposten "2026-11-25 – CN1"
+säger att capex ska jämföras med companyfacts `PaymentsToAcquirePropertyPlantAndEquipment` och immateriella
+tillgångar där det finns. Koden jämförde i stället Alibaba med en bredare rad i 20-F-instanserna
+(`PaymentsToAcquireLandUseRightsPropertyAndEquipment`, med mark och kontorscampus), läste 20-F först från 2019 och
+prövade aldrig `capex_baba_v1`. Det är ett fel i koden, inte i regeln. Här skrivs regeln ut med Alibabas begrepp, så
+att koden kan följa den. Inga serier, värden eller datum ändras. Korskontrollen skriver ingenting.
+
+**Vad som var sett före posten.** R21:s granskning, som redovisar utfallet av den registrerade kontrollen (exakt för
+`capex_baba_v1` FY2015–FY2018 och `capex_baba_v2` FY2019–FY2020). Alibabas companyfacts: listan över poster för
+`PaymentsToAcquireOtherPropertyPlantAndEquipment` och `PaymentsToAcquireIntangibleAssets` (år, 20-F och värden).
+Namnen på kassaflödesbegreppen och segmentmedlemmarna i 20-F-instanserna FY2016–FY2018, utan värden. Ingen summa av
+kvartal är räknad av spåret före posten.
+
+**Regel (b) för Alibaba, utskriven.** Summan av fyra räkenskapskvartal (april–mars) jämförs med:
+- `capex_baba_v1` (anläggningstillgångar och immateriella tillgångar i en rad): companyfacts
+  `PaymentsToAcquireOtherPropertyPlantAndEquipment` plus `PaymentsToAcquireIntangibleAssets`, båda ur samma 20-F
+  (den senaste som har båda för året). Dessutom bolagets egen rad i 20-F-instanserna, som är ett tilläggsbegrepp och
+  inte finns i companyfacts: `PaymentsToAcquireOtherPropertyPlantAndEquipmentIntangibleAssets` (20-F FY2016),
+  `PaymentsToAcquireOtherPropertyEquipmentIntangibleAssetsAndLicensedCopyrightsOfVideoContent` (20-F FY2017) och
+  `PaymentsToAcquireOtherPropertyEquipmentIntangibleAssetsAndLicensedCopyrights` (20-F FY2018).
+- `capex_baba_v2` (anläggningstillgångar utan immateriella): companyfacts
+  `PaymentsToAcquireOtherPropertyPlantAndEquipment` (den senaste 20-F:n för året).
+- Samma definition: förväntad avvikelse högst 4 MRMB (avrundning), som för molnet. Utfallet redovisas även om det
+  inte stämmer.
+- Kvoten mot `PaymentsToAcquireLandUseRightsPropertyAndEquipment` (20-F-instansen) redovisas bara för serie och år där
+  ingen av raderna ovan finns. Den används inte för att justera något.
+- 20-F läses från 2016-01-01, för både molnet och capex. Då prövas också FY2016 för `rev_baba_cloud_v1`.
+
+Baidus kontroll ändras inte.
+
+**Förtydliganden utan regeländring.**
+- `capex_baba_v1` innehåller licensierade upphovsrätter till videoinnehåll, åtminstone från FY2017 (begreppsnamnet i
+  20-F FY2017 ovan). I pressmeddelandet 2018-11-02 delas 2017Q3 upp i 5 322 MRMB anläggningstillgångar och 2 680 MRMB
+  upphovsrätter och immateriella tillgångar, sammanlagt `v1`:s 8 002 (R21-4). Raden är fortfarande bolagets egen rad.
+  Noten och etiketten säger nu vad den innehåller.
+- Gränsen för DingTalk (`v2` → `v3`) står i pressmeddelandet 2023-11-16 självt, inte bara i 2024-08-15 som posten och
+  dokumentet citerade (R21 N-5). Gränsen är densamma.
+- Posten säger 47 pressmeddelanden från Alibaba. Koden läser 48, ett per kvartal 2014Q4–2026Q3, utan lucka (R21 N-1).
