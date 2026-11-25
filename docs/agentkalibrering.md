@@ -37,6 +37,11 @@ En rad per spår, fylls på efter varje körning. Tumreglerna justeras när siff
 | 2026-11-24 | 13 | W10 avstämningar och regim | webb (sidor) | ~36 | ~121 | ~312 | /avstamningar, /regim, bidragsdiagram, holdoutresultat, konstanter testade mot Python |
 | 2026-11-24 | 13 | W11 utforskbar metod | webb (interaktiv) | ~48 | ~123 | ~344 | dödband, intervall, as_of, Holm-stege; golden mot Python-motorn |
 | 2026-11-25 | 13 | W12 navigering och delning | webb (layout, sök, delningsbilder) | ~105 (två pass, kvotstopp) | ~180 | ~380 | ⌘K-sök, djuplänkar, 421 delningsbilder, citeringsrad; hittade basvägsfelet |
+| 2026-11-25 | 14 | R-W1 licens och läckage | granskning (adversariell) | ~43 | ~103 | ~274 | licens OK; 5 tidsreseläckor rättade; backfill-gräns fel; härledbar riktning för inhållna |
+| 2026-11-25 | 14 | W13 månadens berättelse | regel + Python + webb | ~59 | ~120 | ~390 | regel låst före körning (1ca59b8), story.py, /manad/*, scrollytelling |
+| 2026-11-25 | 14 | RW1-X rättning | rättning (schema, CI, scan) | ~43 | ~132 | ~285 | backfill_fetched, commit per skarp prognos, scan-build, tidlös citering |
+| 2026-11-25 | 14 | R-W3 neutralitet | granskning | ~20 | ~98 | ~230 | speglingstest symmetriskt; 3 mallasymmetrier rättade; 4 krav före byte av huvudsida |
+| 2026-11-25 | 14 | R-W2 tillgänglighet | granskning + rättning | ~56 | ~116 | ~270 | axe 0 i 54 körningar; 4 tangentbordsfel rättade; LCP 0,8 s; TBT kvar (P1) |
 
 ## Körning 1, sammanfattning (2026-11-23, orkestrerare)
 
