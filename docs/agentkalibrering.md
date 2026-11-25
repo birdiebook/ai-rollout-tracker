@@ -70,6 +70,7 @@ En rad per spår, fylls på efter varje körning. Tumreglerna justeras när siff
 | 2026-11-25 | 14 | R-W3 neutralitet | granskning | ~20 | ~98 | ~230 | speglingstest symmetriskt; 3 mallasymmetrier rättade; 4 krav före byte av huvudsida |
 | 2026-11-25 | 14 | R-W2 tillgänglighet | granskning + rättning | ~56 | ~116 | ~270 | axe 0 i 54 körningar; 4 tangentbordsfel rättade; LCP 0,8 s; TBT kvar (P1) |
 | 2026-11-25 | 14 | KR1 spread vid emission | extraktion (deterministisk parser, villkorsbilagor) | ~57 (varav 16 full testsvit) | ~115 | – | 239 tranchar ur 39 FWP, 11 katalogserier, självkontroll 0 fel, kontroll mot 39 slutliga prospekttillägg, 37 tester |
+| 2026-11-25 | 14 | R20 granskning av KR1 | granskning (extraktion, 146 SEC-dokument nyhämtade, egen text och indelning per tranche) | ~45 (varav 15 full testsvit) | ~95 | – | 0 fel av 72 i stickprovet och 0 av 239 med egen kontroll, 39 av 39 omslag, omräkning av 11 serier och alla versioner, 5 should_fix, 21 tester varav 5 strikta xfail |
 
 ## Körning 1, sammanfattning (2026-11-23, orkestrerare)
 

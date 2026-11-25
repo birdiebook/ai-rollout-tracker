@@ -793,3 +793,18 @@ republishing data"), npm och arXiv (`okänd`), och Microsofts capex-guidance ur 
 - **Rekommendation till Johannes:** låt granskningen pröva semantiken (källa, valuta, referens) innan serierna
   publiceras. Läs spreaden per emittent, inte den poolade serien, som till stor del visar vilken emittent som kom till
   marknaden.
+
+## 2026-11-25 – R20: KR1:s spread vid emission godkänd med anmärkningar
+
+- Granskningen R20 (`docs/granskning/r20-kredit-emission.md`) läste 72 slumpade rader (30 %) och ett helt dokument per
+  emittent i nyhämtade villkorsbilagor: 0 fel (95 % KI 0–5,0 %). Alla 239 rader prövades också med egen text och egen
+  indelning per tranche: 0 fel. Alla 39 erbjudanden har samma tranchar som sitt slutliga prospekttillägg, och inget
+  registrerat erbjudande 2020–2026 saknas.
+- Inget läckage. En oberoende omräkning ger samma 82 rader och samma `known_from`, och varje version går att bygga om ur
+  de rader som var inlämnade då.
+- Fem should_fix (R20-1 till R20-5): självkontrollen prövar inte talen i tranchens kolumn, dokument som inte kodas
+  listas inte, T+n räknar helgdagar som bankdagar, CSV:n skrivs med sex värdesiffror och avstämningen per kvartal
+  saknas. Ingen av dem ändrar ett värde i dag.
+- **Rekommendation till Johannes:** registrets villkor för granskningen är uppfyllt. Volymerna och spreaden per emittent
+  kan få `publish=True` med en daterad registerpost. Visa den poolade serien bara med noten om mixen. Rätta R-1 till R-5
+  före nästa ombyggnad av CSV:n.
