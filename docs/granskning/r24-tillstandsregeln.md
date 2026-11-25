@@ -61,7 +61,8 @@ Ordningen enligt git (alla 2026-11-25, UTC):
 har 306 rader, alltså 34 månader och 9 grenar, och tillstånden är identiska med T1:s realtidstillstånd i alla 306
 rader (v1 och v2). Filen är alltså med stor sannolikhet T1:s. Den innehåller per månad tillstånd, index och
 riktningen för varje räknad serie. Det är mer än antalen. Vid h = 6 är seriernas riktning vid m + 6 i stort sett
-utfallet, och riktningen vid m är persistensen (punkt 5). Det går inte att veta om T1 läste mer än antalen. Valen som
+utfallet: i G3–G7 och G9 har den samma tecken som seriens utfall i 776 fall och motsatt tecken i 14, och den är 0
+(inom dödbandet) i 323. Riktningen vid m är persistensen (punkt 5). Det går inte att veta om T1 läste mer än antalen. Valen som
 filen kunde ha påverkat är få: horisonterna, blocklängden och beslutsregelns nivåer. Kappanivån och nivån för hårda
 byten gäller (a), som filen inte visar. Ändå ska resultatet säga vilken fil som fanns och vad den innehöll.
 
@@ -94,8 +95,8 @@ versionen vid m och P_{m−h}. Kontroller:
 **Revideringarna i G6 (R24-6).** Bara Fed G.17 har ändrade värden i G6: `us_ip_semis_m` och `us_ip_computers_m` i 34 av
 34 månader. TSMC, ASML och Broadcom har flera rader, men inget värde som var känt vid m har ändrats. Ändringarna kommer
 från en enda version, G.17:s årsrevision 2026-11-24, en dag före V. Den byter basår till 2022 och ändrar alla 657
-perioder som var kända 2026-10-31. Datumet och basåret stämmer med Fed:s sida ("The 2026 Annual Revision", "Release Date: November 24, 2026",
-"an update of the base year to 2022"). Två följder: G6:s resultat i (a) hade sett annorlunda ut med V en dag
+perioder som var kända 2026-10-31. Datumet och basåret stämmer med Fed:s sida ("The 2026 Annual Revision",
+"Release Date: November 24, 2026", "an update of the base year to 2022"). Två följder: G6:s resultat i (a) hade sett annorlunda ut med V en dag
 tidigare, och exponeringen räknar basårsbytet som en revidering i varje månad, också där tillväxttalen inte ändras.
 
 ## 3. Blockpermutation, Holm och MDE – OK
@@ -132,8 +133,8 @@ tidigare, och exponeringen räknar basårsbytet som en revidering i varje månad
 | G7 2026-01 | utfall h = 6 / persistens | ned / upp | ned / upp |
 
 Utöver tabellen stämmer alla 236 grenmånader och horisonter i G4–G7 (punkt 2). EIA:s värden kontrollerades inte mot
-EIA, bara mot bastabellen. Revideringarna är av den storlek som EIA:s årsdata brukar ge (Georgia april 2024: 3 801 →
-4 197 GWh), men det är inte verifierat mot källan.
+EIA, bara mot bastabellen. Revideringarna kommer i versionerna ungefär ett år efter den första (Georgia april 2024:
+3 801 → 4 056 → 4 197 GWh), men de är inte verifierade mot källan.
 
 ## 5. Ordval och beslutsregeln – anmärkning
 
@@ -192,7 +193,7 @@ p 0,048 (frö 3, h = 6). Fröna står inte i resultatet (R24-7).
 |---|---|---|
 | R24-1 | `docs/resultat/t1_tillstandsregeln.md`, och nästa registerpost | Skriv att persistensen vid h = 6 är tillståndets egen jämförelse (P_m mot P_{m−6}, samma som förändringen i takt) utan dödband, att H = persistensen där av konstruktion (46 av 46), och att godkänt därför bara kan nås vid h = 3. Ändra läsningen av G4 och G5. En ny registerpost väljer en annan baslinje för h = 6 eller prövar bara h ≠ laggen mot persistens. Strikt xfail i `tests/test_r24_tillstandsregeln.py` |
 | R24-2 | `docs/resultat/t1_tillstandsregeln.md`, sammanfattningen | Redovisa persistensen över alla månader med utfall (0,61 och 0,56), som posten kräver. Lägg till andelen upp på tillståndens månader (81 % och 80 %) och att en konstant prognos "upp" hade träffat 0,81 och 0,80. Ersätt "62 % av utfallen" i sammanfattningen. Strikt xfail |
-| R24-3 | `tests/test_state_evaluate.py` | Byt slumpvärldens krav mot ett storlekstest över många frön (eller Markovkedjor, som i R24) och kräv att testet faktiskt körs (`tested`). Kravet |H − slumpnivå| < 0,1 håller bara för vissa frön. Strikt xfail (frö 1) |
+| R24-3 | `tests/test_state_evaluate.py` | Byt slumpvärldens krav mot ett storlekstest över många frön (eller Markovkedjor, som i R24) och kräv att testet faktiskt körs (`tested`). Kravet att H ligger inom 0,1 från slumpnivån håller bara för vissa frön. Strikt xfail (frö 1) |
 | R24-4 | `docs/resultat/t1_tillstandsregeln.md`, "Synligt före posten" | Skriv att `snapshot.backcast` skrevs till en fil före posten med tillstånd, index och riktning per serie för varje månad, att den vid h = 6 nästan innehåller utfallen, och att "bara antalen lästes" är spårets egen uppgift som inte går att kontrollera. Strikt xfail |
 | R24-5 | nästa registerpost (omkörningen 2027) | Räkna spärren i dagens data med samma antal egna månader som i realtid vid m, inte med första `known_from` i den reviderade tabellen. Ingen effekt i denna körning. Ett test i R24 visar beteendet och att körningen redovisar det |
 | R24-6 | `docs/resultat/t1_tillstandsregeln.md`, (a) | Skriv att G6:s revideringar kommer från G.17:s årsrevision 2026-11-24 (basår 2022), en dag före V, och att exponeringen räknar basårsbytet som revidering. TSMC, ASML och Broadcom har inga ändrade värden i fönstret |
