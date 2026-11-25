@@ -25,7 +25,7 @@ De är inte resultat.
 |---|---|
 | 1. Förregistrering och vad som setts | **OK.** Registret före koden före värdena. Inga värden i de två första commitarna. Registerposten är oförändrad efteråt |
 | 2. Klassning | **OK för Arena.** Etiketterna är samtida: 0 avvikelser i 42 712 jämförbara par. **Anmärkning för ECI:** Kimi K3.1 Pro räknas som öppen i 2026-10, fast vikterna kom 2026-11-04 (R23-3) |
-| 3. Eftersläpning inom en tavla | **OK.** Betyget läses bara i b(m). Ersättningsregeln är implementerad som registrerad, men enligt en känslighetsräkning kortar den eftersläpningen med 2–3 månader i 8 månader (2025-08 – 2026-03). Storleken står inte i dokumentationen (R23-4) |
+| 3. Eftersläpning inom en tavla | **OK.** Ratingen läses bara i b(m). Ersättningsregeln är implementerad som registrerad, men enligt en känslighetsräkning kortar den eftersläpningen med 2–3 månader i 8 månader (2025-08 – 2026-03). Storleken står inte i dokumentationen (R23-4) |
 | 4. ECI som registrerat | **OK.** Alla 152 rader stämmer. Datum och klassning är dagens, som registret säger |
 | 5. Handkontroller | 11 månader i båda måtten och båda källorna. Alla stämmer med serierna, utom gapet 2026-09 (R23-1) |
 | 6. Datering och versioner | **Fel.** En tavla som publiceras sista dagen i månaden och beläggs nästa dag kommer aldrig in i den månaden (R23-1). Samma fel finns sedan tidigare i `sources/vintages.py` och ger fel värden i G1:s kärnserie `g1_arena_text_top` (R23-2) |
@@ -239,6 +239,7 @@ kärnserie.
 | R23-8 | `arena_meta.weights_of` (daterad registerpost) | Läs kända felstavningar av "Proprietary" som stängd. Ingen effekt i dag |
 | R23-9 | `model_origin.ORG_COUNTRY` | Rätta citaten "NousResearch" och "NVIDIA" till Epochs "Nous Research" och "Nvidia". Lägg gärna till en kontroll mot `all_ai_models.csv` som hoppas över utan filen |
 | R23-10 | ingen | Space-tabellernas datering: risken är liten och inget värde påverkas. Ingen åtgärd |
+| R23-11 | `docs/datakallor/licensniva.md` | Skriv om tabellerna efter sammanslagningen med `python -m ai_tracker.licenses report --markdown` (LMArena 3 → 7 serier, Epoch AI 13 → 17) |
 
 Kärnserie: ingen av serierna bör föreslås före R23-1, R23-3 och R23-4. Om ägaren vill pröva
 `g1_open_lag_months_arena` som kärnserie ska registerposten också ta ställning till R23-5 (vy) och till
