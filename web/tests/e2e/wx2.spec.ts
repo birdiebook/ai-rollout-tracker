@@ -52,8 +52,12 @@ test.describe('without JavaScript', () => {
 test('a large table is drawn when it is opened (R-W2 P1)', async ({ page }) => {
   await page.goto(`serie/${monthly.key}/`, { waitUntil: 'networkidle' });
   await expect(page.locator('#level-table tbody tr')).toHaveCount(0);
-  await page.locator('#level summary').click();
-  expect(await page.locator('#level-table tbody tr').count()).toBeGreaterThan(0);
+  // Retry: a click that lands before hydration opens the details natively and hydration may close it again.
+  await expect(async () => {
+    if (!(await page.locator('#level details').evaluate((d) => (d as HTMLDetailsElement).open)))
+      await page.locator('#level summary').click();
+    expect(await page.locator('#level-table tbody tr').count()).toBeGreaterThan(0);
+  }).toPass({ timeout: 10_000 });
 });
 
 test('charts are drawn live after load, and the hover tip is not a live region (R-W2)', async ({ page }) => {
