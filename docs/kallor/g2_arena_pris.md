@@ -18,8 +18,13 @@ att referensmodellerna finns i tavlorna och vilka namnformer de har. Inga priser
 - **Bara Bradley–Terry-eran:** tavlor publicerade från 2024-01-09. Första månaden är 2024-01.
 - Månad m använder den senaste tavlan publicerad ≤ månadens slut bland dem som är belagda vid versionens datum.
   Versioner och datum följer regeln i `sources/vintages.py`. Första versionen har `known_from` = månadsslut + 1 dag
-  och tavlor med belägg ≤ månadsslut. En tavla som publicerades ≤ månadsslut men beläggs senare ger en ny version
-  på beläggets datum, om värdet ändras.
+  och tavlor med belägg ≤ månadsslut + 1 dag. En tavla som publicerades ≤ månadsslut men beläggs senare ger en ny
+  version på beläggets datum, om värdet ändras.
+- **Ändrat 2026-11-25** (registerposten 2026-11-25 "Integration 14: månadsgränsen i arena_price (R23-2)"). Tidigare
+  räknade första versionen bara belägg till och med månadsslut. En tavla från månadens sista dag som belades dagen
+  efter kom då aldrig in i sin månad. Ombyggnaden ändrade inget värde, ingen `known_from` och ingen `source`. Bara
+  diagnostiken ändrades: 2026-04 och 2026-09 sätts nu av tavlorna 2026-04-30 och 2026-09-30 i stället för 2026-04-29
+  och 2026-09-25, med samma nyckel vid minimum.
 
 ### Referens och tröskel
 

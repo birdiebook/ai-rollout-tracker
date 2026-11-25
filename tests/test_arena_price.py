@@ -213,6 +213,19 @@ def test_reference_rule_is_written_in_the_doc():
     assert "2024-01-09" in doc and str(ap.OVERLAP_BOARDS) in doc
 
 
+def test_doc_states_the_first_version_cut_off_of_the_register():
+    """The source doc states the month-end + 1 day cut-off that build() uses (register 2026-11-25, Integration 14,
+    R23-2) and names a register entry that exists (review L1-1: the doc kept the old rule)."""
+    doc = (config.REPO / "docs" / "kallor" / "g2_arena_pris.md").read_text(encoding="utf-8")
+    reg = (config.REPO / "docs" / "mattregister.md").read_text(encoding="utf-8")
+    title = "Integration 14: månadsgränsen i arena_price (R23-2)"
+    assert f"### 2026-11-25 – {title}" in reg
+    assert f'"{title}"' in doc
+    rules = " ".join(doc.split("### Referens och tröskel")[0].split())  # section 1, Tavlor; line breaks folded
+    assert "Första versionen har `known_from` = månadsslut + 1 dag och tavlor med belägg ≤ månadsslut + 1 dag." in rules
+    assert "belägg ≤ månadsslut. " not in rules  # the old first-version rule is gone
+
+
 def test_specs_in_catalog():
     by = catalog.by_key()
     for key in ap.KEYS.values():
