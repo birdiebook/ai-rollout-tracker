@@ -192,8 +192,24 @@ python -m ai_tracker.sources.census_hs check
 Det skriver antalet rader och månader, för var och en av de 35 serierna första och sista månad, antalet poster och
 antalet månader utan post (nollor), kvoten mellan HS och end-use 2025 per land och `LAST_UPDATE` för senaste
 månaden. Om anropet får timeout syns det som en uppdelning per år. Ändras nollregeln efter att data har setts, ska
-det loggas i registret med datum och motivering. Kontrollen är ännu inte körd: sessionerna 2026-11-24 hade ingen
-nyckel ([granskning R13](../granskning/r13_census_hs.md), R13-6).
+det loggas i registret med datum och motivering. Sessionerna 2026-11-24 hade ingen nyckel ([granskning
+R13](../granskning/r13_census_hs.md), R13-6).
+
+### Utfall av kontrollen (2026-11-25, med nyckel)
+
+- **Svaret:** 5 768 poster, 2013-01 till 2026-09. Kolumnerna är de väntade. Alla 35 serier har sista månad 2026-09.
+  Alla börjar 2013-01 utom `us_imp_hs847150_vn_m`, som börjar 2013-02.
+- **Månader utan post:** bara `us_imp_hs847180_vn_m` har några, 6 av 165 månader, och de blir nollor. Alla andra
+  serier har 0. Nollregeln behålls.
+- **HS mot end-use 2025** (8471 + 8473.30 mot 21300 + 21301): Taiwan 0,99, Mexiko 0,99, Vietnam 0,94, världen
+  0,94, Thailand 0,89, Kina 0,77 och Malaysia 0,75. För Taiwan och Mexiko är HS-serierna i praktiken samma mått.
+  För Kina och Malaysia täcker de bara tre fjärdedelar. End-use-koderna har med fler HS-positioner (troligen
+  kringutrustning som bildskärmar och skrivare), och den delen är större i de länderna. Det är en skillnad i
+  definition och inget datafel, men nivåer för Kina och Malaysia ska läsas som en del av end-use-måttet.
+- **`LAST_UPDATE`** svarar `0` för 2026-09, så releasedagen går inte att kontrollera med fältet. `known_from` bygger
+  inte på fältet utan på FT-900:s kalender, så det påverkar inga värden.
+- **Start 2010 eller 2013:** kontrollen frågar från 2013-01 och kan inte avgöra om datasetet går längre bak. Den
+  registrerade starten 2013-01 gäller.
 
 ## Kontroll mot Census publicerade tabeller (2026-11-24)
 
