@@ -113,8 +113,8 @@
    "path": "method.json",
    "schema": "method",
    "bytes": 8754,
-   "gzip_bytes": 2769,
-   "sha256": "41dc9b3ace6b259d38cd3f5c28bc5a860ef6524144510f6fd0e235740285d556"
+   "gzip_bytes": 2770,
+   "sha256": "f27f10ce6e859cced48c8af252c64ab98b141f5756e2d96190c1c946b53c12f2"
   },
   {
    "path": "nowcast/d2.json",
@@ -608,7 +608,7 @@
    "group": "method.json",
    "files": 1,
    "bytes": 8754,
-   "gzip_bytes": 2769
+   "gzip_bytes": 2770
   },
   {
    "group": "nowcast",
@@ -662,7 +662,7 @@
  "totals": {
   "files": 79,
   "bytes": 654434,
-  "gzip_bytes": 183738
+  "gzip_bytes": 183739
  },
  "budgets": {
   "per_file": [
