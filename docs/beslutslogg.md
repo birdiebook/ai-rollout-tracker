@@ -766,3 +766,13 @@ republishing data"), npm och arXiv (`okänd`), och Microsofts capex-guidance ur 
   2026-11-25).
 - **Rekommendation till Johannes:** behåll regeln. Vill du hellre ha percentiler eller värden i repot behöver det
   beslutet stå här före 2026-11-30 22:41 UTC, eftersom ögonblicksbilden då skrivs en gång för alla.
+
+## 2026-11-25 – Main mergad in i integrationen, paketet blir 1.4.0
+
+- `origin/main` (W12–W14, RW1-X, R-W1–R-W3, WX2 och aktualitetsgränsen 165 dagar för `rev_nvda_datacenter`) är
+  mergad in i `auto14/integration13`. Utan gränsen hade uppdateringen före ögonblicksbilden 2026-11-30 gett exit 2.
+- **Paketversion.** Main hade redan använt 1.1.0–1.3.0 (berättelsen, backfill-dagen och commit per prognos,
+  kvartalsrapporten). K1:s index v2 får därför 1.4.0. Det är en minor: `index` och `state` behåller sina namn, bara
+  regeln bakom dem ändras, och fälten är tillägg (`docs/steg3/datakontrakt.md`, Ändringar).
+- Loggarna och registret har båda sidornas poster i tidsordning. `quarterly.py` har mains omskrivning med "för få
+  källor" i tillståndsordningen.

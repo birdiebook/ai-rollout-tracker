@@ -378,6 +378,9 @@ för 1.x, som bara saknar de nya fälten och tillståndet nedan.
   i licenstabellen.
 - Fixturerna är regenererade. `us_ip_computers_m` är ny i den syntetiska världen, så att G6 har en familj med två
   serier.
+- Tillägg vid mergen 2026-11-25: `story/<YYYY-MM>.json` K0:s `facts.counts` har nyckeln `"för få källor"` när en gren
+  har det tillståndet (schemat tillåter redan nya nycklar). K5 och K6 prövar bara publicerbara serier
+  (registerändringen 2026-11-25, L3-1), så `withheld.K5` och `withheld.K6` är 0 och `chance.n` räknar bara dem.
 
 ## Läsanvisningar för körning 13
 
@@ -435,15 +438,43 @@ förändringen mellan år. Varje år blir känt 10 juli året efter. Månadsseri
 is not endorsed or certified by the Census Bureau." stå med serien och i sidfoten. Paketet lägger den redan sist i
 `license.attribution`.
 
-**Webbgrindar efter integrationen (2026-11-24).** `npm run check`, `npm run build` och Playwright (348 tester) är
-gröna mot fixturerna 1.1.0. `npm test` har 20 röda tester, alla i `src/lib/method/engine.test.ts` och
-`src/lib/start/model.test.ts`, och alla beror på index v2 i fixturerna. På `main` med fixturerna 1.0.0 är samma tester
-gröna. Webbsessionen behöver:
+**Webbgrindar efter integrationen (2026-11-25).** Huvudet på `auto14/integration13` efter mergen av `main` (W12–W14,
+paket 1.3.0) och rättningarna efter granskningen L1/L3. Paketet är 1.4.0. Siffrorna ersätter dem från 2026-11-24
+(20 röda tester), som inte räknade med det riktiga paketet.
+- **Gröna mot fixturerna:** `npm ci`, `npm run check` (0 fel, 0 varningar), `npm run build` med
+  `BASE_PATH=/ai-rollout-tracker/next`, `python -m ai_tracker.site_bundle scan-build web/build --src web/src` (0 träffar)
+  och Playwright (PLAYWRIGHT_RESULT).
+- **`npm test` mot fixturerna: 20 röda av 396**, i två filer.
+  - `src/lib/method/engine.test.ts`, 18 tester. "dead band: golden values from state.branch with the dead band moved":
+    "every probed dead band" och "the index steps agree with the probes" för G1, G2, G5, G6, G7 och G8 (12). "registered
+    parameters reproduce the record in web-data-fixtures" för G1, G2, G5, G6, G7 och G8 (6). Motorn räknar v1: den ger
+    "för få serier" där paketet har "för få källor", och v1:s index där paketet har v2:s.
+  - `src/lib/start/model.test.ts`, 2 tester. "start data … uses the pipeline headline and generates the chain sentence
+    from flow.json": `countsSentence` skriver "1 bromsar in", Python "en bromsar in". "fixture specifics > shows the
+    live N2 forecast and its champion backtest": grenarna med ändrat tillstånd är nu `['G6']`, testet väntar
+    `['G6', 'G9']`.
+- **`npm test` med det riktiga paketet, som i `pages-next.yml`** (`SITE_BUNDLE_DIR` och `REQUIRE_REAL_BUNDLE=1`, ingen
+  `static/data` i en ny utcheckning): **23 röda av 410.** De 20 ovan och "registered parameters reproduce the record in
+  <paketet>" för G1 ("för få serier" mot "för få källor"), G6 (index 0,7222 mot 0,7857) och G8 ("accelererar" mot
+  "för få källor").
+- **Med `static/data` synkad från det riktiga paketet** (efter `npm run build` eller `npm run sync-bundle` lokalt, som i
+  granskningen L1): **24 röda av 410.** Den 24:e är `src/lib/regime/regime.test.ts` "page loads against the bundle >
+  every visible reconciliation has its components; withheld ones carry no values" (0 komponenter). Den beror på P2b,
+  inte på index v2: paketet har P2b:s fem avstämningar, men `regime/reconciliations.json` speglar dem inte.
+- **Följd för Pages.** `pages.yml` tar bara med `/next/` när `pages-next.yml` lyckas. Efter en push till `main`
+  publiceras den gamla sidan som förut men utan `/next/`, tills vitest är grön. Johannes väljer före 2026-11-30 om det
+  är acceptabelt, eller om webbrättningen ska landa först (STATUS, punkt 6).
+
+Webbsessionen behöver:
 - lägga till tillståndet "för få källor" i `design/state.ts`, `data/types.ts`, `start/model.ts` (`State`, `VERB`,
   `asState`, räkningarna), `timetravel/gate.ts` och `start/Hero.svelte`;
 - räkna index v2 i metodsidans motor (`method/engine.ts`, `prepare.ts`): en röst per källfamilj ur
   `method.json#branches[].families` och minst `rules.min_families` familjer, med v1 bredvid;
 - skriva "en" för 1 i `countsSentence`, som Python gör (`site_bundle.export._sv_number`);
 - uppdatera de fixturberoende förväntningarna i `start/model.test.ts` (ändringarna är nu bara G6);
-- spegla P2b:s fem avstämningar i `regime/reconciliations.json`, med vikten r på `ppe_net_hyp4`. Testet
-  `tests/test_web_regime_constants.py::test_web_mirrors_every_reconciliation` är strikt xfail tills dess.
+- spegla P2b:s fem avstämningar i `regime/reconciliations.json` med fältet `weight` på termen `ppe_net_hyp4` (0,08 och
+  0,12; termer utan fältet har vikten 1), och multiplicera med vikten i `recon.ts` `side()`. Då blir
+  `regime.test.ts` grön. `tests/test_web_regime_constants.py::test_reconciliation_terms_match_avstamning` kontrollerar
+  vikten, och `test_web_mirrors_every_reconciliation` är strikt xfail tills alla tio är speglade;
+- veta att K0 i `story/<månad>.json` nu kan ha nyckeln "för få källor" i `facts.counts` (registerändringen
+  2026-11-25), och att K5 och K6 inte längre räknar inhållna serier (`withheld.K5` och `withheld.K6` är 0).
