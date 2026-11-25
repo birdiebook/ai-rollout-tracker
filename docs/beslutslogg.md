@@ -777,3 +777,16 @@ republishing data"), npm och arXiv (`okänd`), och Microsofts capex-guidance ur 
   regeln bakom dem ändras, och fälten är tillägg (`docs/steg3/datakontrakt.md`, Ändringar).
 - Loggarna och registret har båda sidornas poster i tidsordning. `quarterly.py` har mains omskrivning med "för få
   källor" i tillståndsordningen.
+
+## 2026-11-25 – Tokenekonomi och personligt värde (Johannes)
+
+- Projektet byggs i första hand för Johannes. Tokens ska gå till det han läser och använder (`docs/riktning.md`,
+  avsnitt 10). Johannes sa ja till båda rekommendationerna.
+- **Granskning efter hur mycket han förlitar sig på resultatet.** Full oberoende granskning bara för kärnserier,
+  tillståndsregeln, prognoser och extraktioner han agerar på. Katalogserier får spårets egna kontroller och datatester.
+  Kraven i CLAUDE.md på stickprov och på en granskning per positivt resultat står kvar. Färre och större spår, 4–5 per
+  körning.
+- **Personligt läslager:** först "mina lager" på sidan, valt i webbläsaren och sparat bara lokalt, så att inga innehav
+  hamnar i repot. Sedan en privat byggning som också visar inhållna serier och aldrig publiceras.
+- Användningen loggas i "Värde för Johannes" i `docs/agentkalibrering.md`. Nästa körning efter 14 bygger läsprodukten,
+  en lagervy med vad som ändrades per månad, i stället för fler serier.

@@ -253,3 +253,39 @@ intäkterna för ett frontlabb.
 3. **Licensnivå:** ska utdata kunna användas kommersiellt av en fond eller bank? **Rekommendation:** sidan förblir
    icke-kommersiell. Lägg till ett fält för kommersiell användbarhet per serie, och välj öppna licenser i nya spår,
    så att en kommersiellt ren delmängd alltid går att räkna fram.
+
+## 10. Tokenekonomi: det som ger Johannes värde går först (beslutat 2026-11-25)
+
+Projektet byggs i första hand för Johannes, inte för att spridas. Tokens ska därför gå till det han läser och
+använder. De ska inte gå till att göra saker publicerbara utöver vad licenserna kräver.
+
+**Var tokens gick i körning 13–14 (grov uppskattning):** bygga cirka 45 %, granska cirka 25 %, rätta cirka 20 % och
+integrera cirka 10 %. Det publika repot (licensklasser, publiceringsgrindar, inhållna värden, fixturer, webbkontrakt)
+stod för uppskattningsvis 15–25 %. Driften i CI kostar inga tokens. Undantaget är serier som extraheras ur text, eftersom
+de kräver agentarbete varje kvartal.
+
+**Värdefilter före varje spår:**
+1. Ändrar det vad Johannes läser på sidan inom en månad? En katalogserie som inte visas ger inget värde ännu.
+2. Är det ledande eller en överraskning (order, orderstock, guidance, capex, TSMC)? Eller är det släpande och finns
+   redan fritt på annat håll?
+3. Vad kostar det att hålla vid liv: gratis i CI (XBRL, API) eller tokens varje kvartal (extraktion ur text)?
+
+**Regler från 2026-11-25:**
+- **Granskning efter hur mycket Johannes förlitar sig på resultatet.** Full oberoende granskning görs för kärnserier,
+  tillståndsregeln, prognoser och extraktioner som Johannes agerar på. Katalogserier får spårets egna kontroller och
+  automatiska datatester. CLAUDE.md:s krav står kvar: stickprov för extraherade värden och ett granskningsspår per
+  positivt resultat.
+- **Färre och större spår,** 4–5 per körning, så att samordning och upprepad kontext kostar mindre.
+- **Budget för löpande kostnad:** serier som kräver extraktion varje kvartal behålls bara om Johannes skulle sakna dem.
+  Listan tas fram i nästa körning.
+- **Användning loggas.** Tabellen "Värde för Johannes" i `docs/agentkalibrering.md` fylls i en månad efter leverans:
+  används det, och vad betydde det? Det som inte används byggs inte vidare.
+
+**Personligt läslager** (inga innehav i repot):
+1. Först "mina lager" på sidan: Johannes väljer lager i webbläsaren och valet sparas bara lokalt. Det är billigt och
+   kräver ingen ändring av licensreglerna.
+2. Sedan en privat byggning för Johannes som också visar de inhållna serierna (personligt bruk, publiceras aldrig),
+   till exempel som en privat sida.
+
+**Nästa körning efter 14:** läsprodukten. En lagervy med "vad ändrades den här månaden" per lager i stacken, där ledande
+signaler och överraskningar står först. Efter körning 14 finns det mesta av stacken som data, så fler serier ger mindre.
