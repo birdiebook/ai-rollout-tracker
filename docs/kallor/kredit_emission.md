@@ -177,10 +177,10 @@ falska dokument.
 ## Tolkningar under kodningen (inte en del av de låsta reglerna)
 
 Följande fall täcktes inte uttryckligen av reglerna. Valet står här så att granskningen kan pröva det. Inget av dem
-ändrar en spreadserie, utom punkt 6, som ändrar ett belopp.
+ändrar en serie, utom punkt 6, som ändrar ett belopp (volymen och vikten i spreaden).
 
 1. **Tre layouter.** Amazon, Alphabet, Meta och Microsoft har en gemensam tabell där varje fält räknar upp trancherna
-   med namn ("2030 Notes: …"). Oracle har ett avsnitt per tranche. En sedel med rörlig ränta står ofta i ett eget
+   med namn ("2030 Notes: …"). Oracle har ett avsnitt per tranche. En obligation med rörlig ränta står ofta i ett eget
    avsnitt i en annars gemensam tabell. Kolumner per tranche förekom inte, men parsern hanterar dem.
 2. **`col #j` i en gemensam tabell** är tranchens nummer bland namnen (från 0), inte en tabellkolumn. Blocket är
    tabellen från den första till den sista rad som någon tranche använder. Ett avsnitt har eget block, och blocket
@@ -189,8 +189,8 @@ Följande fall täcktes inte uttryckligen av reglerna. Valet står här så att 
    `benchmark` och dess avkastning gäller obligationen, så spreaden mot obligationen kodas (till exempel 51,6 bp i
    stället för 50). Det gäller 13 rader i CAD, som inte ingår i någon serie.
 4. **Euro** anger spread både mot mid-swaps och mot den tyska statsobligationen. Mid-swaps kodas
-   (`benchmark_type` = `mid_swaps`, utan referensens avkastning). Pund anger spread mot en gilt, och yen en spread utan
-   namngiven referens (`other`). Ingen av dem ingår i någon serie.
+   (`benchmark_type` = `mid_swaps`, utan referensens avkastning). Pund anger spread mot en gilt, och yen en spread mot en
+   referensränta som inte namnges i fältet (`other`). Ingen av dem ingår i någon serie.
 5. **Rörlig ränta:** `spread_bp` är marginalen över SOFR eller EURIBOR som den står ("plus 0.52% per annum" = 52).
    Raderna ingår i volymen (USD) men inte i spreaden.
 6. **Oracles 3.950% Notes due 2051 (2021)** står som "$3,250,000,0000" i villkorsbilagan, alltså en nolla för mycket.
