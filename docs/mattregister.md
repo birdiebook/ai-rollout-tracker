@@ -1608,3 +1608,21 @@ summan, kodningsreglerna 3–5, kontrollmodulen och medelkursen (färre än 55 d
 
 **Beslutsregler:** inga. Serierna analyseras inte i det här spåret. Om en serie föreslås bli kärnserie står skälet i
 `for_owner`, och det kräver en ny post.
+
+#### 2026-11-25 – Ändring av CN1: dateringsregeln (efter dateringskontrollen, före analys)
+
+Motivering: kontrollen av dateline mot 6-K visar att 5 av Baidus 28 pressmeddelanden har en dateline 2–6 dagar före
+inlämningen: 2020-03-04 (6 dagar), 2020-05-20 (2), 2020-08-17 (4), 2021-02-22 (5) och 2021-05-20 (2). Siffrorna var
+alltså offentliga tidigare än `known_from`. Det ger inget läckage, bara en `known_from` som är senare än nödvändigt.
+Regeln ovan ("används inte") hade tagit bort Baidus capex för 2019Q4 helt, utan att något läckage undviks. Ändringen
+gäller bara dateringen. Den görs innan någon serie analyseras, och inga mått räknas i spåret.
+- **Ny regel:** pressmeddelandet används. `known_from` är fortfarande 6-K:ns inlämningsdatum. Avvikelsen redovisas
+  per pressmeddelande i `docs/kallor/kina_sec.md`.
+- `known_from` sätts inte till datumet i dateline. Datum ur löptext är mindre säkra än EDGAR:s, och regeln ska vara
+  konservativ.
+- Alibaba: 47 av 48 pressmeddelanden har dateline samma dag som inlämningen och 1 dagen före (2016-01-29). Inget
+  ändras där.
+
+Rättelse av koden, inte av regeln: i den första kodningskörningen matchade mönstret för rubriken "Fiscal Year <år>
+Results" titeln ("Fourth Quarter and Fiscal Year <år> Results"). Då kodades inga meningar i fjärde kvartalets
+pressmeddelanden. Koden följer nu regel 4 som den är skriven, och utfallet är redovisat i dokumentet.
