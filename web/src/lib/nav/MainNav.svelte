@@ -33,14 +33,14 @@
     padding: 0;
     display: flex;
     flex-wrap: wrap;
-    gap: 0 2px;
+    gap: 0 16px;
   }
   a {
     text-decoration: none;
     display: inline-flex;
     align-items: center;
     min-height: var(--hit);
-    padding: 0 7px;
+    padding: 0;
     border-radius: var(--radius-md);
     color: var(--c-ink-2);
   }
@@ -55,12 +55,13 @@
     text-decoration-thickness: 2px;
     text-underline-offset: 6px;
   }
-  li:first-child a {
-    margin-left: -7px;
-  }
+  /* mobile: the links wrap into aligned rows; wider: a pill hover area */
   @media (min-width: 641px) {
-    li:first-child a {
-      margin-left: 0;
+    .main-nav ul {
+      gap: 0 2px;
+    }
+    a {
+      padding: 0 7px;
     }
   }
 </style>

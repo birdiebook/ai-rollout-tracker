@@ -115,7 +115,8 @@ test('the search page works without JavaScript and filters with it', async ({ br
 });
 
 test('every page has its share tags, a generated PNG and one description', async ({ page, request }) => {
-  for (const r of routes()) {
+  // the prerendered pages (what crawlers read); the time-travel variants (#as_of=…) are the same files
+  for (const r of routes().filter((x) => !x.path.includes('#'))) {
     await page.goto(r.path);
     const meta = (sel: string) => page.locator(sel).getAttribute('content');
     expect(await page.locator('meta[name="description"]').count(), r.name).toBe(1);
