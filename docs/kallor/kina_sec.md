@@ -197,6 +197,14 @@ kommersiell användning: `ja` för alla serier (regeln sec, de kurerade raderna 
 - **Capex-definitionerna** är bolagens egna och skiljer sig åt: Alibaba utan mark och kontorscampus, Baidu som hela
   kassaflödesraden. Nivåerna är inte jämförbara med de amerikanska hyperscalers capex rakt av.
 
+## Drift
+
+Tabellserierna uppdateras av veckohämtningen: nya 6-K hämtas och tolkas, och gamla dokument läses ur råkopiorna. Ett
+pressmeddelande som inte hör till någon deklarerad definition, eller som räknar om ett publicerat värde, stoppar
+hämtningen av serien med `DefinitionBreakError`. Då ska texten läsas och gränsen deklareras i `china_sec.ERAS`, med en
+daterad registerpost. Textserierna uppdateras inte av sig själva: efter ett nytt Baidu-pressmeddelande körs
+`python -m ai_tracker.sources.china_text --write` och `python -m ai_tracker.china_text_check`, och CSV-filen committas.
+
 ## Öppna frågor och nästa steg
 
 - Baidus pressmeddelanden från 2026 har en tabell i miljarder RMB med AI Cloud Infra också för 2025Q1, 2025Q2, FY2024
