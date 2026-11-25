@@ -181,7 +181,10 @@ async function describeNowcast(c: Ctx, id: string, slug: string | undefined): Pr
       values: vs,
       first: periodLabel(ps[0]),
       last: periodLabel(ps[ps.length - 1]),
-      lastLabel: '',
+      lastLabel: (() => {
+        const v = [...vs].reverse().find((x) => x !== null);
+        return v === undefined || v === null ? '' : `${fmt(v, dec)} ${unit}`.trim();
+      })(),
       forecast: row && row.value !== null ? { value: row.value, lo: i80?.[0] ?? null, hi: i80?.[1] ?? null, label: `${fmt(row.value, dec)} ${unit}`.trim() } : null
     };
   };
@@ -194,7 +197,7 @@ async function describeNowcast(c: Ctx, id: string, slug: string | undefined): Pr
   const title = `${nc.label} ${nc.title}`;
   const next = nc.next_origin ? `Nästa skarpa prognos ${dateLabel(nc.next_origin)}${nc.next_period ? ` för ${periodLabel(nc.next_period, true)}` : ''}.` : '';
   const description = `Huvudmodell ${nc.champion ?? '–'}. ${live.length ? `${live.length} skarp${live.length === 1 ? '' : 'a'} prognos${live.length === 1 ? '' : 'er'} med öppet facit.` : 'Ännu ingen skarp prognos.'} ${next}`.trim();
-  return page(c, `prognoser/${id}`, title, description, spec(c, { kicker: `Prognos · ${nc.label}`, title: nc.title, subtitle: next || `Huvudmodell ${nc.champion ?? '–'}`, status: live.length ? 'live' : 'backtest', graphic: histG() }));
+  return page(c, `prognoser/${id}`, title, description, spec(c, { kicker: `Prognos · ${nc.label}`, title: nc.title, subtitle: next || `Huvudmodell ${nc.champion ?? '–'}`, status: live.length ? 'live' : null, graphic: histG() }));
 }
 
 /** Title, description, share image and citation for one route. */

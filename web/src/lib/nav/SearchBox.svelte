@@ -133,7 +133,7 @@
       autocapitalize="off"
       spellcheck="false"
       enterkeyhint="go"
-      placeholder={label}
+      placeholder="Serie, gren, led, prognos …"
       {onkeydown}
     />
   </div>
@@ -250,6 +250,15 @@
     text-decoration: underline;
     text-decoration-thickness: 2px;
     text-underline-offset: 3px;
+  }
+  @media (max-width: 480px) {
+    .opt {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 0;
+    }
+    .kind {
+      font-size: 10px;
+    }
   }
   @media (forced-colors: active) {
     .opt[aria-selected='true'] {

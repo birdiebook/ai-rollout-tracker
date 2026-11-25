@@ -5,7 +5,10 @@
   import { tokensCss } from '$lib/design/tokens';
   import { resolve } from '$app/paths';
   import ThemeToggle from '$lib/components/ThemeToggle.svelte';
-  import { MainNav, PageMeta, SearchButton, ShareCite } from '$lib/nav';
+  import MainNav from '$lib/nav/MainNav.svelte';
+  import PageMeta from '$lib/nav/PageMeta.svelte';
+  import SearchButton from '$lib/nav/SearchButton.svelte';
+  import ShareCite from '$lib/nav/ShareCite.svelte';
 
   let { data, children } = $props();
   const css = `<style>${tokensCss()}</style>`;

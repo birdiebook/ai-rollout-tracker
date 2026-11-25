@@ -224,20 +224,22 @@ function indexChart(g: Extract<OgGraphic, { kind: 'index' }>, b: Box): string {
   let s = `<rect x="${b.x0}" y="${yOf(g.hi).toFixed(1)}" width="${b.x1 - b.x0}" height="${(yOf(g.lo) - yOf(g.hi)).toFixed(1)}" fill="${P.mid}"/>`;
   s += `<line x1="${b.x0}" x2="${b.x1}" y1="${yOf(0.5)}" y2="${yOf(0.5)}" stroke="${P.axis}"/>`;
   s += `<line x1="${b.x0}" x2="${b.x1}" y1="${top}" y2="${top}" stroke="${P.grid}"/><line x1="${b.x0}" x2="${b.x1}" y1="${top + h}" y2="${top + h}" stroke="${P.grid}"/>`;
-  s += `<text x="${b.x0 + 6}" y="${top + 16}" font-size="14" fill="${P.muted}">1 alla serier ökar takten</text>`;
-  s += `<text x="${b.x0 + 6}" y="${(yOf(g.lo) - 6).toFixed(1)}" font-size="14" fill="${P.muted}">stabilt läge ${fmtN(g.lo)}–${fmtN(g.hi)}</text>`;
-  s += `<text x="${b.x0 + 6}" y="${top + h - 6}" font-size="14" fill="${P.muted}">0 alla minskar</text>`;
+  let lab = '';
+  lab += `<text x="${b.x0 + 6}" y="${top + 16}" font-size="14" fill="${P.muted}" paint-order="stroke" stroke="${P.page}" stroke-width="5" stroke-linejoin="round">1 alla serier ökar takten</text>`;
+  lab += `<text x="${b.x0 + 6}" y="${(yOf(g.lo) - 6).toFixed(1)}" font-size="14" fill="${P.muted}" paint-order="stroke" stroke="${P.page}" stroke-width="5" stroke-linejoin="round">stabilt läge ${fmtN(g.lo)}–${fmtN(g.hi)}</text>`;
+  lab += `<text x="${b.x0 + 6}" y="${top + h - 6}" font-size="14" fill="${P.muted}" paint-order="stroke" stroke="${P.page}" stroke-width="5" stroke-linejoin="round">0 alla minskar</text>`;
   const firstLive = g.kinds.findIndex((k) => k === 'skarp');
   const split = firstLive > 0 ? firstLive : n;
   const recon = g.index.map((v, i) => (i <= split ? v : null));
   const live = g.index.map((v, i) => (i >= split ? v : null));
-  s += `<path d="${path(recon, xOf, yOf)}" fill="none" stroke="${P.ink}" stroke-width="3" stroke-dasharray="${split < n ? '7 5' : '0'}"/>`;
+  s += `<path d="${path(recon, xOf, yOf)}" fill="none" stroke="${P.ink}" stroke-width="3" stroke-dasharray="7 5"/>`;
   if (split < n) s += `<path d="${path(live, xOf, yOf)}" fill="none" stroke="${P.ink}" stroke-width="3.5"/>`;
   const lastI = g.index.map((v, i) => (v === null ? -1 : i)).reduce((a, c) => Math.max(a, c), -1);
   if (lastI >= 0) {
     const v = g.index[lastI] as number;
     s += `<circle cx="${xOf(lastI).toFixed(1)}" cy="${yOf(v).toFixed(1)}" r="9" fill="${indexFill(v)}" stroke="${P.ink}" stroke-width="2.5"/>`;
   }
+  s += lab;
   // stripes under the line: the same months as colour
   const cw = (b.x1 - b.x0) / n;
   g.index.forEach((v, i) => {
