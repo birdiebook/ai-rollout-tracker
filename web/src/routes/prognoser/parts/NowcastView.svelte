@@ -77,7 +77,7 @@
               ({#if pr?.commit}<a href={pr.commit} rel="external"><code>{latest.commit.sha.slice(0, 7)}</code></a>{:else}<code>{latest.commit.sha.slice(0, 7)}</code>{/if}){:else}, väntar på verifiering (ingen commit i bygget){/if}{#if pr}: <a href={pr.history} rel="external">commit-historik</a>{/if}
           </dd>
         </dl>
-        <p><a href={resolve('/prognoser/[id]/[[slug]]', { id: nc.id, slug: latest.slug })}>Prognosens egen sida →</a></p>
+        <p><a href={resolve('/prognoser/[id]/[[slug]]', { id: nc.id, slug: latest.slug })}>Prognosens egen sida <span aria-hidden="true">→</span></a></p>
       </div>
       <div class="panel">
         <ForecastDots id="dots" row={latest} {unit} format={f} source={srcLine} license={lic} />

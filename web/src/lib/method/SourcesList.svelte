@@ -2,6 +2,7 @@
      its series are published. URLs in the source names and licence texts are shown as links (rel="noopener", no
      referrer) and are never fetched by the page. -->
 <script lang="ts">
+  import { Deferred } from '$lib/design';
   import type { SourceView } from './prepare';
 
   let { sources, counts }: { sources: SourceView[]; counts: { n_series: number; n_published: number; n_withheld: number } } = $props();
@@ -28,6 +29,8 @@
   <button type="button" class="chip" aria-pressed={filter === 'held'} onclick={() => (filter = 'held')}>Hålls inne helt eller delvis</button>
 </div>
 
+<!-- static server markup until a filter is chosen (R-W2 P1: 60 source cards on the method page) -->
+<Deferred force={filter !== 'all'}>
 <ul class="sources">
   {#each shown as s, i (i)}
     <li>
@@ -46,6 +49,7 @@
     </li>
   {/each}
 </ul>
+</Deferred>
 
 <style>
   .summary {

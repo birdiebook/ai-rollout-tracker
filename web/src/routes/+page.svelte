@@ -3,7 +3,7 @@
      view model live in $lib/start/; data comes only through the typed loaders (+page.server.ts). -->
 <script lang="ts">
   import { resolve } from '$app/paths';
-  import { dateLabel, fmt, periodLabel } from '$lib/design';
+  import { dataUrl, dateLabel, fmt, periodLabel, setChartData } from '$lib/design';
   import Calibration from '$lib/start/Calibration.svelte';
   import CalendarChart from '$lib/start/CalendarChart.svelte';
   import Chain from '$lib/start/Chain.svelte';
@@ -17,6 +17,7 @@
   import { moveCounts, upcoming } from '$lib/start/model';
 
   let { data } = $props();
+  setChartData(() => dataUrl('overview.json'));
   const s = $derived(data.start);
   const moves = $derived(moveCounts(s.branches));
   const next = $derived(upcoming(s.calendar)[0] ?? null);
@@ -31,7 +32,7 @@
 <Hero start={s} />
 
 <p class="story-entry">
-  <a href={resolve('/manad/[manad]', { manad: s.record.month })}>Månadens berättelse, {periodLabel(s.record.month, true)} →</a>
+  <a href={resolve('/manad/[manad]', { manad: s.record.month })}>Månadens berättelse, {periodLabel(s.record.month, true)} <span aria-hidden="true">→</span></a>
   <span class="note">det som hände enligt den förregistrerade urvalsregeln, kort för kort</span>
 </p>
 {#if data.report}

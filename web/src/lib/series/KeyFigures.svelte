@@ -2,7 +2,7 @@
      the record date. Each tile has a small picture: the pace's percentile on 0–100, and the change in pace against
      the dead band, so the direction is seen, not only read (colour + glyph + word, P3). -->
 <script lang="ts">
-  import { DIRECTIONS, Glyph, dateLabel, fmt } from '$lib/design';
+  import { DIRECTIONS, Glyph, Term, dateLabel, fmt } from '$lib/design';
   import { periodText } from './period';
   import { num, ordinal, paceSign, snum } from './text';
   import type { Measure } from './types';
@@ -45,7 +45,7 @@
     <h2 class="t-title">Takt</h2>
     {#if hasPace}
       <p class="big num">{snum(m?.pace)}</p>
-      <p class="sub">{m?.pace_unit} · {periodText(m?.latest_period ?? '')}</p>
+      <p class="sub">{#if /log/.test(m?.pace_unit ?? '')}<Term id="log100">{m?.pace_unit}</Term>{:else if /procentenheter/.test(m?.pace_unit ?? '')}<Term id="pe">{m?.pace_unit}</Term>{:else}{m?.pace_unit}{/if} · {periodText(m?.latest_period ?? '')}</p>
       {#if m?.pace_percentile !== null && m?.pace_percentile !== undefined}
         {@const p = m.pace_percentile}
         <div class="meter" role="img" aria-label="Takten ligger på den {ordinal(p)} percentilen av seriens egen historik">
@@ -53,7 +53,7 @@
           {#each [0, 50, 100] as q (q)}<span class="tick" style:left="{q}%"></span><span class="tl" style:left="{q}%">{q}</span>{/each}
           <span class="dot" style:left="{Math.max(0, Math.min(100, p))}%" style:background="var(--c-ink)"></span>
         </div>
-        <p class="sub">{ordinal(p)} percentilen av egen historik{m?.n_pace ? ` (${fmt(m.n_pace)} perioder)` : ''}</p>
+        <p class="sub">{ordinal(p)} <Term id="percentil">percentilen</Term> av egen historik{m?.n_pace ? ` (${fmt(m.n_pace)} perioder)` : ''}</p>
       {:else}
         <p class="sub">För kort historik för percentil.</p>
       {/if}

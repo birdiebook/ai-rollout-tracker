@@ -1,19 +1,26 @@
 <!--
   The frame every chart sits in (OWID Grapher idea): title, generated sentence (also the accessible name of the
-  SVG), status badge, the SVG itself, legend, table view toggle, source and licence. The SVG is prerendered at the
-  default width and redrawn at the real width after hydration; the height is fixed in px, so nothing shifts (CLS).
+  SVG), status badge, the SVG itself, legend, table view, source and licence. The SVG is prerendered at the default
+  width and redrawn at the real width after hydration; the height is fixed in px, so nothing shifts (CLS).
 
   Accessibility: the SVG is role="img" named by the sentence. Hover tooltips are for pointer users; the same numbers
-  are always one keypress away in the table view (TableToggle), which is the keyboard and screen-reader path.
+  are in the table view, which is the keyboard and screen-reader path. The table view is a native <details>, so it
+  opens without JavaScript (R-W2 B1). A small table (<= PRERENDER_CELLS cells) is prerendered inside it; a larger one
+  is drawn only when the <details> is first opened (R-W2 P1), and without JavaScript the <details> holds a link to
+  the published data the chart is drawn from (`dataHref`, or the page's setChartData).
 -->
 <script lang="ts">
-  import type { Snippet } from 'svelte';
+  import { getAllContexts, onMount, type Snippet } from 'svelte';
+  import { render } from 'svelte/server';
   import { dims as mkDims, type ChartDims, type Margin, type RecordStatus, type TableSpec } from './types';
   import { provideTooltip } from './tooltip.svelte';
   import Tooltip from './Tooltip.svelte';
-  import TableToggle from './TableToggle.svelte';
-  import DataTable from './DataTable.svelte';
+  import TableView from './TableView.svelte';
   import StatusBadge from './StatusBadge.svelte';
+  import { chartData } from './chartData';
+  import { claimingServerMarkup, enqueue, staticMarkup } from './lazy';
+  import SnippetHost from './SnippetHost.svelte';
+  import Deferred from './Deferred.svelte';
 
   let {
     id,
@@ -27,6 +34,7 @@
     source,
     license,
     headingLevel = 3,
+    dataHref,
     children,
     legend
   }: {
@@ -43,18 +51,59 @@
     source?: string;
     license?: string;
     headingLevel?: 2 | 3 | 4;
+    /** the published data behind the chart, linked in the table view (default: the page's setChartData) */
+    dataHref?: string | null;
     children: Snippet<[ChartDims]>;
     legend?: Snippet;
   } = $props();
 
   let measured = $state(0);
-  let showTable = $state(false);
+  // R-W2 P1: the SVG body is server markup until the chart is drawn live (lazy.ts)
+  let live = $state(!import.meta.env.SSR && !claimingServerMarkup());
+  let open = $state(false);
+  let opened = $state(false);
+  $effect(() => {
+    if (open) opened = true; // drawn once, kept when closed again
+  });
+  const pageData = chartData();
+  const href = $derived(dataHref === undefined ? pageData() : dataHref);
+  const tbl = $derived(table);
   const w = $derived(measured > 0 ? Math.round(measured) : width);
   const d = $derived(mkDims(w, height, margin));
+  const d0 = $derived(mkDims(width, height, margin)); // the prerendered body's dimensions
+  const vb = $derived(live ? d : d0);
   const tip = provideTooltip();
+  const ctx = import.meta.env.SSR ? getAllContexts() : null; // after provideTooltip: the body's marks read it
   let host: HTMLElement | undefined = $state();
   $effect(() => {
     tip.host = host ?? null;
+  });
+  // server: the body as a string; client during the first hydration: any non-empty value claims that markup
+  const body = $derived(
+    import.meta.env.SSR
+      ? staticMarkup(render(SnippetHost, { props: { snippet: children as never, args: d0 as never }, context: ctx ?? undefined }).body)
+      : ' '
+  );
+  // the table view likewise (TableView): no table is built during the hydration
+  const tableBody = $derived(
+    import.meta.env.SSR && table
+      ? staticMarkup(render(TableView, { props: { id, table, href, drawn: false } }).body)
+      : ' '
+  );
+  let job: ReturnType<typeof enqueue> | null = null;
+  let seen = false;
+  $effect(() => {
+    // the inputs the generated sentence depends on changed (a view in the URL, a slider): draw live now. The table
+    // is not read here: building it is what the deferred drawing avoids during the hydration.
+    void description;
+    if (seen && !live) {
+      job?.cancel();
+      live = true;
+    }
+    seen = true;
+  });
+  onMount(() => {
+    if (!live && host) job = enqueue(host, () => (live = true));
   });
 </script>
 
@@ -65,31 +114,35 @@
   </figcaption>
   <p class="desc" id="{id}-desc">{description}</p>
 
-  <div class="plot" bind:this={host} bind:clientWidth={measured} hidden={showTable} id="{id}-chart">
+  <div class="plot" bind:this={host} bind:clientWidth={measured} id="{id}-chart">
     <svg
-      viewBox="0 0 {d.width} {d.height}"
+      viewBox="0 0 {vb.width} {vb.height}"
       width="100%"
-      height={d.height}
+      height={vb.height}
       preserveAspectRatio="xMinYMin meet"
       role="img"
       aria-labelledby="{id}-title {id}-desc"
       onpointerleave={() => tip.hide()}
+      onpointerenter={() => job?.now()}
+      data-live={live ? '' : undefined}
     >
-      {@render children(d)}
+      {#if live}{@render children(d)}{:else}{@html body}{/if}
     </svg>
     <Tooltip state={tip} hostWidth={d.width} />
   </div>
-  {#if table}
-    <div hidden={!showTable} id="{id}-table"><DataTable {table} /></div>
-  {/if}
 
   <div class="foot">
-    {#if legend}<div class="legend-slot">{@render legend()}</div>{/if}
+    <!-- legend and a small prerendered table stay server markup until the chart is live (R-W2 P1) -->
+    {#if legend}<div class="legend-slot">{#if live}{@render legend()}{:else}<Deferred>{@render legend()}</Deferred>{/if}</div>{/if}
     <div class="meta">
       {#if source}<span>Källa: {source}</span>{/if}
       {#if license}<span>Licens: {license}</span>{/if}
-      {#if table}<TableToggle bind:pressed={showTable} controls="{id}-chart {id}-table" />{/if}
     </div>
+    {#if table}
+      <details class="tbl" bind:open>
+        {#if live || opened}<TableView {id} table={tbl!} {href} drawn={opened} />{:else}{@html tableBody}{/if}
+      </details>
+    {/if}
   </div>
 </figure>
 
@@ -118,9 +171,6 @@
   .plot {
     position: relative;
   }
-  .plot[hidden] {
-    display: none;
-  }
   svg {
     display: block;
     overflow: visible;
@@ -141,5 +191,8 @@
     font-size: 12px;
     color: var(--c-muted);
     margin-left: auto;
+  }
+  .tbl[open] {
+    flex-basis: 100%;
   }
 </style>

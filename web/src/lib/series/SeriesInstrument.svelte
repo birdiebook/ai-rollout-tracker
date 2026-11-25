@@ -7,7 +7,7 @@
   import { onMount } from 'svelte';
   import { resolve } from '$app/paths';
   import { replaceState } from '$app/navigation';
-  import { Glyph, StatusBadge, dateLabel, fmt, type RecordStatus } from '$lib/design';
+  import { Deferred, Glyph, StatusBadge, Term, dateLabel, fmt, type RecordStatus } from '$lib/design';
   import { clientBundle } from '$lib/data';
   import KeyFigures from './KeyFigures.svelte';
   import LevelChart from './LevelChart.svelte';
@@ -152,10 +152,10 @@
 
 <section aria-labelledby="kf-h">
   <h2 id="kf-h" class="visually-hidden">Läget enligt tillståndsmotorn</h2>
-  <KeyFigures measure={s.measure} unit={s.unit} last={allPoints.length ? { p: allPoints.at(-1)!.p, v: allPoints.at(-1)!.v } : null} />
+  <Deferred><KeyFigures measure={s.measure} unit={s.unit} last={allPoints.length ? { p: allPoints.at(-1)!.p, v: allPoints.at(-1)!.v } : null} /></Deferred>
   <p class="note">
     Tillståndsmotorns mått per {dateLabel(s.measure_as_of)}{s.measure?.known_from ? `, senaste period ${periodText(s.measure.latest_period ?? '')} känd från ${dateLabel(s.measure.known_from)}` : ''}.
-    Riktningen räknas mot dödbandet 0,25 × seriens egen standardavvikelse för förändring i takt (måttregistret avsnitt 2).
+    Riktningen räknas mot <Term id="dodband">dödbandet</Term> 0,25 × seriens egen standardavvikelse för förändring i takt (måttregistret avsnitt 2).
   </p>
 </section>
 
@@ -261,6 +261,7 @@
 
 <section aria-labelledby="about-h">
   <h2 id="about-h">Om serien</h2>
+  <Deferred>
   <div class="panel about">
     <dl class="facts">
       <dt>Nyckel</dt><dd><code>{s.key}</code></dd>
@@ -295,6 +296,7 @@
       </ul>
     </details>
   {/if}
+  </Deferred>
 </section>
 
 <style>

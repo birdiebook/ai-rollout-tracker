@@ -46,10 +46,24 @@ web/
   `Stripes`, `Glyph`, `StatusBadge`, `Legend`, `Tooltip`, `TableToggle` och `DataTable`. Allt importeras från
   `$lib/design`.
 - Katalogen visar alla komponenter med exempelvärden: `/next/_katalog/`. Den länkas inte från menyn.
+- Ordlistan (`glossary.ts`, R-W3) visas på `/next/metod/#ordlista`, och `Term` länkar ett fackord dit där det står.
 
 **Tillgänglighet i diagrammen.** SVG:n har `role="img"` och namnges av rubriken och den genererade meningen.
-Hovringstips är till för pekare. För tangentbord och skärmläsare finns samma tal alltid i tabellvyn (knappen "Visa
-tabell"/"Visa diagram" med `aria-controls`; namnet säger vad knappen gör, därför inget `aria-pressed`, R-W2). Därför är enskilda markeringar inte tabbstopp. Breda tabeller går att fokusera och rulla.
+Hovringstips är till för pekare och har ingen live-roll (R-W2). För tangentbord och skärmläsare finns samma tal i
+tabellvyn under diagrammet: en inbyggd `<details>` ("Tabell (N rader)"), som öppnas också utan JavaScript (WX2, R-W2
+B1). En liten tabell (högst `PRERENDER_CELLS` = 60 celler) förrenderas i den. En större ritas först när den öppnas, och
+utan JavaScript innehåller den i stället en länk till det publicerade paketdokumentet som diagrammet ritas ur (sidan
+anger det med `setChartData`, ett diagram kan ge ett eget `dataHref`). Valet: små tabeller kostar nästan inget och ska
+gå att läsa direkt, medan de stora utgjorde 78 % av DOM:en på seriesidan och var orsaken till den långa
+blockeringstiden. Enskilda markeringar är inte tabbstopp. Breda tabeller går att fokusera och rulla.
+
+**Uppskjuten ritning (WX2, R-W2 P1).** `ChartFrame` förrenderar diagrammets SVG-innehåll som en sträng
+(`svelte/server` vid förrenderingen) och den första hydreringen gör bara anspråk på den markupen i stället för att gå
+igenom varje markering. Därefter ritas varje diagram levande i en egen uppgift, synliga först (`lazy.ts`), och genast
+om dess mening eller tabell ändras (ett reglage, en vy i URL:en) eller pekaren går in i det. `Deferred` gör samma sak
+för block utan formulärkontroller som inte ändras efter laddningen (startsidans kedja och rubrikrad): de lämnas som
+server-markup tills en muspekare går in. Länkar och `<details>` fungerar som vanligt i markupen. Klienten får en
+stubbe i stället för `svelte/server` (`vite.config.ts`).
 
 **Responsivt utan layoutskift.** Diagrammen förrenderas med standardbredden och ritas om med den uppmätta bredden
 efter hydreringen. Höjden är fast i px, så sidan flyttar sig inte (CLS).
@@ -99,7 +113,9 @@ Riktig data lokalt: `PYTHONPATH=src python -m ai_tracker.site_bundle build --out
 I sessionsmiljön finns Chromium i `/opt/pw-browsers` (revision 1243). Därför är `@playwright/test` låst till 1.63.0,
 och `playwright-core` är låst med `overrides`.
 
-**Budget (gzip, per sida):** JS ≤ 150 kB, CSS ≤ 30 kB och data inlagd i HTML ≤ 100 kB (avsnitt 6.3). Det som laddas
+**Budget (gzip, per sida):** JS ≤ 150 kB, CSS ≤ 30 kB och data inlagd i HTML ≤ 100 kB (avsnitt 6.3), och högst
+3 000 element i den förrenderade HTML:en (WX2, efter R-W2 P1; metodsidan ligger på cirka 2 500 med sina 60
+källkort, seriesidorna på högst 1 400 mot 6 500 med de dolda tabellerna). Det som laddas
 lat, som DuckDB-WASM på `/data`, finns inte i HTML:en och räknas inte. Så ska det vara. Skelettet ligger på 54–75 kB JS
 per sida.
 

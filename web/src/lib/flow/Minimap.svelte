@@ -41,7 +41,8 @@
                 class="cell"
                 class:me={b.code === branch}
                 class:empty={b.index === null}
-                style:background={divergingFill(b.index)}
+                class:few={b.index !== null && (b.state === 'för få serier' || b.state === 'inga registrerade kärnserier')}
+                style:background={b.index !== null && (b.state === 'för få serier' || b.state === 'inga registrerade kärnserier') ? 'transparent' : divergingFill(b.index)}
                 title="{b.code} {b.name ?? ''}: {stateStyle(b.state).glyph} {stateStyle(b.state).word}, index {fmt(b.index, 2)}"
               ></span>
             {/each}
@@ -111,6 +112,9 @@
   }
   .cell.empty {
     border: 1px solid var(--c-grid);
+  }
+  .cell.few {
+    border: 1px dashed var(--c-axis); /* R-W3: an index without a state gets no direction colour */
   }
   .cell.me {
     outline: 2px solid var(--c-ink);

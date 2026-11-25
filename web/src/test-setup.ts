@@ -5,3 +5,7 @@ class ResizeObserverStub {
   disconnect() {}
 }
 globalThis.ResizeObserver ??= ResizeObserverStub as unknown as typeof ResizeObserver;
+
+// R-W2 P1: components in tests are mounted, not hydrated: draw chart bodies directly (lazy.ts)
+import { hydrationDone } from '$lib/design/charts/lazy';
+hydrationDone();

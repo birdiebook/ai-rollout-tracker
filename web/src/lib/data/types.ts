@@ -360,6 +360,18 @@ export interface Story {
   omitted: PerType;
   withheld: PerType;
   cards: StoryCard[];
+  /** R-W3a (register 2026-11-25): candidates dropped as the same quantity as a shown card */
+  duplicates?: PerType;
+  /** R-W3c: the cards struck by a cap, in the rule's order */
+  omitted_cards?: { type: string; id: string; label: string; direction: -1 | 0 | 1 | null }[];
+  /** R-W3b: per K5/K6, series tested, hits expected from chance (n/10) and how many met the condition */
+  chance?: { K5: StoryChance; K6: StoryChance } | null;
+}
+
+export interface StoryChance {
+  n: number;
+  expected: number;
+  met: number;
 }
 
 export interface StoryIndexEntry {

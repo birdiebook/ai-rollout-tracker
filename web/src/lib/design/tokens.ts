@@ -51,11 +51,11 @@ export const palettes: Record<Theme, Palette> = {
     axis: '#c3c2b7',
     ring: 'rgba(11, 11, 11, 0.10)',
     acc: '#2a78d6',
-    brk: '#d9661f',
+    brk: '#c25a00', // R-W3: balanced against blue (distance to the mid grey 39.6 vs 41.2), was #d9661f
     stb: '#8a8880',
     mid: '#f0efec',
     model: '#6250d6',
-    base: '#898781',
+    base: '#5e5d58', // R-W3: not the stable grey (was #898781, dE 0.4 to stb)
     focus: '#0b0b0b'
   },
   dark: {
@@ -68,11 +68,11 @@ export const palettes: Record<Theme, Palette> = {
     axis: '#4a4a46',
     ring: 'rgba(255, 255, 255, 0.10)',
     acc: '#3987e5',
-    brk: '#d95926',
+    brk: '#d46600', // R-W3: hue 51 deg instead of 40 deg (read as red), was #d95926
     stb: '#8f8d85',
     mid: '#383835',
     model: '#9085e9',
-    base: '#898781',
+    base: '#bdbbb2', // R-W3: not the stable grey (was #898781)
     focus: '#f0efec'
   }
 };

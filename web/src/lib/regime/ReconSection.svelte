@@ -68,7 +68,7 @@
     Bidragen är den exakta uppdelningen av samma takt, ur komponenternas nivåer som de var kända på postens datum.
     {#if r.source}Källa: {r.source}.{/if}
     {#if r.license}Licens: {r.license}.{/if}
-    {#if r.linkable}<a href={resolve('/serie/[key]', { key: r.key })}>Kvoten som serie →</a>{/if}
+    {#if r.linkable}<a href={resolve('/serie/[key]', { key: r.key })}>Kvoten som serie <span aria-hidden="true">→</span></a>{/if}
   </p>
 </section>
 

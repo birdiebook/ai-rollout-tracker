@@ -254,14 +254,16 @@ Neutralt, tillgängligt och validerat (datavisualiseringsskillens validerare, OK
 | Roll | Ljust | Mörkt | Användning |
 |---|---|---|---|
 | Mer takt (accelererar) | `#2a78d6` | `#3987e5` | Riktning uppåt, index mot 1 |
-| Mindre takt (bromsar in) | `#d9661f` | `#d95926` | Riktning nedåt, index mot 0 |
+| Mindre takt (bromsar in) | `#c25a00` | `#d46600` | Riktning nedåt, index mot 0 |
 | Balans (stabil) | `#8a8880` | `#8f8d85` | Riktning 0 |
 | Divergerande mittpunkt | `#f0efec` | `#383835` | Index 0,5 |
 | Modell och intervall | `#6250d6` | `#9085e9` | Prognos, band (50/80/95 med opacitet) |
-| Naiv baslinje | `#898781` | `#898781` | B0/B1 |
+| Naiv baslinje | `#5e5d58` | `#bdbbb2` | B0/B1 |
 
-Paret blått/orange klarar alla kontroller i båda lägena: CVD ΔE 26,1 (ljust) och 26,8 (mörkt), normalseende ΔE
-32,3/31,8, kontrast ≥ 3:1 mot ytan. Grönt och rött används aldrig för riktning (de betyder bra och dåligt). Serie-
+Paret blått/orange klarar alla kontroller i båda lägena: CVD ΔE 26,7 (ljust) och 27,5 (mörkt), normalseende ΔE
+30,9/31,8, kontrast ≥ 3:1 mot ytan. Ändrat 2026-11-25 efter R-W3: orange i ljust läge ligger lika långt från mitten
+som blått (39,6 mot 41,2, förut 35,1), mörkt orange har nyansen 51° i stället för 40° (drog mot rött), och den naiva
+baslinjen har en egen grå (ΔE 14,8 mot stabil, förut 0,4). Grönt och rött används aldrig för riktning (de betyder bra och dåligt). Serie-
 identitet i små multiplar bärs av rubriken, inte av färg, så att blått och orange bara betyder riktning. Mörkt läge
 är en egen vald palett, inte en automatisk invertering. Mönster (45°-linjer) som alternativ kanal för utskrift och
 `forced-colors`.

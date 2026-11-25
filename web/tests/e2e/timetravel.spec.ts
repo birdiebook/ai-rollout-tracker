@@ -42,7 +42,7 @@ test('start page on a past day: the record known then, Python’s sentence, noth
     if (g?.record) await expect(page.locator('[data-tt="view"] .lede').first()).toContainText(g.record.sentence);
   }
   // the stripes table lists only months whose month end is on or before the day
-  await page.locator('#tt-stripes').getByRole('button', { name: 'Visa tabell' }).click();
+  await page.locator('#tt-stripes summary').click();
   await expect(page.locator('#tt-stripes-table tbody tr').first()).toBeVisible();
 });
 
@@ -67,7 +67,7 @@ test('series on a past day: the level table is exactly the replay, every row kno
   const v = doc.versions;
   const known = new Map<string, string>();
   for (let i = 0; i < v.p.length && v.dates[v.d[i]] <= TT_DAY; i++) known.set(v.periods[v.p[i]], v.dates[v.d[i]]);
-  await page.locator('#tt-level').getByRole('button', { name: 'Visa tabell' }).click();
+  await page.locator('#tt-level summary').click();
   const rows = page.locator('#tt-level-table tbody tr');
   await expect(rows).toHaveCount(known.size);
   if (golden) {

@@ -448,7 +448,7 @@ def horizons_section(d: dict, build: dict) -> str:
         parts.append("\n".join(block))
     return f"""<section class="nowcast" id="d2">
 <h2>D2: prognoser 1–8 kvartal (skugga)</h2>
-<p>Mål: capex för de fyra största hyperscalers och molnintäkterna enligt N4, första publicerade värdet. Prognosdag: kvartalets slut + 20 dagar (samma som N1 och N4). Horisont h = 1–8 kvartal efter det senaste kända kvartalet L. Modeller: B0 (senaste nivå), B1 (drift), B2 (bolagens guidance, bara capex) och V_kedja (direkt OLS per h på RPO-årstakten och capex/moln-kvoten, skugga). Horisontgrupper: {esc(groups)}. Intervallen bygger på en felpool per modell och h, och ett fel kommer in först när dess utfall är känt.</p>
+<p>Mål: capex för de fyra största molnbolagen och molnintäkterna enligt N4, första publicerade värdet. Prognosdag: kvartalets slut + 20 dagar (samma som N1 och N4). Horisont h = 1–8 kvartal efter det senaste kända kvartalet L. Modeller: B0 (senaste nivå), B1 (drift), B2 (bolagens guidance, bara capex) och V_kedja (direkt OLS per h på RPO-årstakten och capex/moln-kvoten, skugga). Horisontgrupper: {esc(groups)}. Intervallen bygger på en felpool per modell och h, och ett fel kommer in först när dess utfall är känt.</p>
 {head}
 {''.join(parts)}
 <p class="small">Utveckling och registrering: <a href="{esc(build['repo'])}/blob/main/docs/resultat/d2_utveckling.md">docs/resultat/d2_utveckling.md</a>.</p>

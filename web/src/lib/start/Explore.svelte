@@ -26,19 +26,19 @@
   <ul class="ways">
     <li>
       <a href={resolve('/flode')}>
-        <b>Flödet L1–L9 →</b>
+        <b>Flödet L1–L9 <span aria-hidden="true">→</span></b>
         <span>Led för led: grenarnas tillstånd, nyckelserier och avstämningarna mellan leden.</span>
       </a>
     </li>
     <li>
       <a href={resolve('/prognoser')}>
-        <b>Prognoserna →</b>
+        <b>Prognoserna <span aria-hidden="true">→</span></b>
         <span>{nNowcasts} nowcasts med intervall, kalender och facit mot utfallen.</span>
       </a>
     </li>
     <li>
       <a href={resolve('/metod')}>
-        <b>Metoden →</b>
+        <b>Metoden <span aria-hidden="true">→</span></b>
         <span>
           Förregistrerade regler, källor och licenser{#if start.facts.n_withheld !== null}, och de {fmt(start.facts.n_withheld)} serier som räknas
             men hålls inne{/if}.

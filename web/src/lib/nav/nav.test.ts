@@ -126,7 +126,7 @@ describe('share image SVG', () => {
     const [lo, mid, hi] = [indexFill(0), indexFill(0.5), indexFill(1)] as string[];
     expect(mid).toBe('#f0efec');
     expect(hi).toBe('#2a78d6');
-    expect(lo).toBe('#d9661f');
+    expect(lo).toBe('#c25a00');
   });
 });
 

@@ -270,7 +270,7 @@ export async function describe(b: Bundle, ref: RouteRef): Promise<Described> {
       const title = 'Regim och strukturbrott';
       const latest = rg.blocks.map((x) => x.latest).filter((x): x is NonNullable<typeof x> => !!x);
       const description = rg.available
-        ? `Sannolikheten för inbromsning per block (C4) ur de skarpa ögonblicksbilderna, ${latest.length} block, ${rg.shifts.length} skiften och ${rg.breaks.length + rg.n_breaks_withheld} strukturbrott.`
+        ? `Sannolikheten för inbromsning per block ur de skarpa ögonblicksbilderna, ${latest.length} block, ${rg.shifts.length} skiften och ${rg.breaks.length + rg.n_breaks_withheld} strukturbrott.`
         : 'Regimmodellen (C4) visas först från den första skarpa ögonblicksbilden; den rekonstrueras aldrig bakåt.';
       return page(c, 'regim', title, description, spec(c, { kicker: 'Regim · C4', title: 'Har något fundamentalt ändrats?', subtitle: description, status: rg.available ? statusOf(rg.record) : null, graphic: overviewStripes(c) }));
     }

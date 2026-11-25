@@ -7,12 +7,19 @@ import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { gzipSync } from 'node:zlib';
 import { rel, walk } from './lib.mjs';
+import { countElements } from './count-elements.mjs';
 
 export const BUDGET = {
   jsKb: 150, // gzip, per page (start page target in the vision; applied to every page)
   cssKb: 30, // gzip, per page
-  dataKb: 100 // gzip, data inlined in the page HTML (SvelteKit serialises load() data into it)
+  dataKb: 100, // gzip, data inlined in the page HTML (SvelteKit serialises load() data into it)
+  // R-W2 P1: elements in the prerendered HTML. Hidden prerendered tables were 78 % of a series page and drove the
+  // blocking time (TBT 0.5-1.2 s at 4x CPU); large tables are now drawn when opened. This keeps them from coming back.
+  // 3 000, not R-W2's example 2 500: the method page is at ~2 490 with its 60 source cards (licences, needed without
+  // JS); the series pages are at <= 1 400 and were 6 500 with the hidden tables.
+  domElements: 3000
 };
+
 
 const build = resolve(process.argv[2] ?? 'build');
 if (!existsSync(build)) {
@@ -56,13 +63,14 @@ for (const file of walk(build).filter((f) => f.endsWith('.html'))) {
   // inlined data: the hydration script's data array
   const dataMatch = html.match(/data:\s*(\[[\s\S]*?\]),\s*form:/);
   const dataB = dataMatch ? gz(Buffer.from(dataMatch[1])) : 0;
-  const over = [kb(jsB) > BUDGET.jsKb && 'js', kb(cssB) > BUDGET.cssKb && 'css', kb(dataB) > BUDGET.dataKb && 'data'].filter(Boolean);
+  const dom = countElements(html);
+  const over = [kb(jsB) > BUDGET.jsKb && 'js', kb(cssB) > BUDGET.cssKb && 'css', kb(dataB) > BUDGET.dataKb && 'data', dom > BUDGET.domElements && 'dom'].filter(Boolean);
   if (over.length) failed = true;
-  rows.push({ page: rel(build, file), js_kb: +kb(jsB).toFixed(1), css_kb: +kb(cssB).toFixed(1), data_kb: +kb(dataB).toFixed(1), html_kb: +kb(gz(Buffer.from(html))).toFixed(1), over: over.join(',') });
+  rows.push({ page: rel(build, file), js_kb: +kb(jsB).toFixed(1), css_kb: +kb(cssB).toFixed(1), data_kb: +kb(dataB).toFixed(1), html_kb: +kb(gz(Buffer.from(html))).toFixed(1), dom, over: over.join(',') });
 }
 rows.sort((a, b) => b.js_kb - a.js_kb);
 console.table(rows);
-console.log(`budget (gzip): JS <= ${BUDGET.jsKb} kB, CSS <= ${BUDGET.cssKb} kB, inlined data <= ${BUDGET.dataKb} kB per page`);
+console.log(`budget (gzip): JS <= ${BUDGET.jsKb} kB, CSS <= ${BUDGET.cssKb} kB, inlined data <= ${BUDGET.dataKb} kB per page; <= ${BUDGET.domElements} elements in the prerendered HTML`);
 if (process.env.BUDGET_REPORT) writeFileSync(process.env.BUDGET_REPORT, JSON.stringify({ budget: BUDGET, pages: rows }, null, 2));
 if (missing.size) {
   console.error(`budget: ${missing.size} referenced assets not found in the build (BASE_PATH=${base}; set it as for the build), e.g. ${[...missing][0]}`);

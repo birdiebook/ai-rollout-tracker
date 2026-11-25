@@ -2,10 +2,11 @@
      nowcasts, reconciliations touching the lead, withheld key series, up- and downstream. -->
 <script lang="ts">
   import { resolve } from '$app/paths';
-  import { Glyph, StatusBadge, fmt, periodLabel, dateLabel } from '$lib/design';
+  import { Glyph, StatusBadge, dataUrl, fmt, periodLabel, dateLabel, setChartData } from '$lib/design';
   import { IndexHistory, Minimap, Multiples, SpanChart, UnitBoxes, WithheldBoxes } from '$lib/flow';
 
   let { data } = $props();
+  setChartData(() => dataUrl('flow.json'));
   const l = $derived(data.lead);
 </script>
 

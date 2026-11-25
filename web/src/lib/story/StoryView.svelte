@@ -5,7 +5,7 @@
      (as_of is set after mount: time travel needs JavaScript, and the prerendered link opens today's view). prefers-reduced-motion: no transitions, no smooth scrolling. -->
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { DIRECTIONS, StatusBadge, dateLabel } from '$lib/design';
+  import { DIRECTIONS, StatusBadge, Term, dateLabel, fmt } from '$lib/design';
   import Figure from './Figure.svelte';
   import { cardHref, monthHref } from './links';
   import { typeGlyph, type MonthNav, type StoryPage } from './model';
@@ -38,15 +38,28 @@
   const prevLabel = $derived(s.previous ? (months.find((m) => m.month === s.previous)?.month_sv ?? s.previous) : null);
   const omitted = $derived(Object.entries(s.omitted).filter(([, n]) => n > 0));
   const withheld = $derived(Object.entries(s.withheld).filter(([, n]) => n > 0));
-  const dirColor = (d: -1 | 0 | 1 | null) => (d === null ? 'var(--c-model)' : DIRECTIONS[d].color);
+  // Colour is direction in an index only (R-W3): a reconciliation (K6) has no direction (A5), so it is drawn in ink.
+  const dirColor = (t: string, d: -1 | 0 | 1 | null) => (d === null || t === 'K6' ? (d === null ? 'var(--c-model)' : 'var(--c-ink)') : DIRECTIONS[d].color);
   // A state change (K1) moves the branch's index, not its pace: "högre/lägre index" (R-W3).
   const dirWord = (t: string, d: -1 | 0 | 1 | null) =>
-    d === null ? '' : t === 'K1' ? (d === 1 ? 'högre index' : 'lägre index') : d === 1 ? 'mer takt' : d === -1 ? 'mindre takt' : 'oförändrad takt';
+    d === null
+      ? ''
+      : t === 'K1'
+        ? d === 1 ? 'högre index' : 'lägre index'
+        : t === 'K6'
+          ? d === 1 ? 'kvotens takt högt i egen historik' : 'kvotens takt lågt i egen historik'
+          : d === 1 ? 'mer takt' : d === -1 ? 'mindre takt' : 'oförändrad takt';
+  const zoneGlyph = (d: -1 | 0 | 1 | null) => (d === 1 ? '▲' : d === -1 ? '▼' : '');
+  const recon = $derived(s.status !== 'live');
+  const duplicates = $derived(Object.entries(s.duplicates ?? {}).filter(([, n]) => n > 0));
+  const struck = $derived(s.omitted_cards ?? []);
+  const chance = $derived(s.chance ?? null);
+  const fmt1 = (x: number) => fmt(x, x % 1 ? 1 : 0);
 
   const clip = (x: string, n = 26) => (x.length > n ? x.slice(0, n - 1).trimEnd() + '…' : x);
   function railLabel(c: (typeof page.cards)[number]): string {
     const f = c.facts;
-    if (c.type === 'K1') return `${f.branch} → ${f.to}`;
+    if (c.type === 'K1') return `${f.branch}: ${f.to}`;
     if (c.type === 'K2') return `Regim: ${f.label}`;
     if (c.type === 'K3') return `Utfall ${f.label}`;
     if (c.type === 'K4' || c.type === 'K5' || c.type === 'K6') return clip(String(f.label).replace(/^\[syntetisk\]\s*/, ''));
@@ -101,17 +114,26 @@
 
 <article class="story" data-month={s.month} data-status={s.status} data-known={s.known} bind:this={host}>
   <header class="head">
-    <p class="kicker">Månadens berättelse <StatusBadge {status} /></p>
-    <h1>{cap(s.month_sv)}</h1>
+    <p class="kicker">Månadens berättelse {#if !recon}<StatusBadge {status} />{/if}</p>
+    <h1>{cap(s.month_sv)}{#if recon} <span class="h1-status" data-status="recon">rekonstruerad</span>{/if}</h1>
+    {#if recon}
+      <!-- R-W3: the status in the heading itself, at the heading's size, and what it means -->
+      <p class="recon-note" data-testid="recon-note">
+        <StatusBadge {status} prominent label="Rekonstruerad månad" />
+        Korten är valda ur en post som räknats i efterhand med dagens kod på data som var kända vid månadsslutet, inte ur
+        en skarp ögonblicksbild som sparades då. <Term id="rekonstruerad">Vad det betyder</Term>
+      </p>
+    {/if}
     <p class="lede">{s.headline}</p>
     <p class="note">
       Korten väljs mekaniskt med en regel som registrerades i förväg (måttregistret, {s.rule.entry.split(' – ')[0]}): tillståndsskiften,
-      regimskiften, nya skarpa utfall, strukturbrott och serier som når percentil ≤ {s.rule.low} eller ≥ {s.rule.high}, i båda riktningarna,
-      högst {s.rule.cap} kort. Allt är som det var känt {dateLabel(s.known)}.
+      regimskiften, nya skarpa utfall, strukturbrott och serier som når <Term id="percentil">percentil</Term> ≤ {s.rule.low} eller ≥ {s.rule.high}
+      i sin egen historik, i båda riktningarna, högst {s.rule.cap} kort. Grenens <Term id="diffusionsindex">diffusionsindex</Term> är andelen
+      serier som ökar takten. Allt är som det var känt {dateLabel(s.known)}.
     </p>
     <nav class="monthnav" aria-label="Föregående och nästa månad">
-      {#if prev}<a href={monthHref(prev.month)} rel="prev">← {prev.month_sv}</a>{:else}<span></span>{/if}
-      {#if next}<a href={monthHref(next.month)} rel="next">{next.month_sv} →</a>{/if}
+      {#if prev}<a href={monthHref(prev.month)} rel="prev"><span aria-hidden="true">←</span> {prev.month_sv}</a>{:else}<span></span>{/if}
+      {#if next}<a href={monthHref(next.month)} rel="next">{next.month_sv} <span aria-hidden="true">→</span></a>{/if}
     </nav>
   </header>
 
@@ -121,7 +143,7 @@
         {#each cards as c, k (c.id)}
           <li>
             <a href={`#kort-${c.id}`} aria-current={enhanced && active === k ? 'step' : undefined}>
-              <span class="g" aria-hidden="true" style:color={dirColor(c.direction)}>{typeGlyph[c.type] ?? '·'}</span>
+              <span class="g" aria-hidden="true" style:color={dirColor(c.type, c.direction)}>{typeGlyph[c.type] ?? '·'}</span>
               <span class="rl">{railLabel(c)}</span>
             </a>
           </li>
@@ -144,8 +166,8 @@
             aria-labelledby={`t-${c.id}`}
           >
             <p class="kicker kick">
-              <span class="tag" style:border-color={dirColor(c.direction)}>
-                <span aria-hidden="true" style:color={dirColor(c.direction)}>{typeGlyph[c.type] ?? '·'}</span>
+              <span class="tag" style:border-color={dirColor(c.type, c.direction)}>
+                <span aria-hidden="true" style:color={dirColor(c.type, c.direction)}>{typeGlyph[c.type] ?? '·'}{#if c.type === 'K6'}{zoneGlyph(c.direction)}{/if}</span>
                 <span>{c.type_label}{#if dirWord(c.type, c.direction)}, {dirWord(c.type, c.direction)}{/if}</span>
               </span>
               <span class="count">Kort {k + 1} av {cards.length}</span>
@@ -153,11 +175,11 @@
             <div class="txt">
               <h2 id={`t-${c.id}`}>{c.title}</h2>
               <p class="body">{c.text}</p>
-              <p class="go"><a href={cardHref(enhanced ? c.target : { ...c.target, asOf: null })} data-link={c.link.kind} data-tt-own={enhanced && c.target.asOf ? '' : undefined}>{c.link.label} →</a>
+              <p class="go"><a href={cardHref(enhanced ? c.target : { ...c.target, asOf: null })} data-link={c.link.kind} data-tt-own={enhanced && c.target.asOf ? '' : undefined}>{c.link.label} <span aria-hidden="true">→</span></a>
                 {#if enhanced && c.target.asOf}<span class="note"> (som det var känt {dateLabel(c.target.asOf)})</span>{/if}</p>
               <p class="stepnav note">
-                {#if k > 0}<a href={`#kort-${cards[k - 1].id}`}>↑ Föregående kort</a>{/if}
-                {#if k < cards.length - 1}<a href={`#kort-${cards[k + 1].id}`}>Nästa kort ↓</a>{:else}<a href="#om-urvalet">Om urvalet ↓</a>{/if}
+                {#if k > 0}<a href={`#kort-${cards[k - 1].id}`}><span aria-hidden="true">↑</span> Föregående kort</a>{/if}
+                {#if k < cards.length - 1}<a href={`#kort-${cards[k + 1].id}`}>Nästa kort <span aria-hidden="true">↓</span></a>{:else}<a href="#om-urvalet">Om urvalet <span aria-hidden="true">↓</span></a>{/if}
               </p>
             </div>
             <div class="fig"><Figure card={c} /></div>
@@ -175,7 +197,31 @@
       Taket är {s.rule.cap} kort (strukturbrott högst {s.rule.type_caps.K4}, kärnserier högst {s.rule.type_caps.K5}, avstämningar högst {s.rule.type_caps.K6}).
     </p>
     <ul class="facts">
-      <li>{omitted.length ? `Uppfyllde villkoren men visas inte på grund av taket: ${omitted.map(([t, n]) => counted(t, n)).join(', ')}.` : 'Inget kort ströks på grund av taket.'}</li>
+      <li>
+        {omitted.length ? `Uppfyllde villkoren men visas inte på grund av taket: ${omitted.map(([t, n]) => counted(t, n)).join(', ')}.` : 'Inget kort ströks på grund av taket.'}
+        {#if struck.length}
+          <ul class="struck" aria-label="Kort som ströks av taket">
+            {#each struck as c (c.id)}
+              <li data-card={c.id}>
+                {#if c.direction === 1 || c.direction === -1}<span aria-hidden="true">{c.direction === 1 ? '▲' : '▼'}</span>{/if}
+                {c.label}
+                <span class="note">({typeName1[c.type] ?? c.type}{#if c.direction !== null}, {dirWord(c.type, c.direction)}{/if})</span>
+              </li>
+            {/each}
+          </ul>
+        {/if}
+      </li>
+      {#if duplicates.length}
+        <li>Ströks som dubblett, eftersom samma storhet redan har ett kort: {duplicates.map(([t, n]) => counted(t, n)).join(', ')}.</li>
+      {/if}
+      {#if chance}
+        <li data-testid="chance">
+          Slumpnivå: med {chance.K5.n} räknade kärnserier ligger i snitt {fmt1(chance.K5.expected)} i en ytterzon (≤ {s.rule.low} eller ≥ {s.rule.high})
+          av en slump, om percentilerna är jämnt fördelade. {chance.K5.met} uppfyllde villkoret den här månaden.
+          {#if chance.K6.n}För avstämningarna är det {fmt1(chance.K6.expected)} av {chance.K6.n}, och {chance.K6.met} uppfyllde villkoret.{/if}
+          Kravet att serien inte låg i samma zon förra månaden gör att slumpen ger något färre utslag än så. Inget kort väljs bort på grund av det.
+        </li>
+      {/if}
       <li>{withheld.length ? `Serier som inte visas av licensskäl men uppfyllde villkoren (räknas, namnges inte): ${withheld.map(([t, n]) => counted(t, n)).join(', ')}.` : 'Inga serier som hålls inne av licensskäl uppfyllde villkoren.'}</li>
       <li>{prevLabel ? `Jämförelsemånad: ${prevLabel}.` : 'Ingen jämförelsemånad: tillståndsskiften och extrema percentiler kunde inte prövas.'}</li>
     </ul>
@@ -294,6 +340,23 @@
   }
   .facts {
     padding-left: 18px;
+  }
+  .struck {
+    margin: 4px 0 0;
+    padding-left: 18px;
+  }
+  h1 .h1-status {
+    font-weight: 400;
+    color: var(--c-ink-2);
+    border-bottom: 2px dashed var(--c-ink-2);
+  }
+  .recon-note {
+    max-width: 78ch;
+    margin: 4px 0 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 10px;
+    align-items: center;
   }
   .mlist {
     columns: 2 220px;

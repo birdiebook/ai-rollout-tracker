@@ -1,4 +1,6 @@
-<!-- Tooltip for one chart. Positioned inside the ChartFrame; flips left/up near the edges. Text only. -->
+<!-- Tooltip for one chart. Positioned inside the ChartFrame; flips left/up near the edges. Text only. No live-region
+     role (R-W2): it is created and removed on every hover, which is noise for a screen reader; the table view is the
+     screen-reader path. -->
 <script lang="ts">
   import type { TooltipState } from './tooltip.svelte';
 
@@ -9,7 +11,6 @@
 {#if state.visible && state.content}
   <div
     class="tip"
-    role="status"
     style:left="{state.x}px"
     style:top="{state.y}px"
     style:transform="translate({flipX ? 'calc(-100% - 12px)' : '12px'}, calc(-100% - 8px))"

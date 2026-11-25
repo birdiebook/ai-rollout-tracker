@@ -12,7 +12,7 @@
   const nLive = $derived(s.kind.filter((k) => k === 'skarp').length);
   const description = $derived(
     `Diffusionsindex per gren och månad, ${periodLabel(s.months[0])}–${periodLabel(s.months.at(-1) ?? '')}. ` +
-      `Blått: fler serier ökar takten, orange: fler minskar den, grått: balans. ` +
+      `Blått: fler serier ökar takten, orange: fler minskar den, grått: balans. En gren med för få serier har inget tillstånd och ingen färg. ` +
       (nLive ? `${nLive} ${nLive === 1 ? 'månad är skarp' : 'månader är skarpa'}, de övriga rekonstruerade.` : 'Alla månader är rekonstruerade.')
   );
   const table = $derived({
@@ -46,7 +46,8 @@
         { label: '0,5 · balans', fill: divergingFill(0.5) },
         { label: `${fmt(start.thresholds.high, 2)}`, fill: divergingFill(start.thresholds.high) },
         { label: '1 · alla ökar takten', fill: divergingFill(1) },
-        { label: 'inget index', border: 'var(--c-grid)' }
+        { label: 'inget index', border: 'var(--c-grid)' },
+        { label: 'för få serier: index utan tillstånd, ingen färg', border: 'var(--c-axis)', dashed: true }
       ]}
     />
   {/snippet}

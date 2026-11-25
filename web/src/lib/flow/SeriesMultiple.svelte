@@ -4,7 +4,7 @@
 <script lang="ts">
   import { resolve } from '$app/paths';
   import { scaleLinear, scaleLog } from 'd3-scale';
-  import { Axis, ChartFrame, DIRECTIONS, Glyph, Line, fmt, periodLabel, signed } from '$lib/design';
+  import { Axis, ChartFrame, DIRECTIONS, Glyph, Line, dataUrl, fmt, periodLabel, signed } from '$lib/design';
   import DeadbandGauge from './DeadbandGauge.svelte';
   import { deadbandSentence, invertedPace, multipleSentence, periodTime } from './prepare';
   import type { Multiple } from './types';
@@ -83,11 +83,11 @@
       <span class="nodir">ingen riktning</span>
     {/if}
     {#if mode === 'pace' && m.pace !== null}
-      <span class="val num">{signed(m.pace, 1)}{#if m.pace_percentile !== null}<span class="pct">{` · ${fmt(m.pace_percentile, 0)}:e pct`}</span>{/if}</span>
+      <span class="val num">takt {signed(m.pace, 1)}{#if m.pace_percentile !== null}<span class="pct">{` · ${fmt(m.pace_percentile, 0)}:e percentilen`}<span class="visually-hidden"> av seriens egen historik</span></span>{/if}</span>
     {/if}
     {#if showBranch && m.branch}<span class="tag">{m.branch}</span>{/if}
     {#if m.linkable}
-      <a class="open" href={resolve('/serie/[key]', { key: m.key })}>Serien<span class="visually-hidden">: {m.label}</span> →</a>
+      <a class="open" href={resolve('/serie/[key]', { key: m.key })}>Serien<span class="visually-hidden">: {m.label}</span> <span aria-hidden="true">→</span></a>
     {/if}
   </div>
   <ChartFrame
@@ -99,6 +99,7 @@
     headingLevel={3}
     margin={{ top: 16, right: 12, bottom: 20, left: 44 }}
     {table}
+    dataHref={m.linkable ? dataUrl(`series/${m.key}.json`) : undefined}
     source={m.source ?? undefined}
     license={m.license ?? undefined}
     legend={m.counted || m.change_in_pace !== null ? gauge : undefined}
