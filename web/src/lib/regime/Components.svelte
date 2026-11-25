@@ -36,7 +36,7 @@
           <li class="c" class:held={!c.linkable}>
             {#if c.linkable}
               <a class="name" href={resolve('/serie/[key]', { key: c.key })}>{c.label}</a>
-              <span class="key">{c.key}{c.window === 4 ? ' · summa av 4 kvartal' : ''}</span>
+              <span class="key">{c.key}{c.window === 4 ? ' · summa av 4 kvartal' : ''}{c.weight !== 1 ? ` · vikt ${fmt(c.weight, 2)}` : ''}</span>
               <span class="row">
                 <svg class="spark" width={W} height={H} viewBox="0 0 {W} {H}" aria-hidden="true">
                   <path d={spark(c)} fill="none" stroke="var(--c-ink)" stroke-width="1.5" stroke-linejoin="round" />
@@ -51,7 +51,7 @@
               </span>
             {:else}
               <span class="name">{c.label}</span>
-              <span class="key">{c.key}</span>
+              <span class="key">{c.key}{c.window === 4 ? ' · summa av 4 kvartal' : ''}</span>
               <span class="muted">inhållen serie: visas bara med namn, inga värden</span>
             {/if}
           </li>

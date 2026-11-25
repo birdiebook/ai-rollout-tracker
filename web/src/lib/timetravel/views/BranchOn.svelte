@@ -119,7 +119,7 @@
     {#if b.month}
       <h2 id="tt-now-h" class="kicker">Läget {periodLabel(b.month, true)}</h2>
       <div class="big"><Glyph state={b.state} size="1.15em" /></div>
-      <p class="idx"><span class="num">{fmt(b.index, 2)}</span> <span class="note">diffusionsindex, 0–1 · {b.n_up ?? 0} ▲ {b.n_neutral ?? 0} ● {b.n_down ?? 0} ▼ av {b.n_series ?? 0} räknade</span></p>
+      <p class="idx"><span class="num">{fmt(b.index, 2)}</span> <span class="note">diffusionsindex, 0–1 · {b.n_up ?? 0} ▲ {b.n_neutral ?? 0} ● {b.n_down ?? 0} ▼ av {b.n_series ?? 0} räknade{#if b.n_families !== null} serier i {b.n_families} {b.n_families === 1 ? 'källfamilj' : 'källfamiljer'}{/if}{#if b.index_v1 !== null && b.state_v1 !== null} · regel v1 {fmt(b.index_v1, 2)} {b.state_v1}{/if}</span></p>
       {#if b.previous}
         <p class="note">Månaden före ({periodLabel(b.previous.month)}): {fmt(b.previous.index, 2)} <Glyph state={b.previous.state} />{#if b.delta_index !== null}, förändring {signed(b.delta_index, 2)}{/if}.</p>
       {/if}

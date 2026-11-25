@@ -4,7 +4,18 @@
 // Paths (relative to the bundle root): manifest.json, overview.json, flow.json, method.json, withheld.json,
 // branch/<G>.json, series/index.json, series/<key>.json, nowcast/<id>.json, regime.json.
 
-export type StateName = 'accelererar' | 'stabil' | 'bromsar in' | 'för få serier' | 'inga registrerade kärnserier';
+// "för få källor": index v2's no-state (fewer than 3 counted source families, bundle 1.4.0); "för få serier": v1's.
+export type StateName = 'accelererar' | 'stabil' | 'bromsar in' | 'för få källor' | 'för få serier' | 'inga registrerade kärnserier';
+export type IndexRule = 'v1' | 'v2';
+
+/** A counted source family of a branch (index v2): its counted series and its vote (mean of (d + 1) / 2). Only
+ *  families whose counted series may all be shown; the others are only counted (n_families_withheld). */
+export interface FamilyVote {
+  family: string;
+  series: string[];
+  n_series?: number;
+  vote: number | null;
+}
 
 /** The record a document was built from: live snapshot or reconstructed history (P9: always shown). */
 export interface RecordMeta {
@@ -43,7 +54,22 @@ export interface BranchTile {
   index: number | null;
   state: StateName | null;
   n_series?: number | null;
-  previous?: { index: number | null; state: StateName | null; [k: string]: unknown } | null;
+  /** index v2 (bundle 1.4.0): the rule behind index and state; a record before v2 is "v1" */
+  rule_version?: IndexRule;
+  n_families?: number | null;
+  n_families_withheld?: number | null;
+  index_v1?: number | null;
+  state_v1?: StateName | null;
+  families?: FamilyVote[];
+  previous?: {
+    index: number | null;
+    state: StateName | null;
+    rule_version?: IndexRule;
+    n_families?: number | null;
+    index_v1?: number | null;
+    state_v1?: StateName | null;
+    [k: string]: unknown;
+  } | null;
   delta_index?: number | null;
   state_changed?: boolean | null;
   [k: string]: unknown;
@@ -53,7 +79,16 @@ export interface Stripes {
   months: string[];
   /** record kind per month: 'skarp' | 'rekonstruerad' */
   kind: (string | null)[];
-  rows: { code: string; name: string; index: (number | null)[]; state: (StateName | null)[]; n_series?: (number | null)[] }[];
+  rows: {
+    code: string;
+    name: string;
+    index: (number | null)[];
+    state: (StateName | null)[];
+    n_series?: (number | null)[];
+    n_families?: (number | null)[];
+    index_v1?: (number | null)[];
+    state_v1?: (StateName | null)[];
+  }[];
   thresholds: { braking_at_most: number; accelerating_at_least: number };
 }
 
@@ -282,6 +317,36 @@ export interface RegimeBlock {
 export interface WithheldDoc {
   withheld: { key: string; label: string; source?: string; license?: string; why: string; counted?: boolean; branch?: string | null }[];
   n?: number;
+}
+
+/** expectations.json (bundle 1.5.0): the snapshot section "expectations" (register F1) after
+ *  expectations.withhold. While the series that read curated/guidance_capex.csv are withheld (`csv_public` false),
+ *  their rows carry ids only (company, period, dates): never a value, size or direction. Never in a branch index. */
+export interface ExpectationsRow {
+  period?: string | null;
+  known_from?: string | null;
+  [k: string]: unknown;
+}
+export interface ExpectationsIndexEntry {
+  latest: ExpectationsRow | null;
+  latest_with_value: ExpectationsRow | null;
+}
+export interface Expectations {
+  record: RecordMeta;
+  available: boolean;
+  from_snapshot: boolean;
+  kind: 'skarp' | 'rekonstruerad';
+  date: string;
+  csv_public: boolean;
+  group: string;
+  in_diffusion: false;
+  error?: string;
+  rules?: Record<string, unknown>;
+  revisions?: Record<string, ExpectationsIndexEntry>;
+  surprise?: { companies?: ExpectationsRow[]; index?: ExpectationsIndexEntry; [k: string]: unknown };
+  events_recent?: ExpectationsRow[];
+  break_statements?: ExpectationsRow[];
+  [k: string]: unknown;
 }
 
 export interface Regime {

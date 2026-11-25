@@ -1,7 +1,8 @@
 // The method page's engine (track W11). Pure functions, no DOM. Each one is the TypeScript form of one Python
 // function and is checked against it in engine.test.ts (golden file web/fixtures/method_golden.json, made by the
 // Python engine itself, and every branch document of the bundle at the registered parameters):
-//   directionAt / exploreBranch   ai_tracker.state.measures (direction) and state.branch.branch / diffusion / state_of
+//   directionAt / exploreBranch   ai_tracker.state.measures (direction) and state.branch.branch / diffusion /
+//                                 state_of (v1) / vote_exact / diffusion_v2_exact / state_v2 (v2, the official rule)
 //   quantile6 / interval / pit    ai_tracker.nowcast.intervals.ErrorDistribution (empirical case, G-C)
 //   binomialBand                  ai_tracker.nowcast.intervals.binomial_band
 //   holm                          ai_tracker.evaluation.holm
@@ -9,17 +10,36 @@
 // drawn as "registrerat"; these give the reader's exploration ("utforskning") at other parameter values.
 
 export type Dir = 1 | 0 | -1;
-export type StateWord = 'accelererar' | 'stabil' | 'bromsar in' | 'för få serier' | 'inga registrerade kärnserier';
+export type StateWord =
+  | 'accelererar'
+  | 'stabil'
+  | 'bromsar in'
+  | 'för få källor'
+  | 'för få serier'
+  | 'inga registrerade kärnserier';
+export type IndexRule = 'v1' | 'v2';
 
 export interface Rules {
   deadband_sd: number;
   accelerating_at_least: number;
   braking_at_most: number;
+  /** v1: fewer counted series than this gives no state ("för få serier") */
   min_series: number;
+  /** v2: fewer counted source families than this gives no state ("för få källor") */
+  min_families: number;
+  /** the official rule behind index and state (method.json rules.index_rule) */
+  index_rule: IndexRule;
 }
 
-/** The registered rules (docs/mattregister.md section 2), used when method.json lacks them. */
-export const REGISTERED: Rules = { deadband_sd: 0.25, accelerating_at_least: 0.67, braking_at_most: 0.33, min_series: 3 };
+/** The registered rules (docs/mattregister.md section 2 and 2026-11-24 index v2), used when method.json lacks them. */
+export const REGISTERED: Rules = {
+  deadband_sd: 0.25,
+  accelerating_at_least: 0.67,
+  braking_at_most: 0.33,
+  min_series: 3,
+  min_families: 3,
+  index_rule: 'v2'
+};
 
 /** What the engine needs of one counted series (branch/<G>.json `counted[]`). */
 export interface ExploreSeries {
@@ -30,6 +50,8 @@ export interface ExploreSeries {
   sd: number;
   /** the pipeline's direction at the registered dead band */
   registered: Dir;
+  /** the series' source family (branch/<G>.json families[]); absent = a family of its own */
+  family?: string;
 }
 
 /** Doubling and halving times: a shorter time is acceleration, so the sign flips (register 2026-11-23, Fas 5 p. 2). */
@@ -45,7 +67,7 @@ export function directionAt(s: Pick<ExploreSeries, 'method' | 'change' | 'sd'>, 
   return signed > band ? 1 : signed < -band ? -1 : 0;
 }
 
-/** branch.diffusion: (n_up + 0.5 n_neutral) / n, the same float operations as Python. */
+/** branch.diffusion (v1): (n_up + 0.5 n_neutral) / n, the same float operations as Python. */
 export function diffusion(dirs: Dir[]): number | null {
   if (dirs.length === 0) return null;
   let up = 0;
@@ -57,7 +79,7 @@ export function diffusion(dirs: Dir[]): number | null {
   return (up + 0.5 * neutral) / dirs.length;
 }
 
-/** branch.state_of: the index compared unrounded (2/3 = 0.667 is below 0.67: stable). */
+/** branch.state_of (v1): the index compared unrounded (2/3 = 0.667 is below 0.67: stable). */
 export function stateOf(index: number | null, n: number, r: Rules = REGISTERED): StateWord {
   if (n < r.min_series || index === null) return 'för få serier';
   if (index >= r.accelerating_at_least) return 'accelererar';
@@ -65,29 +87,123 @@ export function stateOf(index: number | null, n: number, r: Rules = REGISTERED):
   return 'stabil';
 }
 
+// ---------------------------------------------------------------- index v2: one vote per source family
+
+/** An exact non-negative rational num/den (small integers: series and family counts). */
+export interface Ratio {
+  num: number;
+  den: number;
+}
+
+const gcd = (a: number, b: number): number => (b === 0 ? Math.abs(a) : gcd(b, a % b));
+
+/** A threshold written as a decimal (0.67) as the exact rational Python's Fraction(str(x)) gives (67/100). */
+export function decimalRatio(x: number): Ratio {
+  const s = String(x);
+  if (!/^-?\d+(\.\d+)?$/.test(s)) throw new RangeError(`not a plain decimal: ${s}`);
+  const dec = s.includes('.') ? s.split('.')[1].length : 0;
+  const den = 10 ** dec;
+  return { num: Math.round(x * den), den };
+}
+
+/** a >= b, exactly (cross-multiplied integers). */
+const ge = (a: Ratio, b: Ratio) => a.num * b.den >= b.num * a.den;
+
+/** branch.vote_exact: the mean of (d + 1) / 2 over the family's counted series (1, 1/2 or 0 for one series). */
+export function voteExact(dirs: Dir[]): Ratio | null {
+  if (!dirs.length) return null;
+  const num = dirs.reduce<number>((a, d) => a + d + 1, 0);
+  const den = 2 * dirs.length;
+  const g = gcd(num, den) || 1;
+  return { num: num / g, den: den / g };
+}
+
+/** branch.diffusion_v2_exact: the mean of the family votes over families with at least one counted series. */
+export function diffusionV2Exact(families: Dir[][]): Ratio | null {
+  const votes = families.map(voteExact).filter((v): v is Ratio => v !== null);
+  if (!votes.length) return null;
+  let acc: Ratio = { num: 0, den: 1 };
+  for (const v of votes) {
+    const den = acc.den * v.den;
+    const num = acc.num * v.den + v.num * acc.den;
+    const g = gcd(num, den) || 1;
+    acc = { num: num / g, den: den / g };
+  }
+  const den = acc.den * votes.length;
+  const g = gcd(acc.num, den) || 1;
+  return { num: acc.num / g, den: den / g };
+}
+
+/** float(Fraction): one correctly rounded division of two exact integers, the same double as Python. */
+export const ratioValue = (x: Ratio | null): number | null => (x === null ? null : x.num / x.den);
+
+/** branch.state_v2: the same thresholds compared exactly; fewer than min_families families -> "för få källor". */
+export function stateV2(index: Ratio | null, nFamilies: number, r: Rules = REGISTERED): StateWord {
+  if (nFamilies < r.min_families || index === null) return 'för få källor';
+  if (ge(index, decimalRatio(r.accelerating_at_least))) return 'accelererar';
+  if (ge(decimalRatio(r.braking_at_most), index)) return 'bromsar in';
+  return 'stabil';
+}
+
+export interface FamilyVote {
+  family: string;
+  series: string[];
+  vote: number | null;
+}
+
 export interface Explored {
   k: number;
+  /** the official rule's index and state (rules.index_rule) */
   index: number | null;
   state: StateWord;
   n_series: number;
   n_up: number;
   n_neutral: number;
   n_down: number;
+  n_families: number;
+  index_v1: number | null;
+  state_v1: StateWord;
+  index_v2: number | null;
+  state_v2: StateWord;
+  /** counted families in the order of their first series, each with its vote */
+  families: FamilyVote[];
   directions: Record<string, Dir>;
 }
 
-export function exploreBranch(series: Pick<ExploreSeries, 'key' | 'method' | 'change' | 'sd'>[], k: number, r: Rules = REGISTERED): Explored {
+type Explorable = Pick<ExploreSeries, 'key' | 'method' | 'change' | 'sd' | 'family'>;
+
+export function exploreBranch(series: Explorable[], k: number, r: Rules = REGISTERED): Explored {
   const directions: Record<string, Dir> = {};
   const dirs = series.map((s) => (directions[s.key] = directionAt(s, k)));
-  const index = diffusion(dirs);
+  const groups = new Map<string, { series: string[]; dirs: Dir[] }>();
+  series.forEach((s, i) => {
+    const f = s.family ?? s.key;
+    const g = groups.get(f) ?? { series: [], dirs: [] };
+    g.series.push(s.key);
+    g.dirs.push(dirs[i]);
+    groups.set(f, g);
+  });
+  const families = [...groups].map(([family, g]) => ({ family, series: g.series, vote: ratioValue(voteExact(g.dirs)) }));
+  const exact = diffusionV2Exact([...groups.values()].map((g) => g.dirs));
+  const index_v1 = diffusion(dirs);
+  const state_v1 = stateOf(index_v1, series.length, r);
+  const index_v2 = ratioValue(exact);
+  const state_v2 = stateV2(exact, groups.size, r);
+  const v2 = r.index_rule === 'v2';
   return {
     k,
-    index,
-    state: stateOf(index, series.length, r),
+    index: v2 ? index_v2 : index_v1,
+    state: v2 ? state_v2 : state_v1,
     n_series: series.length,
     n_up: dirs.filter((d) => d === 1).length,
     n_neutral: dirs.filter((d) => d === 0).length,
     n_down: dirs.filter((d) => d === -1).length,
+    n_families: groups.size,
+    index_v1,
+    state_v1,
+    index_v2,
+    state_v2,
+    families,
     directions
   };
 }
@@ -100,7 +216,7 @@ export function flipPoints(series: Pick<ExploreSeries, 'method' | 'change' | 'sd
 
 /** The index over k in [0, kMax] as steps [{from, to, index, state}]. A series exactly on the band edge is neutral
  *  (the rule is strict: signed > band), so the value at a flip point itself belongs to the step on its right. */
-export function indexSteps(series: Pick<ExploreSeries, 'key' | 'method' | 'change' | 'sd'>[], kMax: number, r: Rules = REGISTERED) {
+export function indexSteps(series: Explorable[], kMax: number, r: Rules = REGISTERED) {
   const cuts = [0, ...flipPoints(series).filter((x) => x > 0 && x < kMax), kMax];
   const out: { from: number; to: number; index: number | null; state: StateWord }[] = [];
   for (let i = 0; i < cuts.length - 1; i++) {

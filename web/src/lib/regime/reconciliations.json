@@ -88,6 +88,132 @@
         }
       ],
       "scale": 100.0
+    },
+    {
+      "key": "x_dep_rev",
+      "num": [
+        {
+          "series": "dep_hyp4",
+          "window": 4
+        }
+      ],
+      "den": [
+        {
+          "series": "rev_msft",
+          "window": 4
+        },
+        {
+          "series": "rev_googl",
+          "window": 4
+        },
+        {
+          "series": "rev_amzn",
+          "window": 4
+        },
+        {
+          "series": "rev_meta",
+          "window": 4
+        }
+      ],
+      "scale": 100.0
+    },
+    {
+      "key": "x_capcost_rev_r08",
+      "num": [
+        {
+          "series": "dep_hyp4",
+          "window": 4
+        },
+        {
+          "series": "ppe_net_hyp4",
+          "window": 1,
+          "weight": 0.08
+        }
+      ],
+      "den": [
+        {
+          "series": "rev_msft",
+          "window": 4
+        },
+        {
+          "series": "rev_googl",
+          "window": 4
+        },
+        {
+          "series": "rev_amzn",
+          "window": 4
+        },
+        {
+          "series": "rev_meta",
+          "window": 4
+        }
+      ],
+      "scale": 100.0
+    },
+    {
+      "key": "x_capcost_rev_r12",
+      "num": [
+        {
+          "series": "dep_hyp4",
+          "window": 4
+        },
+        {
+          "series": "ppe_net_hyp4",
+          "window": 1,
+          "weight": 0.12
+        }
+      ],
+      "den": [
+        {
+          "series": "rev_msft",
+          "window": 4
+        },
+        {
+          "series": "rev_googl",
+          "window": 4
+        },
+        {
+          "series": "rev_amzn",
+          "window": 4
+        },
+        {
+          "series": "rev_meta",
+          "window": 4
+        }
+      ],
+      "scale": 100.0
+    },
+    {
+      "key": "x_dep_capex",
+      "num": [
+        {
+          "series": "dep_hyp4",
+          "window": 4
+        }
+      ],
+      "den": [
+        {
+          "series": "capex_hyp4",
+          "window": 4
+        }
+      ],
+      "scale": 100.0
+    },
+    {
+      "key": "x_dep_rev_aws",
+      "num": [
+        {
+          "series": "dep_aws",
+          "window": 4
+        }
+      ],
+      "den": [
+        {
+          "series": "rev_aws",
+          "window": 4
+        }
+      ],
+      "scale": 100.0
     }
   ]
 }

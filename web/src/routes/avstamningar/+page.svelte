@@ -5,7 +5,7 @@
   import { resolve } from '$app/paths';
   import { StatusBadge, dataUrl, periodLabel, setChartData } from '$lib/design';
   import { SpanChart } from '$lib/flow';
-  import { ReconOverview, ReconSection } from '$lib/regime';
+  import { ExpectationsSection, ReconOverview, ReconSection } from '$lib/regime';
 
   let { data } = $props();
   setChartData(() => dataUrl('flow.json'));
@@ -34,6 +34,7 @@
     <ReconOverview views={data.views} status={data.status} />
     <nav class="toc" aria-label="Avstämningarna">
       {#each data.views as v (v.key)}<a href="#{v.key}">{v.short} <span>{v.lead}</span></a>{/each}
+      {#if data.expectations}<a href="#forvantningar">Förväntningar mot utfall <span>F1</span></a>{/if}
     </nav>
   </section>
 
@@ -47,6 +48,10 @@
   {#each data.views as v (v.key)}
     <ReconSection r={v} />
   {/each}
+{/if}
+
+{#if data.expectations}
+  <ExpectationsSection v={data.expectations} />
 {/if}
 
 <p class="note end">

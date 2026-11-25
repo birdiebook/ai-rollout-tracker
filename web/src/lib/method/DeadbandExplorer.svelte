@@ -6,7 +6,7 @@
   import { resolve } from '$app/paths';
   import { scaleLinear } from 'd3-scale';
   import { Axis, ChartFrame, DIRECTIONS, Legend, fmt, stateStyle, type RecordStatus } from '$lib/design';
-  import { IndexHistory, UnitBoxes } from '$lib/flow';
+  import { FamilyVotes, IndexHistory, UnitBoxes } from '$lib/flow';
   import { exploreBranch, indexSteps, zOf, type Rules } from './engine';
   import type { ExploreBranch } from './prepare';
 
@@ -43,9 +43,12 @@
   const kTxt = (x: number) => fmt(x, 2);
   const changed = $derived(series.filter((s) => atK.directions[s.key] !== s.registered).length);
 
+  const v2 = $derived(rules.index_rule === 'v2');
+  const famTxt = (n: number) => `${n} ${n === 1 ? 'källfamilj' : 'källfamiljer'}`;
   const sentence = $derived(
     br
-      ? `Med dödbandet ${kTxt(k)} standardavvikelser ${atK.n_up} av ${atK.n_series} serier ökar takten, ${atK.n_neutral} oförändrade och ${atK.n_down} minskar takten: index ${fmt(atK.index, 2)}, ${st(atK.state).word}. ` +
+      ? `Med dödbandet ${kTxt(k)} standardavvikelser ${atK.n_up} av ${atK.n_series} serier ökar takten, ${atK.n_neutral} oförändrade och ${atK.n_down} minskar takten` +
+          (v2 ? ` i ${famTxt(atK.n_families)}: index ${fmt(atK.index, 2)} (medel av familjernas röster), ${st(atK.state).word}. ` : `: index ${fmt(atK.index, 2)}, ${st(atK.state).word}. `) +
           (isReg
             ? 'Det är det registrerade dödbandet, och utfallet är exakt grenens registrerade tillstånd.'
             : `Registrerat (${kTxt(reg)}): index ${fmt(br.registered.index, 2)}, ${st(br.registered.state).word}. ${changed} ${changed === 1 ? 'serie byter' : 'serier byter'} riktning.`)
@@ -97,15 +100,21 @@
   <div class="verdicts" aria-live="polite">
     <div class="verdict reg-card">
       <span class="tag reg">registrerat</span>
-      <span class="k">dödband {kTxt(reg)} sd, {br.registered.n_series} serier</span>
+      <span class="k">dödband {kTxt(reg)} sd, {v2 && br.registered.n_families !== null ? `${famTxt(br.registered.n_families)}, ` : ''}{br.registered.n_series} serier</span>
       <span class="state"><span class="sw" style:background={st(br.registered.state).color} aria-hidden="true"></span>{st(br.registered.state).glyph} {st(br.registered.state).word}</span>
       <span class="idx">index <strong class="num">{fmt(br.registered.index, 2)}</strong></span>
+      {#if v2 && br.registered.index_v1 !== null}
+        <span class="v1">regel v1, en röst per serie: {fmt(br.registered.index_v1, 2)} {st(br.registered.state_v1 ?? '').glyph} {st(br.registered.state_v1 ?? '').word}</span>
+      {/if}
     </div>
     <div class="verdict exp-card" class:same={isReg}>
       <span class="tag exp">utforskning</span>
       <span class="k">dödband {kTxt(k)} sd</span>
       <span class="state"><span class="sw" style:background={st(atK.state).color} aria-hidden="true"></span>{st(atK.state).glyph} {st(atK.state).word}</span>
       <span class="idx">index <strong class="num">{fmt(atK.index, 2)}</strong></span>
+      {#if v2}
+        <span class="v1">regel v1, en röst per serie: {fmt(atK.index_v1, 2)} {st(atK.state_v1).glyph} {st(atK.state_v1).word}</span>
+      {/if}
     </div>
   </div>
   <p class="desc-line">{sentence}</p>
@@ -122,12 +131,14 @@
         caption: `${br.code}: förändring i takt i standardavvikelser och riktning vid registrerat och utforskat dödband`,
         columns: [
           { key: 's', label: 'Serie', align: 'left' },
+          ...(v2 ? [{ key: 'f', label: 'Källfamilj', align: 'left' as const }] : []),
           { key: 'z', label: 'Förändring (sd)' },
           { key: 'r', label: `Registrerat (${kTxt(reg)})`, align: 'left' },
           { key: 'e', label: `Utforskning (${kTxt(k)})`, align: 'left' }
         ],
         rows: rows.map((r) => ({
           s: r.label,
+          f: r.family ?? r.key,
           z: fmt(r.z, 2),
           r: `${DIRECTIONS[r.registered as 1 | 0 | -1].glyph} ${word(r.registered as number)}`,
           e: `${DIRECTIONS[atK.directions[r.key]].glyph} ${word(atK.directions[r.key])}`
@@ -160,7 +171,7 @@
     <ChartFrame
       id="db-index"
       title="Grenens index när dödbandet ändras"
-      description={`${br.code}: indexet är en trappa i dödbandet, eftersom en serie bara byter riktning när bandet passerar den. Tröskeln ${fmt(rules.accelerating_at_least, 2)} ger accelererar och ${fmt(rules.braking_at_most, 2)} bromsar in; med färre än ${rules.min_series} serier visas inget tillstånd.`}
+      description={`${br.code}: indexet är en trappa i dödbandet, eftersom en serie bara byter riktning när bandet passerar den. Tröskeln ${fmt(rules.accelerating_at_least, 2)} ger accelererar och ${fmt(rules.braking_at_most, 2)} bromsar in; med färre än ${v2 ? `${rules.min_families} källfamiljer` : `${rules.min_series} serier`} visas inget tillstånd.`}
       height={240}
       margin={{ top: 14, right: 18, bottom: 34, left: 40 }}
       {status}
@@ -223,11 +234,19 @@
   <div class="units-pair">
     <div>
       <p class="unit-head"><span class="tag reg">registrerat</span> {kTxt(reg)} sd</p>
-      <UnitBoxes label="Seriernas registrerade riktning i {br.code}" items={series.map((s) => ({ key: s.key, label: s.label, direction: s.registered }))} {href} />
+      {#if v2}
+        <FamilyVotes label="Källfamiljernas registrerade röster i {br.code}" families={atReg.families} counted={series.map((s) => ({ key: s.key, label: s.label, direction: s.registered }))} {href} />
+      {:else}
+        <UnitBoxes label="Seriernas registrerade riktning i {br.code}" items={series.map((s) => ({ key: s.key, label: s.label, direction: s.registered }))} {href} />
+      {/if}
     </div>
     <div>
       <p class="unit-head"><span class="tag exp">utforskning</span> {kTxt(k)} sd</p>
-      <UnitBoxes label="Seriernas riktning i {br.code} vid dödbandet {kTxt(k)}" items={series.map((s) => ({ key: s.key, label: s.label, direction: atK.directions[s.key] }))} {href} />
+      {#if v2}
+        <FamilyVotes label="Källfamiljernas röster i {br.code} vid dödbandet {kTxt(k)}" families={atK.families} counted={series.map((s) => ({ key: s.key, label: s.label, direction: atK.directions[s.key] }))} {href} />
+      {:else}
+        <UnitBoxes label="Seriernas riktning i {br.code} vid dödbandet {kTxt(k)}" items={series.map((s) => ({ key: s.key, label: s.label, direction: atK.directions[s.key] }))} {href} />
+      {/if}
     </div>
   </div>
 
@@ -341,6 +360,11 @@
     .verdict .sw {
       forced-color-adjust: none;
     }
+  }
+  .verdict .v1 {
+    grid-column: 1 / -1;
+    font-size: var(--fs-small);
+    color: var(--c-muted);
   }
   .verdict .idx {
     grid-column: 1 / -1;

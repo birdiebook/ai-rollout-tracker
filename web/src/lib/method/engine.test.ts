@@ -5,6 +5,7 @@
 // 2. Every branch document of every bundle at the registered parameters: what the explorer computes at the
 //    registered dead band is exactly the pipeline's record (index, state, counts, each series' direction).
 //    Bundles: web-data-fixtures/ and, when set, SITE_BUNDLE_DIR (a real bundle).
+// Index v2 (one vote per source family, register 2026-11-24) is the official rule; v1 is checked beside it.
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -21,18 +22,39 @@ import {
   pit,
   pitHistogram,
   quantile6,
-  stateOf
+  decimalRatio,
+  diffusionV2Exact,
+  ratioValue,
+  stateOf,
+  stateV2,
+  voteExact,
+  REGISTERED
 } from './engine';
 import { exploreBranchOf, rulesOf, type BranchInput } from './prepare';
 
 const golden = JSON.parse(readFileSync(resolve('fixtures/method_golden.json'), 'utf-8'));
 const fixtureSeries = (code: string) => {
   const doc = JSON.parse(readFileSync(resolve(`../web-data-fixtures/branch/${code}.json`), 'utf-8')) as BranchInput;
-  return doc.counted.map((s) => ({ key: s.key, method: s.method ?? null, change: s.change_in_pace as number, sd: s.sd_change as number }));
+  const fam = new Map((doc.families ?? []).flatMap((f) => f.series.map((k) => [k, f.family] as const)));
+  return doc.counted.map((s) => ({ key: s.key, method: s.method ?? null, change: s.change_in_pace as number, sd: s.sd_change as number, family: fam.get(s.key) }));
 };
 
 describe('dead band: golden values from state.branch with the dead band moved', () => {
-  const branches = golden.deadband.branches as Record<string, { k: number; index: number | null; state: string; n_up: number; n_neutral: number; n_down: number; directions: Record<string, number> }[]>;
+  type Row = {
+    k: number;
+    index: number | null;
+    state: string;
+    n_up: number;
+    n_neutral: number;
+    n_down: number;
+    n_families: number;
+    index_v1: number | null;
+    state_v1: string;
+    votes: Record<string, number>;
+    families: Record<string, string>;
+    directions: Record<string, number>;
+  };
+  const branches = golden.deadband.branches as Record<string, Row[]>;
   for (const [code, rows] of Object.entries(branches)) {
     const doc = JSON.parse(readFileSync(resolve(`../web-data-fixtures/branch/${code}.json`), 'utf-8'));
     if ((doc.n_withheld_counted ?? 0) > 0) {
@@ -49,7 +71,14 @@ describe('dead band: golden values from state.branch with the dead band moved', 
         expect(e.index, `${code} k=${r.k}`).toBe(r.index);
         expect(e.state, `${code} k=${r.k}`).toBe(r.state);
         expect([e.n_up, e.n_neutral, e.n_down]).toEqual([r.n_up, r.n_neutral, r.n_down]);
+        expect(e.n_families, `${code} k=${r.k}`).toBe(r.n_families);
+        expect([e.index_v1, e.state_v1], `${code} k=${r.k} v1`).toEqual([r.index_v1, r.state_v1]);
+        expect(Object.fromEntries(e.families.map((f) => [f.family, f.vote])), `${code} k=${r.k} votes`).toEqual(r.votes);
       }
+    });
+    it(`${code}: the fixture's families are the golden ones`, () => {
+      const fam = Object.fromEntries(fixtureSeries(code).map((s) => [s.key, s.family]));
+      expect(fam).toEqual(rows[0].families);
     });
     it(`${code}: the index steps agree with the probes`, () => {
       const series = fixtureSeries(code);
@@ -71,7 +100,8 @@ describe.each(bundles)('registered parameters reproduce the record in %s', (dir)
   const method = JSON.parse(readFileSync(resolve(dir, 'method.json'), 'utf-8'));
   const rules = rulesOf(method);
   it('the rules are the registered ones', () => {
-    expect(rules).toEqual({ deadband_sd: 0.25, accelerating_at_least: 0.67, braking_at_most: 0.33, min_series: 3 });
+    expect(rules).toEqual({ deadband_sd: 0.25, accelerating_at_least: 0.67, braking_at_most: 0.33, min_series: 3, min_families: 3, index_rule: 'v2' });
+    expect(rules).toEqual(REGISTERED);
   });
   for (const code of ['G1', 'G2', 'G3', 'G4', 'G5', 'G6', 'G7', 'G8', 'G9']) {
     it(`${code}`, () => {
@@ -85,6 +115,12 @@ describe.each(bundles)('registered parameters reproduce the record in %s', (dir)
       expect(e.index).toBe(doc.index);
       expect(e.state).toBe(doc.state);
       expect([e.n_up, e.n_neutral, e.n_down]).toEqual([doc.n_up, doc.n_neutral, doc.n_down]);
+      expect(e.n_families).toBe(doc.n_families);
+      expect([e.index_v1, e.state_v1]).toEqual([doc.index_v1, doc.state_v1]);
+      // the bundle rounds a family's vote to 4 decimals (the index itself is exact)
+      const votes = new Map(e.families.map((f) => [f.family, f.vote as number]));
+      expect([...votes.keys()]).toEqual((doc.families ?? []).map((f: { family: string }) => f.family));
+      for (const f of doc.families ?? []) expect(votes.get(f.family), f.family).toBeCloseTo(f.vote, 4);
       for (const s of b.series) expect(directionAt(s, rules.deadband_sd), s.key).toBe(s.registered);
     });
   }
@@ -102,6 +138,36 @@ describe('state rule edges (register section 2)', () => {
     expect(stateOf(0.67, 3)).toBe('accelererar');
     expect(stateOf(0.33, 3)).toBe('bromsar in');
     expect(stateOf(1, 2)).toBe('för få serier');
+  });
+  it('v2: one vote per family, compared exactly; fewer than 3 families gives "för få källor"', () => {
+    expect(voteExact([1])).toEqual({ num: 1, den: 1 });
+    expect(voteExact([1, 0])).toEqual({ num: 3, den: 4 });
+    expect(voteExact([])).toBeNull();
+    expect(decimalRatio(0.67)).toEqual({ num: 67, den: 100 });
+    // G6 in the fixtures: votes 1/2, 1 (two series up), 1/2 -> 2/3, below 0.67: stable (v1 would say 3/4: accelerating)
+    const g6 = diffusionV2Exact([[0], [1, 1], [0]]);
+    expect(g6).toEqual({ num: 2, den: 3 });
+    expect(ratioValue(g6)).toBe(2 / 3);
+    expect(stateV2(g6, 3)).toBe('stabil');
+    expect(stateV2({ num: 67, den: 100 }, 3)).toBe('accelererar');
+    expect(stateV2({ num: 33, den: 100 }, 3)).toBe('bromsar in');
+    expect(stateV2({ num: 1, den: 1 }, 2)).toBe('för få källor');
+    expect(stateV2(null, 5)).toBe('för få källor');
+  });
+  it('v2 equals v1 when every family has one series', () => {
+    const series = [
+      { key: 'a', method: 'log', change: 3, sd: 1 },
+      { key: 'b', method: 'log', change: 0, sd: 1 },
+      { key: 'c', method: 'log', change: -3, sd: 1 },
+      { key: 'd', method: 'log', change: 3, sd: 1 }
+    ];
+    const e = exploreBranch(series, 0.25);
+    expect(e.index).toBe(e.index_v1);
+    expect(e.n_families).toBe(4);
+    const grouped = exploreBranch(series.map((s) => ({ ...s, family: s.key === 'd' ? 'a' : s.key })), 0.25);
+    expect(grouped.n_families).toBe(3);
+    expect(grouped.index).toBe((1 + 0.5 + 0) / 3);
+    expect(grouped.index_v1).toBe(e.index_v1);
   });
   it('doubling and halving times are flipped: a shorter time is more pace', () => {
     expect(directionAt({ method: 'doubling', change: -2, sd: 1 }, 0.25)).toBe(1);

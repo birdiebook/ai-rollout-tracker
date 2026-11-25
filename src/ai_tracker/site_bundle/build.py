@@ -33,6 +33,7 @@ BUDGETS: list[tuple[str, tuple[int, int]]] = [
     ("series/*.json", (300_000, 75_000)),
     ("nowcast/*.json", (200_000, 40_000)),
     ("regime.json", (100_000, 20_000)),
+    ("expectations.json", (60_000, 12_000)),
     ("method.json", (100_000, 20_000)),
     ("withheld.json", (80_000, 15_000)),
     ("story/index.json", (60_000, 12_000)),

@@ -12,7 +12,8 @@
     { s: 'accelererar', n: h.counts.accelererar, word: 'accelererar' },
     { s: 'stabil', n: h.counts.stabil, word: h.counts.stabil === 1 ? 'stabil' : 'stabila' },
     { s: 'bromsar in', n: h.counts['bromsar in'], word: 'bromsar in' },
-    { s: 'för få serier', n: h.counts['för få serier'] + h.counts['inga registrerade kärnserier'], word: 'utan tillstånd' }
+    // v2's "för få källor" (fewer than 3 source families), v1's "för få serier" in older records, and no core series
+    { s: 'för få källor', n: h.counts['för få källor'] + h.counts['för få serier'] + h.counts['inga registrerade kärnserier'], word: 'utan tillstånd' }
   ] as const);
 </script>
 
@@ -48,6 +49,12 @@
   </ul>
 
   <p class="lede" data-testid="chain-sentence">{h.chainSentence}</p>
+  {#if h.v1Sentence}
+    <p class="note v1" data-testid="v1-sentence">
+      Tillståndet räknas med en röst per <Term id="kallfamilj">källfamilj</Term>; en gren med färre än tre räknade
+      familjer har för få källor för ett tillstånd. {h.v1Sentence} <a href="{resolve('/metod')}#diffusion">Så räknas indexet</a>
+    </p>
+  {/if}
 
   {#if h.changes.length}
     <div class="changes">

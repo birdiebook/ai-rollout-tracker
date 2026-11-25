@@ -4,7 +4,7 @@
      for a state is drawn without the diverging colour (R-W3: an index without a state is no direction). -->
 <script lang="ts">
   import { fmt, periodLabel } from '../format';
-  import { divergingFill, stateStyle } from '../state';
+  import { divergingFill, isNoState, stateStyle } from '../state';
   import { useTooltip } from './tooltip.svelte';
   import type { ChartDims, RecordStatus } from './types';
 
@@ -26,8 +26,8 @@
   const labelW = $derived(dims.width < 500 ? 34 : 200);
   const cw = $derived((dims.width - labelW) / Math.max(1, months.length));
   const status = (i: number): RecordStatus => (kind[i] === 'skarp' || kind[i] === 'live' ? 'live' : 'recon');
-  /** no state for that month: too few series (or none registered) */
-  const few = (s: string | null | undefined) => s === 'för få serier' || s === 'inga registrerade kärnserier';
+  /** no state for that month: too few source families (v2), too few series (v1) or none registered */
+  const few = (s: string | null | undefined) => isNoState(s);
   const tip = useTooltip();
 
   function over(e: PointerEvent) {

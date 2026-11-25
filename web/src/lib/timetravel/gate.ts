@@ -93,7 +93,21 @@ export function cutVersions(v: Versions | null | undefined, date: string): Versi
   };
 }
 
-export type HistoryRow = { month: string; kind: string; index: number | null; state: string | null; n_series?: number | null; n_up?: number | null; n_neutral?: number | null; n_down?: number | null };
+export type HistoryRow = {
+  month: string;
+  kind: string;
+  index: number | null;
+  state: string | null;
+  n_series?: number | null;
+  n_up?: number | null;
+  n_neutral?: number | null;
+  n_down?: number | null;
+  /** index v2 (bundle 1.4.0) */
+  rule_version?: string | null;
+  n_families?: number | null;
+  index_v1?: number | null;
+  state_v1?: string | null;
+};
 
 /** A branch's index history as a site built on `day` had it: the month-end records known on that day. */
 export function cutHistory<T extends { month: string }>(history: T[], day: string, rec?: RecordInfo | null): (T & { known: string })[] {
@@ -110,7 +124,17 @@ export interface StripesOn {
   /** the day each month's record became known */
   known: string[];
   kind: (string | null)[];
-  rows: { code: string; name: string; index: (number | null)[]; state: (StateName | null)[]; n_series: (number | null)[] }[];
+  rows: {
+    code: string;
+    name: string;
+    index: (number | null)[];
+    state: (StateName | null)[];
+    n_series: (number | null)[];
+    /** index v2 (bundle 1.4.0): empty on an older bundle */
+    n_families: (number | null)[];
+    index_v1: (number | null)[];
+    state_v1: (StateName | null)[];
+  }[];
   thresholds: Stripes['thresholds'];
 }
 
@@ -121,7 +145,16 @@ export function cutStripes(s: Stripes, day: string, rec?: RecordInfo | null): St
     months,
     known: months.map((m) => monthKnown(m, rec)),
     kind: s.kind.slice(0, n),
-    rows: s.rows.map((r) => ({ code: r.code, name: r.name, index: r.index.slice(0, n), state: r.state.slice(0, n), n_series: (r.n_series ?? []).slice(0, n) })),
+    rows: s.rows.map((r) => ({
+      code: r.code,
+      name: r.name,
+      index: r.index.slice(0, n),
+      state: r.state.slice(0, n),
+      n_series: (r.n_series ?? []).slice(0, n),
+      n_families: (r.n_families ?? []).slice(0, n),
+      index_v1: (r.index_v1 ?? []).slice(0, n),
+      state_v1: (r.state_v1 ?? []).slice(0, n)
+    })),
     thresholds: s.thresholds
   };
 }
@@ -147,6 +180,9 @@ export interface BranchStateOn {
   index: number | null;
   state: StateName | null;
   n_series: number | null;
+  n_families: number | null;
+  index_v1: number | null;
+  state_v1: StateName | null;
   previous: { month: string; index: number | null; state: StateName | null } | null;
   delta_index: number | null;
   state_changed: boolean | null;
@@ -190,12 +226,15 @@ export function overviewOn(ov: Overview, date: string): OverviewOn {
       index: r.index[i],
       state: r.state[i],
       n_series: r.n_series[i] ?? null,
+      n_families: r.n_families[i] ?? null,
+      index_v1: r.index_v1[i] ?? null,
+      state_v1: r.state_v1[i] ?? null,
       previous: prev,
       delta_index: prev && prev.index !== null && r.index[i] !== null ? round4(r.index[i]! - prev.index) : null,
       state_changed: prev ? prev.state !== r.state[i] : null
     };
   });
-  const counts: Record<string, number> = { accelererar: 0, stabil: 0, 'bromsar in': 0, 'för få serier': 0, 'inga registrerade kärnserier': 0 };
+  const counts: Record<string, number> = { accelererar: 0, stabil: 0, 'bromsar in': 0, 'för få källor': 0, 'för få serier': 0, 'inga registrerade kärnserier': 0 };
   for (const b of branches) if (b.state) counts[b.state] = (counts[b.state] ?? 0) + 1;
   const out: OverviewOn = {
     day,
@@ -235,6 +274,10 @@ export interface BranchOn {
   n_up: number | null;
   n_neutral: number | null;
   n_down: number | null;
+  /** index v2 of the month (null on a record before v2) and v1 beside */
+  n_families: number | null;
+  index_v1: number | null;
+  state_v1: StateName | null;
   previous: { month: string; index: number | null; state: StateName | null } | null;
   delta_index: number | null;
   history: (HistoryRow & { known: string })[];
@@ -263,6 +306,9 @@ export function branchOn(doc: Branch & { history?: HistoryRow[] }, date: string)
     n_up: cur?.n_up ?? null,
     n_neutral: cur?.n_neutral ?? null,
     n_down: cur?.n_down ?? null,
+    n_families: cur?.n_families ?? null,
+    index_v1: cur?.index_v1 ?? null,
+    state_v1: (cur?.state_v1 as StateName | null) ?? null,
     previous: prev ? { month: prev.month, index: prev.index, state: prev.state as StateName | null } : null,
     delta_index: prev && prev.index !== null && cur && cur.index !== null ? round4(cur.index - prev.index) : null,
     history

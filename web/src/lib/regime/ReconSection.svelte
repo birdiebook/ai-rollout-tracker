@@ -8,12 +8,13 @@
   import Components from './Components.svelte';
   import ContributionChart from './ContributionChart.svelte';
   import RatioChart from './RatioChart.svelte';
-  import { REST_TOLERANCE, levelText, ordinal } from './recon';
+  import { RECON_READING, REST_TOLERANCE, levelText, ordinal } from './recon';
   import type { ReconView } from './types';
 
   let { r }: { r: ReconView } = $props();
   const inside = $derived(r.change_in_pace !== null && r.deadband !== null ? Math.abs(r.change_in_pace) <= r.deadband : null);
   const restNote = $derived(r.max_rest !== null && r.max_rest >= REST_TOLERANCE);
+  const reading = $derived(RECON_READING[r.key] ?? null);
 </script>
 
 <section class="rc panel" id={r.key} aria-labelledby="{r.key}-h">
@@ -24,6 +25,7 @@
       <p class="label">{r.label}</p>
       {#if r.question}<p class="q">{r.question}</p>{/if}
       {#if r.formula}<p class="formula"><span class="visually-hidden">Definition: </span>{r.formula}</p>{/if}
+      {#if reading}<p class="q reading" data-testid="recon-reading">{reading.read} <span class="caveat">Förbehåll: {reading.caveat}</span></p>{/if}
     </div>
     <dl class="facts">
       <div>
@@ -49,6 +51,7 @@
   </header>
 
   {#if !r.valid && r.reason}<p class="note">Inget giltigt mått: {r.reason}.</p>{/if}
+  {#if r.latest_period === null && r.level === null}<p class="note">Kvoten har inga värden i paketet än.</p>{/if}
 
   <div class="charts">
     <RatioChart {r} mode="ratio" />
@@ -117,6 +120,14 @@
   }
   .q {
     font-style: italic;
+  }
+  .q.reading {
+    font-style: normal;
+    max-width: 68ch;
+    margin-top: 6px;
+  }
+  .caveat {
+    color: var(--c-muted);
   }
   .formula {
     margin: 6px 0 0;

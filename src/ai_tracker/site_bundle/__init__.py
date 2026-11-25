@@ -20,6 +20,7 @@ Layout of the bundle (one JSON Schema per document type in schema/, copied into 
     nowcast/n1.json ...      N1-N6: live files, intervals, scorecard, coverage, backtest calibration
     nowcast/d2.json          D2 horizons 1-8 (shadow)
     regime.json              C4 regime section from the live snapshots
+    expectations.json        F1 expectations against outcomes (guidance revisions, surprise), withheld numbers removed
     method.json              register summary: rules, core series per branch, leads, nowcast variants, sources
     withheld.json            withheld series: names and reasons only
     story/<YYYY-MM>.json     the monthly story: cards selected by the pre-registered rule (W13, site_bundle.story)
@@ -34,4 +35,4 @@ Python owns all data and the licence gate (site_bundle.gate, which reuses site.d
 only this bundle, never the observation table.
 """
 
-VERSION = "1.4.0"  # 1.4.0: index v2 (source families) rule behind index/state, state "för få källor"
+VERSION = "1.5.0"  # 1.4.0: index v2 (source families) rule behind index/state, state "för få källor"; 1.5.0: expectations.json

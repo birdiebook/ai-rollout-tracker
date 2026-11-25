@@ -9,7 +9,7 @@ export async function load() {
   const spark = new Map(st.rows.map((r) => [r.code, r.index.slice(from)]));
   const counts: Record<string, number> = {};
   for (const b of overview.branches) {
-    const s = b.state ?? 'för få serier';
+    const s = b.state ?? 'för få källor';
     counts[s] = (counts[s] ?? 0) + 1;
   }
   return {

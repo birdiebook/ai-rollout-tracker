@@ -29,6 +29,7 @@ ROUTES: list[tuple[str, str]] = [
     ("nowcast/d2.json", "horizons"),
     ("nowcast/*.json", "nowcast"),
     ("regime.json", "regime"),
+    ("expectations.json", "expectations"),
     ("method.json", "method"),
     ("withheld.json", "withheld"),
     ("story/index.json", "story_index"),

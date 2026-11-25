@@ -525,9 +525,11 @@ def test_state_enum_has_both_few_states_and_the_bundle_is_1_4():
     common = json.loads((Path(SY.__file__).parent / "schema" / "common.json").read_text(encoding="utf-8"))
     states = common["$defs"]["state"]["enum"]
     assert R.STATE_FEW_FAMILIES in states and R.STATE_FEW in states and states == E.STATES
-    assert site_bundle.VERSION == "1.4.0"  # index v2 after main's 1.3.0 (W14), a minor: additive
+    # index v2 came with 1.4.0 after main's 1.3.0 (W14), a minor: additive; 1.5.0 (WV2) adds expectations.json
+    major, minor, _ = (int(x) for x in site_bundle.VERSION.split("."))
+    assert (major, minor) >= (1, 4) and major == 1
     man = json.loads((config.REPO / "web-data-fixtures" / "manifest.json").read_text(encoding="utf-8"))
-    assert man["version"] == "1.4.0"
+    assert man["version"] == site_bundle.VERSION
 
 
 def _schedule(path: Path) -> Path:
@@ -546,12 +548,12 @@ def test_synthetic_bundle_does_not_read_the_environments_btos_schedule(tmp_path,
     assert n5["next_origin"] is None  # as in the committed fixtures, built without a schedule
 
 
-@pytest.mark.xfail(strict=True, reason="R9-S1: web/ has no word for 'för få källor' and falls back to "
-                                       "'för få serier' (web/src/lib/design/state.ts), the web session adds it")
 def test_web_state_vocabulary_has_the_v2_state():
+    """R9-S1, fixed by WV2: the web's state vocabulary has the v2 no-state and falls back to it."""
     text = (config.REPO / "web" / "src" / "lib" / "design" / "state.ts").read_text(encoding="utf-8")
     assert "'för få källor'" in text and "'för få källor'" in (
         config.REPO / "web" / "src" / "lib" / "data" / "types.ts").read_text(encoding="utf-8")
+    assert "NO_STATE: StateName = 'för få källor'" in text
 
 
 def test_asml_licence_text_names_asml_not_tsmc():

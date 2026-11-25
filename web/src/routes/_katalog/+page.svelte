@@ -60,7 +60,7 @@
             </li>
           {/each}
         </ul>
-        <p class="glyphs"><Glyph state="accelererar" /> <Glyph state="stabil" /> <Glyph state="bromsar in" /> <Glyph state="för få serier" /></p>
+        <p class="glyphs"><Glyph state="accelererar" /> <Glyph state="stabil" /> <Glyph state="bromsar in" /> <Glyph state="för få källor" /></p>
       </div>
     {/each}
   </div>

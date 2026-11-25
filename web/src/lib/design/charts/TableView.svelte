@@ -7,9 +7,15 @@
   import { PRERENDER_CELLS } from './chartData';
   import type { TableSpec } from './types';
 
-  let { id, table, href, drawn = false }: { id: string; table: TableSpec; href: string | null; drawn?: boolean } = $props();
+  let {
+    id,
+    table,
+    href,
+    drawn = false,
+    prerender = true
+  }: { id: string; table: TableSpec; href: string | null; drawn?: boolean; prerender?: boolean } = $props();
   const nRows = $derived(table.rows.length);
-  const pre = $derived(nRows * table.columns.length <= PRERENDER_CELLS);
+  const pre = $derived(prerender && nRows * table.columns.length <= PRERENDER_CELLS);
 </script>
 
 <summary class="chip">Tabell <span class="n">({nRows} {nRows === 1 ? 'rad' : 'rader'})</span></summary>

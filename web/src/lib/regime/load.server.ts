@@ -60,6 +60,7 @@ export async function reconciliations() {
             label: s?.label ?? wLabel.get(t.series) ?? t.series,
             side: sideName,
             window: t.window,
+            weight: t.weight ?? 1,
             linkable: !!s,
             unit: s?.unit ?? null,
             latest_period: s ? ((m?.latest_period as string) ?? null) : null,

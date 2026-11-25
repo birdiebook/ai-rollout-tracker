@@ -20,6 +20,7 @@ import {
   reconDescription,
   sparkViews,
   startData,
+  v1Sentence,
   type BranchView,
   type StartData
 } from './model';
@@ -49,7 +50,7 @@ describe('wording', () => {
   });
   it('writes the chain sentence in a fixed state order with neutral verbs', () => {
     const s = chainSentence([
-      { code: 'L1', state: 'för få serier' },
+      { code: 'L1', state: 'för få källor' },
       { code: 'L2', state: 'stabil' },
       { code: 'L3', state: 'accelererar' },
       { code: 'L4', state: 'accelererar' },
@@ -58,14 +59,25 @@ describe('wording', () => {
       { code: 'L7', state: 'blandat' }
     ]);
     expect(s).toBe(
-      'I kedjan: L3–L5 accelererar, L2 är stabilt, L6 bromsar in, L7 har grenar i olika tillstånd och L1 har för få serier.'
+      'I kedjan: L3–L5 accelererar, L2 är stabilt, L6 bromsar in, L7 har grenar i olika tillstånd och L1 har för få källor.'
     );
     expect(s).not.toMatch(/oroande|bra|dålig|varning|risk/i);
   });
   it('falls back to a counts sentence that matches the pipeline wording', () => {
-    expect(countsSentence({ accelererar: 4, stabil: 3, 'bromsar in': 0, 'för få serier': 2, 'inga registrerade kärnserier': 0 })).toBe(
+    expect(countsSentence({ accelererar: 4, stabil: 3, 'bromsar in': 0, 'för få källor': 2, 'för få serier': 0, 'inga registrerade kärnserier': 0 })).toBe(
       'Av 7 grenar med tillstånd: 4 accelererar, 3 är stabila och ingen bromsar in.'
     );
+    // one is "en", as site_bundle.export._sv_number writes it
+    expect(countsSentence({ accelererar: 0, stabil: 1, 'bromsar in': 1 })).toBe('Av 2 grenar med tillstånd: ingen accelererar, en är stabil och en bromsar in.');
+  });
+  it('names the branches whose state v1 would give differently', () => {
+    const b = (code: string, state: BranchView['state'], state_v1: BranchView['state_v1']) => ({ code, state, state_v1, rule_version: 'v2' as const });
+    expect(v1Sentence([b('G1', 'stabil', 'stabil'), b('G6', 'stabil', 'accelererar'), b('G8', 'för få källor', 'för få serier'), b('G9', 'för få källor', 'bromsar in')])).toBe(
+      'Med regel v1, en röst per serie, hade G6 accelererat och G9 bromsat in.'
+    );
+    expect(v1Sentence([b('G8', 'för få källor', 'för få serier')])).toBe('Med regel v1, en röst per serie, hade alla grenar samma tillstånd.');
+    expect(v1Sentence([b('G1', 'stabil', 'stabil')])).toBe('Med regel v1, en röst per serie, hade alla grenar samma tillstånd.');
+    expect(v1Sentence([{ code: 'G1', state: 'stabil', state_v1: null, rule_version: 'v1' }])).toBe('');
   });
 });
 
@@ -155,7 +167,12 @@ describe('fixture specifics', () => {
     expect(s.calibration?.id).toBe('n2');
     expect(s.calibration?.model).toBe('B3');
     expect(s.regime.available).toBe(true);
-    expect(s.headline.changes.map((c) => c.code)).toEqual(['G6', 'G9']);
+    expect(s.headline.changes.map((c) => c.code)).toEqual(['G6']);
+    // index v2 in the fixtures: G6 has three families (two series in us_ip_g17) and is stable; v1 says accelerating
+    const g6 = s.branches.find((b) => b.code === 'G6')!;
+    expect([g6.rule_version, g6.n_families, g6.state, g6.state_v1]).toEqual(['v2', 3, 'stabil', 'accelererar']);
+    expect(s.headline.counts['för få källor']).toBe(6);
+    expect(s.headline.v1Sentence).toBe('Med regel v1, en röst per serie, hade G6 accelererat och G9 bromsat in.');
   });
   it('names a level outside its binomial band', () => {
     const c = { id: 'n2', label: 'N2', title: '', model: 'B3', n: 226, first: '2008-01', last: '2026-09', rows: [

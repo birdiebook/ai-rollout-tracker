@@ -5,7 +5,8 @@ show at a parameter value must be what the Python engine gives at that value, so
 
 - **Dead band.** `ai_tracker.state.branch.branch(code, when, ctx)` on the synthetic world of web-data-fixtures/
   (`site_bundle.synthetic.context`, the record date of the fixtures' live snapshot) with `register.DEADBAND`
-  set to each probe value. At the registered 0.25 this is exactly what the fixtures' branch/<G>.json hold.
+  set to each probe value. At the registered 0.25 this is exactly what the fixtures' branch/<G>.json hold. Index v2
+  (one vote per source family, the official rule) with each series' family and each family's vote, and v1 beside it.
 - **Intervals.** `nowcast.intervals.ErrorDistribution` (G-C: Hyndman-Fan type 6 quantiles, mid-rank PIT,
   `pit_histogram`) and `binomial_band` on the illustration pool in web/src/lib/method/illustration.json, at every
   level the slider offers and for each width factor the calibration figure offers.
@@ -77,6 +78,10 @@ def deadband_golden() -> dict:
                 out.setdefault(code, []).append({
                     "k": k, "index": b["index"], "state": b["state"], "n_series": b["n_series"],
                     "n_up": b["n_up"], "n_neutral": b["n_neutral"], "n_down": b["n_down"],
+                    "rule_version": b["rule_version"], "n_families": b["n_families"],
+                    "index_v1": b["v1"]["index"], "state_v1": b["v1"]["state"],
+                    "votes": {f["family"]: f["vote"] for f in b["families"] if f["series"]},
+                    "families": {m["series"]: m["family"] for m in b["series_used"]},
                     "directions": {m["series"]: m["direction"] for m in b["series_used"]}})
     finally:
         R.DEADBAND = saved

@@ -45,11 +45,26 @@
   <h2 id="h-diffusion">1. Diffusionsindex: dra i dödbandet</h2>
   <p class="lede">
     Varje kärnserie får en riktning: ▲ om förändringen i takt är större än {fmt(r.deadband_sd, 2)} av seriens egen standardavvikelse (<Term id="dodband">dödbandet</Term>),
-    ▼ om den är mindre än −{fmt(r.deadband_sd, 2)}, annars ●. Indexet är (antal ▲ + hälften av ●) / antal serier. Grenen
-    accelererar vid index ≥ {fmt(r.accelerating_at_least, 2)} och bromsar in vid ≤ {fmt(r.braking_at_most, 2)}. Med färre än
-    {r.min_series} serier visas inget tillstånd. Dödbandet låstes innan någon takt räknades: dra i det och se varför valet
-    måste göras före, inte efter, att man sett utfallet.
+    ▼ om den är mindre än −{fmt(r.deadband_sd, 2)}, annars ●.
+    {#if r.index_rule === 'v2'}
+      Serierna grupperas i <Term id="kallfamilj">källfamiljer</Term>: serier från samma källa som mäter samma sak och bara
+      skiljer sig i land, delstat eller kategori. De rör sig ofta tillsammans och får därför en röst tillsammans. Familjens röst är
+      (antal ▲ + hälften av ●) / familjens serier, och indexet är medel av familjernas röster. Grenen accelererar vid index ≥
+      {fmt(r.accelerating_at_least, 2)} och bromsar in vid ≤ {fmt(r.braking_at_most, 2)}. Med färre än {r.min_families} räknade
+      källfamiljer visas indexet men inget tillstånd: för få källor. Få familjer väger tungt var för sig, så indexet kan röra
+      sig mer än med en röst per serie.
+    {:else}
+      Indexet är (antal ▲ + hälften av ●) / antal serier. Grenen accelererar vid index ≥ {fmt(r.accelerating_at_least, 2)} och
+      bromsar in vid ≤ {fmt(r.braking_at_most, 2)}. Med färre än {r.min_series} serier visas inget tillstånd.
+    {/if}
+    Dödbandet låstes innan någon takt räknades: dra i det och se varför valet måste göras före, inte efter, att man sett utfallet.
   </p>
+  {#if r.index_rule === 'v2'}
+    <p class="note" data-testid="v1-note">
+      <Term id="v1">Regel v1</Term> (en röst per serie och minst {r.min_series} serier) räknas och visas bredvid som jämförelse.
+      När varje familj har en serie ger de två reglerna samma index.
+    </p>
+  {/if}
   <DeadbandExplorer branches={data.branches} initial={data.initial} rules={data.rules} {status} linkable={data.linkable} />
 </section>
 
@@ -101,7 +116,7 @@
 <section id="kallor" aria-labelledby="h-kallor">
   <h2 id="h-kallor">5. Källor och licenser</h2>
   <p class="lede">
-    {data.sources.length} källfamiljer. Länkarna går till källornas egna sidor och villkor; sidan hämtar aldrig något därifrån.
+    {data.sources.length} källor. Länkarna går till källornas egna sidor och villkor; sidan hämtar aldrig något därifrån.
   </p>
   <SourcesList sources={data.sources} counts={data.counts} />
 </section>

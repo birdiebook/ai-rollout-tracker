@@ -152,7 +152,7 @@ describe('page descriptions from the fixtures', () => {
     expect(start.description).toContain(ov.headline.sentence);
     expect(start.ownDescription).toBe(true);
     const g6 = (await describePage(b, { routeId: '/gren/[id]', params: { id: 'G6' } })).meta;
-    expect(g6.title).toMatch(/^G6 .+: (accelererar|stabil|bromsar in|för få serier)/);
+    expect(g6.title).toMatch(/^G6 .+: (accelererar|stabil|bromsar in|för få källor|för få serier)/);
     expect(g6.og).toBe('gren/G6');
     expect(g6.ownDescription).toBe(false);
     const s = (await describePage(b, { routeId: '/serie/[key]', params: { key: 'us_ip_semis_m' } })).meta;
@@ -164,7 +164,7 @@ describe('page descriptions from the fixtures', () => {
   });
   it('RW1-X: every route has a timeless citation name, without the month, state or value of today', async () => {
     const months = /\b(januari|februari|mars|april|maj|juni|juli|augusti|september|oktober|november|december) \d{4}\b/;
-    const states = /accelererar|stabil|bromsar in|för få serier/;
+    const states = /accelererar|stabil|bromsar in|för få källor|för få serier/;
     for (const r of await ogRoutes(b)) {
       const ref = r.ref ?? { routeId: '/nagot-nytt', params: {} };
       const { cite } = (await describePage(b, ref)).meta;

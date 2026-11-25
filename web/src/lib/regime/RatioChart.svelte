@@ -34,6 +34,7 @@
   {height}
   width={380}
   margin={{ top: 22, right: mode === 'sides' ? 62 : 12, bottom: 22, left: 44 }}
+  prerenderTable={false}
   table={{
     caption: mode === 'ratio' ? `${r.short}: nivå per kvartal, som den var känd på postens datum` : `${r.short}: täljare och nämnare, index`,
     columns:

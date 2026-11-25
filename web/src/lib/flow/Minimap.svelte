@@ -3,7 +3,7 @@
      Track W6; candidate for the design system. -->
 <script lang="ts">
   import { resolve } from '$app/paths';
-  import { divergingFill, fmt, stateStyle } from '$lib/design';
+  import { divergingFill, fmt, isNoState, stateStyle } from '$lib/design';
   import type { MiniLead } from './types';
 
   let {
@@ -41,8 +41,8 @@
                 class="cell"
                 class:me={b.code === branch}
                 class:empty={b.index === null}
-                class:few={b.index !== null && (b.state === 'för få serier' || b.state === 'inga registrerade kärnserier')}
-                style:background={b.index !== null && (b.state === 'för få serier' || b.state === 'inga registrerade kärnserier') ? 'transparent' : divergingFill(b.index)}
+                class:few={b.index !== null && isNoState(b.state)}
+                style:background={b.index !== null && isNoState(b.state) ? 'transparent' : divergingFill(b.index)}
                 title="{b.code} {b.name ?? ''}: {stateStyle(b.state).glyph} {stateStyle(b.state).word}, index {fmt(b.index, 2)}"
               ></span>
             {/each}

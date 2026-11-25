@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://birdiebook.github.io/ai-rollout-tracker/schema/v1/expectations.json",
+  "title": "expectations.json: the snapshot section 'expectations' (register F1): guidance revisions and surprise against guidance, after expectations.withhold",
+  "type": "object",
+  "required": ["record", "available", "from_snapshot", "kind", "date", "csv_public", "group", "in_diffusion"],
+  "properties": {
+    "record": {"$ref": "common.json#/$defs/record"},
+    "available": {"type": "boolean", "description": "false when the section failed (its 'error' says why)."},
+    "from_snapshot": {"type": "boolean", "description": "true: read from the live snapshot; false: computed as of the record date (reconstruction)."},
+    "kind": {"enum": ["skarp", "rekonstruerad"]},
+    "date": {"$ref": "common.json#/$defs/date"},
+    "csv_public": {"type": "boolean", "description": "false while the series reading curated/guidance_capex.csv are withheld: their numbers are absent (ids only)."},
+    "group": {"type": "string"},
+    "in_diffusion": {"const": false},
+    "note": {"type": "string"},
+    "error": {"type": "string"},
+    "values_withheld": {"type": "string"},
+    "rules": {"type": "object"},
+    "revisions": {"type": "object", "additionalProperties": {"$ref": "#/$defs/index_entry"}},
+    "revisions_numeric_only": {"type": "object", "additionalProperties": {"$ref": "#/$defs/index_entry"}},
+    "composition_main_window": {"type": "object"},
+    "break_statements": {"type": "array", "items": {"type": "object"}},
+    "events_recent": {"type": "array", "items": {"type": "object"}},
+    "events_per_company_year": {"type": "object"},
+    "surprise": {"type": "object", "properties": {
+      "companies": {"type": "array", "items": {"type": "object", "required": ["company", "period", "known_from"]}},
+      "index": {"$ref": "#/$defs/index_entry"},
+      "tsmc_usd_sensitivity": {"type": "object"}}}
+  },
+  "$defs": {
+    "index_entry": {"type": "object", "required": ["latest", "latest_with_value"],
+                    "properties": {"latest": {"type": ["object", "null"]}, "latest_with_value": {"type": ["object", "null"]}}}
+  }
+}

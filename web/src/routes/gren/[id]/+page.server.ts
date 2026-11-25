@@ -22,6 +22,13 @@ export async function load({ params }) {
       state: doc.state,
       n_series: doc.n_series ?? 0,
       n_withheld_counted: doc.n_withheld_counted ?? 0,
+      // index v2 (bundle 1.4.0): one vote per source family; v1 beside it. A bundle before v2 has none of these.
+      rule_version: doc.rule_version === 'v2' ? ('v2' as const) : ('v1' as const),
+      n_families: doc.n_families ?? null,
+      n_families_withheld: doc.n_families_withheld ?? 0,
+      index_v1: doc.index_v1 ?? null,
+      state_v1: doc.state_v1 ?? null,
+      families: (doc.families ?? []).map((f) => ({ family: f.family, series: f.series, vote: f.vote ?? null })),
       previous: doc.previous ? { month: String(doc.previous.month ?? ''), index: doc.previous.index, state: doc.previous.state } : null,
       delta_index: doc.delta_index ?? null,
       state_changed: doc.state_changed ?? null,

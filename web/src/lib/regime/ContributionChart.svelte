@@ -55,6 +55,7 @@
   {height}
   width={380}
   margin={{ top: 22, right: 10, bottom: 22, left: 40 }}
+  prerenderTable={false}
   table={{
     caption: `${r.short}: takt och bidrag per kvartal (log ×100 per år)`,
     columns: [
@@ -86,17 +87,27 @@
       <text class="ink2 unit" x={d.left} y={d.top - 10}>log ×100 per år</text>
       <Axis scale={y} dims={d} orient="left" ticks={4} format={(v) => signed(v, 0).replace('±', '')} grid baseline={0} />
       <Axis scale={x} dims={d} tickValues={yearTicks(t[0], t[n - 1])} format={(v) => String(v)} />
-      {#each segs as s (`${s.i}-${s.kind}`)}
-        <rect
-          class="mark"
-          x={x(t[s.i]) - bw / 2}
-          y={y(Math.max(s.y0, s.y1))}
-          width={bw}
-          height={Math.max(0.5, Math.abs(y(s.y0) - y(s.y1)))}
-          fill={s.kind === 'num' ? 'var(--c-ink-2)' : s.kind === 'den' ? 'var(--c-surface)' : `url(#${pid})`}
-          stroke={s.kind === 'num' ? 'none' : 'var(--c-ink-2)'}
-          stroke-width="1.2"
-        />
+      <!-- one path per kind (bars as subpaths): the same picture with a few elements, so the page with ten ratios
+           stays inside the DOM budget (WV2) -->
+      {#each ['num', 'den', 'rest'] as const as kind (kind)}
+        {@const dPath = segs
+          .filter((s) => s.kind === kind)
+          .map((s) => {
+            const top = y(Math.max(s.y0, s.y1));
+            const h = Math.max(0.5, Math.abs(y(s.y0) - y(s.y1)));
+            return `M${(x(t[s.i]) - bw / 2).toFixed(1)},${top.toFixed(1)}h${bw.toFixed(1)}v${h.toFixed(1)}h${(-bw).toFixed(1)}Z`;
+          })
+          .join('')}
+        {#if dPath}
+          <path
+            class="mark bars"
+            data-kind={kind}
+            d={dPath}
+            fill={kind === 'num' ? 'var(--c-ink-2)' : kind === 'den' ? 'var(--c-surface)' : `url(#${pid})`}
+            stroke={kind === 'num' ? 'none' : 'var(--c-ink-2)'}
+            stroke-width="1.2"
+          />
+        {/if}
       {/each}
       <Line data={pts} x={(p) => x(p.t)} y={(p) => y(p.v ?? 0)} defined={(p) => p.v !== null} color="var(--c-surface)" width={5} />
       <Line data={pts} x={(p) => x(p.t)} y={(p) => y(p.v ?? 0)} defined={(p) => p.v !== null} />

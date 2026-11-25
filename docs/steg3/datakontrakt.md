@@ -382,6 +382,19 @@ för 1.x, som bara saknar de nya fälten och tillståndet nedan.
   har det tillståndet (schemat tillåter redan nya nycklar). K5 och K6 prövar bara publicerbara serier
   (registerändringen 2026-11-25, L3-1), så `withheld.K5` och `withheld.K6` är 0 och `chance.n` räknar bara dem.
 
+### 2026-11-25 – 1.5.0: `expectations.json` (spår WV2)
+
+En minor, bara tillägg. Nytt dokument `expectations.json` (schema `expectations.json`) med ögonblicksbildens avsnitt
+`expectations` (F1) för posten, så att webben kan visa förväntningar mot utfall.
+- Läses ur den skarpa ögonblicksbilden när den har avsnittet (`from_snapshot: true`, `kind: "skarp"`). Annars räknas
+  det per postens datum (`kind: "rekonstruerad"`), som postens grentillstånd.
+- Går alltid genom `state.expectations.withhold`. Så länge serierna som läser `curated/guidance_capex.csv` har
+  `publish=False` (`csv_public: false`) har raderna för de bolagen, revideringsindexet och överraskningsindexet bara
+  bolag, period, definition och datum. Webben visar dem som räknade rutor utan värden. TSMC och Nvidia (SEC) visas med
+  värden.
+- `in_diffusion` är alltid `false`. Ett paket utan dokumentet (1.4.0 och äldre) läses som förut, och sidan visar då
+  inget sådant avsnitt.
+
 ## Läsanvisningar för körning 13
 
 Underlag för webbsessionen, 2026-11-24. Per nytt mått: vad det visar, hur det läses och det viktigaste förbehållet.
@@ -398,7 +411,7 @@ av bolagens egen guidance (oförändrad räknas som en halv), över fyra kvartal
 betyder fler höjningar än sänkningar. Överraskningen är utfallet mot bolagets guidance i log ×100, och
 överraskningsindexet är medel av standardiserade överraskningar (z) över minst två bolag. Förbehåll: få händelser per
 kvartal (n står bredvid), ingen takt, och serierna som läser `curated/guidance_capex.csv` har `publish=False` tills
-ägaren beslutar (R11-4). Avsnittet finns i ögonblicksbilden men inte i paketet än.
+ägaren beslutar (R11-4). Avsnittet finns i ögonblicksbilden och från paket 1.5.0 i `expectations.json`.
 
 **Intäktskravet (`x_dep_rev`, `x_capcost_rev_r08`, `x_capcost_rev_r12`, `x_dep_capex`, `x_dep_rev_aws`).**
 Avskrivningar, och avskrivningar plus 8 eller 12 % på det bokförda nettot, som procent av intäkterna för MSFT, GOOGL,

@@ -126,7 +126,7 @@ test('month page: "Om urvalet" lists the struck cards and the chance level (R-W3
 
 test('stripes: a month without a state gets no direction colour (R-W3)', async ({ page }) => {
   await page.goto('', { waitUntil: 'networkidle' });
-  const few = overview.stripes.rows.flatMap((r) => r.index.map((v, i) => (v !== null && ['för få serier', 'inga registrerade kärnserier'].includes(r.state?.[i] ?? '') ? 1 : 0))).reduce<number>((a, b) => a + b, 0);
+  const few = overview.stripes.rows.flatMap((r) => r.index.map((v, i) => (v !== null && ['för få källor', 'för få serier', 'inga registrerade kärnserier'].includes(r.state?.[i] ?? '') ? 1 : 0))).reduce<number>((a, b) => a + b, 0);
   await expect(page.locator('#stripes-chart rect.cell[data-few]')).toHaveCount(few);
   const fills = await page.locator('#stripes-chart rect.cell[data-few]').evaluateAll((rs) => rs.map((r) => (r as SVGElement).style.fill));
   expect(fills.every((f) => f === 'transparent')).toBe(true);

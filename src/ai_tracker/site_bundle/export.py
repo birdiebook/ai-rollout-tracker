@@ -25,6 +25,7 @@ from ai_tracker.site_bundle import gate as G
 from ai_tracker.site_bundle import report as RP
 from ai_tracker.site_bundle import story as ST
 from ai_tracker.site_bundle import vintages as V
+from ai_tracker.state import expectations as EX
 from ai_tracker.state import register as R
 from ai_tracker.state import snapshot as S
 from ai_tracker.state.measures import Context, measure_path, rule_for
@@ -364,6 +365,27 @@ def letters_docs(letters_dir: Path, reports_dir: Path) -> dict[str, dict]:
     return docs
 
 
+# ------------------------------------------------------------------ expectations (F1)
+
+
+def expectations_doc(rec: D.Record, ctx: Context) -> dict:
+    """expectations.json (bundle 1.5.0): the snapshot section "expectations" (register F1, 2026-11-24) for the
+    record. From the live snapshot when it carries the section (`from_snapshot`), otherwise computed as of the record
+    date (a reconstruction, like the record's branch states). Always passed through `expectations.withhold`: no number
+    from curated/guidance_capex.csv while the series that read it are withheld (R11-4, L3-1). Never in a branch index."""
+    def publishable(k):
+        return G.publishable(k, ctx)
+
+    sec = rec.live[rec.month].get(EX.SECTION) if rec.live and rec.month in rec.live else None
+    from_snapshot = isinstance(sec, dict)
+    if not from_snapshot:
+        sec = S._clean(EX.safe_section(rec.when, ctx.table))
+    sec = EX.withhold(sec, publishable)
+    return {"record": record_meta(rec), "available": "error" not in sec, "from_snapshot": from_snapshot,
+            "kind": "skarp" if from_snapshot else "rekonstruerad", "date": str(pd.Timestamp(rec.when).date()),
+            "csv_public": EX.csv_public(publishable), **sec}
+
+
 # ------------------------------------------------------------------ assemble
 
 
@@ -427,6 +449,7 @@ def assemble(ctx: Context | None = None, snapshots_dir: Path | None = None, fore
         docs[f"nowcast/{n['id']}.json"] = {"record": meta, **n}
     docs["nowcast/d2.json"] = {"record": meta, **hz}
     docs["regime.json"] = {"record": meta, **regime}
+    docs["expectations.json"] = expectations_doc(rec, ctx)
     docs["method.json"] = method_doc(ctx, rec)
     docs["withheld.json"] = {"withheld": m["withheld"], "n": len(m["withheld"])}
     docs.update(ST.docs(rec, nowcasts, lambda k: G.publishable(k, ctx), lambda k: D.series_meta(k, ctx)["label"]))

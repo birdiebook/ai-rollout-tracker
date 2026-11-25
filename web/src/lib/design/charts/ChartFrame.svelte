@@ -35,6 +35,7 @@
     license,
     headingLevel = 3,
     dataHref,
+    prerenderTable = true,
     children,
     legend
   }: {
@@ -53,6 +54,9 @@
     headingLevel?: 2 | 3 | 4;
     /** the published data behind the chart, linked in the table view (default: the page's setChartData) */
     dataHref?: string | null;
+    /** false: never prerender the table, even a small one (it is drawn on opening; a page with many charts keeps
+     *  its DOM budget). Without JavaScript the table view links the published data. */
+    prerenderTable?: boolean;
     children: Snippet<[ChartDims]>;
     legend?: Snippet;
   } = $props();
@@ -87,7 +91,7 @@
   // the table view likewise (TableView): no table is built during the hydration
   const tableBody = $derived(
     import.meta.env.SSR && table
-      ? staticMarkup(render(TableView, { props: { id, table, href, drawn: false } }).body)
+      ? staticMarkup(render(TableView, { props: { id, table, href, drawn: false, prerender: prerenderTable } }).body)
       : ' '
   );
   let job: ReturnType<typeof enqueue> | null = null;
@@ -140,7 +144,7 @@
     </div>
     {#if table}
       <details class="tbl" bind:open>
-        {#if live || opened}<TableView {id} table={tbl!} {href} drawn={opened} />{:else}{@html tableBody}{/if}
+        {#if live || opened}<TableView {id} table={tbl!} {href} drawn={opened} prerender={prerenderTable} />{:else}{@html tableBody}{/if}
       </details>
     {/if}
   </div>

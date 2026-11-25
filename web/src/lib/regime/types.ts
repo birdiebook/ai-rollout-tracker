@@ -6,6 +6,8 @@ export interface Term {
   series: string;
   /** 1 = the quarter itself (a stock is its balance at the quarter end); 4 = sum over the quarter and the 3 before */
   window: number;
+  /** fixed coefficient of the term (registered, e.g. r = 0,08 on net PP&E in x_capcost_rev_r08); absent = 1 */
+  weight?: number;
 }
 
 export interface ReconDef {
@@ -21,6 +23,8 @@ export interface ComponentView {
   label: string;
   side: 'num' | 'den';
   window: number;
+  /** the term's fixed coefficient (1 when the definition has none) */
+  weight: number;
   /** series/<key> exists (published); false = withheld: name only, no values, no own direction */
   linkable: boolean;
   unit: string | null;

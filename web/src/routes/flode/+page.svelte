@@ -13,7 +13,10 @@
   const sentence = $derived(
     `${n('accelererar')} accelererar, ${n('stabil')} ${n('stabil') === 1 ? 'är stabil' : 'är stabila'}, ` +
       `${n('bromsar in') || 'ingen'} bromsar in` +
-      (n('för få serier') + n('inga registrerade kärnserier') ? ` och ${n('för få serier') + n('inga registrerade kärnserier')} har för få serier.` : '.')
+      // v2's no-state ("för få källor"), v1's in a record before v2, and a branch without core series
+      (n('för få källor') ? ` och ${n('för få källor')} har för få källor` : '') +
+      (n('för få serier') + n('inga registrerade kärnserier') ? ` och ${n('för få serier') + n('inga registrerade kärnserier')} har för få serier` : '') +
+      '.'
   );
 </script>
 

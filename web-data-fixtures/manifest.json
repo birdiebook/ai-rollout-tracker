@@ -1,6 +1,6 @@
 {
  "bundle": "ai-rollout-tracker/site-bundle",
- "version": "1.4.0",
+ "version": "1.5.0",
  "synthetic": true,
  "built_utc": "2026-11-24T00:00:00Z",
  "git_sha": "fixture",
@@ -87,6 +87,13 @@
    "bytes": 7788,
    "gzip_bytes": 2002,
    "sha256": "f9bc888779af7fce964104c317420fca1f253fb94e0c8767fbe298f91b83cae3"
+  },
+  {
+   "path": "expectations.json",
+   "schema": "expectations",
+   "bytes": 3707,
+   "gzip_bytes": 1099,
+   "sha256": "9b999a36ae58d9614e469e22c8fe272c1b3e4fa660261687041c840c4e21a48b"
   },
   {
    "path": "flow.json",
@@ -530,6 +537,13 @@
    "sha256": "309c570276938aa02b6b82a7b587cf5c46c9582e4237ca32c62b3942ba2c3683"
   },
   {
+   "path": "schema/expectations.json",
+   "schema": "json-schema",
+   "bytes": 2197,
+   "gzip_bytes": 791,
+   "sha256": "42e9cea0c17f5fde06db36be9d2f24757f60ce816f5414f65672003b97ce647c"
+  },
+  {
    "path": "schema/flow.json",
    "schema": "json-schema",
    "bytes": 4706,
@@ -650,6 +664,12 @@
    "gzip_bytes": 23882
   },
   {
+   "group": "expectations.json",
+   "files": 1,
+   "bytes": 3707,
+   "gzip_bytes": 1099
+  },
+  {
    "group": "flow.json",
    "files": 1,
    "bytes": 51359,
@@ -705,9 +725,9 @@
   },
   {
    "group": "schema",
-   "files": 18,
-   "bytes": 87785,
-   "gzip_bytes": 20919
+   "files": 19,
+   "bytes": 89982,
+   "gzip_bytes": 21710
   },
   {
    "group": "series",
@@ -729,9 +749,9 @@
   }
  ],
  "totals": {
-  "files": 88,
-  "bytes": 798274,
-  "gzip_bytes": 211108
+  "files": 90,
+  "bytes": 804178,
+  "gzip_bytes": 212998
  },
  "budgets": {
   "per_file": [
@@ -774,6 +794,11 @@
     "pattern": "regime.json",
     "bytes": 100000,
     "gzip_bytes": 20000
+   },
+   {
+    "pattern": "expectations.json",
+    "bytes": 60000,
+    "gzip_bytes": 12000
    },
    {
     "pattern": "method.json",

@@ -5,7 +5,6 @@ that implements the register (docs/mattregister.md A5 and G-D)."""
 import json
 from pathlib import Path
 
-import pytest
 
 from ai_tracker.regime import bocpd, live, realtime
 from ai_tracker.series import avstamning
@@ -51,11 +50,6 @@ def test_reconciliation_terms_match_avstamning():
         assert d == want.get(d["key"]), d["key"]
 
 
-@pytest.mark.xfail(strict=True, reason="P2b (run 13) added x_dep_rev, x_capcost_rev_r08/_r12, x_dep_capex and "
-                                       "x_dep_rev_aws; web/src/lib/regime/reconciliations.json (web session) does "
-                                       "not mirror them yet, and the capital-cost terms carry a weight (r on "
-                                       "ppe_net_hyp4) that the mirror needs as a term field 'weight' (checked by "
-                                       "test_reconciliation_terms_match_avstamning)")
 def test_web_mirrors_every_reconciliation():
     defs = json.loads((WEB / "reconciliations.json").read_text(encoding="utf-8"))["reconciliations"]
     assert [d["key"] for d in defs] == [r.key for r in avstamning.RECONS]

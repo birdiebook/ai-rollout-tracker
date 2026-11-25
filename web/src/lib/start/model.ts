@@ -14,7 +14,11 @@ export const SPARK_MONTHS = 24;
 export const REGIME_HIGH = 0.8;
 export const REGIME_LOW = 0.2;
 
-export type State = 'accelererar' | 'stabil' | 'bromsar in' | 'för få serier' | 'inga registrerade kärnserier';
+// "för få källor": index v2's no-state (fewer than 3 counted source families, the official rule from the snapshot
+// 2026-11-30); "för få serier": v1's, kept for records before v2 and for v1 beside v2.
+export type State = 'accelererar' | 'stabil' | 'bromsar in' | 'för få källor' | 'för få serier' | 'inga registrerade kärnserier';
+export const NO_STATE: State[] = ['för få källor', 'för få serier', 'inga registrerade kärnserier'];
+const ALL_STATES: State[] = ['accelererar', 'stabil', 'bromsar in', 'för få källor', 'för få serier', 'inga registrerade kärnserier'];
 export const WITH_STATE: State[] = ['accelererar', 'stabil', 'bromsar in'];
 
 // ---------- shapes (what the page receives) ----------
@@ -30,6 +34,11 @@ export interface BranchView {
   n_neutral: number;
   n_down: number;
   n_withheld_counted: number;
+  /** index v2 (bundle 1.4.0): rule, counted source families and v1 beside; v1 fields null on an older bundle */
+  rule_version: 'v1' | 'v2';
+  n_families: number | null;
+  index_v1: number | null;
+  state_v1: State | null;
   prev: { month: string | null; index: number | null; state: State | null } | null;
   state_changed: boolean;
 }
@@ -107,6 +116,8 @@ export interface StartData {
     nWithState: number;
     prevMonth: string | null;
     changes: { code: string; name: string; from: State; to: State }[];
+    /** index v2 against v1 this month: the branches whose state differs, or '' (v1 bundle, or no difference) */
+    v1Sentence: string;
   };
   facts: { n_series: number | null; n_published: number | null; n_withheld: number | null; fetched: string | null };
   branches: BranchView[];
@@ -149,11 +160,12 @@ const VERB: Record<State | 'blandat', [string, string]> = {
   accelererar: ['accelererar', 'accelererar'],
   stabil: ['är stabilt', 'är stabila'],
   'bromsar in': ['bromsar in', 'bromsar in'],
+  'för få källor': ['har för få källor', 'har för få källor'],
   'för få serier': ['har för få serier', 'har för få serier'],
   'inga registrerade kärnserier': ['saknar registrerade kärnserier', 'saknar registrerade kärnserier'],
   blandat: ['har grenar i olika tillstånd', 'har grenar i olika tillstånd']
 };
-const CHAIN_ORDER: (State | 'blandat')[] = ['accelererar', 'stabil', 'bromsar in', 'blandat', 'för få serier', 'inga registrerade kärnserier'];
+const CHAIN_ORDER: (State | 'blandat')[] = ['accelererar', 'stabil', 'bromsar in', 'blandat', 'för få källor', 'för få serier', 'inga registrerade kärnserier'];
 
 /** The chain in one generated sentence, states in a fixed order (never ordered by "good" or "bad"):
  *  "I kedjan: L3–L6 och L8 accelererar, L2 och L9 är stabila, L7 har grenar i olika tillstånd och L1 har för få serier." */
@@ -166,20 +178,41 @@ export function chainSentence(leads: Pick<LeadView, 'code' | 'state'>[]): string
   return parts.length ? `I kedjan: ${joinSv(parts)}.` : '';
 }
 
-/** Fallback for the headline when the bundle has none (the pipeline's own sentence is preferred, it is the record). */
-export function countsSentence(counts: Record<State, number>): string {
+/** site_bundle.export._sv_number: 0 -> "ingen", 1 -> "en", otherwise the digits. */
+export const svNumber = (n: number): string => (n === 0 ? 'ingen' : n === 1 ? 'en' : String(n));
+
+/** Fallback for the headline when the bundle has none (the pipeline's own sentence is preferred, it is the record).
+ *  The same words as site_bundle.export.headline, so the two cannot drift unnoticed (tested on every bundle). */
+export function countsSentence(counts: Partial<Record<State, number>>): string {
   const n = WITH_STATE.reduce((a, s) => a + (counts[s] ?? 0), 0);
-  if (n === 0) return 'Ingen gren har ännu tillräckligt många serier för ett tillstånd.';
-  const word = (k: number, one: string, many: string, none: string) => (k === 0 ? none : `${k} ${k === 1 ? one : many}`);
-  const a = word(counts.accelererar ?? 0, 'accelererar', 'accelererar', 'ingen accelererar');
-  const s = word(counts.stabil ?? 0, 'är stabil', 'är stabila', 'ingen är stabil');
-  const b = word(counts['bromsar in'] ?? 0, 'bromsar in', 'bromsar in', 'ingen bromsar in');
-  return `Av ${n} ${n === 1 ? 'gren' : 'grenar'} med tillstånd: ${a}, ${s} och ${b}.`;
+  if (n === 0) return 'Ingen gren har ännu tillräckligt många källor för ett tillstånd.';
+  const a = counts.accelererar ?? 0;
+  const s = counts.stabil ?? 0;
+  const b = counts['bromsar in'] ?? 0;
+  return `Av ${n} grenar med tillstånd: ${svNumber(a)} accelererar, ${svNumber(s)} ${s === 1 ? 'är stabil' : 'är stabila'} och ${svNumber(b)} bromsar in.`;
 }
+
+/** Index v2 against v1 in one neutral sentence: which branches v1 (one vote per series) would put in another state. */
+export function v1Sentence(branches: Pick<BranchView, 'code' | 'state' | 'state_v1' | 'rule_version'>[]): string {
+  // "för få källor" against "för få serier" is the same picture (no state), so only a real difference is named
+  const none = (x: State | null) => x !== null && NO_STATE.includes(x);
+  const diff = branches.filter((b) => b.rule_version === 'v2' && b.state_v1 !== null && b.state_v1 !== b.state && !(none(b.state) && none(b.state_v1)));
+  if (!branches.some((b) => b.rule_version === 'v2')) return '';
+  if (!diff.length) return 'Med regel v1, en röst per serie, hade alla grenar samma tillstånd.';
+  return `Med regel v1, en röst per serie, hade ${joinSv(diff.map((b) => `${b.code} ${V1_SUPINE[b.state_v1 as State]}`))}.`;
+}
+const V1_SUPINE: Record<State, string> = {
+  accelererar: 'accelererat',
+  stabil: 'varit stabil',
+  'bromsar in': 'bromsat in',
+  'för få källor': 'haft för få källor',
+  'för få serier': 'haft för få serier',
+  'inga registrerade kärnserier': 'saknat registrerade kärnserier'
+};
 
 // ---------- selection ----------
 
-const asState = (s: unknown): State => (typeof s === 'string' && s in VERB && s !== 'blandat' ? (s as State) : 'för få serier');
+const asState = (s: unknown): State => (typeof s === 'string' && s in VERB && s !== 'blandat' ? (s as State) : 'för få källor');
 const num = (x: unknown): number | null => (typeof x === 'number' && Number.isFinite(x) ? x : null);
 const int = (x: unknown): number => (typeof x === 'number' && Number.isFinite(x) ? x : 0);
 const str = (x: unknown): string => (typeof x === 'string' ? x : '');
@@ -201,6 +234,10 @@ export function branchViews(ov: Overview): BranchView[] {
       n_neutral: int(b.n_neutral),
       n_down: int(b.n_down),
       n_withheld_counted: int(b.n_withheld_counted),
+      rule_version: b.rule_version === 'v2' ? 'v2' : 'v1',
+      n_families: num(b.n_families),
+      index_v1: num(b.index_v1),
+      state_v1: typeof b.state_v1 === 'string' ? asState(b.state_v1) : null,
       prev: p ? { month: str(p.month) || null, index: num(p.index), state: p.state ? asState(p.state) : null } : null,
       state_changed: b.state_changed === true
     };
@@ -214,7 +251,7 @@ export function leadViews(flow: Flow, branches: BranchView[]): LeadView[] {
   const byCode = new Map(branches.map((b) => [b.code, b]));
   return leads.map((l) => {
     const codes = arr(l.branches).map((b) => str(b.code));
-    const states = [...new Set(codes.map((c) => byCode.get(c)?.state ?? 'för få serier'))];
+    const states = [...new Set(codes.map((c) => byCode.get(c)?.state ?? 'för få källor'))];
     return {
       code: str(l.code),
       name: str(l.name),
@@ -338,7 +375,7 @@ export function startData(input: {
   const branches = branchViews(ov);
   const leads = leadViews(flow, branches);
   const counts = Object.fromEntries(
-    (['accelererar', 'stabil', 'bromsar in', 'för få serier', 'inga registrerade kärnserier'] as State[]).map((s) => [s, int(ov.headline.counts?.[s])])
+    ALL_STATES.map((s) => [s, int(ov.headline.counts?.[s])])
   ) as Record<State, number>;
   const forecast = latestForecast(nowcasts);
   const focus = focusNowcast(ov.calendar, forecast);
@@ -361,7 +398,8 @@ export function startData(input: {
       counts,
       nWithState: WITH_STATE.reduce((a, s) => a + counts[s], 0),
       prevMonth: branches.find((b) => b.prev?.month)?.prev?.month ?? null,
-      changes
+      changes,
+      v1Sentence: v1Sentence(branches)
     },
     facts: {
       n_series: num(facts.n_series),
@@ -372,7 +410,13 @@ export function startData(input: {
     branches,
     leads,
     sparks: sparkViews(ov),
-    stripes: ov.stripes,
+    // only what the stripes draw: the page data is inlined in the HTML (the v2 arrays per month stay in the bundle)
+    stripes: {
+      months: ov.stripes.months,
+      kind: ov.stripes.kind,
+      rows: ov.stripes.rows.map((r) => ({ code: r.code, name: r.name, index: r.index, state: r.state })),
+      thresholds: ov.stripes.thresholds
+    },
     thresholds: { low: ov.stripes.thresholds.braking_at_most, high: ov.stripes.thresholds.accelerating_at_least },
     calendar: ov.calendar.map((c) => ({ id: c.id, label: c.label, title: c.title, next_origin: c.next_origin, next_period: c.next_period, n_live: c.n_live })),
     forecast,

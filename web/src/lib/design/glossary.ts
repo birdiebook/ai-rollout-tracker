@@ -7,7 +7,9 @@ export interface GlossaryEntry {
 }
 
 export const GLOSSARY: GlossaryEntry[] = [
-  { id: 'diffusionsindex', term: 'Diffusionsindex', text: 'Andelen räknade serier i en gren som ökar takten, från 0 till 1: (antal ▲ + hälften av ●) / antal serier. 0,5 betyder lika många som ökar som minskar takten.' },
+  { id: 'diffusionsindex', term: 'Diffusionsindex', text: 'Hur stor del av en grens källor som ökar takten, från 0 till 1. Varje källfamilj har en röst: andelen av familjens serier som ökar takten, där oförändrad räknas som en halv. Indexet är medel av familjernas röster. 0,5 betyder lika mycket ökning som minskning.' },
+  { id: 'kallfamilj', term: 'Källfamilj', text: 'Serier från samma källa som mäter samma sak och bara skiljer sig i land, delstat, kategori eller liknande, till exempel nio länder ur Indeeds platsannonser. De rör sig ofta tillsammans, så de får en röst tillsammans i indexet. Med färre än tre räknade familjer visas indexet men inget tillstånd: för få källor.' },
+  { id: 'v1', term: 'Regel v1', text: 'Den första indexregeln: en röst per serie och minst tre serier för ett tillstånd ("för få serier"). Den visas bredvid som jämförelse. Från ögonblicksbilden i november 2026 är regeln en röst per källfamilj (v2).' },
   { id: 'dodband', term: 'Dödband', text: 'Gränsen för när en förändring i takt räknas. Inom ±0,25 standardavvikelser av seriens egen historik räknas takten som oförändrad (●), utanför som ökande (▲) eller minskande (▼).' },
   { id: 'percentil', term: 'Percentil', text: 'Var ett värde ligger i seriens egen historik fram till beräkningsdagen, 0–100. Percentil 95 betyder att 95 % av de tidigare värdena var lägre. Ytterzonerna är ≤ 5 och ≥ 95: där hamnar i snitt en av tio serier av en slump.' },
   { id: 'log100', term: 'log ×100 per år', text: 'Årsförändringen i den naturliga logaritmen gånger 100. För små tal är det ungefär procent per år (+10 ≈ +10,5 %). För stora tal blir procenten större (+69 ≈ +100 %, en fördubbling).' },

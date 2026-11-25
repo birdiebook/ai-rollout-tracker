@@ -23,6 +23,15 @@ describe('reconciliation arithmetic', () => {
     expect(side([{ series: 'a', window: 1 }, { series: 'b', window: 1 }], lv, '2025Q4')).toBeNull();
   });
 
+  it('multiplies a term by its weight (P2b: r on net PP&E), 1 when absent', () => {
+    const lv = new Map([
+      ['dep', new Map([['2025Q1', 1], ['2025Q2', 2], ['2025Q3', 3], ['2025Q4', 4]])],
+      ['ppe', new Map([['2025Q4', 200]])]
+    ]);
+    expect(side([{ series: 'dep', window: 4 }, { series: 'ppe', window: 1, weight: 0.08 }], lv, '2025Q4')).toBeCloseTo(10 + 16, 12);
+    expect(side([{ series: 'ppe', window: 1 }], lv, '2025Q4')).toBe(200);
+  });
+
   it('splits the pace exactly into numerator and denominator parts', () => {
     // N grows 10 %/quarter, D 5 %/quarter; ratio pace = 100 * 4 * (ln 1.1 - ln 1.05)
     const qs = monthQuarters('2020Q1', 12);
@@ -48,7 +57,13 @@ describe('reconciliation arithmetic', () => {
   });
 
   it('mirrors the registered definitions and writes them as formulas', () => {
-    expect(RECON_DEFS.map((d) => d.key)).toEqual(['x_capex_cloud', 'x_rpo_cover', 'x_nvda_capex', 'x_debt_capex', 'x_capex_ocf']);
+    expect(RECON_DEFS.map((d) => d.key)).toEqual([
+      'x_capex_cloud', 'x_rpo_cover', 'x_nvda_capex', 'x_debt_capex', 'x_capex_ocf',
+      'x_dep_rev', 'x_capcost_rev_r08', 'x_capcost_rev_r12', 'x_dep_capex', 'x_dep_rev_aws'
+    ]);
+    const r08 = RECON_DEFS.find((d) => d.key === 'x_capcost_rev_r08')!;
+    expect(r08.num.filter((t) => t.weight !== undefined)).toEqual([{ series: 'ppe_net_hyp4', window: 1, weight: 0.08 }]);
+    expect(formula(r08)).toBe('(summa 4 kv. av dep_hyp4 + 0,08 × ppe_net_hyp4) / (summa 4 kv. av rev_msft + summa 4 kv. av rev_googl + summa 4 kv. av rev_amzn + summa 4 kv. av rev_meta) × 100');
     expect(formula(RECON_DEFS[0])).toBe('capex_hyp4 / (rev_aws + rev_google_cloud + rev_msft_cloud)');
     expect(formula(RECON_DEFS[1])).toBe('rpo_hyp4 / summa 4 kv. av capex_hyp4');
     expect(formula(RECON_DEFS[4])).toBe('capex_hyp4 / ocf_hyp4 × 100');
@@ -133,8 +148,8 @@ describe('components', () => {
 
   it('a withheld component has its name only: no link, no number, no direction', () => {
     const items: ComponentView[] = [
-      { key: 'pub', label: 'Publicerad', side: 'num', window: 1, linkable: true, unit: 'USD', latest_period: '2026Q3', pace: 12.3, pace_unit: 'log', pace_percentile: 70, direction: 1, levels: { periods: ['2026Q2', '2026Q3'], values: [1, 2] } },
-      { key: 'held', label: 'Inhållen serie', side: 'den', window: 4, linkable: false, unit: null, latest_period: null, pace: null, pace_unit: null, pace_percentile: null, direction: null, levels: null }
+      { key: 'pub', label: 'Publicerad', side: 'num', window: 1, weight: 1, linkable: true, unit: 'USD', latest_period: '2026Q3', pace: 12.3, pace_unit: 'log', pace_percentile: 70, direction: 1, levels: { periods: ['2026Q2', '2026Q3'], values: [1, 2] } },
+      { key: 'held', label: 'Inhållen serie', side: 'den', window: 4, weight: 1, linkable: false, unit: null, latest_period: null, pace: null, pace_unit: null, pace_percentile: null, direction: null, levels: null }
     ];
     const { container } = render(Components, { items });
     const held = container.querySelector('.held')!;
@@ -177,5 +192,42 @@ describe.runIf(!!dir)('page loads against the bundle', () => {
     expect(typeof g.available).toBe('boolean');
     if (!g.available) expect(g.lanes).toEqual([]);
     for (const b of g.breaks) expect(b.linkable).toBe(true);
+  });
+});
+
+// F1 expectations (bundle 1.5.0): rows whose numbers are withheld are counted boxes with ids only.
+describe('expectations against outcomes', () => {
+  const doc = JSON.parse(readFileSync(resolve('../web-data-fixtures/expectations.json'), 'utf-8'));
+  it('reads the fixture: the curated companies are withheld, never in a branch index', async () => {
+    const { expectationsView } = await import('./expectations');
+    const v = expectationsView(doc);
+    expect(doc.in_diffusion).toBe(false);
+    expect(v.csvPublic).toBe(false);
+    expect(v.revision4q?.withheld).toBe(true);
+    expect(v.revision4q?.value).toBeNull();
+    expect(v.events.length).toBeGreaterThan(0);
+    for (const e of v.events) if (e.withheld) expect(e.direction).toBeNull();
+  });
+  it('shows a withheld card and event without any number or direction', async () => {
+    const { expectationsView } = await import('./expectations');
+    const { default: ExpectationsSection } = await import('./ExpectationsSection.svelte');
+    const { container } = render(ExpectationsSection, { v: expectationsView(doc) });
+    const held = [...container.querySelectorAll('.card.held')];
+    expect(held.length).toBeGreaterThan(0);
+    for (const c of held) expect(c.textContent).not.toMatch(/\d,\d|n = /);
+    for (const u of container.querySelectorAll('.events .unit.held')) expect(u.textContent?.trim()).toBe('');
+  });
+  it('shows the numbers of a published row', async () => {
+    const { expectationsSentence, expectationsView } = await import('./expectations');
+    const pub = {
+      ...doc,
+      csv_public: true,
+      revisions: { window_4q: { latest: null, latest_with_value: { period: '2026Q4', known_from: '2026-10-29', n: 13, n_up: 4, n_unchanged: 8, n_down: 1, index: 0.6154, percentile: 58.7, n_history: 23 } } },
+      surprise: { companies: [{ company: 'tsmc', measure: 'revenue', period: '2026Q3', known_from: '2026-10-16', surprise: 3.2, z: 0.8, n: 20, surprise_percentile: 70 }], index: { latest: null, latest_with_value: null } }
+    };
+    const v = expectationsView(pub);
+    expect(v.revision4q).toMatchObject({ value: 0.6154, n: 13, up: 4, withheld: false });
+    expect(v.companies[0]).toMatchObject({ name: 'TSMC', surprise: 3.2, withheld: false });
+    expect(expectationsSentence(v)).toContain('Revideringsindexet över 4 kvartal är 0,62 med 13 revideringar');
   });
 });

@@ -3,7 +3,7 @@
 <script lang="ts">
   import { resolve } from '$app/paths';
   import { Glyph, StatusBadge, Term, dataUrl, fmt, periodLabel, setChartData, signed, stateStyle } from '$lib/design';
-  import { IndexHistory, Minimap, Multiples, UnitBoxes, WithheldBoxes } from '$lib/flow';
+  import { FamilyVotes, IndexHistory, Minimap, Multiples, UnitBoxes, WithheldBoxes } from '$lib/flow';
 
   let { data } = $props();
   setChartData(() => dataUrl(`branch/${data.branch.code}.json`));
@@ -11,6 +11,9 @@
   const st = $derived(stateStyle(b.state));
   const heldCounted = $derived(data.withheld.filter((w) => w.counted));
   const nPub = $derived(data.counted.length);
+  const v2 = $derived(b.rule_version === 'v2');
+  const nf = $derived(b.n_families ?? 0);
+  const v1Differs = $derived(v2 && b.state_v1 !== null && (b.state_v1 !== b.state || Math.abs((b.index_v1 ?? 0) - (b.index ?? 0)) > 0.005));
 </script>
 
 <svelte:head><title>{b.code} {b.name} – AI-utrullningen</title></svelte:head>
@@ -35,7 +38,9 @@
     <div class="big" data-state={st.key}><Glyph state={b.state} size="1.15em" /></div>
     <p class="idx">
       <span class="num">{fmt(b.index, 2)}</span>
-      <span class="unit"><Term id="diffusionsindex">diffusionsindex</Term>: andel serier som ökar takten, 0–1</span>
+      <span class="unit">
+        {#if v2}<Term id="diffusionsindex">diffusionsindex</Term>: medel av källfamiljernas röster, 0–1{:else}<Term id="diffusionsindex">diffusionsindex</Term>: andel serier som ökar takten, 0–1{/if}
+      </span>
     </p>
     {#if b.previous}
       <p class="note">
@@ -45,13 +50,34 @@
     {/if}
     {#if b.index === null}
       <p class="note">Inget index: ingen serie har ett giltigt mått på beräkningsdagen.</p>
+    {:else if b.state === 'för få källor'}
+      <p class="note" data-testid="few-families">
+        {nf === 1 ? 'En källfamilj räknas' : `${nf} källfamiljer räknas`}. Med färre än tre räknade <Term id="kallfamilj">källfamiljer</Term> visas indexet men inget tillstånd.
+      </p>
     {:else if st.key === 'none'}
       <p class="note">Med färre än tre räknade serier visas indexet men inget tillstånd.</p>
     {/if}
+    {#if v2 && b.state_v1 !== null}
+      <p class="note v1" data-testid="v1">
+        <Term id="v1">Regel v1</Term>, en röst per serie: {fmt(b.index_v1, 2)} <Glyph state={b.state_v1} />{v1Differs ? '' : ', samma som v2'}.
+      </p>
+    {/if}
   </div>
   <div class="units">
-    <h3 class="kicker">{b.n_series} {b.n_series === 1 ? 'serie räknas' : 'serier räknas'}{#if heldCounted.length}, varav {heldCounted.length} inhållna{/if}</h3>
-    {#if b.n_series > 0}
+    <h3 class="kicker">
+      {#if v2}{nf} {nf === 1 ? 'källfamilj' : 'källfamiljer'} röstar ·{/if}
+      {b.n_series} {b.n_series === 1 ? 'serie räknas' : 'serier räknas'}{#if heldCounted.length}, varav {heldCounted.length} inhållna{/if}
+    </h3>
+    {#if b.n_series > 0 && v2}
+      <FamilyVotes
+        families={b.families}
+        counted={data.counted.map((m) => ({ key: m.key, label: m.label, direction: m.direction }))}
+        nWithheldFamilies={b.n_families_withheld}
+        withheld={heldCounted}
+        withheldAnon={Math.max(0, b.n_withheld_counted - heldCounted.length)}
+        href={(k) => `#s-${k}`}
+      />
+    {:else if b.n_series > 0}
       <UnitBoxes
         label="Räknade serier och deras riktning"
         items={data.counted.map((m) => ({ key: m.key, label: m.label, direction: m.direction }))}
@@ -68,7 +94,14 @@
       <li><span class="g brk">▼</span>minskar takten</li>
       {#if heldCounted.length}<li><span class="sw held"></span>inhållen, ingen egen riktning</li>{/if}
     </ul>
-    <p class="note">Index = (antal ▲ + ½ × antal ●) / antal räknade serier. Accelererar vid minst 0,67, bromsar in vid högst 0,33.</p>
+    {#if v2}
+      <p class="note">
+        En röst per källfamilj: familjens röst = (antal ▲ + ½ × antal ●) / familjens räknade serier, och index = medel av
+        familjernas röster. Accelererar vid minst 0,67, bromsar in vid högst 0,33, med minst tre räknade familjer.
+      </p>
+    {:else}
+      <p class="note">Index = (antal ▲ + ½ × antal ●) / antal räknade serier. Accelererar vid minst 0,67, bromsar in vid högst 0,33.</p>
+    {/if}
   </div>
 </section>
 

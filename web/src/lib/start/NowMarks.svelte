@@ -38,7 +38,9 @@
             ['Tillstånd', `${st.glyph} ${b.state}`],
             ['Index', b.index === null ? 'inget index' : fmt(b.index, 2)],
             ['Förra månaden', pv === null ? '–' : fmt(pv, 2)],
-            ['Serier ▲ ● ▼', `${b.n_up} · ${b.n_neutral} · ${b.n_down}`]
+            ...(b.n_families !== null ? [['Källfamiljer', String(b.n_families)] as [string, string]] : []),
+            ['Serier ▲ ● ▼', `${b.n_up} · ${b.n_neutral} · ${b.n_down}`],
+            ...(b.rule_version === 'v2' && b.index_v1 !== null ? [['Regel v1', `${fmt(b.index_v1, 2)} ${b.state_v1 ?? ''}`.trim()] as [string, string]] : [])
           ],
           note: b.n_withheld_counted ? `varav ${b.n_withheld_counted} inhållna av licensskäl · klicka för grenen` : 'klicka för grenen'
         },
@@ -53,6 +55,9 @@
       {#if pv !== null && Math.abs(pv - b.index) > 0.005}
         <line class="mark" x1={x(pv)} x2={x(b.index)} y1={cy} y2={cy} stroke="var(--c-ink-2)" stroke-width="1.5" />
         <circle class="mark" cx={x(pv)} {cy} r="3.5" fill="var(--c-surface)" stroke="var(--c-ink-2)" stroke-width="1.5" />
+      {/if}
+      {#if b.rule_version === 'v2' && b.index_v1 !== null && Math.abs(b.index_v1 - b.index) > 0.005}
+        <line class="v1" x1={x(b.index_v1)} x2={x(b.index_v1)} y1={cy - 7} y2={cy + 7} stroke="var(--c-ink-2)" stroke-width="2" data-v1={b.index_v1} />
       {/if}
       <circle
         class="mark"

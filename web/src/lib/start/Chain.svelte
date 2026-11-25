@@ -57,7 +57,7 @@
     <span><span aria-hidden="true" style:color="var(--c-acc)">▲</span> ökar takten</span>
     <span><span aria-hidden="true" style:color="var(--c-stb)">●</span> oförändrad takt</span>
     <span><span aria-hidden="true" style:color="var(--c-brk)">▼</span> minskar takten</span>
-    <span>en markering per räknad serie · linjen: andel serier som ökar takten (<Term id="diffusionsindex">diffusionsindex</Term>), {start.sparks[start.branches[0]?.code]?.months.length ?? 24} månader, bandet är stabilt läge ({fmt(start.thresholds.low, 2)}–{fmt(start.thresholds.high, 2)})</span>
+    <span>en markering per räknad serie · linjen: {start.branches.some((b) => b.rule_version === 'v2') ? 'medel av källfamiljernas röster' : 'andel serier som ökar takten'} (<Term id="diffusionsindex">diffusionsindex</Term>), {start.sparks[start.branches[0]?.code]?.months.length ?? 24} månader, bandet är stabilt läge ({fmt(start.thresholds.low, 2)}–{fmt(start.thresholds.high, 2)})</span>
   </p>
 
   <div class="host" bind:this={host} bind:clientWidth={hostWidth}>

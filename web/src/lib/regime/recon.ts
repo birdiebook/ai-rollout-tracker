@@ -10,6 +10,18 @@ import defs from './reconciliations.json';
 export const RECON_DEFS: ReconDef[] = defs.reconciliations;
 export const reconDef = (key: string): ReconDef | undefined => RECON_DEFS.find((d) => d.key === key);
 
+/** How to read the capital-requirement ratios of P2b (datakontrakt, "Läsanvisningar för körning 13"): what a rising
+ *  or falling ratio means and the main caveat. Shown with the ratio; neutral, no direction is called good or bad. */
+const CAPCOST =
+  'Avskrivningar och kapitalkostnad gäller alla anläggningstillgångar och alla intäkter, inte bara AI. Räntan r är ett antagande i registret, inte en skattning, och historiken börjar 2023Q4.';
+export const RECON_READING: Record<string, { read: string; caveat: string }> = {
+  x_dep_rev: { read: 'En stigande kvot betyder att avskrivningarna växer snabbare än intäkterna.', caveat: CAPCOST },
+  x_capcost_rev_r08: { read: 'En stigande kvot betyder att kapitalkostnaden (avskrivningar plus 8 % på det bokförda nettot) växer snabbare än intäkterna.', caveat: CAPCOST },
+  x_capcost_rev_r12: { read: 'En stigande kvot betyder att kapitalkostnaden (avskrivningar plus 12 % på det bokförda nettot) växer snabbare än intäkterna.', caveat: CAPCOST },
+  x_dep_capex: { read: 'En fallande kvot betyder att capex växer snabbare än avskrivningarna: dagens capex blir avskrivningar under flera år.', caveat: CAPCOST },
+  x_dep_rev_aws: { read: 'En stigande kvot betyder att AWS avskrivningar växer snabbare än AWS intäkter. Kvoten gäller bara segmentet.', caveat: 'Segmentets avskrivningar och intäkter, inte bara AI. Historiken börjar 2023Q4.' }
+};
+
 /** "2026Q3" shifted by k quarters (negative = earlier). */
 export function qShift(p: string, k: number): string {
   const m = /^(\d{4})Q([1-4])$/.exec(p);
@@ -18,16 +30,18 @@ export function qShift(p: string, k: number): string {
   return `${Math.floor(n / 4)}Q${(n % 4) + 1}`;
 }
 
-/** Sum of the terms for quarter p (a 4-quarter term sums p-3..p); null when any input is missing. */
+/** Weighted sum of the terms for quarter p (a 4-quarter term sums p-3..p, each pair times the term's weight, 1 when
+ *  absent; avstamning.weighted_inputs); null when any input is missing. */
 export function side(terms: Term[], levels: Map<string, Map<string, number>>, p: string): number | null {
   let s = 0;
   for (const t of terms) {
+    const w = t.weight ?? 1;
     const lv = levels.get(t.series);
     if (!lv) return null;
     for (let k = 0; k < t.window; k++) {
       const v = lv.get(qShift(p, -k));
       if (v === undefined || !Number.isFinite(v)) return null;
-      s += v;
+      s += w * v;
     }
   }
   return s;
@@ -63,7 +77,8 @@ export function contributions(def: ReconDef, levels: Map<string, Map<string, num
 /** Rests below this (log ×100) are rounding: the bundle rounds levels to 6 significant digits. */
 export const REST_TOLERANCE = 0.05;
 
-const termText = (t: Term, label: (k: string) => string) => (t.window === 4 ? `summa 4 kv. av ${label(t.series)}` : label(t.series));
+const termText = (t: Term, label: (k: string) => string) =>
+  `${t.weight !== undefined && t.weight !== 1 ? `${fmt(t.weight, 2)} × ` : ''}${t.window === 4 ? `summa 4 kv. av ${label(t.series)}` : label(t.series)}`;
 export function formula(def: ReconDef, label: (k: string) => string = (k) => k): string {
   const part = (ts: Term[]) => (ts.length > 1 ? `(${ts.map((t) => termText(t, label)).join(' + ')})` : termText(ts[0], label));
   return `${part(def.num)} / ${part(def.den)}${def.scale !== 1 ? ` × ${fmt(def.scale)}` : ''}`;

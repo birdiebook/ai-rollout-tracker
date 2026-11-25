@@ -3,7 +3,7 @@
 // real one). Nothing is computed here that the pipeline computes; only selection, slicing and URL extraction.
 import type { Versions, MeasureHistory, MeasurePath } from '$lib/series/types';
 import { periodVersions } from '$lib/series/versions';
-import { REGISTERED, type Dir, type ExploreSeries, type Rules } from './engine';
+import { REGISTERED, type Dir, type ExploreSeries, type IndexRule, type Rules } from './engine';
 
 // ---------------------------------------------------------------- the dead band explorer
 
@@ -24,21 +24,45 @@ export interface BranchInput {
   state?: string | null;
   n_series?: number;
   n_withheld_counted?: number;
+  /** index v2 (bundle 1.4.0): the rule behind index and state, the counted families and v1 beside */
+  rule_version?: IndexRule;
+  n_families?: number;
+  n_families_withheld?: number;
+  index_v1?: number | null;
+  state_v1?: string | null;
+  families?: { family: string; series: string[]; n_series?: number; vote: number | null }[];
   counted: CountedEntry[];
-  history?: { month: string; kind: string; index: number | null; state: string | null; n_series?: number | null }[];
+  history?: {
+    month: string;
+    kind: string;
+    index: number | null;
+    state: string | null;
+    n_series?: number | null;
+    n_families?: number | null;
+    index_v1?: number | null;
+    state_v1?: string | null;
+  }[];
   record?: { status?: string; label?: string; date?: string; month?: string };
 }
 
 export interface ExploreBranch {
   code: string;
   name: string;
-  /** the registered record (the pipeline's numbers) */
-  registered: { index: number | null; state: string; n_series: number };
+  /** the registered record (the pipeline's numbers): the official rule, and v1 beside it */
+  registered: {
+    index: number | null;
+    state: string;
+    n_series: number;
+    rule_version: IndexRule;
+    n_families: number | null;
+    index_v1: number | null;
+    state_v1: string | null;
+  };
   /** can the browser recompute this branch? Only when every counted series is publishable and has its numbers */
   eligible: boolean;
   why: string | null;
   series: ExploreSeries[];
-  history: { month: string; kind: string; index: number | null; state: string | null; n_series: number | null }[];
+  history: { month: string; kind: string; index: number | null; state: string | null; n_series: number | null; index_v1: number | null; state_v1: string | null }[];
 }
 
 export function rulesOf(method: Record<string, unknown>): Rules {
@@ -47,7 +71,10 @@ export function rulesOf(method: Record<string, unknown>): Rules {
     deadband_sd: r.deadband_sd ?? REGISTERED.deadband_sd,
     accelerating_at_least: r.accelerating_at_least ?? REGISTERED.accelerating_at_least,
     braking_at_most: r.braking_at_most ?? REGISTERED.braking_at_most,
-    min_series: r.min_series ?? REGISTERED.min_series
+    min_series: r.min_series ?? REGISTERED.min_series,
+    min_families: r.min_families ?? REGISTERED.min_families,
+    // a bundle before 1.4.0 has no index_rule: its index and state are v1
+    index_rule: r.index_rule === 'v2' ? 'v2' : 'v1'
   };
 }
 
@@ -59,14 +86,25 @@ export function exploreBranchOf(b: BranchInput): ExploreBranch {
   const usable = b.counted.filter(
     (s) => s.valid !== false && typeof s.change_in_pace === 'number' && typeof s.sd_change === 'number' && s.sd_change > 0 && s.direction !== null && s.direction !== undefined
   );
+  const famOf = new Map((b.families ?? []).flatMap((f) => f.series.map((k) => [k, f.family] as const)));
+  const rule: IndexRule = b.rule_version === 'v2' ? 'v2' : 'v1';
   let why: string | null = null;
   if (held > 0) why = `räknar ${held === 1 ? 'en inhållen serie' : `${held} inhållna serier`} vars tal inte publiceras`;
   else if (n === 0) why = 'inga räknade serier';
   else if (usable.length !== n) why = 'alla räknade serier har inte sina tal i paketet';
+  else if (rule === 'v2' && usable.some((s) => !famOf.has(s.key))) why = 'alla räknade serier har inte sin källfamilj i paketet';
   return {
     code: b.code,
     name: b.name,
-    registered: { index: b.index ?? null, state: b.state ?? 'för få serier', n_series: n },
+    registered: {
+      index: b.index ?? null,
+      state: b.state ?? (rule === 'v2' ? 'för få källor' : 'för få serier'),
+      n_series: n,
+      rule_version: rule,
+      n_families: b.n_families ?? null,
+      index_v1: rule === 'v2' ? (b.index_v1 ?? null) : (b.index ?? null),
+      state_v1: rule === 'v2' ? (b.state_v1 ?? null) : (b.state ?? null)
+    },
     eligible: why === null,
     why,
     series:
@@ -77,10 +115,19 @@ export function exploreBranchOf(b: BranchInput): ExploreBranch {
             method: s.method ?? null,
             change: s.change_in_pace as number,
             sd: s.sd_change as number,
-            registered: s.direction as Dir
+            registered: s.direction as Dir,
+            family: famOf.get(s.key) ?? s.key
           }))
         : [],
-    history: (b.history ?? []).map((h) => ({ month: h.month, kind: h.kind, index: h.index ?? null, state: h.state ?? null, n_series: h.n_series ?? null }))
+    history: (b.history ?? []).map((h) => ({
+      month: h.month,
+      kind: h.kind,
+      index: h.index ?? null,
+      state: h.state ?? null,
+      n_series: h.n_series ?? null,
+      index_v1: h.index_v1 ?? null,
+      state_v1: h.state_v1 ?? null
+    }))
   };
 }
 
