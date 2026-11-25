@@ -797,7 +797,7 @@ republishing data"), npm och arXiv (`okänd`), och Microsofts capex-guidance ur 
 ## 2026-11-25 – R17: granskning av S1 (nät, optik och servrar)
 
 - **Godkänd med anmärkningar** (`docs/granskning/r17-nat-servrar.md`). Ombygget är identiskt (42 serier, 1 327 rader),
-  alla `known_from` är inlämningsdatum, 85 Q4-rader stämmer med helår − 9M, och 11 bolagskvartal i alla åtta bolag
+  alla `known_from` är inlämningsdatum, 85 Q4-rader stämmer med helår − 9M, och 12 bolagskvartal i alla åtta bolag
   kontrollerades mot huvuddokumenten. Registerposten kom före hämtningen, och tillägget efter första bygget är inte
   styrt av seriernas förlopp.
 - **Fel (R17-1):** `deferred_rev_anet` 2018Q3 är 221,9 i stället för 529,9. I 10-Q 2018-11-05 är den taggade

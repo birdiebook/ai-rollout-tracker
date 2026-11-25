@@ -26,7 +26,7 @@ Underlag:
 | 2. Taggval, definitioner och brott | **Fel i `deferred_rev_anet`**: 2018Q3 tar en annan post som kortfristig del (R17-1), och 2017Q4 är ASC 605 (R17-3). **Anmärkningar:** EMC saknas (R17-4), Aristas åtaganden 2016–2017 (R17-5) och HPE:s RPO är förutbetalda intäkter (R17-6). Omfattningsbrotten, HPE:s Server, Aristas omdatering och `exact_facts` är **OK** |
 | 3. Kalender och Q4 = helår − 9M | **OK** för mappningen och för 85 Q4-rader. **Fel:** första versionen av Dells ISG och Servers and networking 2021Q4 blandar baser (R17-2) |
 | 4. `known_from` och versioner | **OK.** Alla rader har ett inlämningsdatum, ingen ligger före periodens slut, och omräkningar är nya versioner |
-| 5. Handkontroller | 11 bolagskvartal i alla åtta bolag mot huvuddokumenten. Allt stämmer utom `deferred_rev_anet` 2018Q3 |
+| 5. Handkontroller | 12 bolagskvartal i alla åtta bolag mot huvuddokumenten. Allt stämmer utom `deferred_rev_anet` 2018Q3 |
 | 6. Licens och klass | **OK** |
 | 7. Segmentintäkter är inte AI-intäkter | **OK**, med R17-4 som undantag för rekommendationen om `rev_dell_isg` |
 
@@ -228,8 +228,8 @@ Den första versionen ligger inte på någon bas och stod i ett år. Varje enski
 brottskontrollen ser inget. Källdokumentet säger att ISG "räknades om med 0,6–1,6 %", men kvartalet 2021Q4 ändrades
 med −3,9 %. `sec.md` beskriver samma sak för avvecklad verksamhet och säger att den inte går att upptäcka. Här går den
 att upptäcka: samma 10-K räknade om tidigare helår av samma rad. En sökning i alla S1:s serier efter Q4-rader ur ett
-10-K som också räknade om tidigare perioder gav fyra andra fall (Dells ISG 2018Q4, HPE:s Server 2025Q3, Ciscos
-Infrastructure Platforms 2020Q2 och 2021Q2, Super Micro 2017Q2). Där låg 9M redan på den nya basen, eller ändringen var
+10-K som också räknade om tidigare perioder gav sex andra rader (Dells ISG och Servers and networking 2018Q4, HPE:s
+Server 2025Q3, Ciscos Infrastructure Platforms 2020Q2 och 2021Q2, Super Micro 2017Q2). Där låg 9M redan på den nya basen, eller ändringen var
 under 0,5 %. `rev_dell` påverkas inte, eftersom omfattningsregeln läser 9M först ur 10-Q 2022-12-05.
 
 ## 4. `known_from` och versioner – OK
@@ -245,7 +245,7 @@ under 0,5 %. `rev_dell` påverkas inte, eftersom omfattningsregeln läser 9M fö
   mindre än 100 dagar mellan räkenskapskvartalets slut och första värdet räknas. Filtret står inte i registret. Det
   gäller bara aktualiteten, och utan det vore gränsen meningslös.
 
-## 5. Handkontroller – 11 bolagskvartal, alla åtta bolag
+## 5. Handkontroller – 12 bolagskvartal, alla åtta bolag
 
 Värden ur S1:s tabell mot huvuddokumentet i inlämningen på www.sec.gov. Andra kvartal än S1:s egna kontroller.
 
@@ -319,3 +319,8 @@ prövar det. Undantaget är rekommendationen om `rev_dell_isg` som "ren" kandida
   R17-4 till R17-6)
 
 `python -m pytest -q tests/test_r17_nat_servrar.py tests/test_sec_stack_nat.py`: 31 passerade, 6 xfail.
+
+Hela sviten en gång: 2 195 passerade, 3 överhoppade, 8 xfail och 2 fel. Båda felen är kända. `test_committed_fixtures_are_the_current_synthetic_bundle`
+fallerar för att `docs/mattregister.md` ändrades i S1 (fixturerna bär dess sha256). `test_freshness_as_of_last_fetch` fallerar i
+granskningens arbetskatalog, eftersom S1:s 36 öppna serier finns i katalogen men deras data bara finns i S1:s katalog. Med S1:s
+tabell på plats passerar testet.
