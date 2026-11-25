@@ -777,3 +777,19 @@ republishing data"), npm och arXiv (`okänd`), och Microsofts capex-guidance ur 
   regeln bakom dem ändras, och fälten är tillägg (`docs/steg3/datakontrakt.md`, Ändringar).
 - Loggarna och registret har båda sidornas poster i tidsordning. `quarterly.py` har mains omskrivning med "för få
   källor" i tillståndsordningen.
+
+## 2026-11-25 – S1: nät, optik och servrar ur SEC XBRL
+
+- 42 katalogserier i G6 för lagren mellan chip och datacenter: Arista, Cisco, Coherent, Lumentum, Super Micro, Dell,
+  HPE och Celestica (totala intäkter, lager, segment- och produktrader, inköpsåtaganden, Aristas kontraktsskulder och
+  RPO). Inte kärnserier. Förregistrerat före hämtningen. Källa och kontroller: `docs/kallor/sec_stack_nat.md`.
+- **Omfattningsbrott i totala intäkter.** Dell (VMware) och HPE (Enterprise Services och mjukvara) räknade om tidigare
+  år när verksamheter blev avvecklade, och versionsregeln blandade då omfattningar i den senaste versionen. `rev_dell`
+  börjar därför 2021Q1 och `rev_hpe` 2017Q1 (tillägg i registret). Segmentserierna påverkas inte.
+- **Dells AI-rad** (`rev_dell_ai_servers`, från 10-K 2026-03-16) är den enda raden som ett bolag självt kallar AI. Den
+  har bara två kvartal nu och växer till sex när 10-Q i december 2026 ger nio månader för FY2026.
+- **Två taggningsfel rättade i koden:** Aristas RPO i tre 10-Q 2025 har en kontext ett år för tidigt (omdateras), och
+  HPE:s Server delas vid omorganisationen 2026-03-10 trots att kontrollen slår till först 2026-06-02.
+- **Rekommendation till Johannes:** låt serierna vara katalogserier tills de har granskats. Om G6 ska få en
+  kärnserie för nät eller servrar är `rev_csco_networking` eller `rev_dell_isg` de längsta rena kandidaterna, men båda
+  innehåller mycket utanför AI. Ingen av dem ska in före ögonblicksbilden 2026-11-30.

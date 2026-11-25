@@ -67,7 +67,7 @@ COMPANIES: dict[str, Company] = {
                     "52/53 veckor till sista lördagen i juli; kvartal slutar i slutet av okt/jan/apr/jul: aug–okt "
                     "räknas som Q3 och nov–jan som Q4 (mittpunktsregeln), ungefär en månad efter kalenderkvartalet"),
     "cohr": Company("Coherent", COHR, tuple(REVENUE), "2016-01-01", 25, 60 + 92 + 30,
-                    "räkenskapsår till 30 juni, kvartal = kalenderkvartal (II-VI till 2022)",
+                    "till 30 juni, kvartal = kalenderkvartal (II-VI till 2022)",
                     rev_scope_breaks=("2014-08-28",), rev_revisions=("2012-02-08",),
                     rev_note="Läser inlämningar från 10-K 2014-08-28, då produktlinjen tellurium redovisades som avvecklad "
                              "verksamhet och tidigare år räknades om (−3,4 %). Omräkningen 2012-02-08 (+2,0 % för ett "
@@ -75,7 +75,7 @@ COMPANIES: dict[str, Company] = {
     "lite": Company("Lumentum", LITE, (INCL, *REVENUE), "2015-08-01", 25, 64 + 92 + 30,
                     "52/53 veckor till lördagen närmast 30 juni, kvartal slutar nära kalenderkvartalets slut"),
     "smci": Company("Super Micro Computer", SMCI, tuple(REVENUE), "2016-01-01", 25, 81 + 92 + 30,
-                    "räkenskapsår till 30 juni, kvartal = kalenderkvartal",
+                    "till 30 juni, kvartal = kalenderkvartal",
                     rev_revisions=("2019-05-17",),
                     rev_note="Omräkningen i 10-K och 10-Q/A 2019-05-17 (efter revisionsutskottets utredning, ±3–4 % för "
                              "kvartal 2015–2017) är en rättelse av samma definition och ger versioner."),
@@ -87,7 +87,7 @@ COMPANIES: dict[str, Company] = {
                              "avvecklad verksamhet och tidigare år räknades om. Tidigare brott: Dell Services, DSG och ECD "
                              "som avvecklad verksamhet (10-Q 2017-06-09)."),
     "hpe": Company("Hewlett Packard Enterprise", HPE, tuple(REVENUE), "2015-11-01", 25, 83 + 92 + 30,
-                   "räkenskapsår till 31 oktober, kvartal slutar 31 jan/apr/jul/okt: aug–okt räknas som Q3 och "
+                   "till 31 oktober, kvartal slutar 31 jan/apr/jul/okt: aug–okt räknas som Q3 och "
                    "nov–jan som Q4 (mittpunktsregeln), en månad efter kalenderkvartalet",
                    rev_scope_breaks=("2017-06-08", "2018-06-07"),
                    rev_note="Läser inlämningar från 10-Q 2018-06-07, där Enterprise Services (Everett, till DXC 2017-04) "
@@ -117,6 +117,7 @@ class SegLine:
     regime_notes: tuple[str, ...] = ()
     discontinued: str = ""  # Swedish reason, when the last regime is no longer reported
     description: str = ""  # Swedish, what the line contains
+    caveat: str = ""  # Swedish; replaces SEG_CAVEAT when set
     # What definition_breaks must find, when it differs from `breaks`: a realignment whose first filing restates by less
     # than 2% is flagged only at the next filing (HPE's Server, register amendment 2026-11-25). None = `breaks`.
     detected: tuple[str, ...] | None = None
@@ -174,7 +175,9 @@ LINES = [
             description="Alla servrar och nätprodukter i ISG, både traditionella och AI-optimerade."),
     SegLine(("rev_dell_ai_servers",), "dell", (dims((PROD, "AIOptimizedServersAndNetworkingMember"), ISG),),
             "AI-optimerade servrar och nät inom ISG (Dell)",
-            description="Rad från 10-K för FY2026 (2026-03-16), med FY2025 som jämförelse."),
+            description="Rad från 10-K för FY2026 (2026-03-16), med FY2025 som jämförelse.",
+            caveat="Dells egen avgränsning av AI-optimerade servrar och nät. Lagring, tjänster och AI-system i andra "
+                   "rader ingår inte, och raden säger inget om slutkundens användning."),
     SegLine(("rev_dell_traditional_servers",), "dell", (dims((PROD, "TraditionalServersAndNetworkingMember"), ISG),),
             "Traditionella servrar och nät inom ISG (Dell)",
             description="Rad från 10-K för FY2026 (2026-03-16), med FY2025 som jämförelse."),
@@ -429,8 +432,8 @@ def balance_series(key: str) -> pd.DataFrame:
 QUESTION = ("Hur snabbt växer lagren mellan chip och datacenter (nät, optik och servrar), och var byggs lager och "
             "åtaganden upp?")
 CAVEAT = ("Bolaget säljer också till kunder utanför AI och datacenter, så serien är inte AI-intäkter eller AI-efterfrågan.")
-SEG_CAVEAT = ("Segment- eller produktintäkter är inte AI-intäkter: raden innehåller också traditionella servrar, "
-              "företagsnät och telekom.")
+SEG_CAVEAT = ("Segment- eller produktintäkter är inte AI-intäkter: raderna innehåller också traditionella servrar, "
+              "företagsnät, telekom eller industri.")
 LABELS = {
     "purchase_oblig": "Inköpsåtaganden",
     "deferred_rev": "Kontraktsskulder (förutbetalda intäkter)",
@@ -485,7 +488,8 @@ def _specs() -> list[Spec]:
             elif line.discontinued:
                 note += " Avslutad: " + line.discontinued
             specs.append(_spec(key, f"Intäkter, {line.label}", lambda line=line, i=i: _rows(line_series(line)[i]),
-                               line.company, note + " " + SEG_CAVEAT, source=SOURCE_SEG, closed=closed))
+                               line.company, note + " " + (line.caveat or SEG_CAVEAT), source=SOURCE_SEG,
+                               closed=closed))
     for b in BALANCES:
         c = COMPANIES[b.company]
         specs.append(_spec(b.key, f"{LABELS[b.measure]}, {c.name}", lambda key=b.key: _rows(balance_series(key)),
