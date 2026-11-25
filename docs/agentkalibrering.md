@@ -99,6 +99,7 @@ En rad per spår, fylls på efter varje körning. Tumreglerna justeras när siff
 | 2026-11-25 | 14 | R21 granskning av CN1 | granskning (oberoende omräkning, nyhämtning) | ~90 (två pass, kvotstopp) | ~120 | – | 301 av 301 rader lika; 22 pressmeddelanden byte-lika; 54 tal; exakt mot 20-F även för Alibabas capex; R21-1–4 dok, etikett, korskontroll; 12 tester + 4 xfail |
 | 2026-11-25 | 14 | X18 rättning av CN1 | rättning (korskontroll, dokument, etiketter) | ~27 | ~65 | – | R21-1–4 rättade; registerändring före koden; Alibabas capex exakt FY2015–FY2020; 301 rader oförändrade; 4 xfail → pass, 3 nya tester |
 | 2026-11-25 | 14 | X16 rättning av S3 efter R19 | rättning (registerpost först, omkodning, noter, tester) | ~50 | ~95 | – | R-1–R-4, N-5 och N-7; GE Vernovas order i GW delade, 6 konverteringar kodade (orderingång 5–16 GW), 35/35 GW-rader mot nyhämtade bilagor, 4 strikta xfail nu vanliga tester, 15 nya tester, 62 serier hämtade (60 oförändrade); hela sviten 2247 gröna, 2 kända miljöfel |
+| 2026-11-25 | 14 | Körning 14 som helhet (8 spår, 8 granskningar, 8 rättningar, ägarbeslut och integration) | körning (tre arbetsflöden, ägarbeslut, integration) | ~600 väggtid, med två kvotpauser | – | ~4 020 in + ut, ~22 400 cache-skrivning; integrationens egen kostnad okänd | grupp A (S1–S3, R17–R19, X14–X16, 9 agenter) 1 380 / 7 600; grupp B (T1, KR1, CN1, R20, R21, R24, X17, X18, X21, 9 agenter) 1 330 / 6 300; grupp C (Q1, Q2, R22, R23, X19, X20, 6 agenter) 880 / 4 700; ägarbeslut (3 agenter plus integration och verifiering) 430 / 3 800 (in + ut / cache-skrivning, k). 171 nya katalogserier, ingen ny kärnserie, tillstånden oförändrade, månadsgränsen i Arena rättad |
 
 ## Körning 1, sammanfattning (2026-11-23, orkestrerare)
 
@@ -137,3 +138,9 @@ Fylls i ungefär en månad efter leverans (`docs/riktning.md`, avsnitt 10). Det 
 
 | Leverans | Levererad | Används (ja/nej/delvis) | Vad det betydde | Löpande kostnad (CI/tokens per kvartal) |
 |---|---|---|---|---|
+| S1 nät, optik och servrar (42 serier i G6, sidan) | 2026-11-25 (körning 14) |  |  | CI (XBRL), inga tokens |
+| S2 kraft, kylning, elnät och datacenter (30 serier i G4, G5, G7, sidan) | 2026-11-25 (körning 14) |  |  | CI (XBRL), inga tokens |
+| CN1 Alibabas och Baidus moln och capex ur 6-K (12 tabellserier, sidan) | 2026-11-25 (körning 14) |  |  | CI (6-K-tabeller); tokens bara när en definition byts |
+| Q1 pris för förra årets front (4 serier i G2, sidan) | 2026-11-25 (körning 14) |  |  | CI; tokens när namnkopplingen i Arena behöver nya modeller |
+| Q2 öppna mot stängda modeller och Kina-gapet (8 serier i G1, sidan) | 2026-11-25 (körning 14) |  |  | CI; tokens när nya modeller saknar klass eller land |
+| T1 test av tillståndsregeln (`docs/resultat/t1_tillstandsregeln.md`) | 2026-11-25 (körning 14) |  |  | inget löpande; omkörning 2027-11 |

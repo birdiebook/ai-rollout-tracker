@@ -1200,3 +1200,30 @@ Johannes svarade "kör på dina rekommendationer" på tre rekommendationer samma
   kort granskning av konverteringarna. Vänta med Digital Realtys `dlr_share`-serier tills andelen före 2024Q2 är
   belagd i 10-Q/10-K.
 
+## 2026-11-25 – Körning 14 integrerad
+
+- Åtta rättningsgrenar är mergade i ordning på `auto14k/integration14` från main (9e8541d): X14 (S1), X15 (S2), X16
+  (S3), X21 (T1), X17 (KR1), X18 (CN1), X19 (Q1) och X20 (Q2). Varje gren har sitt bygge och sin granskning. Bara
+  registret, beslutsloggen och kalibreringen krockade. Båda sidornas poster står i tidsordning, och ett skript har
+  kontrollerat rad för rad att ingen post saknas eller står två gånger.
+- **Månadsgränsen i `arena_price` (R22-1, R23-2).** Registerposten "Integration 14: månadsgränsen i arena_price" kom
+  före koden. Första versionen räknar nu tavlor belagda till och med månadsslut + 1 dag, som X20:s regel. Ombyggnaden
+  gav samma värden och `known_from` i alla 34 och 30 rader för `g2_price_at_arena_capability` och `_4o`. Bara
+  diagnostiken ändras: tavlorna 2026-04-30 och 2026-09-30 sätter nu värdet för april och september. Q1:s serier läser
+  inte `arena_price.build` och är oförändrade. Noten i riktning avsnitt 7 står kvar. Andra kopior av samma
+  månadslogik finns inte kvar: `vintages.monthly`, `open_gap` och `price_rolling` är rättade, och övriga läser
+  `vintages.monthly` eller räknar redan med beläggets dag.
+- **Licenser.** `catalog.validate` klassar alla 805 serier. KR1:s och CN1:s källor fick egna grupper med länk till
+  källdokumentet, och ett test kräver att varje grupp har ett dokument. Tabellerna i `datakallor/licensniva.md` är
+  genererade om.
+- **Data.** Rättningsspårens data är inlagd i basen: 170 serier tillagda och 5 ersatta (`dep_msft` och fyra
+  `g1_arena_*`), +3 842 rader (781 117 → 784 959). Byggspåren och granskningsspåren gav inget som saknades i
+  rättningsspåren. Deras äldre rader är inte inlagda. Arena-raderna ur integrationen ersatte basens två serier med
+  samma innehåll. Datakontrollerna är gröna,
+  och rekonstruktionen av tillstånden 2024-01 – 2026-11 är lika med mains i alla 315 grenmånader.
+- **Veckohämtningen.** De nya SEC-serierna lägger till cirka 50 anrop till en varm körning och cirka 2 000 till en kall
+  (instanser och 6-K, ungefär 2 GB). Det ryms i tidsgränserna. Rekommendation: kör "Weekly data fetch" en gång för hand
+  efter pushen, så att cachen är varm före ögonblicksbilden 2026-11-30.
+- **Inte ändrat:** publiceringsflaggor och kärnserier. Ägarbesluten som väntar står i `steg2/STATUS.md`. R18-4
+  (`defnref.xml` i gemensam instanskod 2009–2011) är rättat för S2:s serier och `dep_msft` men inte kontrollerat för
+  alla äldre serier. Det står som öppen fråga.

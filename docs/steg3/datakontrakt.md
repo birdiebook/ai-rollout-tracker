@@ -502,3 +502,122 @@ Webbsessionen behöver:
   vikten, och `test_web_mirrors_every_reconciliation` är strikt xfail tills alla tio är speglade;
 - veta att K0 i `story/<månad>.json` nu kan ha nyckeln "för få källor" i `facts.counts` (registerändringen
   2026-11-25), och att K5 och K6 inte längre räknar inhållna serier (`withheld.K5` och `withheld.K6` är 0).
+
+## Läsanvisningar för körning 14
+
+Underlag för webbsessionens läsprodukt i körning 15 (lagervy och "mina lager"), 2026-11-25. Måtten står per lager i
+stacken (`docs/riktning.md`, avsnitt 0). Per mått: vad det visar, hur det läses och det viktigaste förbehållet. Inget
+mått nedan är kärnserie, och inget ändrar grenarnas index eller tillstånd. Mått med `publish=False` har bara nyckel,
+familj, giltighet och skäl i paketet och i ögonblicksbilden, inga värden. Ägaren har inte beslutat om dem än.
+
+### Förmåga och kostnad (G1, G2)
+
+**Öppna mot stängda modeller (`g1_open_lag_months_arena`, `g1_open_gap_arena`, `g1_open_lag_months_eci`,
+`g1_open_gap_eci`).** Hur många månader de bästa öppna modellerna ligger efter den stängda fronten, och gapet i poäng.
+Arena-varianten jämför inom en och samma tavla, och ECI-varianten på Epochs skala. Visa eftersläpningen som en nivå i
+hela månader: 0 betyder att de öppna leder eller är ikapp. Förbehåll: Arena mäter chattpreferens, och ECI är återfylld
+med dagens skattning och klassning.
+
+**Kina mot övriga (`g1_china_lag_months_arena`, `g1_china_gap_arena`, `g1_china_lag_months_eci`,
+`g1_china_gap_eci`).** Samma mått för kinesiska labb mot alla andra. Läs dem tillsammans med måtten för öppna
+modeller. Sedan 2024-12 är den bästa öppna modellen kinesisk, så de två måtten blir ofta lika och är inte två
+oberoende signaler. De tidiga ECI-värdena 2023-09 – 2024-05 är undre gränser.
+
+**Pris för förra årets front (`g2_price_rolling12_arena`, huvudvariant, och `g2_price_rolling6_arena`).** Lägsta
+listpris (3:1, USD per miljon tokens) för en modell som är minst lika bra som den som ledde Arena för 12 (eller 6)
+månader sedan, i samma tavla. En fallande serie betyder att förra årets front blir billigare. Visa den bredvid
+frontpriset. Förbehåll: marginalen till tröskeln är ofta under 5 poäng, de flesta priser vid minimum är inte
+kontrollerade mot utvecklarens prislista, och L = 12 är osäker 2026-02 – 2026-05 (efterföljarregeln).
+
+**Frontpris (`g2_price_frontier_arena`).** Priset för den högst rankade prissatta modellen i tavlan. Det är sammanhang,
+inget taktmått. Priset hoppar mellan leverantörer (till exempel 93,75 USD för GPT-4.5 Preview 2025-03), så rita ingen
+trendlinje.
+
+**Pris vid rörlig tröskel på ECI (`g2_price_rolling12_eci`).** Samma idé som Arena-varianten, med Epochs ECI som
+tröskel. Visa den bara som kontroll. Hela historiken är återfylld med dagens ECI och läcker framtida information.
+
+**Månadsgränsen i Arena (rättad).** En tavla som publiceras på månadens sista dag och beläggs dagen efter räknas nu i
+sin månad. `g1_arena_text_top`, `g1_arena_text_sc_top` och `g1_arena_text_top_gap_ref` fick nya värden för 2026-04
+och 2026-09, och `g1_arena_webdev_top` för 2026-07 och 2026-09, med samma `known_from`. G1:s tillstånd ändrades inte, och `g2_price_at_arena_capability*` fick samma
+värden som förut.
+
+### Intäkter (G4)
+
+**Alibabas moln (`rev_baba_cloud_v1` – `v4`, `rev_baba_cloud_v4_usd`).** Molnsegmentets intäkter i fyra definitioner
+som aldrig skarvas: före DingTalk, med DingTalk, Cloud Intelligence Group och AI Cloud and Compute Services. Rita dem
+som separata linjer och jämför takt inom en definition. Förbehåll: v4 har bara några kvartal, och Cloud Intelligence
+Group innehåller intäkter från andra segment (+30 till +36 % vid omorganisationen 2023).
+
+**Baidus AI-moln ur text (`rev_bidu_ai_cloud_infra`, `rev_bidu_core_nonads`, `publish=False`).** Belopp som Baidu
+bara anger i löptext, extraherade med låsta regler och kontrollerade mot EDGAR. AI Cloud Infra har 5 kvartal. Visas
+inte förrän ägaren har beslutat.
+
+### Capex och finansiering (G5)
+
+**Alibabas och Baidus capex (`capex_baba_v1`, `capex_baba_v2`, `capex_bidu`, `capex_bidu_core`, och `_usd`-vyerna).**
+Köp av anläggningstillgångar enligt bolagens egna avstämningar, i miljoner RMB eller i US$ med kvartalsmedel av Fed:s
+H.10-kurs. Jämför takt inom en serie. Förbehåll: `capex_baba_v1` innehåller licensierade upphovsrätter till
+videoinnehåll, och `v2` undantar mark och kontorscampus.
+
+**Emissioner och spread vid emission (`issuance_<bolag>_q`, `spread_issue_<bolag>_q`, `spread_issue_ai_q`,
+`spread_issue_ai_7_12y_q`, `publish=False`).** Emitterat belopp i USD och spreaden mot statsobligationer (punkter) i
+obligationernas villkorsbilagor, per kvartal. Ett kvartal utan emission är en lucka, så rita punkter och inga linjer.
+Förbehåll: den poolade spreaden har bara en emittent i 12 av 17 kvartal och visar mest vem som lånade, och obligationer
+i annan valuta ingår inte.
+
+### Chips, minne och nät (G6)
+
+**Intäkter för nät, optik och servrar (`rev_anet`, `rev_csco`, `rev_cohr`, `rev_lite`, `rev_smci`, `rev_dell`,
+`rev_hpe`, `rev_cls`).** Totala intäkter per kvartal ur SEC, daterade med inlämningsdagen. De visar efterfrågan i lagren
+mellan chippen och datacentret. Förbehåll: avvecklad verksamhet gör att Dell börjar 2021Q1, HPE 2017Q1 och Coherent
+2013Q3.
+
+**Segment och produktrader (`rev_cohr_datacom`, `rev_lite_*`, `rev_csco_networking`, `rev_dell_isg`,
+`rev_dell_ai_servers`, `rev_hpe_server_fy26`, `rev_hpe_dc_networking`, `rev_cls_ccs` med flera).** Den del av
+bolaget som ligger närmast AI. Sex serier är avslutade definitioner (till exempel `rev_hpe_server_fy24`) och skarvas
+inte med efterföljaren. Förbehåll: segmentintäkter är inte AI-intäkter. Dells och HPE:s serverrader har också
+traditionella servrar, Dells AI-rad har bara några kvartal, och `rev_dell_isg` är jämförbar först från 2017Q1.
+
+**Lager, inköpsåtaganden och orderstock (`inv_<bolag>`, `purchase_oblig_<bolag>`, `rpo_<bolag>`,
+`deferred_rev_anet`).** Balanser vid kvartalets slut, alltså stockar och inga flöden. Stigande åtaganden och RPO
+betyder att bolagen binder sig för mer leveranser framåt. Förbehåll: inköpsåtaganden mäter olika saker hos olika bolag,
+och `rpo_hpe` är förutbetalda intäkter enligt HPE:s egen text och kan inte jämföras med `rpo_dell` eller `rpo_csco`.
+
+**Dells AI-order (`ob_dell_*`, `publish=False`).** Order och orderstock för AI-servrar som Dell anger i
+pressmeddelanden. Visas inte förrän ägaren har beslutat om S3.
+
+### El och kylning (G7)
+
+**Intäkter, segment och capex för Vertiv, GE Vernova, Eaton och Quanta (`rev_vrt`, `rev_gev`, `rev_etn`, `rev_pwr`,
+segmenten och `capex_<bolag>`).** Leverantörerna av kraft, kylning och elnät. Läs takten i Vertivs segment och Eatons
+elsegment som mått på utbyggnaden. Förbehåll: GE Vernova och Eaton är mest annat än AI, och Vertivs bruttosegment
+innehåller försäljning mellan segmenten (`rev_vrt_*_net` är extern försäljning och summerar till `rev_vrt`).
+
+**Orderstock som RPO (`rpo_gev`, `rpo_gev_equipment`, `rpo_gev_services`, `rpo_pwr`, `rpo_etn`).** Återstående
+prestationsåtaganden, en ledande stock för den fysiska utbyggnaden. `rpo_etn` är Eatons fasta orderstock. Förbehåll:
+serierna är korta (GE Vernovas RPO har 11 kvartal), och Vertivs RPO finns inte i XBRL.
+
+**Order och orderstock ur pressmeddelanden (`ob_vrt_*`, `ob_gev_*`, `ob_etn_*`, `publish=False`).** Talen som bolagen
+anger, till exempel GE Vernovas gasturbiner i GW och Eatons book-to-bill. Vertiv slutade ange order i siffror 2026, så
+alla tio Vertiv-serier är avslutade. Visas inte förrän ägaren har beslutat om S3.
+
+### Datacenter (G4, G5)
+
+**Equinix och Digital Realty (`rev_eqix`, `rev_dlr`, `rpo_eqix`, `capex_eqix`, `capex_dlr`).** Intäkter, RPO och
+capex för utbyggnad och förbättring av datacenter. Capex visar hur snabbt de bygger. Förbehåll: datacenterbolagens
+capex är inte bara AI, och serierna börjar 2009, långt före AI-utbyggnaden.
+
+**Digital Realtys tecknade avtal (`ob_dlr_*`, `publish=False`).** Tecknade hyresavtal per produkt i MUSD per år och
+MW. Visas inte förrän ägaren har beslutat. Förbehåll: Digital Realtys andel i samägda bolag anges inte före 2025.
+
+### Import (G6)
+
+**Import per HS-kod och land (`us_imp_hs*_m`).** Månadsserierna hämtades 2026-11-25 med `CENSUS_API_KEY`: 35 serier
+från 2013-01. Census-notisen ska nu stå med serierna och i sidfoten (Läsanvisningar för körning 13).
+
+### Tillståndsregeln (T1)
+
+**Vad ett tillstånd betyder.** T1 prövade regeln förregistrerat ([resultat/t1_tillstandsregeln.md](../resultat/t1_tillstandsregeln.md)).
+Tillstånden är stabila mot revideringar (kappa 0,83 med v2), men träffkvoten mot nästa takt (0,74 och 0,76) är inte
+skild från slumpen och persistensen (Holm-p 0,37). Läs ett tillstånd som en beskrivning av takten nu, inte som en
+prognos. Regeln och paketet är oförändrade.

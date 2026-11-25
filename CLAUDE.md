@@ -80,6 +80,12 @@ Se `docs/plan.md`, avsnitt 8. Uppdatera här när en fas är klar.
   Avskrivningar och PP&E (P1), nyttjandeperioder (P2a), intäktskrav som avstämningar (P2b), N7 som backtest (ingen
   variant klarar regeln, B1). Revideringar av guidance och överraskningsindex (F1). BNP-bidrag, elpris och PPI (M1).
   Serverimport per land (M2): årsfilen och HS-serierna (hämtade med `CENSUS_API_KEY` 2026-11-25)
+- **Körning 14** ✅ (`docs/riktning.md` avsnitt 8): stackens lager via SEC som katalogserier: nät, optik och servrar
+  (S1), kraft, kylning, elnät och datacenter (S2), order och orderstock ur 8-K (S3, `ob_*`, inhållna). Spread vid
+  emission (KR1, inhållen), Kina via 6-K (CN1), pris vid rörlig förmågetröskel i G2 (Q1) och öppna mot stängda modeller
+  och Kina-gapet i G1 (Q2). T1 prövade tillståndsregeln (`python -m ai_tracker.state evaluate`): tillstånden beskriver,
+  men att de förutsäger är inte visat (Holm-p 0,37). Månadsgränsen i Arena rättad (en tavla från månadens sista dag
+  räknas i sin månad, också i `arena_price`)
 - Drift: `docs/drift.md` (veckohämtning, skarpa prognoser N2 dag 5 och N1 kvartal + 20 dagar, ögonblicksbild vid månadsslut)
 
 ## Tekniska konventioner

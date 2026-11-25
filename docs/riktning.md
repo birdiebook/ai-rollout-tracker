@@ -230,11 +230,11 @@ delat med kostnaden i agentspår och de mänskliga flaskhalsarna (nycklar, licen
 
 **Körning 14, omprioriterad efter syftet (avsnitt 0):**
 
-1. **Stackens saknade lager via SEC:** minne (Micron), nät (Arista), kraft och kylning (Vertiv, GE Vernova, Eaton: order och orderstock/RPO) och datacenterbolag (Equinix, Digital Realty). Det mesta går med befintlig XBRL-teknik (segment och RPO). Orderstock för kraft och kylning är en ledande indikator för den fysiska utbyggnaden.
-2. **Finansieringsskörhet** (förslag 8): spread vid emission, skuld, leasing utanför balansräkningen.
-3. **Förmåga och kostnad** (förslag 6). De styr efterfrågan och var marginalerna hamnar i stacken.
-4. **Kina via SEC** (förslag 7).
-5. **Test av själva tillståndsregeln** (förregistrerat).
+1. **Stackens saknade lager via SEC:** minne (Micron), nät (Arista), kraft och kylning (Vertiv, GE Vernova, Eaton: order och orderstock/RPO) och datacenterbolag (Equinix, Digital Realty). Det mesta går med befintlig XBRL-teknik (segment och RPO). Orderstock för kraft och kylning är en ledande indikator för den fysiska utbyggnaden. **Klart i körning 14:** S1 (nät, optik och servrar, [kallor/sec_stack_nat.md](kallor/sec_stack_nat.md)), S2 (kraft, kylning, elnät och datacenter, [kallor/sec_stack_kraft.md](kallor/sec_stack_kraft.md)) och S3 (order och orderstock ur 8-K, [kallor/order_orderstock.md](kallor/order_orderstock.md)). Micron fanns redan (`capex_mu`).
+2. **Finansieringsskörhet** (förslag 8): spread vid emission, skuld, leasing utanför balansräkningen. **Spreaden vid emission är klar i körning 14** (KR1, [kallor/kredit_emission.md](kallor/kredit_emission.md), inhållen tills ägaren beslutar).
+3. **Förmåga och kostnad** (förslag 6). De styr efterfrågan och var marginalerna hamnar i stacken. **Klart i körning 14:** Q1 ([kallor/g2_rorlig_troskel.md](kallor/g2_rorlig_troskel.md)) och Q2 ([kallor/g1_oppen_stangd.md](kallor/g1_oppen_stangd.md)). Kostnad per uppgift är BLOCKED.
+4. **Kina via SEC** (förslag 7). **Klart i körning 14:** CN1 ([kallor/kina_sec.md](kallor/kina_sec.md)).
+5. **Test av själva tillståndsregeln** (förregistrerat). **Klart i körning 14:** T1 ([resultat/t1_tillstandsregeln.md](resultat/t1_tillstandsregeln.md)). Inget positivt resultat (Holm-p 0,37), och regeln ändras inte.
 6. **G8 v2** (förslag 5, efter L1). Den har lägre prioritet för syftet.
 7. **Korea via ECOS**, när nyckeln finns.
 

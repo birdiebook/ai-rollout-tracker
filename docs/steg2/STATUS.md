@@ -1,8 +1,31 @@
 # Status steg 2
 
-Uppdateras av orkestreraren vid varje milstolpe. Senast: 2026-11-25 (körning 13, rättning efter granskningen av integrationen).
+Uppdateras av orkestreraren vid varje milstolpe. Senast: 2026-11-25 (integrationen av körning 14).
 
 ## Läge
+
+### Körning 14 (2026-11-25)
+
+- **Status:** åtta spår är byggda, granskade (R17–R24) och rättade (X14–X21), och integrerade på grenen
+  `auto14k/integration14` med main (ägarbesluten 2026-11-25 och WV2). 171 nya katalogserier, ingen ny kärnserie.
+  Grenarnas tillstånd och index v2 är oförändrade i rekonstruktionen 2024-01 – 2026-11. Data är inlagd i den delade
+  basen ur rättningsspårens arbetskopior.
+- **Stacken via SEC:** nät, optik och servrar (S1, [kallor/sec_stack_nat.md](../kallor/sec_stack_nat.md)), kraft,
+  kylning, elnät och datacenter (S2, [kallor/sec_stack_kraft.md](../kallor/sec_stack_kraft.md)) och order och
+  orderstock ur 8-K (S3, [kallor/order_orderstock.md](../kallor/order_orderstock.md), `publish=False`).
+- **Finansiering och Kina:** spread vid emission (KR1, [kallor/kredit_emission.md](../kallor/kredit_emission.md),
+  `publish=False`) och Alibaba och Baidu via 6-K (CN1, [kallor/kina_sec.md](../kallor/kina_sec.md)).
+- **Förmåga och kostnad:** pris vid rörlig förmågetröskel (Q1, [kallor/g2_rorlig_troskel.md](../kallor/g2_rorlig_troskel.md))
+  och öppna mot stängda modeller och Kina-gapet (Q2, [kallor/g1_oppen_stangd.md](../kallor/g1_oppen_stangd.md)).
+- **Tillståndsregeln prövad** (T1, [resultat/t1_tillstandsregeln.md](../resultat/t1_tillstandsregeln.md)): tillstånden
+  är stabila mot revideringar, men att de förutsäger takten är inte visat (Holm-p 0,37). Regeln ändras inte.
+- **Månadsgränsen i Arena:** en tavla från månadens sista dag, belagd dagen efter, räknas nu i sin månad i alla
+  Arena-serier. Rättat i `vintages.monthly` och `open_gap` (X20), `price_rolling` (X19) och `arena_price`
+  (integrationen, registerposten 2026-11-25). Inga rader i `g2_price_at_arena_capability*` ändrades.
+- **Läsanvisningar** för webben: [steg3/datakontrakt.md](../steg3/datakontrakt.md), "Läsanvisningar för körning 14".
+- **Väntar på ägarbeslut:** publicering av `f1_surprise_index`, Q1:s referens (N-1), `g2_price_rolling12_arena` som
+  kärnserie, KR1 per emittent, CN1:s textserier för Baidu, S3:s `ob_*`, Vertivs externa segment och kärnkandidater i
+  G6 och G7. Inget av detta är ändrat i integrationen.
 
 ### Körning 13 (2026-11-24)
 
