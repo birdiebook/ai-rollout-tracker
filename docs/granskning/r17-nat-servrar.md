@@ -324,3 +324,5 @@ Hela sviten en gång: 2 195 passerade, 3 överhoppade, 8 xfail och 2 fel. Båda 
 fallerar för att `docs/mattregister.md` ändrades i S1 (fixturerna bär dess sha256). `test_freshness_as_of_last_fetch` fallerar i
 granskningens arbetskatalog, eftersom S1:s 36 öppna serier finns i katalogen men deras data bara finns i S1:s katalog. Med S1:s
 tabell på plats passerar testet.
+
+Rättat i auto14k/x14-nat-servrar

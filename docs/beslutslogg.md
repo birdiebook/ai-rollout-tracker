@@ -808,3 +808,20 @@ republishing data"), npm och arXiv (`okänd`), och Microsofts capex-guidance ur 
   det är inte visat att Aristas åtaganden 2016–2017 har samma definition, och HPE:s RPO är förutbetalda intäkter.
 - **Rekommendation:** rätta R17-1 och R17-2 med en daterad registerpost före eller vid mergen. `rev_dell_isg` är inte
   en ren kandidat från 2015, utan från 2017Q1 (38 kvartal). Ingen serie ska bli kärnserie före 2026-11-30.
+
+## 2026-11-25 – X14: rättning av S1 efter R17
+
+- **R17-1 och R17-3 rättade.** `deferred_rev_anet` tar balansräkningens rader i Aristas 10-Q under 2018 (2018Q3 529,9 i
+  stället för 221,9) och börjar 2018Q1, den första ASC 606-balansen vid ett kvartalsslut. 2017Q4 (ASC 605) utgår.
+- **R17-2 rättat med en smalare regel än granskningens.** I segment- och produktraderna används inte Q4 = helår − 9M
+  när 10-K:t räknar om tidigare värden och 9M:s egen inlämning inte gjorde det. Då väntar kvartalet på nästa 10-K.
+  `rev_dell_isg` och `rev_dell_servers_networking` 2021Q4 har bara 9 219 och 4 720, kända från 2023-03-30. Villkoret
+  om 9M:s inlämning finns för att granskningens förslag också hade hållit tillbaka fem Q4-rader där 10-Q:na redan låg
+  på den nya basen. Tre av dem hade försvunnit för gott, och `rev_csco_infra_platforms` hade kortats till tre
+  kvartal. `sec.vintages` fick en valfri kontroll, så andra serier är oförändrade.
+- **Noterna rättade** (R17-4 till R17-6): EMC i Dells ISG, ordalydelsen för Aristas åtaganden 2016–2017 och att HPE:s RPO
+  är förutbetalda intäkter. Rekommendationen i S1:s post ovan gäller med en ändring: `rev_dell_isg` är jämförbar över
+  tid från 2017Q1 (38 kvartal), inte från 2015.
+- Effekt på datat: 1 324 rader i stället för 1 327, och fyra rader ändrade eller borttagna. Alla 42 serier byggdes om i
+  spårets `data/`. Den tabellen ska mergas i stället för S1:s. Om S1:s redan är mergad krävs `--replace` för
+  `deferred_rev_anet`, `rev_dell_isg` och `rev_dell_servers_networking`.

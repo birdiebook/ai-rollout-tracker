@@ -428,9 +428,9 @@ SOURCE_GROUPS: list[tuple[str, str, str]] = [
     ("SEC EDGAR XBRL, companyfacts", r"^SEC EDGAR XBRL companyfacts", "kallor/sec.md"),
     ("SEC EDGAR XBRL, RPO", r"^SEC EDGAR XBRL instances \(RPO\)", "kallor/rpo.md"),
     ("SEC EDGAR XBRL, segment", r"^SEC EDGAR XBRL instances \(segment", "kallor/sec_segment.md"),
-    # Nvidia's purchase commitments and P1's custom concepts (dep_msft, ppe_*_googl) share this source text
-    ("SEC EDGAR XBRL, instanser (Nvidias inköpsåtaganden, P1:s egna taggar)", r"^SEC EDGAR XBRL instances$",
-     "kallor/sec.md"),
+    # Nvidia's purchase commitments, P1's custom concepts (dep_msft, ppe_*_googl) and S1's instance balances share this
+    # source text (group renamed in track X14, run 14, after review R17 N-5)
+    ("SEC EDGAR XBRL, instanser (åtaganden, RPO och egna taggar)", r"^SEC EDGAR XBRL instances$", "kallor/sec.md"),
     ("Avstämningar A5 (härledda ur SEC)", r"^Härledd \(A5\)", "kallor/avstamning.md"),
     ("SEC EDGAR, TSMC 6-K", r"^SEC EDGAR, TSMC Form 6-K", "kallor/tsmc_asien.md"),
     ("SEC EDGAR, ASML 6-K", r"^SEC EDGAR, ASML Form 6-K", "kallor/halvledare.md"),

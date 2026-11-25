@@ -5,7 +5,8 @@ Spår S1, körning 14. Byggt 2026-11-25 och kontrollerat mot bolagens inlämning
 `sources/sec_instant.py`, `sources/sec_segment.py` och `sources/sec_custom.py` (se `sec.md`, `sec_segment.md` och
 `halvledare.md`). Tester: `tests/test_sec_stack_nat.py` (syntetiska companyfacts- och instansfixturer, inget nät).
 Förregistrering: `docs/mattregister.md`, 2026-11-25, S1 (commit `6fab1f5`, före hämtningen av värden), med ett tillägg
-efter första bygget samma dag. Här finns ingen trendanalys.
+efter första bygget samma dag och en rättning efter granskning R17 (commit `56f1efb`, spår X14). Granskning:
+`docs/granskning/r17-nat-servrar.md`. Här finns ingen trendanalys.
 
 Syftet är att följa lagren mellan chipen och datacentret: nätverksswitchar (Arista, Cisco), optiska moduler och
 komponenter (Coherent, Lumentum) och servermontering (Super Micro, Dell, HPE, Celestica). G6 täckte bara chipen. Alla
@@ -32,7 +33,8 @@ serier är katalogserier i G6, inte kärnserier, och de påverkar inte diffusion
 
 ## Serier (alla kvartal, MUSD, gren G6, release-daterade)
 
-Hämtning 2026-11-25: 42 serier och 1 327 rader. "Rev." är antalet kvartal med mer än en version. Datatesterna
+Hämtning 2026-11-25 efter rättningen R17 (spår X14): 42 serier och 1 324 rader (S1:s hämtning hade 1 327). "Rev." är
+antalet kvartal med mer än en version. Datatesterna
 (`python -m ai_tracker.warehouse`) är gröna på spårets vy (bas och spår), och ingen serie är för gammal.
 
 | Nyckel | Innehåll | Kvartal | Från–till | Rader | Rev. |
@@ -40,7 +42,7 @@ Hämtning 2026-11-25: 42 serier och 1 327 rader. "Rev." är antalet kvartal med 
 | `rev_anet` | Arista, totala intäkter | 54 | 2013Q2–2026Q3 | 54 | 0 |
 | `inv_anet` | Arista, varulager | 50 | 2014Q2–2026Q3 | 51 | 1 |
 | `purchase_oblig_anet` | Arista, inköpsåtaganden | 44 | 2015Q4–2026Q3 | 44 | 0 |
-| `deferred_rev_anet` | Arista, kontraktsskulder (kort + lång) | 36 | 2017Q4–2026Q3 | 36 | 0 |
+| `deferred_rev_anet` | Arista, kontraktsskulder (kort + lång) | 35 | 2018Q1–2026Q3 | 35 | 0 |
 | `rpo_anet` | Arista, RPO (total) | 16 | 2022Q4–2026Q3 | 16 | 0 |
 | `rev_csco` | Cisco, totala intäkter | 73 | 2008Q3–2026Q3 | 73 | 0 |
 | `inv_csco` | Cisco, varulager | 70 | 2009Q2–2026Q3 | 70 | 0 |
@@ -65,8 +67,8 @@ Hämtning 2026-11-25: 42 serier och 1 327 rader. "Rev." är antalet kvartal med 
 | `rpo_smci` | Super Micro, RPO | 33 | 2018Q3–2026Q3 | 33 | 0 |
 | `rev_dell` | Dell, totala intäkter (utan VMware) | 22 | 2021Q1–2026Q2 | 22 | 0 |
 | `inv_dell` | Dell, varulager | 43 | 2015Q4–2026Q2 | 45 | 2 |
-| `rev_dell_isg` | Dell, segmentet ISG | 46 | 2015Q1–2026Q2 | 54 | 8 |
-| `rev_dell_servers_networking` | Dell, Servers and networking inom ISG (avslutad) | 43 | 2015Q1–2025Q3 | 51 | 8 |
+| `rev_dell_isg` | Dell, segmentet ISG (EMC från 2016Q3) | 46 | 2015Q1–2026Q2 | 53 | 7 |
+| `rev_dell_servers_networking` | Dell, Servers and networking inom ISG (avslutad) | 43 | 2015Q1–2025Q3 | 50 | 7 |
 | `rev_dell_ai_servers` | Dell, AI-optimerade servrar och nät | 2 | 2026Q1–2026Q2 | 2 | 0 |
 | `rev_dell_traditional_servers` | Dell, traditionella servrar och nät | 2 | 2026Q1–2026Q2 | 2 | 0 |
 | `rpo_dell` | Dell, RPO | 34 | 2018Q1–2026Q2 | 34 | 0 |
@@ -113,14 +115,29 @@ dimension (till exempel geografi) räknas inte.
 **Aristas åtaganden.** Meningen "we had non-cancellable purchase commitments of" står i noten från 10-K 2016-02-25.
 Tidigare inlämningar använde samma tagg för en annan, liten post (4,5 MUSD i 10-Q 2015-11-06). I 10-Q 2018-11-05 är
 den odimensionerade taggen totalen (423,1 MUSD) och medlemmen `PurchaseCommitmentMember` delen till
-kontraktstillverkare och leverantörer (370,4). Från 2022 delas totalen i inom och efter 12 månader. Det är samma
-definition, och ingen omräkning över 2 % finns.
+kontraktstillverkare och leverantörer (370,4). Från 2022 delas totalen i inom och efter 12 månader. Ingen omräkning
+över 2 % finns, men det finns heller inga jämförelsetal att pröva. Ordalydelsen ändras (R17-5):
 
-**Aristas kontraktsskulder.** Balansräkningens "Deferred revenue" och "Deferred revenue, non-current", taggade som
-`ContractWithCustomerLiabilityCurrent` och `...Noncurrent`. I 10-Q under 2018 (efter ASC 606 2018-01-01) taggades en del
-av dem som `DeferredRevenueCurrent` eller `...Noncurrent`, och den taggen används då för den delen, ur samma inlämning.
-Balanser före 2017-12-31 (ASC 605) ingår inte. `ContractWithCustomerLiability` (utan uppdelning) används inte: den är
-inte summan av de två delarna hos Arista.
+| Inlämning | Mening |
+|---|---|
+| 10-K 2016-02-25, 10-Q 2016-05-05 | "non-cancelable purchase commitments of $43.9 million / $57.3 million to our contract manufacturers and suppliers" |
+| 10-Q 2016-08-05 till 10-Q 2017-11-03 | "non-cancelable purchase commitments of $X million" (odelat belopp) |
+| från 10-K 2018-02-20 | "non-cancellable purchase commitments of $195.1 million, of which $147.9 million was to our contract manufacturers and suppliers" |
+
+Från 2018-02-20 är taggen totalen, och delen till kontraktstillverkare och leverantörer var 76 % av den 2017-12-31. Om
+beloppen 2015Q4–2017Q3 är totalen eller den delen går inte att avgöra ur texten. Det är alltså inte visat att det är
+samma definition före och efter 10-K 2018-02-20, och det står i noten. Serien börjar ändå 2015Q4.
+
+**Aristas kontraktsskulder.** Balansräkningens "Deferred revenue" och "Deferred revenue, non-current". Från 10-K
+2019-02-15 är de taggade som `ContractWithCustomerLiabilityCurrent` och `...Noncurrent`. I de tre 10-Q:na under 2018
+(2018-05-04, 2018-08-08 och 2018-11-05) är de taggade som `DeferredRevenueCurrent` och `DeferredRevenueNoncurrent`, och
+de taggarna har då företräde för samma balansdag (rättning efter R17-1). I 10-Q 2018-11-05 är
+`ContractWithCustomerLiabilityCurrent` en annan post: "$10.9 million of our contract liabilities was included in 'Other
+current liabilities'". S1 tog den posten som kortfristig del, och 2018Q3 blev 221,9 i stället för 529,9 (318,850 +
+211,005). Serien börjar 2018Q1 (rättning efter R17-3): Arista bytte till ASC 606 2018-01-01 med den modifierade
+retroaktiva metoden och flyttade 16,5 MUSD till övriga skulder, så balansen 2017-12-31 (515,3) är ASC 605 och
+öppningsbalansen 2018-01-01 (498,7) ligger inte vid ett kvartalsslut. `ContractWithCustomerLiability` (utan
+uppdelning) används inte: den är inte summan av de två delarna hos Arista.
 
 **Aristas RPO.** Bolagets egen tagg
 `RevenueRemainingPerformanceObligationIncludingContractLiabilitiesDeferredRevenueAndOtherPerformanceObligationsAmount`,
@@ -148,7 +165,13 @@ upptäckta brotten måste stämma med de deklarerade, annars stoppar hämtningen
   raderna Components och Systems (FY2026–).
 - Dell: Servers and networking (–FY2026 Q3) → AI-optimerade respektive traditionella servrar och nät (10-K 2026-03-16).
   ESG bytte namn till ISG i 10-Q 2018-06-12 utan omräkning över 2 %. ISG och Servers and networking räknades om med
-  0,6–1,6 % 2018–2019 (ASC 606) och 2022 (efter VMware), som versioner.
+  0,2–1,6 % per helår och kvartal 2018–2019 (ASC 606) och 2022 (efter VMware), som versioner. För 2021Q4 gav det en
+  blandning av baser (R17-2, se "Q4 över ett basbyte" nedan).
+- **Dells ISG omfattar EMC** från fusionen 2016-09-07 ("On September 7, 2016, EMC Corporation … became a wholly-owned
+  subsidiary of Dell Technologies", 10-Q 2016-12-09). ISG går från 3 779 (2016Q2) till 5 989 (2016Q3, delvis EMC) och
+  8 395 (2016Q4). Ett förvärv är inget brott, men nivåskiftet är inte organisk tillväxt, och `rev_dell_isg` är
+  jämförbar över tid först från 2017Q1 (38 kvartal till 2026Q2, inte 46). I Servers and networking syns inget skifte
+  av samma storlek (3 237, 2 910 och 3 612), men hur mycket av EMC som ingår går inte att skilja ut (R17-4).
 - **HPE:s Server delas vid omorganisationen** (tillägg i registret). HPE slog ihop Server, Hybrid Cloud och Financial
   Services till segmentet Cloud & AI från 2025-11-01 och räknade om tidigare perioder i 10-Q 2026-03-10 (Server +1,8 %)
   och 2026-06-02 (+2,0 %, där kontrollen slår till). Serien delas vid 2026-03-10: `rev_hpe_server_fy24` (avslutad) och
@@ -158,6 +181,20 @@ upptäckta brotten måste stämma med de deklarerade, annars stoppar hämtningen
   och "Prior period segment information has not been recast, as the changes to our segment composition did not have a
   material impact". Det syns inte i datat. `rev_cohr_datacom` har alltså en liten, okänd skillnad i innehåll från 2026Q3.
 
+**Q4 över ett basbyte** (rättning efter R17-2, registret 2026-11-25). Dells 10-K 2022-03-24 lägger ISG på en ny bas
+(FY2021 räknas om från 32 588 till 33 002, +1,3 %), men 9M FY2022 i arkivet är den gamla basen (24 771, 10-Q
+2021-12-03). `sec.py` parar helåret med den 9M som fanns när helåret lämnades in, så S1:s första version av 2021Q4 var
+34 366 − 24 771 = 9 595, ett värde på ingen bas. På samma bas är det 9 219 (9M 25 147, omräknat i 10-Q 2022-12-05).
+Servers and networking hade samma fel (4 797 mot 4 720). Varje omräkning är under 2 %, så brottskontrollen ser inget.
+Regeln i segment- och produktraderna (`same_basis` i koden): ett kvartal som räknas som differens, i praktiken Q4 =
+helår − 9M, används inte när 10-K:t räknar om tidigare inlämnade värden av raden, 9M är inlämnad före 10-K:t och 9M:s
+egen inlämning inte räknade om något. Kvartalet väntar då på ett par på samma bas, och det kommer med nästa 10-K. Om
+9M:s inlämning också räknade om, låg den nya basen redan i 10-Q:na. Så är det i de fem andra segmentfallen där ett
+10-K som räknar om ger Q4: Dells ISG och Servers and networking 2018Q4 (ASC 606), HPE:s Server 2025Q3 och Ciscos
+Infrastructure Platforms 2020Q2 och 2021Q2. De ändras inte. Effekt: `rev_dell_isg` och `rev_dell_servers_networking`
+2021Q4 har bara 9 219 och 4 720, kända från 10-K 2023-03-30. Gräns: ett 10-K som inför en andra ändring ovanpå en som
+redan finns i 10-Q:na upptäcks inte. Totala intäkter följer `sec.py` utan regeln, och där fann R17 ingen blandad Q4.
+
 **Totala intäkter, omfattningsbrott** (tillägg i registret). När en verksamhet redovisas som avvecklad räknar bolaget om
 tidigare år, men versionsregeln i `sec.py` räknar bara om de kvartal som lämnas in igen. Därför läser `rev_<co>` bara
 inlämningar från det senaste omfattningsbrottet:
@@ -165,13 +202,23 @@ inlämningar från det senaste omfattningsbrottet:
 | Bolag | Omfattningsbrott | Effekt | Serien börjar |
 |---|---|---|---|
 | Dell | 10-Q 2017-06-09 (Dell Services, DSG och ECD avvecklade), 10-K 2022-03-24 (VMware avknoppat 2021-11, −8 % för helår FY2020–FY2021) | före tillägget: kvartal till 2020 med VMware, senare utan | 2021Q1 |
-| HPE | 10-Q 2017-06-08 (Enterprise Services, −33 %), 10-Q 2018-06-07 (mjukvaran, −8,6 %) | före tillägget: 2016 med ES, ner till −58 % mellan versioner | 2017Q1 |
+| HPE | 10-Q 2017-06-08 (Enterprise Services, −33 %), 10-Q 2018-06-07 (där kontrollen slår till för mjukvaran, −8,6 %; HPE redovisade ES och mjukvaran som avvecklad verksamhet redan i 10-K 2017-12-15) | före tillägget: 2016 med ES, ner till −58 % mellan versioner | 2017Q1 |
 | Coherent | 10-K 2014-08-28 (produktlinjen tellurium, −3,4 % för FY2012) | | 2013Q3 |
+
+För HPE är 2018-06-07 kontrollens datum, inte bolagets (R17 N-1): 10-K 2017-12-15 hade redan både Enterprise Services
+och mjukvaran som avvecklad verksamhet. Regeln läser bara från 2018-06-07, så 2017Q3 och 2017Q4 får `known_from` ungefär
+ett år senare än nödvändigt. Det är konservativt.
 
 Rättelser som blir versioner: Super Micros 10-K och 10-Q/A 2019-05-17 (efter revisionsutskottets utredning, ±3–4 % för
 kvartal 2015–2017), och Coherents 10-Q 2012-02-08 (+2,0 % för ett kvartal 2010, inte förklarad i textblocken; påverkar
 inte serien). `inv_dell` och `inv_hpe` prövas inte (som registrerat) och kan ha samma blandning för balanser före
-avknoppningarna.
+avknoppningarna. Omräkningar av lager som syns i datat men inte förklaras (R17 N-3): `inv_lite` 2018Q2 +13,3 % (153,6
+→ 174,1 i 10-K 2019-08-27), `inv_hpe` 2016Q3 −3,0 % (1 774 → 1 720, ES och mjukvaran) och `inv_anet` 2014Q4 −3,1 %
+(80,5 → 78,0).
+
+**Brottskontrollen skyddar balanser lite** (R17 N-6). Åtaganden, RPO och kontraktsskulder jämförs bara när samma
+balansdag lämnas in igen. En ändrad definition utan jämförelsetal syns inte, som i R17-1 (Aristas 2018-09-30 lämnas in
+en gång) och R17-5 (Aristas åtaganden 2016–2017).
 
 **Aristas RPO, fel datum.** 10-Q 2025-05-07, 2025-08-06 och 2025-11-05 taggar balansen med en kontext ett år för tidigt.
 Texten i 10-Q 2025-05-07 säger "$3.7 billion as of March 31, 2025", men faktat har kontexten 2024-03-31 (där 10-Q
@@ -187,9 +234,10 @@ kalenderkvartal (`sec_instant.fiscal_quarters`), så att lager, åtaganden, kont
 flödena i samma räkenskapskvartal. För RPO skiljer det sig från `sec_rpo.py`, som använder balansdagens eget
 kalenderkvartal. Det spelar roll för Cisco, Dell och HPE, vars balans den 31 januari här är Q4 (nov–jan), inte Q1.
 
-Avstånd från kalenderkvartalets slut till första egna inlämning, 2015–2026 (jämförelsetal i senare dokument
-undantagna), och aktualitetsgränsen (största + 92 + 30). `lag_days` är 25 för alla: ingen inlämning kommer före
-kalenderkvartalets slut.
+Avstånd från kalenderkvartalets slut till första egna inlämning, 2015–2026, och aktualitetsgränsen (största + 92 +
+30). Bara kvartal där första värdet kom högst 100 dagar efter räkenskapskvartalets slut räknas (registret, rättning
+efter R17 N-4). Filtret tar bort jämförelsetal i senare dokument och Super Micros sena 10-K för FY2017 (686 dagar) och
+FY2024 (240 dagar). `lag_days` är 25 för alla: ingen inlämning kommer före kalenderkvartalets slut.
 
 | Bolag | Räkenskapsår | Mappning | Min | Max | Gräns |
 |---|---|---|---|---|---|
@@ -245,13 +293,19 @@ stämmer.
   produktintäkter är inte AI-intäkter: Ciscos Networking innehåller företagsnät och UCS-servrar, Dells och HPE:s
   serverrader innehåller traditionella servrar, och Coherents och Lumentums segment innehåller telekom och industri.
   Dells `rev_dell_ai_servers` är den enda raden som bolaget själv kallar AI, och den har bara två kvartal.
-- **Förvärv är inga brott.** Juniper ingår i HPE:s nät från 2025-07, Oclaro i Lumentum från 2018-12, Coherent Inc. i II-VI
-  från 2022-07 och Splunk i Cisco från 2024-03. Nivåskiften vid förvärven är inte organisk tillväxt.
+- **Förvärv är inga brott.** EMC ingår i Dells ISG från 2016-09-07, Juniper i HPE:s nät och RPO från 2025-07, Oclaro i
+  Lumentum från 2018-12, Coherent Inc. i II-VI från 2022-07 och Splunk i Cisco från 2024-03. Nivåskiften vid förvärven
+  är inte organisk tillväxt. EMC är det största i S1:s data: ISG mer än fördubblas från 2016Q2 till 2016Q4.
 - **Åtaganden mäter olika saker.** Arista och Super Micro anger icke uppsägningsbara åtaganden, Cisco åtaganden för lager
   mot kontraktstillverkare och leverantörer, och Lumentum bindande åtaganden för lager och annat. Super Micros siffra
   innehåller närstående (Ablecom och Compuware, cirka 0,2 mdr USD i 2026Q3). Jämför takter, inte nivåer mellan bolagen.
 - **RPO och kontraktsskulder** är inte orderstock i vid mening. Cisco och Dell har stora tjänstedelar (support och
   prenumerationer). Aristas RPO omfattar förutbetalda intäkter och icke uppsägningsbar orderstock.
+- **HPE:s RPO är förutbetalda intäkter** enligt bolagets egen text (R17-6): "the aggregate amount of remaining
+  performance obligations, or deferred revenue" (10-K 2022-12-08 till 10-Q 2024-03-05) och "the aggregate amount of
+  deferred revenue" (från 10-Q 2024-06-05). Dells och Ciscos RPO är förutbetalda intäkter plus ofakturerade belopp.
+  Jämför inte nivån i `rpo_hpe` med `rpo_dell` eller `rpo_csco`. Juniper ingår från förvärvet 2025-07-02, cirka 2,5 mdr
+  USD 2025-10-31 ("approximately $2.5 billion was attributable to the Merger", 10-K 2025-12-18).
 - **Avrundning.** Arista och Super Micro anger åtaganden och RPO i 0,1 miljarder USD i texten och taggar dem så. Coherent
   och Super Micro taggar i tusental, de övriga i miljoner med en decimal eller hela miljoner.
 - Första versionen av kvartal som bara finns som jämförelsetal (Ciscos Networking FY2023, Coherents och Lumentums nya
@@ -265,3 +319,29 @@ vilka instanser. För att läsa definitionerna lästes textblock i ett urval inl
 (Aristas åtaganden och RPO i sju inlämningar, Super Micros, Lumentums och Ciscos åtaganden i den senaste 10-Q:n, och
 HPE:s intäkter per kategori i 10-Q 2026-09-03). Inga kvartalsserier eller takter räknades före posten. Tillägget efter
 första bygget bygger på brottskontrollens utfall (vilka inlämningar som räknar om, och hur mycket) och bolagens text.
+
+## Rättning efter R17 (spår X14)
+
+Rättat 2026-11-25 i `auto14k/x14-nat-servrar`, med registerposten "S1: Aristas kontraktsskulder, Q4 över ett basbyte och
+aktualitetsgränsen (rättning efter R17)" committad före koden och ombygget. Alla 42 serier byggdes om ur SEC (en
+hämtning i följd: companyfacts och inlämningslistor för åtta bolag, instanserna ur den delade rå-cachen). Inga 403 eller
+429. Ombygget är identiskt med S1:s tabell utom fyra rader:
+
+| Serie | Kvartal | `known_from` | S1 | X14 | Fynd |
+|---|---|---|---|---|---|
+| `deferred_rev_anet` | 2017Q4 | 2018-05-04 | 515,262 | utgår | R17-3 |
+| `deferred_rev_anet` | 2018Q3 | 2018-11-05 | 221,905 | 529,855 | R17-1 |
+| `rev_dell_isg` | 2021Q4 | 2022-03-24 | 9 595 | utgår (9 219 från 2023-03-30 står kvar) | R17-2 |
+| `rev_dell_servers_networking` | 2021Q4 | 2022-03-24 | 4 797 | utgår (4 720 från 2023-03-30 står kvar) | R17-2 |
+
+Noterna för `rev_dell_isg` och `rev_dell_servers_networking` (EMC), `purchase_oblig_anet` (ordalydelsen 2018-02-20),
+`deferred_rev_anet` och `rpo_hpe` (förutbetalda intäkter) är ändrade. Datatesterna (`python -m ai_tracker.warehouse`) är
+gröna på spårets vy.
+
+**Vad som setts före registerposten:** R17:s rapport med dess värden. Ur den delade rå-cachen med S1:s kod och utan nät:
+Aristas taggade kontraktsskulder och förutbetalda intäkter per inlämning 2017–2019, och en sökning efter Q4-rader ur
+ett 10-K som räknar om tidigare värden, med helår, 9M och Q4 före och efter, och vilka 10-Q som räknade om under året.
+Ur S1:s tabell: Dells ISG och Servers and networking 2016Q1–2017Q2 och Aristas åtaganden och kontraktsskulder
+2015Q4–2018Q4. Textblock i cachade instanser för Aristas åtaganden 2016–2018, HPE:s RPO 2022–2026 och EMC-fusionen. Den
+sökningen ledde till det tredje villkoret i regeln för Q4 (att 9M:s inlämning inte räknade om). Granskningens förslag
+utan det villkoret hade också hållit tillbaka fem Q4-rader på en konsekvent bas. Inga takter räknades.

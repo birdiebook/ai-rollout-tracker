@@ -71,6 +71,7 @@ En rad per spår, fylls på efter varje körning. Tumreglerna justeras när siff
 | 2026-11-25 | 14 | R-W2 tillgänglighet | granskning + rättning | ~56 | ~116 | ~270 | axe 0 i 54 körningar; 4 tangentbordsfel rättade; LCP 0,8 s; TBT kvar (P1) |
 | 2026-11-25 | 14 | S1 nät, optik och servrar | bygge (SEC XBRL, 8 bolag) | ~50 + tester | ~95 | – | 42 serier, 1 327 rader; register före hämtning; 2 taggningsfel och omfattningsbrott hittade; 11 handkontroller |
 | 2026-11-25 | 14 | R17 granskning av S1 | granskning mot primärkälla (13 huvuddokument, ombygge offline) | ~90 | ~95 | – | 12 handkontroller i 8 bolag, 85 Q4-rader med egen kod, 2 must_fix (fel post 2018Q3, Q4 över basbyte), 4 should_fix, 23 tester varav 6 strikt xfail |
+| 2026-11-25 | 14 | X14 rättning av S1 efter R17 | rättning (kod, register, noter, ombygge) | ~45 + 13 tester | ~100 | – | 2 must_fix och 4 should_fix rättade, 6 strikta xfail passerar; smalare Q4-regel än förslaget (5 rader räddade); 42 serier ombyggda, 1 324 rader (4 ändrade) |
 
 ## Körning 1, sammanfattning (2026-11-23, orkestrerare)
 
