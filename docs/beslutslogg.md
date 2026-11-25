@@ -823,3 +823,21 @@ republishing data"), npm och arXiv (`okänd`), och Microsofts capex-guidance ur 
 - Serierna är fortfarande katalogserier med `publish=False`. **Rekommendation till Johannes:** som R20. Volymerna och
   spreaden per emittent kan få `publish=True` med en daterad registerpost, och den poolade serien bara med noten om
   mixen.
+
+## 2026-11-25 – KL1: Kreditlagret som följd fråga
+
+- Johannes vill följa tesen om skuld och vilja eller förmåga att investera i de yttre lagren. Den blir en **följd
+  fråga**, inte en gren: en registerpost (2026-11-25 KL1), katalogserier med `publish=False` och en månadsrapport
+  (`python -m ai_tracker.followed kreditlagret --as-of D`). Inga kärnserier, inget grenindex och ingen tillståndsregel
+  ändras, och ögonblicksbilden 2026-11-30 påverkas inte.
+- Frågan är symmetrisk, och läsregeln låstes med fasta gränser före beräkningen: pris eller beroende steg först, sedan
+  föll capex-takten i yttre lagret medan det inre höll (talar för), eller priset steg och takten höll (emot 1), eller
+  takten föll lika i båda lagren (emot 2). Vad orkestreraren och Johannes hade sett i chatten står i posten.
+- Extraktionen ur EDGAR följer KR1 och CN1: dokument, plats, SHA-256 och citatet bara under `data/raw`. 400 rader
+  (Anthropics S-1, CoreWeaves 8-K och skuldtabeller, Metas datacenterbolag). Självkontroll mot nyhämtade dokument: 400
+  av 400 ok. OpenAI har ingen registreringsansökan på EDGAR, och Oracle anger inga belopp för datacenter-SPV.
+- Utslag per 2026-11-25: Oracle "talar för", CoreWeave "talar emot (1)", Nebius "inget av mönstren", yttre lagret och
+  IREN "kan inte avgöras" (för kort). Per 2025-11-25 gav Oracle "talar emot (1)". Det är en beskrivning, inget test.
+- **Rekommendation till Johannes:** läs rapporten månadsvis. Låt en oberoende granskning stickprova extraktionen (minst
+  30 % av de agentkodade raderna och en tabell per CoreWeave-rapport) innan något av beloppen används för beslut.
+  Gör ingen kärnserie av måtten: med 8–12 kvartal räcker inte historiken för grenarnas regel.

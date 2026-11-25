@@ -226,8 +226,10 @@ def _spec(measure: str, who: str) -> Spec:
     note = (f"KL1 (följd fråga, register 2026-11-25). {NOTES.get(measure, '')}{extra}known_from = den senaste "
             f"komponenten som används. Aktualitet: gräns {MAX_AGE} dagar, som komponenternas längsta (CoreWeaves 10-K "
             "kommer upp till 61 dagar efter kvartalet). Räknas inte i grenarnas diffusionsindex. publish=False.")
+    # Oracle files before the calendar quarter it maps to ends (as its components: lag_days -31)
+    lag = -31 if any(c.endswith("_orcl") for c in f.components) else 25
     return Spec(key=f.key, branch="G5", label=f"{label}, {who_label}", unit=unit, freq="Q", source=SOURCE,
-                fetch=_fetch(f), lag_days=25, license=LICENSE, revised=True, publish=False, question=question,
+                fetch=_fetch(f), lag_days=lag, license=LICENSE, revised=True, publish=False, question=question,
                 note=note, components=f.components, max_age_days=MAX_AGE, closed=closed)
 
 

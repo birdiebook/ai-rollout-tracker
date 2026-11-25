@@ -72,6 +72,7 @@ En rad per spår, fylls på efter varje körning. Tumreglerna justeras när siff
 | 2026-11-25 | 14 | KR1 spread vid emission | extraktion (deterministisk parser, villkorsbilagor) | ~57 (varav 16 full testsvit) | ~115 | – | 239 tranchar ur 39 FWP, 11 katalogserier, självkontroll 0 fel, kontroll mot 39 slutliga prospekttillägg, 37 tester |
 | 2026-11-25 | 14 | R20 granskning av KR1 | granskning (extraktion, 146 SEC-dokument nyhämtade, egen text och indelning per tranche) | ~45 (varav 15 full testsvit) | ~95 | – | 0 fel av 72 i stickprovet och 0 av 239 med egen kontroll, 39 av 39 omslag, omräkning av 11 serier och alla versioner, 5 should_fix, 21 tester varav 5 strikta xfail |
 | 2026-11-25 | 14 | X17 rättning av KR1 efter R20 (spread vid emission) | rättning (register före ombyggnad, kod, kontroller mot SEC, dokument) | ~75 (varav 10 full testsvit) | ~90 | – | R20-1 – R20-5 rättade (5 strikta xfail nu vanliga tester), CSV byte för byte oförändrad, 107 dokument listade med skäl, mutationsprov 1 229 av 1 234 (förut 0), självkontroll och --covers åt båda hållen 0 fel, 19 nya tester |
+| 2026-11-25 | 15 | KL1 Kreditlagret (följd fråga) | registerpost före data, extraktion (agentkodad + deterministisk tabell), härledda serier, rapport-CLI | ~110 (varav ~1 självkontroll, ~2 egna tester) | ~85 | – | registerpost + tillägg före kodning, 400 extraherade rader (självkontroll 400/400), 53 katalogserier publish=False, rapport per 2026-11-25 och 2025-11-25, 54 syntetiska tester |
 
 ## Körning 1, sammanfattning (2026-11-23, orkestrerare)
 
