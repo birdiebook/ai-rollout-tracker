@@ -1490,3 +1490,138 @@ tak ändras inte.
    punkt 2 gäller inte längre.
 3. **K0** räknar tillståndet "för få källor" (index v2, registret 2026-11-24) för sig, bredvid "för få serier", när det
    förekommer. Tidigare räknades det som "för få serier". Inget urval ändras.
+
+### 2026-11-25 – T1: test av tillståndsregeln (förregistrering, före körning)
+
+Spår T1 i körning 14 (`docs/riktning.md`, avsnitt 8, punkt 5). Testet prövar själva tillståndsregeln: avsnitt 2 med
+index v2 (en röst per källfamilj, registret 2026-11-24) som huvudregel och v1 som sekundär. Två frågor: håller
+tillstånden när data revideras, och säger de något om grenens takt de närmaste månaderna? Testet ändrar ingen skarp
+regel: inga trösklar, inget dödband, inga kärnserier och inga familjer. Koden läser tillståndsmotorn
+(`state/branch.py`, `measures.py`, `snapshot.py`) och ändrar den inte.
+
+**Vad som var synligt före posten.**
+- Tabellerna i `docs/resultat/tillstand.md`: v1 2026-05–2026-10, antalet månader per tillstånd 2019–2026 (v1) och v1
+  mot v2 2026-05–2026-10.
+- Tillstånden 2026-10-31 med v1 och v2 (en körning av motorn, samma som tabellen).
+- För MDE nedan: antalet månader per tillstånd och gren 2024-01–2026-10 med v1 och v2, i realtid ur
+  `snapshot.backcast`. Bara antalen lästes, inte index eller serier per månad.
+- Antalet versioner per period för kärnserierna, alltså vilka serier som har mer än en version. Inte värdena.
+- **Inga utfall** för (a) eller (b): inga reviderade tillstånd, inga takter efter ursprungsmånaden och inga träffar.
+
+**Fönster.** Månadsslut m från 2024-01 till 2026-10: 34 månader och 9 grenar. I (b) ska utfallsdagen m + h vara
+senast 2026-10-31. Fönstret är därför m till och med 2026-07 för h = 3 (31 månader) och till och med 2026-04 för
+h = 6 (28 månader). Månadsslutet 2026-11-30 ligger efter körningen och används inte.
+
+**Tillstånd i realtid.** Tillståndet vid m räknas med `as_of(m)` på dagens tabell (den delade basen och spårets egen),
+med samma kod som `snapshot.backcast`. v2 (`state`) är huvudregel och v1 (`state_v1`) sekundär. Rader med
+`source = "backfill"` bär dagens version, så realtid är redan delvis reviderad (förbehållen nedan).
+
+**(a) Revideringsstabilitet**
+
+- **Dagens data för månad m.** För varje serie ingår de perioder som hade minst en rad med `known_from` ≤ m. Varje
+  sådan period får värdet och `source` från sin senaste rad med `known_from` ≤ V, där V är körningsdagen 2026-11-25.
+  Rader med `known_from` > V används inte. Perioder som blev kända först efter m ingår inte. Tekniskt är det en tabell
+  med en rad per serie och period: senaste värdet, och `known_from` = periodens första `known_from`. Tillståndet vid m
+  räknas med `as_of(m)` på den tabellen och med samma kod. Härledda serier (`capex_ocf_hyp4`) bildas av de reviderade
+  komponenterna. Aktiv BTOS-regim, valda benchmarks, aktualitetsregeln och benchmarkvakten tillämpas av samma kod.
+  Spärren för bakåtfyllda serier räknas på den reviderade tabellen. Räknas en spärrad serie i den ena men inte i den
+  andra redovisas det.
+- **Mängd.** S = de grenmånader där minst ett av de två tillstånden är accelererar, stabil eller bromsar in.
+- **Mått**, poolat över grenar (huvudmått) och per gren:
+  - överensstämmelse = andelen av S med samma tillstånd;
+  - Cohens kappa över S med fyra kategorier: accelererar, stabil, bromsar in och för få (för få källor med v2, för få
+    serier med v1). Kappa redovisas inte när den väntade överensstämmelsen är 1;
+  - andelen hårda byten = andelen av S där det ena tillståndet är accelererar och det andra bromsar in.
+- **Beskrivande.** Överensstämmelse över alla 306 grenmånader, medel av |index reviderat − index realtid|, och
+  exponering: andelen räknade serier (realtid) vars värden kända vid m har ändrats i senare versioner. Med exponering
+  noll är överensstämmelsen 1 av konstruktion och säger ingenting.
+
+**(b) Information om vad som kommer**
+
+- **Prediktion.** Accelererar vid m förutsäger att grenens takt går upp, bromsar in att den går ned. Stabil och för få
+  ger ingen prediktion.
+- **Utfall** för gren b, ursprung m och horisont h ∈ {3, 6} månader, med t = månadsslutet m + h:
+  - Serierna är de som räknades i b:s tillstånd vid m (samma för v1 och v2), med sin familj, sin senaste period P_m
+    och sitt tecken σ: −1 för fördubblings- och halveringstid, annars +1.
+  - Takten är det registrerade måttet (avsnitt 1), räknat med `as_of(t)` i `measures.measure_path(s, t)`, alltså samma
+    kod som tillståndet. P_t är seriens senaste period vid t.
+  - u = tecknet av σ × (takten vid P_t − takten vid P_m), båda ur versionen vid t. Det kräver att P_t är senare än
+    P_m och att båda takterna finns. Annars saknar serien utfall. Inget dödband.
+  - Grenens utfall med v2: familjens röst = medel av (u + 1)/2 över familjens serier med utfall, och O = medel av
+    rösterna över familjer med minst en serie med utfall. Med v1: O = medel av (u + 1)/2 över serierna med utfall.
+    **Upp** om O > 1/2 och **ned** om O < 1/2, räknat med exakta bråk. Vid O = 1/2, eller utan serier med utfall,
+    saknas utfall, och månaden räknas inte.
+  - Inget efter t används. Utfallet läser versionen vid t, inte dagens version.
+- **Träff:** accelererar och upp, eller bromsar in och ned. **Träffkvot** H = träffar / prediktioner med utfall, poolat
+  över grenar. Den redovisas också per gren och för accelererar och bromsar in var för sig, med andelen upp bland
+  utfallen (basfrekvensen).
+- **Baslinje 1, persistens:** riktningen i grenens takt de senaste h månaderna fortsätter. För samma serier vid m:
+  u' = tecknet av σ × (takten vid P_m − takten vid P_{m−h}), båda ur versionen vid m, där P_{m−h} är seriens senaste
+  period vid m − h. Samma aggregering som för utfallet ger upp, ned eller ingen riktning. Persistensens träffkvot räknas
+  på samma grenmånader som tillståndens prediktioner: 1 vid samma riktning som utfallet, 0 vid motsatt och 0,5 när
+  persistensen saknar riktning. Den redovisas också över alla månader med utfall.
+- **Baslinje 2, slump:** blockpermutation av månaderna inom gren. Varje grens tillståndsföljd i fönstret delas i block
+  om **6 månader** från fönstrets början (det sista blocket kan vara kortare). Blocken byter plats slumpmässigt, oberoende
+  per gren, och utfallen ligger kvar. Antalet månader per tillstånd och gren bevaras. **9 999 permutationer**, frö
+  **20261125**. Slumpnivån = medel av H* över permutationerna. p = (1 + antalet permutationer med H* ≥ H) / 10 000,
+  ensidigt. En permutation utan prediktion med utfall räknas som H* < H. Blocklängden 6 är minst lika lång som båda
+  horisonterna och lika med laggen för förändring i takt. Överlappande utfall och tröga tillstånd hålls då ihop.
+- **Testfamilj och Holm.** Familjen är {v2 h = 3, v2 h = 6}, Holm-justerad. v1 med {h = 3, h = 6} redovisas med egen
+  Holm, bara som information. Ett test kräver minst 20 prediktioner med utfall, annars p = 1.
+- **Nedre svansen.** p_ned = (1 + antalet med H* ≤ H) / 10 000, Holm-justerad i samma familj. Den visar om
+  tillstånden pekar fel oftare än slumpen.
+
+**MDE, räknad före testet.** Underlaget är antalet prediktioner i realtid (se ovan), med antagandet att alla får ett
+utfall. Med v2 finns 58 prediktioner för h = 3 (52 accelererar och 6 bromsar in) och 48 för h = 6 (44 och 4). Bara
+G3–G7 har tillstånd med v2. Utfallen överlappar, så det effektiva antalet är ungefär n/h, alltså 19 och 8. Holms första
+steg med två tester är 0,05, ensidigt. Med 80 % styrka blir MDE ≈ (1,645 + 0,842) × 0,5 / √(n/h): **0,28 för h = 3 och
+0,44 för h = 6**. Träffkvoten måste alltså ligga cirka 28 respektive 44 procentenheter över slumpnivån för att testet
+ska upptäcka skillnaden. Med v1 är det 92 och 80 prediktioner, och MDE blir 0,22 och 0,34.
+
+**Styrkan är låg**, och det sägs nu, före testet. Ett icke-signifikant resultat visar inte att tillstånden saknar
+information. Nästan alla prediktioner är accelererar, så "bromsar in → ned" går i praktiken inte att pröva (6 och 4
+fall). Tröga tillstånd gör det effektiva antalet mindre än n/h. Grenarna och månaderna är dessutom inte oberoende,
+eftersom flera grenar följer samma cykel.
+
+**(c) Beskrivande, ingen ny regel**
+
+- Andelen månader per tillstånd, med v2 och v1, per gren och totalt, 2024-01–2026-10 i realtid.
+- Hur ofta grenar saknar tillräckligt många serier eller familjer: andelen för få serier och för få källor, och medel
+  av antalet räknade serier och familjer.
+- Trösklarna 0,60/0,40 och 0,75/0,25 i stället för 0,67/0,33, ur samma exakta index (≥ den övre och ≤ den undre).
+  Andel per tillstånd, överensstämmelse med de registrerade trösklarna, (a) och träffkvoter i (b) med slumpnivå. Inga
+  p-värden.
+- Delperioder i (b): ursprung till och med 2025-06 och från 2025-07 (G-E:s holdoutfönster). Träffkvoter utan test.
+
+**G-E.** T1 är ingen metodfamilj i G-E. Inget skattas och inget väljs, och regeln var låst före testet. Testet öppnar
+därför ingen holdout, och holdoutloggen ändras inte. Delperioden från 2025-07 redovisas för sig.
+
+**Beslutsregel.** Testet ändrar ingen skarp regel. Det ger en rekommendation till Johannes.
+- **En granskning av regeln rekommenderas** om minst ett av följande gäller:
+  1. (a) Poolad kappa med v2 < **0,70**, eller andelen hårda byten med v2 > **0,02**.
+  2. (b) Träffkvoten med v2 är inte högre än den bättre baslinjen vid någon horisont: H ≤ max(persistensen på samma
+     månader, slumpnivån) för både h = 3 och h = 6.
+  3. (b) Tillstånden pekar fel: Holm-justerat p_ned < 0,10 vid någon horisont.
+- **(b) godkänt** är ett positivt resultat och kräver ett granskningsspår (`CLAUDE.md`). Det gäller när Holm-justerat
+  p < 0,10 vid minst en horisont och H vid den horisonten är högre än persistensens träffkvot på samma månader.
+- **Annars är (b) inte avgjort.** Då ges ingen rekommendation på grund av (b). Tillstånden läses som en beskrivning av
+  läget, och deras informationsvärde är inte påvisat.
+- **Ger ingen rekommendation:** resultat per gren, v1, de andra trösklarna i (c), delperioderna och kappa per gren. De
+  redovisas men avgör inte. En regeländring kräver en ny registerpost och gäller bara framåt.
+
+**Förbehåll som skrivs i resultatet.**
+- Många kärnserier har bara en version (`source = "backfill"` eller en enda inlämning). För dem är realtid och
+  reviderat lika av konstruktion. Flera versioner finns för Indeed (G8), Fed G.17, TSMC, ASML och Broadcom (G6),
+  Microsoft Cloud (G4), capex och kassaflöde för de fyra största (G5), EIA:s elförsäljning från arkivet (G7), BTOS v1
+  (G3) och Arena (G1). (a) mäter alltså bara de revideringar som tabellen har som versioner, och överensstämmelsen är
+  en övre gräns.
+- Utfallen i (b) läser versionen vid t, men bakåtfyllda rader i den versionen bär dagens värden.
+- Tillståndet vid m och utfallet delar takten vid P_m med motsatt tecken. Mätfel i den takten ger en mekanisk tendens
+  till återgång, alltså färre träffar. Det är en egenskap hos regeln och inget fel i testet. Permutationen bryter
+  kopplingen, så tendensen syns som en träffkvot under slumpnivån.
+
+**Kod och tester.** `state/evaluate.py` och `python -m ai_tracker.state evaluate`. Syntetiska tester utan nätverk: en
+värld med tröga tillstånd (takten följer långa cykler, så tillståndet håller i sig och utfallet följer det), en värld
+där nivån är en slumpvandring (inget samband), och ett test att resultatet för ursprung m och horisont h blir detsamma
+när tabellen kapas vid m + h. Konstanterna i posten står i koden, och ett test jämför dem med posten. Körloggen skrivs
+till `experiments/runs/`, och resultatet till `docs/resultat/t1_tillstandsregeln.md`.
