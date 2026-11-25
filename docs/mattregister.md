@@ -1490,3 +1490,27 @@ tak ändras inte.
    punkt 2 gäller inte längre.
 3. **K0** räknar tillståndet "för få källor" (index v2, registret 2026-11-24) för sig, bredvid "för få serier", när det
    förekommer. Tidigare räknades det som "för få serier". Inget urval ändras.
+
+### 2026-11-25 – S3: order och orderstock ur resultatpressmeddelanden (extraktion, inte kärnserier)
+
+Låst före kodningen. Inga bilagor var hämtade och inga värden lästa när posten skrevs. Agenten hade bara sett EDGAR:s
+submissions och indexsidorna för resultat-8-K:na (bilagornas nummer och namn). Regler i detalj:
+[`docs/kallor/order_orderstock.md`](kallor/order_orderstock.md), avsnittet "Kodningsregler".
+- **Vad:** tal för order, orderstock, book-to-bill, reservationer av leveransplatser (GW), AI-servrar och tecknade
+  hyresavtal som Vertiv, GE Vernova, Eaton, Dell, Digital Realty och (valfritt) Equinix anger i pressmeddelandet
+  (`EX-99.1`, eller `EX-99` när det är den enda bilagan) till 8-K med Item 2.02, inlämnade 2022-01-01–2026-11-25.
+  Luckregel för ett kvartal utan Item 2.02 (GE Vernova 2025-07-23).
+- **Definitioner:** bolag, mått, segment, komponent, fönster (kvartal, tolv månader, hittills i året, helår, stock vid
+  periodens slut), form (nivå, tillväxt mot året före, mot kvartalet före, mot förra årsslutet, kvot, multipel),
+  organiskt eller inte, och enhet. Varje kombination är en egen serie. Inget räknas om och inget skarvas.
+- **Serier:** `ob_<bolag>_<mått>_<segment>[_<komponent>]_<fönster>_<form>[_<organiskt>]_<enhet>` för varje
+  definition med värden för minst två perioder. Kalenderkvartalet som innehåller mitten av räkenskapskvartalet, år
+  för helårstal. Gren G7 (Vertiv, GE Vernova, Eaton), G6 (Dell) och G4 (Digital Realty, Equinix).
+- **known_from** = EDGAR:s `filingDate`. Datumraden i pressmeddelandet sparas och kontrolleras mot den. Första
+  dokumentet som anger ett tal för en period räknas. Ett ändrat tal i ett senare dokument är en ny vintage.
+- **Stopp:** när ett ordinarie pressmeddelande slutar ange en definition som det föregående angav kodas ett stopp.
+  Luckan fylls inte. Anges definitionen igen fortsätter serien, och stoppet står kvar.
+- **Gränser** ("more than", "nearly") står i CSV:n men blir inga seriepunkter.
+- **Inte kärnserier.** De ingår inte i grenarnas tillstånd, diffusionsindex eller takter. Ingen takt räknas.
+- **Publicering:** `publish=False` tills den oberoende granskningen av extraktionen är godkänd. Stickprov med
+  `python -m ai_tracker.orders_check`.
