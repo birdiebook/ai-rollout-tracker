@@ -26,7 +26,8 @@ grenens takt de närmaste 3 och 6 månaderna? Testet ändrar ingen skarp regel.
 1. **Revideringar (a).** Med v2 har 91 % av grenmånaderna samma tillstånd med dagens data. Kappa är 0,83 och det
    finns inga hårda byten (accelererar mot bromsar in). Det klarar den registrerade nivån (kappa ≥ 0,70, hårda byten
    ≤ 2 %). Men G6 och G7 byter tillstånd i 6 respektive 8 av 34 månader, och bara 33 % av de räknade serierna (räknat per
-   månad) har reviderade värden alls. För resten är stabiliteten given av konstruktion, inte prövad.
+   månad) har reviderade värden alls. För resten är stabiliteten given av konstruktion, inte prövad. G6:s byten hänger
+   mest på G.17:s årsrevision dagen före V: med V = 2026-11-23 är de 3.
 2. **Information (b).** Tillstånden träffar i 74 % (3 månader) och 76 % (6 månader) av fallen. Slumpen ger 68 % och
    71 %, eftersom takten oftast gick upp i fönstret. På månaderna med en prediktion gick takten upp i 81 % och 80 %,
    så en konstant prognos "upp" hade träffat oftare än tillstånden. Att den senaste riktningen fortsätter
@@ -43,7 +44,8 @@ grenens takt de närmaste 3 och 6 månaderna? Testet ändrar ingen skarp regel.
 
 **Hur tillstånden kan läsas:** som en beskrivning av riktningen i den senaste förändringen i takt för de räknade
 källorna, inte som en prognos. Att de pekar ut vad som händer de närmaste månaderna bättre än slumpen eller "samma
-riktning som senast" är inte visat. G6 och G7 ändras ofta när data revideras.
+riktning som senast" är inte visat. G6 och G7 ändras ofta när data revideras, G6 i den här körningen mest genom en
+enda årsrevision.
 
 ## (a) Revideringsstabilitet
 
@@ -123,6 +125,14 @@ av 9 999 blockpermutationer (block om 6 månader inom gren).
 | 3 | 57 (51/6) | 42 (acc. 41, broms. 1) | 0,74 | 0,68 | 0,70 | 0,184 | 0,368 | 1,000 |
 | 6 | 46 (42/4) | 35 (acc. 34, broms. 1) | 0,76 | 0,71 | 0,76 | 0,261 | 0,368 | 1,000 |
 
+Baslinjer och basfrekvens (v2, beskrivning efter R24, avgör inget). Vid h = 6 har persistensen aldrig motsatt
+riktning mot tillståndet:
+
+| h | Persistens samma månader | Persistens alla månader med utfall (antal) | Andel upp på prediktionsmånaderna (= konstant "upp") | Persistensens riktning mot tillståndets (samma/ingen/motsatt) |
+|---|---|---|---|---|
+| 3 | 0,70 | 0,61 (231) | 81 % | 49/2/6 |
+| 6 | 0,76 | 0,56 (210) | 80 % | 46/0/0 |
+
 Per gren (v2). Grenar utan tillstånd har inga prediktioner men har utfall, som visar basfrekvensen:
 
 | Gren | h | Prediktioner | Träffkvot | Acc.: träffar/antal | Broms.: träffar/antal | Persistens samma månader | Andel upp i utfallen | Månader med utfall |
@@ -150,6 +160,13 @@ Per gren (v2). Grenar utan tillstånd har inga prediktioner men har utfall, som 
 |---|---|---|---|---|---|---|---|---|
 | 3 | 90 (78/12) | 68 (acc. 63, broms. 5) | 0,76 | 0,74 | 0,72 | 0,417 | 0,833 | 0,707 |
 | 6 | 78 (66/12) | 58 (acc. 52, broms. 6) | 0,74 | 0,76 | 0,71 | 0,652 | 0,833 | 0,707 |
+
+Baslinjer och basfrekvens (v1, beskrivning efter R24, avgör inget):
+
+| h | Persistens samma månader | Persistens alla månader med utfall (antal) | Andel upp på prediktionsmånaderna (= konstant "upp") | Persistensens riktning mot tillståndets (samma/ingen/motsatt) |
+|---|---|---|---|---|
+| 3 | 0,72 | 0,60 (235) | 78 % | 77/4/9 |
+| 6 | 0,71 | 0,57 (213) | 74 % | 72/6/0 |
 
 | Gren | h | Prediktioner | Träffkvot | Acc.: träffar/antal | Broms.: träffar/antal | Persistens samma månader | Andel upp i utfallen | Månader med utfall |
 |---|---|---|---|---|---|---|---|---|
@@ -304,3 +321,26 @@ skriver `outputs/t1_tillstandsregeln.json` (gitignorerad, med alla rader per gre
 och en körlogg i `experiments/runs/`. I körloggen står permutationens p i kolumnen `dm_p_vs_baseline`, och `MAE` är tom.
 Tabellen ändras när veckohämtningen lägger till versioner, så en senare körning med samma V kan ge andra siffror om
 basen har fått rader med `known_from` ≤ V i efterhand. Körningen tog cirka 3 minuter.
+
+## Rättningar efter R24 (2026-11-25)
+
+Granskning R24 (`docs/granskning/r24-tillstandsregeln.md`) godkände T1 med anmärkningar. Rättningsspåret X21 har
+rättat texten ovan. Det registrerade testet, konstanterna och beslutsregeln är oförändrade, och inget
+implementationsfel hittades (`docs/mattregister.md`, "2026-11-25 – T1: tillägg efter R24").
+
+- **R24-1:** vid 6 månader är persistensen tillståndets egen jämförelse. Det står nu i Kort svar, Läsning och
+  Beslutsregeln. Läsningen av G4 och G5 gäller nu bara 3 månader.
+- **R24-2:** persistensen över alla månader med utfall (0,61 och 0,56) och basfrekvensen på prediktionsmånaderna (81
+  och 80 %) står i (b). Kort svar ersätter den tidigare uppgiften "cirka 62 % av utfallen" i spårets sammanfattning,
+  som var andelen upp över alla grenmånader.
+- **R24-3:** det syntetiska testet för slumpvärlden prövar storleken över frö 1–10 med G4–G6 i stället för ett frö.
+  Med frö 1–40 och G4–G6 (199 permutationer) var 76 av 80 horisonter prövbara. Rått p < 0,10 i 4 av 76 och p_ned < 0,10 i 6 av 76.
+  Medel av H − slumpnivån var −0,03. Med G4–G5 var 50 av 80 prövbara, och rått p < 0,10 i 2 av 50, som R24 fann.
+- **R24-4:** "Synligt före posten" nämner filen med backcasten och vad den innehöll.
+- **R24-5 och R24-6 (noter):** står i (a). G6:s byten med V = 2026-11-23 räknades om: 3 i stället för 6.
+- **R24-7 (not):** fröna och grenarna för det syntetiska exemplet står i Slump och förbehåll.
+
+**Omkörning.** `python -m ai_tracker.state evaluate` kördes om med rättningens kod (`b1a0107`, körlogg
+`experiments/runs/20261125T134200Z_t1_state_rule.csv`) på samma bastabell (780 623 rader, senast ändrad 08:56 UTC).
+Resultatfilen är lika med T1:s i alla fält utom de två nya beskrivande fälten (`up_share_predicted` och
+`persistence_vs_state`). Alla tal i tabellerna ovan är oförändrade, och beslutet är detsamma.

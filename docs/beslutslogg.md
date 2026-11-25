@@ -804,3 +804,15 @@ republishing data"), npm och arXiv (`okänd`), och Microsofts capex-guidance ur 
 - R24-2 till R24-4 (should_fix): persistensen över alla månader (0,61 och 0,56) saknas i resultatet, slumpvärldens test
   håller bara för sitt frö, och filen med tillstånd per månad som fanns före posten ska nämnas. Övrigt är noter. G6:s
   revideringar kommer från G.17:s årsrevision 2026-11-24, en dag före V (verifierat hos Fed).
+
+## 2026-11-25 – X21: T1 rättat efter R24
+
+- Rättningsspår X21 har rättat R24-1 till R24-4 och tagit med noterna R24-5 till R24-7
+  (`docs/resultat/t1_tillstandsregeln.md`, "Rättningar efter R24"). Testet, konstanterna och beslutsregeln i T1:s
+  registerpost är oförändrade, och inget implementationsfel hittades. Ett daterat tillägg står i `docs/mattregister.md`.
+- Beslutet står: ingen granskning av regeln rekommenderas, och (b) är inte avgjort. Omkörningen gav samma tal.
+- Resultatet säger nu att persistensen vid 6 månader är tillståndets egen jämförelse, så godkänt kan bara nås vid 3
+  månader. En konstant prognos "upp" hade träffat 0,81 och 0,80 på tillståndens månader, mer än tillstånden.
+- G6:s byten i (a) hänger på G.17:s årsrevision dagen före V: med V = 2026-11-23 byter G6 i 3 månader i stället för 6.
+- Nästa registerpost för testet (omkörningen, tidigast 2027-11) ska välja en annan baslinje vid 6 månader och räkna
+  spärren för bakåtfyllda serier som i realtid.

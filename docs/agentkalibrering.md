@@ -71,6 +71,7 @@ En rad per spår, fylls på efter varje körning. Tumreglerna justeras när siff
 | 2026-11-25 | 14 | R-W2 tillgänglighet | granskning + rättning | ~56 | ~116 | ~270 | axe 0 i 54 körningar; 4 tangentbordsfel rättade; LCP 0,8 s; TBT kvar (P1) |
 | 2026-11-25 | 14 | T1 tillståndsregeln | test av regeln (förregistrerat: revideringar, blockpermutation, Holm) | ~50 | ~50 | – | registerpost före kod, `state/evaluate.py` + CLI `evaluate`, (a) kappa 0,83 och inga hårda byten, (b) inte avgjort (Holm-p 0,37, MDE 0,28/0,44), ingen granskning rekommenderas, 18 tester |
 | 2026-11-25 | 14 | R24 granskning av T1 | granskning (omkörning, oberoende omräkning, syntetiska storlekstest) | ~75 | ~70 | – | omkörning byte för byte lika; 76 + 236 grenmånader omräknade utan avvikelse; G.17-revisionen verifierad hos Fed; 4 should_fix (persistens = tillstånd vid h = 6, saknad registrerad siffra, frövalt slumptest, synlighet före posten), 26 tester varav 4 strikt xfail |
+| 2026-11-25 | 14 | X21 rättning av T1 | rättning (text, beskrivande baslinjer, storlekstest över frön) | ~60 | ~60 | – | 4 should_fix rättade och 4 strikta xfail passerar; omkörning lika i alla registrerade fält; storlekstest över 10 frön i stället för ett; G6 med V före årsrevisionen räknad (3 byten mot 6); daterat registertillägg |
 
 ## Körning 1, sammanfattning (2026-11-23, orkestrerare)
 

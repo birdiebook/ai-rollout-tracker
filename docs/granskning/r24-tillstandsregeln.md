@@ -229,3 +229,5 @@ p 0,048 (frö 3, h = 6). Fröna står inte i resultatet (R24-7).
 sviten på grenen: 2 205 passerade, 3 överhoppade, 6 xfail och 1 fel. Felet är det kända
 `tests/test_site_bundle.py::test_committed_fixtures_are_the_current_synthetic_bundle`: fixturerna bär sha256 av
 `docs/mattregister.md`, som T1 lade till i. Fixturerna har inte genererats om.
+
+Rättat i auto14k/x21-tillstandsregeln
