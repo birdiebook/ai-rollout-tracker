@@ -3,6 +3,8 @@
 export interface Citation {
   /** what is cited: 'serie "<label>" (<key>; källa: <source>)' or the page title */
   what: string;
+  /** the page's name without anything today's record says (month, state, value): cited under time travel (RW1-X) */
+  timeless: string;
   /** "version per" date (the bundle's build day; for a series the day its levels were read) */
   date: string;
   /** short commit of the build, null for fixtures */

@@ -6,6 +6,7 @@ import type { Nowcast } from '$lib/data';
 import {
   MIN_LIVE_FOR_CALIBRATION,
   calibrationNote,
+  committedBefore,
   daysUntil,
   dotDomain,
   hitCounts,
@@ -110,9 +111,20 @@ describe('helpers', () => {
   });
   it('proof links only for github.com, pinned to a real sha', () => {
     const p = proofLinks('https://github.com/o/r', 'a233b1f', 'forecasts/n2/2026-11.json');
-    expect(p).toEqual({ history: 'https://github.com/o/r/commits/main/forecasts/n2/2026-11.json', file: 'https://github.com/o/r/blob/a233b1f/forecasts/n2/2026-11.json', ref: 'a233b1f' });
+    expect(p).toEqual({ history: 'https://github.com/o/r/commits/main/forecasts/n2/2026-11.json', file: 'https://github.com/o/r/blob/a233b1f/forecasts/n2/2026-11.json', ref: 'a233b1f', commit: null });
     expect(proofLinks('https://github.com/o/r', 'a233b1f+dirty', 'f.json')?.ref).toBe('main');
     expect(proofLinks('https://example.com/o/r', 'abc1234', 'f.json')).toBeNull();
+  });
+  it('RW1-X 4a: the proof links the exact commit that added the file, and only a well-formed one', () => {
+    const c = { sha: 'a'.repeat(40), date: '2026-10-05T06:41:12Z' };
+    const p = proofLinks('https://github.com/o/r', 'b233b1f', 'forecasts/n2/2026-09.json', c)!;
+    expect(p.commit).toBe(`https://github.com/o/r/commit/${'a'.repeat(40)}`);
+    expect(p.file).toBe(`https://github.com/o/r/blob/${'a'.repeat(40)}/forecasts/n2/2026-09.json`);
+    expect(proofLinks('https://github.com/o/r', 'b233b1f', 'f.json', { sha: 'abc', date: '2026-10-05' })?.commit).toBeNull();
+    expect(committedBefore(c, '2026-10-14')).toBe(true);
+    expect(committedBefore(c, '2026-10-05')).toBe(false); // the same day as the outcome is not before it
+    expect(committedBefore(c, null)).toBe(true);
+    expect(committedBefore(null, null)).toBe(false);
   });
   it('the calibration note is honest about small n', () => {
     expect(calibrationNote(0)).toMatch(/först efter cirka 12/);
@@ -148,6 +160,24 @@ describe.each(dirs)('nowcast fixtures in %s', (dir) => {
       expect(r.champion).toBe(nc.champion);
       for (const row of liveRows(nc)) expect(row.file.endsWith(`${row.slug}.json`) || row.slug.includes('_')).toBe(true);
     }
+  });
+  it('RW1-X 4a: every live file with a commit was committed before its outcome became known', async () => {
+    let scored = 0;
+    for (const c of (await b.overview()).calendar.filter((x) => x.id !== 'd2')) {
+      const nc = await b.nowcast(c.id);
+      for (const row of liveRows(nc)) {
+        if (!row.commit) {
+          expect(row.verified, row.file).toBe(false); // never shown as live without its commit
+          continue;
+        }
+        if (row.outcomeKnown) {
+          expect(row.commit.date.slice(0, 10) < row.outcomeKnown.slice(0, 10), `${row.file}: ${row.commit.date} vs ${row.outcomeKnown}`).toBe(true);
+          if (row.scored) scored++;
+        }
+        expect(row.verified, row.file).toBe(true);
+      }
+    }
+    if (dir.endsWith('web-data-fixtures')) expect(scored).toBeGreaterThan(0);
   });
   it('D2 loads through horizons() and is not a nowcast() document', async () => {
     if (!existsSync(resolve(dir, 'nowcast/d2.json'))) return;

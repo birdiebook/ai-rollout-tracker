@@ -12,7 +12,7 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import type { Branch, Overview } from '$lib/data';
 import type { SeriesDoc, Versions } from '$lib/series/types';
-import { asOf } from '$lib/series/versions';
+import { asOf, backfillUntil } from '$lib/series/versions';
 import {
   LeakError,
   branchOn,
@@ -44,7 +44,7 @@ interface Golden {
   probes: {
     day: string;
     record: null | { month: string; kind: string; sentence: string; change_sentence: string; n_months: number; history: Record<string, number>; measure_history: Record<string, number> };
-    series: Record<string, { versions: null | { n: number; n_periods: number; n_dates: number; n_revised_periods: number; first_known: string; last_known: string; sha: string }; as_of?: { n: number; sha: string } }>;
+    series: Record<string, { versions: null | { n: number; n_periods: number; n_dates: number; n_revised_periods: number; first_known: string; last_known: string; sha: string }; as_of?: { n: number; sha: string }; backfilled?: boolean }>;
   }[];
 }
 const golden = JSON.parse(readFileSync(GOLDEN, 'utf-8')) as Golden;
@@ -57,11 +57,30 @@ const num = (x: number) => {
 const sha = (lines: string[]) => createHash('sha256').update(lines.join('\n'), 'utf-8').digest('hex').slice(0, 20);
 const versionsSha = (v: Versions) => sha(v.p.map((p, i) => `${v.periods[p]}|${v.dates[v.d[i]]}|${num(v.v[i])}`));
 
+const prevDay = (d: string) => new Date(Date.parse(d + 'T00:00:00Z') - 86_400_000).toISOString().slice(0, 10);
+
 describe('golden: the cut of today’s bundle = Python’s replay on the day', () => {
   it('covers every series of the bundle and the record boundaries', () => {
     expect(golden.probes.length).toBeGreaterThanOrEqual(6);
     for (const p of golden.probes) expect(Object.keys(p.series).sort()).toEqual(Object.keys(series).sort());
     expect(golden.probes.some((p) => p.record === null)).toBe(true); // before the first month end: no record
+  });
+
+  it('RW1-X 3a: every day between the backfill rule day and the fetch day is marked reconstructed', () => {
+    let gap = 0;
+    for (const [key, doc] of Object.entries(series)) {
+      const r = doc.rows;
+      if (!r?.backfill_last_known) continue;
+      expect(r.backfill_fetched, `${key}: a 1.2.0 bundle has the fetch day`).toBeTruthy();
+      const until = backfillUntil(r)!;
+      expect(until >= r.backfill_last_known && until >= r.backfill_fetched!, key).toBe(true);
+      expect(seriesOn(doc, until, overview.record).backfilled, key).toBe(false);
+      if (r.backfill_fetched! > r.backfill_last_known) {
+        gap++;
+        for (const d of [r.backfill_last_known, prevDay(r.backfill_fetched!)]) expect(seriesOn(doc, d, overview.record).backfilled, `${key} ${d}`).toBe(true);
+      }
+    }
+    expect(gap, 'series fetched after their last backfill rule day').toBeGreaterThan(0);
   });
 
   for (const p of golden.probes) {
@@ -78,6 +97,7 @@ describe('golden: the cut of today’s bundle = Python’s replay on the day', (
             key
           ).toEqual(g.versions);
         }
+        if (g.backfilled !== undefined) expect(seriesOn(series[key], p.day, overview.record).backfilled, `${key} backfilled`).toBe(g.backfilled);
         if (g.as_of) {
           const rows = [...asOf(cut, p.day)].sort((a, b) => (a[0] < b[0] ? -1 : 1)).map(([per, v]) => `${per}|${num(v)}`);
           expect({ n: rows.length, sha: sha(rows) }, `${key} as_of`).toEqual(g.as_of);

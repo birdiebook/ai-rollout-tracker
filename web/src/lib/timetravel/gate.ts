@@ -14,7 +14,7 @@
 // separately and labels it (data-tt="today").
 import type { Branch, Overview, RecordMeta, StateName, Stripes } from '$lib/data';
 import type { Measure, MeasureHistory, SeriesDoc, Versions } from '$lib/series/types';
-import { reconstructedOn, toDay } from '$lib/series/versions';
+import { backfillUntil, reconstructedOn, toDay } from '$lib/series/versions';
 
 export class LeakError extends Error {
   constructor(public violations: string[]) {
@@ -289,7 +289,7 @@ export interface SeriesOn {
   history: (MeasureHistory & { known: string[] }) | null;
   /** the record's measure of the latest month known on `day` (when the series was measured that month) */
   measure: (Partial<Measure> & { month: string; kind: string; counted: boolean; known: string }) | null;
-  /** the history before rows.backfill_last_known is backfilled with today's version (datakontrakt 5.6) */
+  /** the history is backfilled with the version of a later fetch day: reconstructed before backfillUntil(rows) (datakontrakt 5.6) */
   backfilled: boolean;
   /** the series had no version yet on `day` (or it is before a collapse cutoff) */
   empty: boolean;
@@ -333,7 +333,7 @@ export function seriesOn(doc: SeriesDoc, date: string, rec?: RecordInfo | null):
     levels,
     history,
     measure,
-    backfilled: reconstructedOn(doc.rows?.backfill_last_known ?? null, day),
+    backfilled: reconstructedOn(backfillUntil(doc.rows), day),
     empty: versions === null
   };
   return checked(out, day);

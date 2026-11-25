@@ -228,7 +228,7 @@
         Inga revideringar: varje period har kvar värdet den först publicerades med ({plural(vs.n_periods, 'period', 'perioder')},
         {plural(vs.n_dates, 'publiceringsdag', 'publiceringsdagar')} från {dateLabel(vs.first_known)}).
       {/if}
-      {#if s.rows?.backfill_last_known}Historiken fram till {dateLabel(s.rows.backfill_last_known)} är bakåtfylld med dagens version.{/if}
+      {#if s.rows?.backfill_last_known}Historiken fram till {dateLabel(s.rows.backfill_last_known)} är bakåtfylld med dagens version{#if s.rows.backfill_fetched && s.rows.backfill_fetched > s.rows.backfill_last_known}, hämtad {dateLabel(s.rows.backfill_fetched)}{/if}.{/if}
     </p>
     {#if data.revision}
       <div class="panel">
@@ -245,7 +245,7 @@
       {#if view.rev}
         {#if full}
           <div class="panel">
-            <RevisionExplorer versions={full} bind:day={() => day, setDay} unit={s.unit} log={scale === 'log' && canLog} {from} backfillLastKnown={s.rows?.backfill_last_known} source={s.source} {license} />
+            <RevisionExplorer versions={full} bind:day={() => day, setDay} unit={s.unit} log={scale === 'log' && canLog} {from} backfill={s.rows} source={s.source} {license} />
           </div>
         {:else if loadError}
           <p class="note" role="alert">Kunde inte hämta versionerna: {loadError}</p>

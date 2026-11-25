@@ -129,7 +129,15 @@ export interface LiveForecast {
   registered_origin?: string;
   variants?: Record<string, number | null>;
   intervals?: Partial<Record<IntervalLevel, Pair>>;
+  /** the commit that added the file, its timestamp (bundle 1.2.0); null: built without git history */
+  commit?: Commit | null;
   [k: string]: unknown;
+}
+
+/** A commit that added a live forecast file: full sha and the committer date in UTC ("YYYY-MM-DDTHH:MM:SSZ"). */
+export interface Commit {
+  sha: string;
+  date: string;
 }
 
 /** One forecast file against the first vintage of its outcome. Model columns are err_<m>, crps_<m>, pit_<m>,
@@ -231,6 +239,7 @@ export interface Horizons {
   first_live: string;
   origin: string | null;
   file: string | null;
+  commit?: Commit | null;
   next_origin: string | null;
   next_period: string | null;
   groups: Record<string, number[]>;

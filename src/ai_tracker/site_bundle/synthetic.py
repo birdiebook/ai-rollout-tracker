@@ -122,6 +122,20 @@ def context(root: Path) -> Context:
                    forecasts=root / "forecasts", selection=lambda when: [], reconciliations=list(RECONCILIATIONS))
 
 
+# The commit that added each synthetic live file (export.assemble's `commits`): made-up shas, dated on the origin
+# day, before the outcome is known (the N2 outcome is known from 2026-10-14).
+COMMITS = {"forecasts/n2/2026-09.json": {"sha": "0c7ab7c5fab7ebfe5cc4ef3399ad3bc0c20374e7", "date": "2026-10-05T06:41:12Z"},
+           "forecasts/d2/2026-10-20.json": {"sha": "ff2e255de31c4d52f9c1723249f362d8f0af197e", "date": "2026-10-20T06:52:40Z"}}
+
+
+def commits(path: Path) -> dict | None:
+    """The synthetic commit of a live file under <root>/forecasts/, by its path from forecasts/ on."""
+    parts = Path(path).parts
+    rel = "/".join(parts[parts.index("forecasts"):]) if "forecasts" in parts else ""
+    c = COMMITS.get(rel)
+    return dict(c) if c else None
+
+
 def write_inputs(root: Path, ctx: Context) -> dict:
     """Forecast files, a live snapshot (2026-10, with a C4 section) and one letter and report under `root`."""
     fc = root / "forecasts" / "n2"

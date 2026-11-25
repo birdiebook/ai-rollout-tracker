@@ -53,6 +53,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: main  # the newest snapshot/forecast commit, also when triggered by a run on an older commit
+          fetch-depth: 0  # the history that dates each live forecast file (git log --diff-filter=A, RW1-X 4a)
       - uses: actions/setup-python@v5
         with:
           python-version: "3.13"

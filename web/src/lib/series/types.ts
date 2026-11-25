@@ -108,7 +108,7 @@ export interface SeriesFields {
   measure_path: MeasurePath | null;
   measure_history: MeasureHistory | null;
   levels: Levels | null;
-  rows?: { counts?: Record<string, number>; backfill_last_known?: string | null } | null;
+  rows?: { counts?: Record<string, number>; backfill_last_known?: string | null; backfill_fetched?: string | null } | null;
 }
 
 export type SeriesDoc = SeriesFields & { versions: Versions | null };

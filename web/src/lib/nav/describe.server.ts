@@ -81,9 +81,11 @@ function spec(c: Ctx, s: Omit<OgSpec, 'testdata' | 'footer'> & { footer?: string
   return { footer: `Version per ${dateLabel(today(c))} · ${SITE}`, testdata: c.m.synthetic === true || c.m.provisional === true, ...s };
 }
 
-function page(c: Ctx, og: string, title: string, description: string, o: OgSpec, own = false): Described {
+/** `timeless`: the page's name for a citation under time travel, without today's month, state or value (defaults
+ *  to the title, for routes whose title says nothing about today's record). */
+function page(c: Ctx, og: string, title: string, description: string, o: OgSpec, own = false, timeless = title): Described {
   return {
-    meta: { title, description, ownDescription: own, og, imageAlt: `${title}. ${description}`.slice(0, 420), cite: { what: title, date: today(c), commit: commitOf(c.m) } },
+    meta: { title, description, ownDescription: own, og, imageAlt: `${title}. ${description}`.slice(0, 420), cite: { what: title, timeless, date: today(c), commit: commitOf(c.m) } },
     og: o
   };
 }
@@ -149,7 +151,7 @@ async function describeSeries(c: Ctx, key: string): Promise<Described> {
       ownDescription: true,
       og: `serie/${key}`,
       imageAlt: `${label}: nivån de senaste tio åren. ${description}`.slice(0, 420),
-      cite: { what: `serie ${label} (${key}; källa: ${src})`, date: asOf, commit: commitOf(c.m) }
+      cite: { what: `serie ${label} (${key}; källa: ${src})`, timeless: `serie ${label} (${key}; källa: ${src})`, date: asOf, commit: commitOf(c.m) }
     },
     og
   };
@@ -192,7 +194,7 @@ async function describeNowcast(c: Ctx, id: string, slug: string | undefined): Pr
     const i80 = row.intervals?.['80'];
     const title = `${nc.label} för ${periodLabel(String(row.period), true)}: ${fmt(row.value, dec)} ${unit}`.trim();
     const description = `Skarp prognos${row.origin ? ` gjord ${dateLabel(String(row.origin))}` : ''} med huvudmodellen ${row.champion}${i80 && i80[0] !== null && i80[1] !== null ? `, 80 %-intervall ${fmt(i80[0], dec)}–${fmt(i80[1], dec)} ${unit}` : ''}. ${nc.title}.`;
-    return page(c, `prognoser/${id}/${slug}`, title, description, spec(c, { kicker: `Prognos · ${nc.label} · skarp`, title, subtitle: nc.title, status: 'live', graphic: histG() }));
+    return page(c, `prognoser/${id}/${slug}`, title, description, spec(c, { kicker: `Prognos · ${nc.label} · skarp`, title, subtitle: nc.title, status: 'live', graphic: histG() }), false, `${nc.label} ${nc.title}, en skarp prognos`);
   }
   const title = `${nc.label} ${nc.title}`;
   const next = nc.next_origin ? `Nästa skarpa prognos ${dateLabel(nc.next_origin)}${nc.next_period ? ` för ${periodLabel(nc.next_period, true)}` : ''}.` : '';
@@ -210,7 +212,7 @@ export async function describe(b: Bundle, ref: RouteRef): Promise<Described> {
     case '/': {
       const title = `Läget ${periodLabel(r.month, true)}`;
       const description = [ov.headline.sentence, ov.headline.change_sentence].filter(Boolean).join(' ');
-      return page(c, 'start', `${SITE}: ${title.toLowerCase()}`, description, spec(c, { kicker: recordText(r), title: ov.headline.sentence, subtitle: ov.headline.change_sentence ?? '', status: statusOf(r), graphic: overviewStripes(c) }), true);
+      return page(c, 'start', `${SITE}: ${title.toLowerCase()}`, description, spec(c, { kicker: recordText(r), title: ov.headline.sentence, subtitle: ov.headline.change_sentence ?? '', status: statusOf(r), graphic: overviewStripes(c) }), true, 'startsidan, läget');
     }
     case '/flode': {
       const ls = await leads(c);
@@ -225,7 +227,7 @@ export async function describe(b: Bundle, ref: RouteRef): Promise<Described> {
         const states = l.branches.map((x) => `${x.code} ${x.name}: ${stateWord(x.state)}${x.index !== null ? ` (index ${fmt(x.index, 2)})` : ''}`).join('; ');
         const title = `${l.code} ${l.name}`;
         const description = `${l.content ? l.content + '. ' : ''}${states}, ${periodLabel(r.month, true)}.${l.nowcasts.length ? ` Prognoser: ${l.nowcasts.map((n) => n.label).join(', ')}.` : ''}`;
-        return page(c, `flode/${l.code}`, title, description, spec(c, { kicker: `Led ${l.code} · ${recordText(r)}`, title, subtitle: l.branches.map((x) => `${x.code} ${stateWord(x.state)}`).join(' · '), status: statusOf(r), graphic: chainGraphic(ls, l.code) }));
+        return page(c, `flode/${l.code}`, title, description, spec(c, { kicker: `Led ${l.code} · ${recordText(r)}`, title, subtitle: l.branches.map((x) => `${x.code} ${stateWord(x.state)}`).join(' · '), status: statusOf(r), graphic: chainGraphic(ls, l.code) }), false, `led ${l.code} ${l.name}`);
       }
       break;
     }
@@ -241,7 +243,7 @@ export async function describe(b: Bundle, ref: RouteRef): Promise<Described> {
         const graphic: OgGraphic = hist.length > 1
           ? { kind: 'index', months: hist.map((h) => periodLabel(h.month)), kinds: hist.map((h) => h.kind), index: hist.map((h) => h.index), lo: th.braking_at_most, hi: th.accelerating_at_least }
           : overviewStripes(c, br.code);
-        return page(c, `gren/${br.code}`, title, description, spec(c, { kicker: `Gren ${br.code} · ${recordText(doc.record)}`, title, subtitle: br.question ?? '', status: statusOf(doc.record), graphic }));
+        return page(c, `gren/${br.code}`, title, description, spec(c, { kicker: `Gren ${br.code} · ${recordText(doc.record)}`, title, subtitle: br.question ?? '', status: statusOf(doc.record), graphic }), false, `gren ${br.code} ${br.name}`);
       }
       break;
     }
@@ -283,7 +285,7 @@ export async function describe(b: Bundle, ref: RouteRef): Promise<Described> {
       // (no figure: today's stripes would show later knowledge than the month's story)
       const st = (await b.story(p.manad)) as unknown as { month_sv?: string; month: string; headline: string; status: string };
       const title = `Månadens berättelse – ${st.month_sv ?? st.month}`;
-      return page(c, `manad/${st.month}`, title, st.headline, spec(c, { kicker: 'Månadens berättelse', title: st.headline, subtitle: st.month_sv ?? st.month, status: st.status === 'live' ? 'live' : null, graphic: { kind: 'none' } }), true);
+      return page(c, `manad/${st.month}`, title, st.headline, spec(c, { kicker: 'Månadens berättelse', title: st.headline, subtitle: st.month_sv ?? st.month, status: st.status === 'live' ? 'live' : null, graphic: { kind: 'none' } }), true, 'Månadens berättelse');
     }
     case '/sok': {
       const idx = await b.seriesIndex();

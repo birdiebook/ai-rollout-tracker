@@ -25,9 +25,9 @@
   const live = $derived(href || url);
   const hash = $derived(live.includes('#') ? live.slice(live.indexOf('#')) : '');
   const asOf = $derived(asOfOf(hash));
-  // Under time travel the start page's title names today's record ("AI-utrullningen: läget oktober 2026"): drop it.
-  // Interim (R-W1): a timeless page name per route in describe.server.ts is the real fix (RW1-X).
-  const what = $derived(asOf ? cite.what.replace(/:\s*läget\s+\p{L}+\s+\d{4}$/u, '') : cite.what);
+  // Under time travel a title can name today's record (month, state, value): cite the route's timeless name instead
+  // (describe.server.ts, RW1-X). A citation built before `timeless` existed falls back to the title.
+  const what = $derived(asOf ? (cite.timeless ?? cite.what) : cite.what);
   const text = $derived(`AI-utrullningen, ${what}, version per ${asOf ?? cite.date}${cite.commit ? ` (commit ${cite.commit})` : ''}, ${live}`);
   const sectionHref = (id: string) => withSection(hash, id) || '#';
 

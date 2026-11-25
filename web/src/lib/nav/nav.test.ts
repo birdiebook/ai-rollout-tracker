@@ -162,6 +162,22 @@ describe('page descriptions from the fixtures', () => {
     const unknown = (await describePage(b, { routeId: '/nagot-nytt', params: {} })).meta;
     expect(unknown.og).toBe('sida');
   });
+  it('RW1-X: every route has a timeless citation name, without the month, state or value of today', async () => {
+    const months = /\b(januari|februari|mars|april|maj|juni|juli|augusti|september|oktober|november|december) \d{4}\b/;
+    const states = /accelererar|stabil|bromsar in|för få serier/;
+    for (const r of await ogRoutes(b)) {
+      const ref = r.ref ?? { routeId: '/nagot-nytt', params: {} };
+      const { cite } = (await describePage(b, ref)).meta;
+      expect(cite.timeless, r.og).toBeTruthy();
+      expect(cite.timeless, r.og).not.toMatch(months);
+      expect(cite.timeless, r.og).not.toMatch(states);
+      if (!r.og.startsWith('serie/')) expect(cite.timeless, r.og).not.toMatch(/\d{4}-\d{2}-\d{2}/); // a series label is the catalog's name
+    }
+    const start = (await describePage(b, { routeId: '/', params: {} })).meta.cite;
+    expect(start.what).toMatch(months); // today's title names the record; the timeless name does not
+    expect(start.timeless).toBe('startsidan, läget');
+    expect((await describePage(b, { routeId: '/gren/[id]', params: { id: 'G6' } })).meta.cite.timeless).toMatch(/^gren G6 \S/);
+  });
   it('the public base follows GitHub Pages for the repo, SITE_URL wins', () => {
     const m = { repo: 'https://github.com/Owner/ai-rollout-tracker' };
     expect(publicBase(m, '/next')).toBe('https://owner.github.io/ai-rollout-tracker/next');

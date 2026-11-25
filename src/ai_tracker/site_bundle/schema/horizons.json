@@ -10,6 +10,7 @@
     "first_live": {"$ref": "common.json#/$defs/date"},
     "origin": {"$ref": "common.json#/$defs/str_or_null"},
     "file": {"$ref": "common.json#/$defs/str_or_null"},
+    "commit": {"$ref": "common.json#/$defs/commit"},
     "next_origin": {"$ref": "common.json#/$defs/date_or_null"},
     "next_period": {"$ref": "common.json#/$defs/str_or_null"},
     "groups": {"type": "object", "additionalProperties": {"type": "array", "items": {"type": "integer"}}},

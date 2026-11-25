@@ -3,7 +3,7 @@
 import { readFileSync } from 'node:fs';
 import { expect, test } from '@playwright/test';
 
-type NC = { id: string; champion: string; forecasts?: { file: string; period: string | null }[]; backtest_calibration?: { available: boolean } | null };
+type NC = { id: string; champion: string; forecasts?: { file: string; period: string | null; commit?: { sha: string; date: string } | null }[]; backtest_calibration?: { available: boolean } | null };
 const nc = (id: string) => JSON.parse(readFileSync(`static/data/nowcast/${id}.json`, 'utf-8')) as NC;
 const ids = ['n1', 'n2', 'n3', 'n4', 'n5', 'n6'];
 const card = (id: string) => `a.card:is([href$="/prognoser/${id}"], [href$="/prognoser/${id}/"])`;
@@ -44,14 +44,21 @@ test('D2 is a shadow', async ({ page }) => {
   await expect(page.locator('.tags [data-role="shadow"]')).toContainText('D2');
 });
 
-const live = ids.flatMap((id) => (nc(id).forecasts ?? []).filter((f) => f.period).map((f) => ({ id, slug: slug(f.file), file: f.file })));
+const live = ids.flatMap((id) => (nc(id).forecasts ?? []).filter((f) => f.period).map((f) => ({ id, slug: slug(f.file), file: f.file, commit: f.commit ?? null })));
 for (const f of live) {
   test(`live forecast page ${f.id}/${f.slug} has the commit link and the dots`, async ({ page }) => {
     await page.goto(`prognoser/${f.id}/${f.slug}/`);
     const link = page.getByRole('link', { name: /commit-historik/i });
     await expect(link).toHaveAttribute('href', new RegExp(`^https://github\\.com/.+/commits/main/${f.file.replace(/[.]/g, '\\.')}$`));
     await expect(page.locator('#dots circle.dot')).toHaveCount(20);
-    await expect(page.locator('.tags [data-kind="skarp"]')).toBeVisible();
+    if (f.commit) {
+      // RW1-X 4a: the exact commit that added the file, with its date
+      await expect(page.getByRole('link', { name: 'Commiten som lade till filen' })).toHaveAttribute('href', new RegExp(`^https://github\\.com/.+/commit/${f.commit.sha}$`));
+      await expect(page.locator(`[data-commit="${f.commit.sha}"]`)).toContainText(f.commit.sha.slice(0, 7));
+      await expect(page.locator('.tags [data-kind="skarp"]')).toBeVisible();
+    } else {
+      await expect(page.locator('.tags [data-kind="overifierad"]')).toBeVisible(); // never live without its commit
+    }
   });
 }
 
