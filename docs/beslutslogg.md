@@ -777,3 +777,17 @@ republishing data"), npm och arXiv (`okänd`), och Microsofts capex-guidance ur 
   regeln bakom dem ändras, och fälten är tillägg (`docs/steg3/datakontrakt.md`, Ändringar).
 - Loggarna och registret har båda sidornas poster i tidsordning. `quarterly.py` har mains omskrivning med "för få
   källor" i tillståndsordningen.
+
+## 2026-11-25 – Q1: pris vid rörlig förmågetröskel i G2 (katalogserier)
+
+- Fyra katalogserier: `g2_price_rolling12_arena` (huvudvariant), `g2_price_rolling6_arena`, `g2_price_frontier_arena`
+  (sammanhang) och `g2_price_rolling12_eci` (backfill). Registerposten committades före värdena
+  (`docs/kallor/g2_rorlig_troskel.md`). Grenindex och tillstånd ändras inte.
+- **Referensen är ettan för m − L enligt det som är känt vid versionens datum**, inte vid slutet av m − L. Annars blir
+  fördröjningen upp till L + 7 månader i mätglappet. Känsligheten visar att valet ändrar L = 6 i 2026-05 – 2026-09.
+- **Efterföljarregeln är central:** ettan är ofta ett experimentnamn som tas bort ur tavlan. 9 av 22 månader (L = 12)
+  använder en efterföljare med G2A:s överlappsregel. Namn hittas även efter bytet till visningsnamn (normaliserad form).
+- **Kostnad per uppgift är BLOCKED:** Agent Arena har kostnad per uppgift först från 2026-11-02, och metoden går inte
+  att läsa (arena.ai nekas).
+- **Rekommendation till Johannes:** granska `g2_price_rolling12_arena` innan den blir kärnserie. Den skulle ersätta
+  Arena-varianterna A och B, inte läggas till.

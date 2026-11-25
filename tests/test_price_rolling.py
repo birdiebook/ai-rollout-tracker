@@ -204,6 +204,7 @@ def test_frontier_price_is_the_top_rated_priced_model():
     row = t.iloc[0]
     # exp-top is not priced; front and mid-high tie at 1300 -> the cheaper of the two keys
     assert row["threshold"] == 1300 and row["key"] == "k-mid" and row["n_qualifying"] == 2
+    assert row["board_top"] == "exp-top"  # the diagnostic shows that the board's top is not priced
     assert row["value"] == pytest.approx(blend(3.0, 15.0))
 
 

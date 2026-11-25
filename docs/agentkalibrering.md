@@ -69,6 +69,7 @@ En rad per spår, fylls på efter varje körning. Tumreglerna justeras när siff
 | 2026-11-25 | 14 | RW1-X rättning | rättning (schema, CI, scan) | ~43 | ~132 | ~285 | backfill_fetched, commit per skarp prognos, scan-build, tidlös citering |
 | 2026-11-25 | 14 | R-W3 neutralitet | granskning | ~20 | ~98 | ~230 | speglingstest symmetriskt; 3 mallasymmetrier rättade; 4 krav före byte av huvudsida |
 | 2026-11-25 | 14 | R-W2 tillgänglighet | granskning + rättning | ~56 | ~116 | ~270 | axe 0 i 54 körningar; 4 tangentbordsfel rättade; LCP 0,8 s; TBT kvar (P1) |
+| 2026-11-25 | 14 | Q1 rörlig förmågetröskel (G2) | mått + katalogserier (förregistrerade) | ~50 | ~100 | – | 4 serier (L = 12, L = 6, frontpris, ECI backfill), register före värden (b5c652c), efterföljarregel i 9 av 22 månader, 9 handkontroller mot råfiler, kostnad per uppgift BLOCKED, 21 tester |
 
 ## Körning 1, sammanfattning (2026-11-23, orkestrerare)
 

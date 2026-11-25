@@ -62,7 +62,7 @@ RENAMES: dict[str, str] = {
 }
 
 COLUMNS = ["period", "value", "known_from", "source", "key", "name", "rating", "threshold", "reference", "via",
-           "board", "ref_board", "n_qualifying", "price_check"]
+           "board", "ref_board", "board_top", "n_qualifying", "price_check"]
 
 
 def norm(name: str) -> str:
@@ -209,7 +209,7 @@ def build(boards: list, snaps: pd.DataFrame, lag: int, last_month: pd.Period, pa
                 rows.append({"period": str(m), "value": v["value"], "known_from": known_from, "source": source,
                              "key": v["key"], "name": v["name"], "rating": v["rating"], "threshold": t[0],
                              "reference": t[1], "via": t[2], "board": board[0], "ref_board": ref_board[0],
-                             "n_qualifying": v["n_qualifying"],
+                             "board_top": ranked(board[1])[0], "n_qualifying": v["n_qualifying"],
                              "price_check": ap.PRICE_CHECKS.get(v["key"], ("unchecked", ""))[0]})
                 prev = v["value"]
     return pd.DataFrame(rows, columns=COLUMNS)
