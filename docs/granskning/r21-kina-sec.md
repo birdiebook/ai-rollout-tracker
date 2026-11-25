@@ -294,3 +294,8 @@ en definition och stämmer exakt mot 20-F FY2019–FY2020. Det kräver en egen r
 - R21-1, R21-2, R21-3 och R21-4 (strikt xfail)
 
 `python -m pytest -q tests/test_r21_kina_sec.py tests/test_china_sec.py`: 41 passerade, 4 xfail.
+Hela sviten på grenens huvud: 2 207 passerade, 2 fel, 1 överhoppad, 6 xfail. Det ena felet är det kända
+`test_site_bundle.py::test_committed_fixtures_are_the_current_synthetic_bundle` (registrets SHA-256 i fixturerna).
+Det andra är `test_data_quality.py::test_data_quality`: den delade bastabellen har fått serien
+`us_gdp_contrib_final_sales_computers` från ett annat spår i körning 14 (`auto14k/agarbeslut`), och den finns inte i
+den här grenens katalog. Felet hör inte till CN1 eller R21 och försvinner vid sammanslagningen.
