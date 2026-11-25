@@ -1582,3 +1582,57 @@ YAML har inga token- eller kostnadsfält. SWE-bench-repot saknar licens.
 **Licens:** Arena-varianterna och frontpriset läser samma texttavlor som G2A, inklusive Space-filerna, och får klassen
 `okänd` genom en nyckel-override (som R10-2). ECI-varianten är LiteLLM (MIT) × Epoch (CC BY 4.0) och får `ja`.
 Alla fyra har `publish=True`, som G2A och I6.
+
+### 2026-11-25 – X19: rättning av Q1 efter granskningen R22 (pris vid rörlig förmågetröskel)
+
+Rättningsspår X19, körning 14, efter granskningen R22 (`docs/granskning/r22-rorlig-troskel.md`). Posten ändrar tre
+regler i posten "2026-11-25 – Q1" och lägger till diagnostik. Den posten skrivs inte om. Serierna är fortfarande
+katalogserier, och grenindex och tillstånd ändras inte.
+
+**Vad som var känt före posten.** Alla Q1-värden (tabellerna i `docs/kallor/g2_rorlig_troskel.md`) och R22:s
+mätningar: kandidatspridningen per version, de fem månader där värdet beror på kandidatordningen (L = 12: 2025-08 och
+2026-02 – 2026-05), driften i skillnaden mellan närliggande modeller, känsligheten ±5 poäng, och R22:s värde för L = 12
+2025-08 med de två namnbytena (0,175). X19 läste dessutom de två namnens tavlor och ratingar (belägget i punkt 1). Inga
+nya värden räknades före posten. Reglerna väljs alltså efter att värdena setts. Skälen är granskningens fynd om
+reglernas brister, inte utfallet. Effekten redovisas i källdokumentet efter omräkningen.
+
+1. **Två namnbyten utan överlapp till** (R22-2). Namnregel 2 får två par till:
+   - `chatgpt-4o-latest` → `chatgpt-4o-latest-20240808`. Det gamla namnet finns i 5 tavlor 2024-08-22 – 2024-09-04
+     (sist 1 315,62). Det nya finns från 2024-09-15 (1 315,98). Ingen tavla har båda. Samma tavla 2024-09-15 inför
+     `chatgpt-4o-latest-20240903` som ny post. Q1:s källdokument kallade `chatgpt-4o-latest` ett experimentnamn som
+     togs bort, och det var fel.
+   - `claude-opus-4-6-thinking` → `claude-opus-4-6-high`. Det gamla namnet finns sist 2026-08-11 (1 502,79), det nya
+     från 2026-08-12 (1 502,80). Ingen tavla har båda.
+
+   Identiteten bygger på att ratingen löper vidare utan överlapp. Arenas egen dokumentation gick inte att läsa (arena.ai
+   nekas av proxyn). Belägget står i `price_rolling.RENAMES`, eftersom `arena_map.py` är skyddad i körning 14.
+   Namnregel 3 (normaliserad form) prövas nu också för det nya namnet. Hittas varken namnet, det nya namnet eller
+   namnets normaliserade form, används det enda namnet i tavlan med det nya namnets normaliserade form. Det behövs för
+   att `claude-opus-4-6-thinking` ska hittas som "Claude Opus 4.6 (High)" efter bytet till visningsnamn. Ger formen fler
+   än ett namn, hittas namnet inte.
+2. **Efterföljare: medianen över alla giltiga kandidater** (R22-3). När r(m) inte hittas i b(m) räknas en tröskel för
+   varje giltig kandidat s: rating_b(m)(s) + Δ_s. En kandidat är giltig med samma villkor som förut (rang 2 – 11 i
+   referenstavlan, hittas i b(m), minst 3 tidigare tavlor kända vid d där både r(m) och s hittas, Δ_s = medianen av
+   r − s i de 3 senaste). Tröskeln är medianen av kandidaternas trösklar. Vid jämnt antal är det medelvärdet av de två
+   mittersta. Förut tog regeln den första giltiga kandidaten. Skäl: R22 visade att värdet berodde på kandidatordningen
+   i 5 av 22 månader för L = 12, med en spridning på upp till 25 poäng när Δ var nästan ett år gammal. Medianen gör
+   värdet oberoende av ordningen och tål en avvikande kandidat. Regeln gäller oavsett Δ:s ålder, så ingen åldersgräns
+   väljs i efterhand. Där alla kandidater ger samma värde ändras inget, eftersom värdet aldrig sjunker när tröskeln
+   stiger. Ingen giltig kandidat ger en lucka, som förut.
+3. **Versionen på månadsslut + 1 använder tavlor belagda till och med den dagen** (R22-1). Förut användes bara tavlor
+   belagda senast vid månadsslut. Då kom en tavla som publiceras på månadens sista dag och beläggs dagen efter aldrig med
+   för sin månad. Posten Q1 säger att en sådan tavla ger en ny version på beläggsdagen. Den dagen är då samma dag som
+   första versionen, och de två blir en version som använder tavlan (`as_of` läser ett datum som dagens slut). Regeln
+   gäller Q1:s tre Arena-serier. Samma kantfall finns i `sources/vintages.py` (`monthly`) och i `arena_price.build`
+   (G2A). De ändras inte här, eftersom de bär kärnserier och G2-modulerna är skyddade i körning 14. Den rättningen hör
+   hemma i ett eget spår.
+
+**Diagnostik** (lagras inte i observationstabellen): `price_rolling.table()` får kolumnerna `delta_from` och `delta_to`
+(den äldsta och den senaste Δ-tavlan bland kandidaterna), `n_successors` (antal giltiga kandidater), `threshold_spread`
+(största minus minsta kandidattröskel) och `floor` (lägsta pris bland kopplade prissatta nycklar i b(m), utan tröskel).
+`via` listar de giltiga kandidaterna i rangordning. `price_rolling.eci_table()` får `floor` (lägsta pris bland kopplade
+prissatta nycklar med känd ECI, utan tröskel). ECI-varianten ändras inte i övrigt. Att den ligger på golvet i
+2025-05 – 2025-11 (R22-4) redovisas i källdokumentet.
+
+Oförändrat: referensregeln, prisreglerna, `known_from` = det senare av d och månadsslut + 1, märkningen `backfill`
+(R22:s not N-2 lämnas till ägaren) och licensklasserna.
