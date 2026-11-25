@@ -11,7 +11,8 @@ dates, accession numbers and SHA-256 prefixes are kept here, never filing text.
 - Properties: the locked rules and the register entry are unchanged, the 11 series equal an independent recomputation,
   no version is dated before the quarter end or before a tranche in it was filed, every vintage can be rebuilt from the
   rows filed by then, the issuer mix caveat, licence class and publish flag, no filing text in git.
-- Findings R20-1 to R20-5 are strict xfail until corrected.
+- Findings R20-1 to R20-5 were strict xfail until corrected; corrected in auto14k/x17-kredit-emission (markers
+  removed, assertions unchanged).
 """
 
 from __future__ import annotations
@@ -658,7 +659,7 @@ def test_euro_rows_take_the_spread_to_mid_swaps():
     assert [r["col"] for r in rows] == [0, 1]  # col #j = the tranche's key among the keys (interpretation 2)
 
 
-# ------------------------------------------------------------------ findings (strict xfail until corrected)
+# ------------------------------------------------------------------ findings (corrected in X17, were strict xfail)
 
 
 def _keyed_sheet() -> str:
@@ -690,8 +691,6 @@ def _csv_row(p: dict, lines: list[str], **kw) -> pd.Series:
     return frame.iloc[0]
 
 
-@pytest.mark.xfail(strict=True, reason="R20-1: the self-check looks for each number in the whole block, not in the "
-                                       "tranche's column or key segment as the locked rule says")
 def test_r20_1_self_check_looks_in_the_tranches_column():
     lines = cc.lines(_keyed_sheet())
     _, parsed = ct.parse(lines, "2023-05-01")
@@ -710,8 +709,6 @@ def _supplement() -> str:
             + _row("Trade Date:", "May 28, 2025") + "</TABLE>")
 
 
-@pytest.mark.xfail(strict=True, reason="R20-2: a document that is not coded is neither a source nor listed with a "
-                                       "reason (only FWPs are read), so an offering without an FWP would be lost")
 def test_r20_2_documents_not_coded_are_listed_with_a_reason():
     meta = [{"company": "orcl", "form": "424B2", "url": "u1", "accession": "0001193125-25-000001",
              "filed": "2025-05-28", "accepted": "2025-05-28T21:00:00.000Z"}]
@@ -719,13 +716,10 @@ def test_r20_2_documents_not_coded_are_listed_with_a_reason():
     assert rows or [s["accession"] for s in skipped] == ["0001193125-25-000001"]
 
 
-@pytest.mark.xfail(strict=True, reason="R20-3: T+n counts holidays as business days; the locked rule excludes them")
 def test_r20_3_t_plus_n_skips_holidays():
     assert ct.add_business_days("2026-12-23", 2) == "2026-12-28"  # not Christmas Day
 
 
-@pytest.mark.xfail(strict=True, reason="R20-4: the CSV writer formats numbers with :g (six significant digits), "
-                                       "the rule says as stated, without rounding")
 def test_r20_4_csv_writer_does_not_round(tmp_path, monkeypatch):
     monkeypatch.setattr(ci, "BLOCKS_DIR", tmp_path / "blocks")
     lines = cc.lines(_keyed_sheet())
@@ -737,8 +731,6 @@ def test_r20_4_csv_writer_does_not_round(tmp_path, monkeypatch):
     assert back["principal"] == 1234567.0 and back["price_pct"] == 99.12345
 
 
-@pytest.mark.xfail(strict=True, reason="R20-5: the coverage report is per year only; the locked rule also asks for it "
-                                       "per quarter with issuance (adapt the column name if the fix chooses another)")
 def test_r20_5_coverage_is_also_reported_per_quarter():
     rows = pd.DataFrame([{**{c: None for c in ci.COLUMNS}, "company": "orcl", "currency": "USD", "principal": 18000.0,
                           "pricing_date": "2025-09-24", "settlement_date": "2025-09-26"}])

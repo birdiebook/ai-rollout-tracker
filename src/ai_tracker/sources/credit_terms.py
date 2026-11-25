@@ -12,8 +12,9 @@ A third layout (tranches as table columns) is handled for safety: a principal fi
 
 Every value is read as stated (docs/kallor/kredit_emission.md, "Tal"): amounts in millions of the currency, rates
 and prices in percent, spreads in basis points. Nothing is computed except tenor_years and a settlement date stated
-only as T+n. The parser marks what it could not read (None); the agent reads every document and codes by hand
-where the parser fails (method "manual").
+only as T+n (US federal holidays for USD; register 2026-11-25, X17). The parser marks what it could not read (None);
+the agent reads every document and codes by hand where the parser fails (method "manual"), and a row whose note
+contains HAND must be coded by hand before the CSV loads.
 """
 
 from __future__ import annotations
@@ -22,6 +23,7 @@ import re
 from dataclasses import dataclass, field
 
 import pandas as pd
+from pandas.tseries.holiday import GoodFriday, USFederalHolidayCalendar
 
 MONTHS = ("January|February|March|April|May|June|July|August|September|October|November|December")
 DATE_RE = re.compile(rf"\b({MONTHS})\s+(\d{{1,2}})\s*,\s*(\d{{4}})")
@@ -171,8 +173,34 @@ def t_plus(s: str | None) -> int | None:
     return int(m.group(1)) if m else None
 
 
-def add_business_days(day: str, n: int) -> str:
-    return (pd.Timestamp(day) + pd.offsets.BDay(n)).strftime("%Y-%m-%d")
+HAND = "code by hand"  # in a parser note: the rules cannot be applied by the parser (sources/credit_issuance.load)
+US_CALENDAR = USFederalHolidayCalendar()
+US_BUSINESS_DAY = pd.offsets.CustomBusinessDay(calendar=US_CALENDAR)
+FIXED_DATE_HOLIDAYS = {(1, 1), (6, 19), (7, 4), (11, 11), (12, 25)}  # moved to the Friday when on a Saturday
+
+
+def uncertain_us_days(first, last) -> list[pd.Timestamp]:
+    """Days in [first, last] that do not close every USD market alike: Good Friday (SIFMA closes or closes early, the
+    Federal Reserve is open) and a Saturday holiday observed on the Friday (the Federal Reserve stays open)."""
+    first, last = pd.Timestamp(first), pd.Timestamp(last)
+    good = [d for d in GoodFriday.dates(first, last)]
+    moved = [d for d in US_CALENDAR.holidays(first, last)
+             if d.dayofweek == 4 and ((d + pd.Timedelta(days=1)).month, (d + pd.Timedelta(days=1)).day)
+             in FIXED_DATE_HOLIDAYS]
+    return sorted(pd.Timestamp(d) for d in good + moved)
+
+
+def add_business_days(day: str, n: int, currency: str = "USD") -> str | None:
+    """n business days after `day`: weekends and holidays do not count (the rule in the doc, \"settlement_date\").
+
+    USD uses the US federal holiday calendar. None (the date is coded by hand) for another currency, which has no
+    calendar here, and when a day that does not close every USD market alike falls in the period (uncertain_us_days)."""
+    if currency != "USD":
+        return None
+    end = pd.Timestamp(day) + n * US_BUSINESS_DAY
+    if uncertain_us_days(pd.Timestamp(day) + pd.Timedelta(days=1), end):
+        return None
+    return end.strftime("%Y-%m-%d")
 
 
 def tenor_years(pricing_date: str, maturity: str) -> float:
@@ -343,11 +371,13 @@ def parse(doc_lines: list[str], filed: str) -> tuple[str, list[dict]]:
         settle_text = v.get("settle")
         settle = to_date(settle_text)
         settle_note = ""
-        if settle is None and t_plus(settle_text) is not None:
-            settle = add_business_days(pricing, t_plus(settle_text))
-            settle_note = "settlement_date computed from T+n"
         coupon = None if floating else first_pct(coupon_text)
         currency = m[0] if m else None
+        if settle is None and t_plus(settle_text) is not None:
+            settle = add_business_days(pricing, t_plus(settle_text), currency or "")
+            settle_note = ("settlement_date computed from T+n (US federal holidays)" if settle else
+                           f"settlement stated only as T+n, not computed for {currency} or over a day that does not "
+                           f"close every market alike: {HAND} from the final supplement")
         spread_label = "spread_ms" if currency not in (None, "USD") and v.get("spread_ms") else "spread"
         if floating:
             sp, btype, bench = frn_spread_bp(coupon_text) or spread_bp(v.get("spread")), "sofr", "Compounded SOFR"

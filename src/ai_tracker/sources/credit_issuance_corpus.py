@@ -7,10 +7,13 @@ Corpus (docs/kallor/kredit_emission.md, "Korpus", locked before the coding): the
 Text and locator. A document is turned into a line list (`lines`): every table row becomes one line with its cells
 joined by " | ", every block element (paragraph, heading, line break) its own line, whitespace collapsed, empty
 cells and empty lines dropped. A tranche's locator is `lines #a-#b` (its block in that list, counted from 0), plus
-` col #j` when the tranches are columns of one table; `block_hash` is the SHA-256 of the block.
+` col #j` when the tranches share one table: in a keyed table (every value lists the tranches by key, "2030 Notes:
+...") j is the tranche's key among the keys of the principal rows, from 0 (interpretation 2 in the doc), and in a table
+with one column per tranche it is the value column. `block_hash` is the SHA-256 of the block.
 
-`kind()` tells a final term sheet from a preliminary supplement or another FWP (the rule in the doc: final terms =
-principal, coupon or rate, maturity and a public offering price).
+`kind()` tells a final document from a preliminary supplement or another document (the rule in the doc: final terms =
+principal, coupon or rate, maturity and a public offering price). The build uses it as the filter for what is coded
+(sources/credit_issuance.rows_from_documents), and every document it drops is listed with the reason.
 
     python -m ai_tracker.sources.credit_issuance_corpus [--companies orcl,meta] [--first 2020-01-01]
 
@@ -127,7 +130,8 @@ EQUITY_RE = re.compile(r"(?i)common\s+stock|class\s+a\s+common|shares\s+of|conve
 def kind(doc_lines: list[str]) -> str:
     """'final' (states final terms), 'preliminary' (subject to completion) or 'other' (no final debt terms).
 
-    A screen for the agent's reading, not the coding rule itself: every document is read before it is coded."""
+    The build codes only 'final' documents and lists the others with the reason (curated/credit_issuance_skipped.csv);
+    R20 checked that it keeps every debt term sheet in the corpus. The agent still reads every document it codes."""
     head = "\n".join(doc_lines[:80])
     text = "\n".join(doc_lines)
     if PRELIM_RE.search(head):
