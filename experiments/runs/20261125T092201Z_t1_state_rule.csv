@@ -1,0 +1,7 @@
+utc,git_sha,target,variant,period,n,MAE,dm_p_vs_baseline
+2026-11-25T09:22:01Z,841f92b,T1 state v2,"h3 hit=0,737 chance=0,682 pers=0,702 holm=0,368",2024-01..2026-07,57,,0.1841
+2026-11-25T09:22:01Z,841f92b,T1 state v2,"h6 hit=0,761 chance=0,706 pers=0,761 holm=0,368",2024-01..2026-04,46,,0.2605
+2026-11-25T09:22:01Z,841f92b,T1 state v2,"revision kappa=0,825 hard=0,000 agree=0,905",2024-01..2026-10,148,,
+2026-11-25T09:22:01Z,841f92b,T1 state v1,"h3 hit=0,756 chance=0,745 pers=0,722 holm=0,833",2024-01..2026-07,90,,0.4166
+2026-11-25T09:22:01Z,841f92b,T1 state v1,"h6 hit=0,744 chance=0,764 pers=0,705 holm=0,833",2024-01..2026-04,78,,0.6518
+2026-11-25T09:22:01Z,841f92b,T1 state v1,"revision kappa=0,856 hard=0,000 agree=0,921",2024-01..2026-10,228,,

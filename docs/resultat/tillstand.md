@@ -279,3 +279,10 @@ Vad som ändras med v2, i 16 av 54 grenmånader:
 - **G9:** alla sex månader blir "för få källor". arXiv:s tre kategorier är en familj, och Epochs två familjer är
   spärrade. Med v1 har G9 ett tillstånd varje månad.
 - G1, G2, G4 och G5 är oförändrade. I G3 är index v2 lägre än v1, men tillståndet är detsamma alla sex månader.
+
+## Test av regeln (T1, 2026-11-25)
+
+Förbehållet ovan att regelns prognos- och beskrivningsvärde inte är prövat gäller inte längre i den delen. Spår T1
+har prövat regeln med ett förregistrerat test (`docs/resultat/t1_tillstandsregeln.md`). Tillstånden håller för de
+revideringar som tabellen har som versioner (kappa 0,83 med v2), men G6 och G7 byter ofta. Att tillstånden säger något
+om takten de närmaste 3–6 månaderna är inte påvisat (Holm-p 0,37, låg styrka).

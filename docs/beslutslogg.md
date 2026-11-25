@@ -778,6 +778,21 @@ republishing data"), npm och arXiv (`okänd`), och Microsofts capex-guidance ur 
 - Loggarna och registret har båda sidornas poster i tidsordning. `quarterly.py` har mains omskrivning med "för få
   källor" i tillståndsordningen.
 
+## 2026-11-25 – T1: tillståndsregeln prövad, ingen granskning rekommenderas
+
+- Förregistrerat test av själva tillståndsregeln (`docs/mattregister.md`, "2026-11-25 – T1", resultat i
+  `docs/resultat/t1_tillstandsregeln.md`). Ingen skarp regel ändras, och ögonblicksbilden 2026-11-30 påverkas inte.
+- **Revideringar (a):** med v2 har 91 % av grenmånaderna samma tillstånd med dagens data, kappa 0,83 och inga hårda
+  byten. Det klarar den registrerade nivån. G6 (Fed G.17) och G7 (EIA:s elförsäljning) byter i 6 och 8 av 34 månader.
+  Bara 33 % av de räknade serierna (räknat per månad) har reviderade värden alls, så resten är inte prövat.
+- **Information (b):** tillstånden träffar 0,74 (3 månader) och 0,76 (6 månader), mot slumpen 0,68 och 0,71 och
+  persistensen 0,70 och 0,76. Holm-p 0,37. Inte avgjort. MDE var 0,28 och 0,44, alltså låg styrka, som sades före
+  testet. Bromsar in träffade 1 av 6 och 1 av 4.
+- **Regeln tillämpad mekaniskt:** ingen granskning rekommenderas. Marginalen mot persistensen vid 3 månader är 2
+  träffar.
+- **Rekommendation till Johannes:** läs tillstånden som en beskrivning av läget, inte som en prognos. Gör om testet på
+  det skarpa registret när det finns minst 12 ögonblicksbilder (tidigast 2027-11), med en ny registerpost.
+
 ## 2026-11-25 – S2: kraft, kylning, elnät och datacenterbolag ur XBRL
 
 - 27 katalogserier, inte kärnserier: intäkter, capex, segment och RPO för Vertiv, GE Vernova, Eaton och Quanta (G7),
@@ -872,6 +887,18 @@ Johannes svarade "kör på dina rekommendationer" på tre rekommendationer samma
 - **Rekommendation:** rätta R17-1 och R17-2 med en daterad registerpost före eller vid mergen. `rev_dell_isg` är inte
   en ren kandidat från 2015, utan från 2017Q1 (38 kvartal). Ingen serie ska bli kärnserie före 2026-11-30.
 
+## 2026-11-25 – R24: granskning av T1 (testet av tillståndsregeln)
+
+- Slutsatsen står: ingen granskning av regeln rekommenderas, och (b) är inte avgjort
+  (`docs/granskning/r24-tillstandsregeln.md`).
+- Ordningen register → kod → körning håller. Omkörningen gav samma resultatfil. Dagens data byggd bokstavligt (76
+  grenmånader), utfall och persistens med egen kod (236 fall), permutationen, Holm, kappa och MDE stämmer. Inget läckage.
+- Rättning R24-1 (should_fix): vid 6 månader är persistensen tillståndets egen jämförelse utan dödband (46 av 46
+  prediktioner har samma riktning). Likheten 35 mot 35,0 är byggd in i testet, och godkänt kan bara nås vid 3 månader.
+- R24-2 till R24-4 (should_fix): persistensen över alla månader (0,61 och 0,56) saknas i resultatet, slumpvärldens test
+  håller bara för sitt frö, och filen med tillstånd per månad som fanns före posten ska nämnas. Övrigt är noter. G6:s
+  revideringar kommer från G.17:s årsrevision 2026-11-24, en dag före V (verifierat hos Fed).
+
 ## 2026-11-25 – S3: order och orderstock ur resultatpressmeddelanden
 
 - Kodningsreglerna låstes och committades före kodningen (471c67b). 575 värden och 42 stopp för Vertiv, GE Vernova,
@@ -907,6 +934,18 @@ Johannes svarade "kör på dina rekommendationer" på tre rekommendationer samma
   stickproven på extraktionen för Amazon, Alphabet och Meta är R2 (5 av 5 för Amazon). R5 kontrollerade bara att
   planerna för nästa år var fullständiga. Hänvisningen "R2: 5 av 5 stickprov rätt, R5" i posten ovan ska läsas så.
   `docs/kallor/guidance.md` är rättad.
+
+## 2026-11-25 – X21: T1 rättat efter R24
+
+- Rättningsspår X21 har rättat R24-1 till R24-4 och tagit med noterna R24-5 till R24-7
+  (`docs/resultat/t1_tillstandsregeln.md`, "Rättningar efter R24"). Testet, konstanterna och beslutsregeln i T1:s
+  registerpost är oförändrade, och inget implementationsfel hittades. Ett daterat tillägg står i `docs/mattregister.md`.
+- Beslutet står: ingen granskning av regeln rekommenderas, och (b) är inte avgjort. Omkörningen gav samma tal.
+- Resultatet säger nu att persistensen vid 6 månader är tillståndets egen jämförelse, så godkänt kan bara nås vid 3
+  månader. En konstant prognos "upp" hade träffat 0,81 och 0,80 på tillståndens månader, mer än tillstånden.
+- G6:s byten i (a) hänger på G.17:s årsrevision dagen före V: med V = 2026-11-23 byter G6 i 3 månader i stället för 6.
+- Nästa registerpost för testet (omkörningen, tidigast 2027-11) ska välja en annan baslinje vid 6 månader och räkna
+  spärren för bakåtfyllda serier som i realtid.
 
 ## 2026-11-25 – X14: rättning av S1 efter R17
 
