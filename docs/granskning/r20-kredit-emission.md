@@ -37,8 +37,8 @@ i dag, men de ska rättas före nästa ombyggnad av CSV:n, eftersom de då kan �
 registerpost. R20 ändrar inte flaggan.
 
 **Bedömning av allvar.** R20-1 till R20-5 är avvikelser från de låsta reglerna. Ingen av dem ändrar ett värde, ett datum
-eller en rad i dag, och det är prövat. De klassas därför som should_fix, som R22-1. Vill orkestreraren läsa "en
-registrerad regel som inte är genomförd som skriven" bokstavligt är R20-1 must_fix.
+eller en rad i dag, och det är prövat. De klassas därför som should_fix, som R22-1. Läser man allvarsgraderna bokstavligt ("en
+registrerad regel eller ett test som inte är genomfört som skrivet") är R20-1 must_fix.
 
 ## 1. Ordning och förregistrering – OK
 
@@ -100,7 +100,7 @@ avsnitt utan nyckel (`amzn_2026-03-11_01`, `amzn_2026-07-07_01`, `googl_2026-11-
 
 - **Källan.** Varje erbjudande har en FWP med de slutliga villkoren, och den är källan. Rubrikens datum är prisdagen i 38
   av 39. Oracles villkorsbilaga 2021 har inget datum i rubriken, och prisdagen tas från "Trade Date". I 8 dokument är
-  `filed` dagen efter prisdagen, eftersom de lämnades in efter 17.30 ET. Det är konservativt.
+  `filed` dagen efter prisdagen, eftersom de lämnades in efter 17.30 ET eller först dagen efter. Det är konservativt.
 - **Valuta:** USD 172, EUR 38, CAD 13, GBP 9 och JPY 7. Stämmer med tecknen i dokumenten och med omslagen.
 - **Räntetyp:** de 12 raderna med rörlig ränta är obligationer mot SOFR eller EURIBOR. Inga andra.
 - **Referenstyp:** alla 162 rader i USD med fast ränta prissätts mot en namngiven amerikansk statsobligation. Det finns
@@ -211,9 +211,10 @@ sec.gov) och SEC-regeln, och alla elva har `publish=False`.
 **R20-1. Självkontrollen prövar inte talen i tranchens kolumn.** Den låsta regeln säger att varje tal ska stå "i blocket,
 i kolumnen när den anges". `check_row()` söker i hela blocket. I den gemensamma tabellen är blocket hela tabellen, så
 ett tal som hör till en annan tranche i samma erbjudande godkänns. För rader från parsern fångas ett sådant fel av
-omtolkningen, men den använder samma parser och är inte oberoende. För en manuell rad prövas det inte alls. R20:s egen
-kontroll per nyckel visar att inget tal i dag hör till fel tranche. Rättning: pröva talen i tranchens del (nyckeln för
-`col #j`), eller logga i registret, med datum, att kolumnkontrollen ersätts av omtolkningen och en oberoende kontroll.
+omtolkningen, men den använder samma parser och är inte oberoende. För en manuell rad prövas bara att talet står
+någonstans i blocket. R20:s egen kontroll per nyckel visar att inget tal i dag hör till fel tranche. Rättning: pröva
+talen i tranchens del (nyckeln för `col #j`), eller logga i registret, med datum, att kolumnkontrollen ersätts av
+omtolkningen och en oberoende kontroll.
 
 ## Kod som inte påverkar dagens rader
 
@@ -225,7 +226,7 @@ kontroll per nyckel visar att inget tal i dag hör till fel tranche. Rättning: 
   FWP:er som inte kodas. Pressmeddelandena (Alphabet 2026-06-01 och 2026-06-03, Meta 2026-10-26, Oracle 2026-02-02) och de
   47 preliminära prospekttilläggen står bara som antal.
 - **R20-3. T+n räknar helgdagar som bankdagar.** Regeln säger att likviddagen är n vardagar efter prisdagen, utan lördag,
-  söndag och helgdagar. `add_business_days()` hoppar bara över helger. T+2 från 2026-12-23 blir juldagen. Ingen rad
+  söndag och helgdagar. `add_business_days()` hoppar bara över lördag och söndag. T+2 från 2026-12-23 blir juldagen. Ingen rad
   använder regeln i dag: alla 239 likviddagar står i dokumenten.
 - **R20-4. CSV:n skrivs med sex värdesiffror.** `write()` formaterar talen med `:g`. Ett belopp på 1 234 567 miljoner yen
   blir 1 234 570, och priset 99,12345 blir 99,1235. Regeln säger "utan avrundning". Inget tal i dag har fler än sex
