@@ -2801,3 +2801,36 @@ Väntad effekt: `ob_gev_orders_gas_power_equipment_q_level_gw` försvinner ur ka
 `ob_gev_orders_new_contracts_gas_power_equipment_q_level_gw` och `ob_gev_orders_converted_gas_power_equipment_q_level_gw`.
 Övriga 60 serier får samma värden. Bara noterna och luckorsakerna ändras (rättningarna R-2 och R-4, som inte rör
 registrets regler).
+
+### 2026-11-25 – Integration 14: månadsgränsen i arena_price (R23-2)
+
+Integrationen av körning 14, efter granskningarna R22 (R22-1) och R23 (R23-2). Posten tillämpar regeln i posten
+"X20: första versionens brytdag är månadsslut + 1 dag" ovan på `series/arena_price.build`. Den ändrar ingen annan
+regel.
+
+**Felet.** `arena_price.build` har en egen kopia av versionskonstruktionen i `sources/vintages.py`. Första versionen
+av en månad räknade bara tavlor belagda ≤ månadsslut. En tavla som publicerades på månadens sista dag och belades
+dagen efter kom därför aldrig med i sin månad, eftersom dagen efter också är första versionens dag. Det är samma fel
+som X20 rättade i `vintages.monthly` och `open_gap.arena_build`, och som X19 rättade i `price_rolling._versions`.
+
+**Regel.** Första versionen av månad m räknar tavlor publicerade ≤ månadsslut och belagda ≤ månadsslut + 1 dag. Den
+har `known_from` = månadsslut + 1 dag (prisets fördröjning `PRICE_LAG_DAYS` är 1 dag och ger samma dag). Senare
+versioner är oförändrade: brytdagen är beläggets dag, och en rad skrivs bara när värdet ändras. Inget dateras före
+sitt belägg. Referensmodellerna, efterföljarregeln, priserna, prisrättningarna och pensionsregeln ändras inte.
+
+**Serier.** `g2_price_at_arena_capability` (A) och `g2_price_at_arena_capability_4o` (B). Båda är katalogserier i G2,
+inte kärnserier (granskning R8). G2:s kärnserie `g2_price_at_capability_gpqa` läser inte `arena_price`. Q1:s serier i
+`series/price_rolling.py` har egen versionskod, som X19 rättade. De läser bara tavelnormeringen, priserna och
+prisvärderingen ur `arena_price`, inte `build`. De ska inte ändras, och de byggs om som kontroll.
+
+**Vad som var känt före posten.** X20 räknade om A och B i minnet med den rättade brytdagen och fick samma rader (34
+och 30). R22 och R23 pekade ut tavlorna 2026-04-30 och 2026-09-30 som de kända fallen. Regeln väljs för att den följer
+regelns andra del, inte efter värdena.
+
+**Hämtning.** Serierna byggs om (`python -m ai_tracker.observations --rebuild`). Ett avvikande värde vore ett kodfel,
+inte en revidering i källan. Varje ändrad rad redovisas i beslutsloggen.
+
+**Det som står kvar.** Noten i `docs/riktning.md` avsnitt 7 (Arena-priset blir inte kärnserie och lappas inte mer)
+står kvar. Rättningen gäller versionsregeln, som är gemensam för projektet, inte seriens innehåll. Samma
+konstruktion finns kvar på andra ställen som läser tavlor per månad. De listas i integrationens leverans och rättas
+inte här.
