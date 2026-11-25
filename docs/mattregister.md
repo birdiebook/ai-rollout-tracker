@@ -1490,3 +1490,114 @@ tak ändras inte.
    punkt 2 gäller inte längre.
 3. **K0** räknar tillståndet "för få källor" (index v2, registret 2026-11-24) för sig, bredvid "för få serier", när det
    förekommer. Tidigare räknades det som "för få serier". Inget urval ändras.
+
+### 2026-11-25 – S1: nät, optik och servrar som katalogserier (inte kärnserier)
+
+Spår S1, körning 14 (avsnitt 0 och 8 i `riktning.md`: stackens saknade lager). G6 täcker chipen, men inte lagren mellan
+chipen och datacentret: nätverksswitchar, optiska moduler och servermontering. Serierna är katalogserier i G6. De ingår
+inte i diffusionsindexet och ändrar inga tillståndsregler, och här räknas inga takter eller tillstånd. Kod:
+`src/ai_tracker/series/sec_stack_nat.py`. Källa och kontroller: `docs/kallor/sec_stack_nat.md`.
+
+**Bolag** (CIK verifierade mot `entityName` i EDGAR:s submissions):
+
+| Bolag | CIK | Räkenskapsår | Mått |
+|---|---|---|---|
+| Arista Networks (ANET) | 1596532 | kalenderår | `rev_anet`, `inv_anet`, `purchase_oblig_anet`, `deferred_rev_anet`, `rpo_anet` |
+| Cisco (CSCO) | 858877 | 52/53 veckor till sista lördagen i juli | `rev_csco`, `inv_csco`, `rev_csco_networking`, `rev_csco_infra_platforms`, `purchase_oblig_csco`, `rpo_csco` |
+| Coherent Corp (COHR, tidigare II-VI) | 820318 | till 30 juni, kvartal = kalenderkvartal | `rev_cohr`, `inv_cohr`, `rev_cohr_networking`, `rev_cohr_datacom` |
+| Lumentum (LITE) | 1633978 | 52/53 veckor till lördagen närmast 30 juni | `rev_lite`, `inv_lite`, `rev_lite_opcomms`, `rev_lite_cloud_networking`, `rev_lite_components`, `rev_lite_systems`, `purchase_oblig_lite` |
+| Super Micro Computer (SMCI) | 1375365 | till 30 juni, kvartal = kalenderkvartal | `rev_smci`, `inv_smci`, `purchase_oblig_smci`, `rpo_smci` |
+| Dell Technologies (DELL) | 1571996 | 52/53 veckor till fredagen närmast 31 januari | `rev_dell`, `inv_dell`, `rev_dell_isg`, `rev_dell_servers_networking`, `rev_dell_ai_servers`, `rev_dell_traditional_servers`, `rpo_dell` |
+| Hewlett Packard Enterprise (HPE) | 1645590 | till 31 oktober | `rev_hpe`, `inv_hpe`, `rev_hpe_server`, `rev_hpe_dc_networking`, `rpo_hpe` |
+| Celestica (CLS) | 1030894 | kalenderår | `rev_cls`, `inv_cls`, `rev_cls_ccs` |
+| Micron (MU) | 723125 | – | `capex_mu` finns redan (spår A2a, `series/halvledare.py`) och ändras inte |
+
+Celestica tas med: bolaget lämnar 10-K och 10-Q med XBRL (US GAAP) från 10-K:n för 2024 (2025-03-03). Tidigare
+lämnade det 20-F och 6-K (IFRS), som inte används.
+
+**Regel för taggval.** Taggen väljs per bolag och mått efter täckning och definitionskonsistens, aldrig efter seriens
+förlopp.
+- En tagg används bara om den står för samma rad i rapporten genom hela perioden. Byte av tagg för samma rad, med
+  identiska värden i överlappet, skarvas per kvartal med `sec.py`:s regel. En tagg som också används för en annan rad
+  används inte (Aristas `SalesRevenueGoodsNet` är bara produkter, HPE:s `SalesRevenueGoodsNet` likaså).
+- **Totala intäkter** (`rev_<co>`): `RevenueFromContractWithCustomerExcludingAssessedTax`, `Revenues`, `SalesRevenueNet`
+  (som de befintliga `rev_*`). Lumentum taggar mest `RevenueFromContractWithCustomerIncludingAssessedTax`, som läggs
+  först (identisk med de andra i alla överlapp). Omräkningar är versioner, som för övriga `rev_*`.
+- **Lager** (`inv_<co>`): `InventoryNet` vid räkenskapskvartalets slut.
+- **Segment- och produktrader** läses ur varje 10-Q/10-K:s XBRL-instans (`sec_segment`), med exakt den angivna
+  dimensionsmängden (ett segment eller en produktkategori, för Dell segment × produkt), och intäktstaggarna ovan i
+  prioritetsordning. Medlemmarna per rad:
+
+| Nyckel | Medlem (axel) | Inlämningar |
+|---|---|---|
+| `rev_csco_networking` | `NetworkingMember`, i 10-K 2024-09-05 `NetworkingRevenueMember` (produkt) | från 2023-11-21 (FY2024, med FY2023 som jämförelse) |
+| `rev_csco_infra_platforms` | `InfrastructurePlatformsMember` (produkt) | 2018-11-20 till 2021-09-09, avslutad |
+| `rev_cohr_networking` | `NetworkingSegmentMember` (segment) | 2022-11-09 till 2025-08-15, avslutad |
+| `rev_cohr_datacom` | `DatacenterAndCommunicationsSegmentMember` (segment) | från 2025-11-05 |
+| `rev_lite_opcomms` | `OpticalCommunicationsSegmentMember` (segment) | till 2023-08-23, avslutad |
+| `rev_lite_cloud_networking` | `CloudNetworkingSegmentMember` (segment) | 2023-11-08 till 2025-08-19, avslutad |
+| `rev_lite_components`, `rev_lite_systems` | `ComponentsMember`, `SystemsMember` (på segmentaxeln; Lumentum har ett rapporterbart segment från FY2026) | från 2025-11-05 |
+| `rev_dell_isg` | `InfrastructureSolutionsGroupMember`, före 2018-06 `EnterpriseSolutionsGroupMember` (segment) | från 2016-06 |
+| `rev_dell_servers_networking` | `ServersAndNetworkingMember` (produkt) × ISG (eller ESG) | till 2025-12-09, avslutad |
+| `rev_dell_ai_servers` | `AIOptimizedServersAndNetworkingMember` (produkt) × ISG | från 2026-03-16 |
+| `rev_dell_traditional_servers` | `TraditionalServersAndNetworkingMember` (produkt) × ISG | från 2026-03-16 |
+| `rev_hpe_server` | `ServerSegmentMember` (segment) | från 2024-03-05 |
+| `rev_hpe_dc_networking` | `DataCenterNetworkingMember` (segment) | från 2026-03-10 |
+| `rev_cls_ccs` | `CCSSegmentMember` (segment) | från 2025-03-03 |
+
+  Arista har ett segment och taggar bara produkt, tjänst och geografi, så ingen rad för moln eller AI finns. Super
+  Micros produktrad "Server and storage systems" taggas inte efter 10-K för FY2025, och bolaget har ett segment, så
+  `rev_smci` är måttet. Celesticas delsegment inom CCS (bytte namn och innehåll i 10-Q 2026-10-26) tas inte med.
+- **Åtaganden** (`purchase_oblig_<co>`, balans, som `purchase_oblig_nvda`), där totalen taggas varje kvartal:
+  - ANET: `PurchaseCommitmentRemainingMinimumAmountCommitted` utan dimension, i inlämningar från 2016-02-25 (från dess
+    står meningen "non-cancellable purchase commitments of" i noten, och tidigare inlämningar använde taggen för en
+    annan, liten post).
+  - CSCO: `UnrecordedUnconditionalPurchaseObligationBalanceSheetAmount` med
+    `UnrecordedUnconditionalPurchaseObligationByCategoryOfItemPurchasedAxis` = `InventoriesMember`, och samma tagg utan
+    dimension, i inlämningar från 2021-05-25 (tabellen "inventory purchase commitments with contract manufacturers and
+    suppliers"). De äldre taggarna (2016–2019) och luckan 2020 skarvas inte.
+  - LITE: `PurchaseCommitmentRemainingMinimumAmountCommitted` utan dimension ("purchase obligations").
+  - SMCI: `PurchaseObligation` utan dimension ("remaining non-cancelable commitments", inklusive närstående).
+  - Inte med: Coherent (bara i 10-K), Dell och HPE (bara tidshinkar, ingen taggad total), Celestica (ingen tagg).
+- **Kontraktsskulder, Arista** (`deferred_rev_anet`): `ContractWithCustomerLiabilityCurrent` +
+  `ContractWithCustomerLiabilityNoncurrent` ur samma inlämning. I inlämningar från 2018-04-01 (efter ASC 606) tas en del
+  som saknas under dessa taggar från `DeferredRevenueCurrent` respektive `DeferredRevenueNoncurrent`. Balanser före
+  2017-12-31 (ASC 605) ingår inte.
+- **RPO** (`rpo_<co>`), total utan dimension: CSCO, SMCI, DELL och HPE `RevenueRemainingPerformanceObligation`
+  (companyfacts). ANET: bolagets egen tagg
+  `RevenueRemainingPerformanceObligationIncludingContractLiabilitiesDeferredRevenueAndOtherPerformanceObligationsAmount`
+  ur instansen, från 10-K 2023-02-14. Den är totalen "deferred revenue, contract liabilities and other performance
+  obligations". `RevenueRemainingPerformanceObligation` före dess är en smalare definition (10-K 2023-02-14 anger båda,
+  med olika belopp) och tas inte med. Lumentum (till 2021) och Micron (bara 10-K) tas inte med.
+- **Capex** för Micron finns redan som `capex_mu`. Inga andra capex-serier byggs i S1.
+
+**Regel för brott.** Varje segment- och produktrad, och varje balansserie utom lager, prövas med
+`sec_segment.definition_breaks`: en inlämning som ändrar ett tidigare inlämnat värde för samma period med mer än 2 %.
+De upptäckta brotten måste stämma med de deklarerade, annars stoppar hämtningen (`DefinitionBreakError`).
+- För segment- och produktrader är ett deklarerat brott alltid en ny definition: raden delas vid brottet i separata
+  nycklar, och de skarvas aldrig. En medlem som ersätts av en ny medlem med annat innehåll är en ny nyckel.
+- För åtaganden, kontraktsskulder och RPO avgörs ett deklarerat brott av inlämningens egen text: en ändrad definition
+  ger en ny nyckel (eller att serien börjar vid den nya definitionen), en rättelse av samma definition blir en version.
+- Totala intäkter och lager prövas inte, som för de befintliga `rev_*` och `inv_*`. Förvärv (Juniper i HPE:s nät från
+  2025-07, Oclaro i Lumentum 2018-12, Coherent Inc. i II-VI 2022-07, Splunk i Cisco 2024-03) är inga brott.
+
+**Kalender och datering.** known_from är inlämningsdatumet för 10-Q eller 10-K. Varje inlämning är en version, och
+YTD-differenser, Q4 = helår − 9M och kalendermappningen (mittpunktsregeln) görs som i `sec.py`. Balanser (lager,
+åtaganden, kontraktsskulder och RPO) får kalenderkvartalet för räkenskapskvartalet (`sec_instant.fiscal_quarters`), så
+att en balans och flödena i samma räkenskapskvartal har samma etikett. För RPO skiljer det sig från `sec_rpo.py`
+(balansdagens kalenderkvartal) för Cisco, Dell och HPE. Det är ett medvetet val för att samma bolags serier ska kunna
+jämföras. `lag_days` är 25 om ingen inlämning kommer före kalenderkvartalets slut. Aktualitetsgränsen är största
+observerade avstånd från kalenderkvartalets slut till första egna inlämning (2015–2026) + 92 + 30 dagar, där den
+härledda gränsen (147 dagar) är för snäv.
+
+**Katalog:** gren G6, frekvens Q, enhet MUSD, `publish=True` med samma licens som övriga SEC-serier (`series/sec.py`,
+klass `ja` i `licenses.py`). Siffrorna är taggade XBRL-fakta, inte extraherad text.
+
+**Vad som setts före denna post:** per bolag och kandidattagg i companyfacts antal fakta, första och sista slutdatum,
+inlämningsdatum och formulär, och den största relativa skillnaden mellan taggar i överlappande perioder (inga nivåer).
+Per instans: vilka segment- och produktmedlemmar och vilka taggar för åtaganden, kontraktsskulder och RPO som finns i
+vilka inlämningar (antal och datum). För att läsa definitionerna lästes textblock i ett urval inlämningar: Aristas
+meningar om åtaganden och RPO i sex inlämningar 2015–2023 och 2026-11-04, Super Micros, Lumentums och Ciscos meningar om
+åtaganden i den senaste 10-Q:n, Lumentums och Coherents segmenttext och HPE:s segmenttext i 10-Q 2026-09-03. I de
+meningarna och i HPE:s tabell över intäkter per kategori syntes enskilda belopp. För Aristas tagg för åtaganden jämfördes
+taggen med meningen i två inlämningar (2015-11-06 och 2018-11-05). Inga kvartalsserier eller takter har räknats.
