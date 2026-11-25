@@ -1586,3 +1586,29 @@ relativa skillnad mellan kandidattaggar och mellan markörer. Radetiketterna i k
 10-Q för EQIX och DLR). Texten kring RPO-fakta hos Vertiv (10-K 2026-02-13 och 10-Q 2026-10-28) och Eaton (10-Q 2020-11-03,
 2023-10-31, 2024-08-01, 2026-11-03), för att se vad som taggats. Där syntes enstaka orderstocksbelopp (Vertiv 15,0 och
 7,2 mdr USD, Eaton 5,4, 12,9, 15,2 och 26,2 mdr USD). Inga kvartalsserier eller takter har räknats.
+
+### 2026-11-25 – S2: tillägg efter första bygget (före analys)
+
+Första bygget av S2:s serier visade två fel i inlämningarna och ett segmentbrott. Inga takter har räknats. Reglerna för
+taggval ändras inte.
+
+1. **Feldaterade fakta i 10-Q.** En 10-Q redovisar perioden och samma period året före. En fakta i en 10-Q vars period
+   slutar mer än 550 dagar före inlämningen är därför felaktigt daterad och används inte. Det gäller en fakta: Equinix
+   10-Q 2025-04-30 taggar intäkten för Q1 2025 (2 225 MUSD) med datumen för Q1 2023. Utan regeln skulle `rev_eqix`
+   2023Q1 få det värdet som ny version. Regeln gäller alla S2-serier (flöden, segment och balanser).
+2. **Eatons skalbolag.** Eaton Corporation plc lämnade en 10-Q 2012-11-14, före sammanslagningen med Cooper, med
+   intäkten 0 för Q3 2012. Fakta som plc-bolaget lämnat in före 2013-01-01 används inte. Perioden täcks av
+   föregångaren Eaton Corporation (31277).
+3. **GE Vernova Electrification, brott deklarerat 2026-04-22.** Från 2026-01-01 flyttade GE Vernova en del av
+   Electrification Software till Gas Power i Power-segmentet (10-Q 2026-04-22). Kvartalen 2025 räknades om med −1,4 till
+   −2,1 %, alltså över gränsen 2 % för Q1. Enligt regeln får varje definition en egen nyckel:
+   `rev_gev_electrification_fy24` (inlämnat 2024-04 till 2026-01, avslutad) och `rev_gev_electrification_fy26`.
+   Power räknades om med +0,5 till +0,6 %, under gränsen, och det blir vanliga versioner av `rev_gev_power`.
+4. **Equinix capex börjar 2014Q1.** Raden taggades `PaymentsToAcquirePropertyPlantAndEquipment` i inlämningarna
+   2012–2013. Den taggen avviker från `PaymentsToAcquireOtherPropertyPlantAndEquipment` i en av 19 överlappande perioder
+   och skarvas därför inte (registrets regel).
+5. **DLR ur instanserna mot companyfacts.** Serierna är lika i alla versioner till och med 2026-05-01, utom tre rader i
+   `rev_dlr` (2009Q2 och första versionen av 2010Q2). Orsaken är att `sec_segment.instance_name` väljer filen
+   `defnref.xml` i fyra av DLR:s inlämningar 2010–2011, och då hittas inga fakta. Kvartalen får sin första version
+   senare (2011-08-05), vilket är konservativt. Samma fil finns i sju av Microsofts inlämningar 2009–2011. Felet
+   rättas inte här, eftersom koden är gemensam.

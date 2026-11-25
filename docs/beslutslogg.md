@@ -777,3 +777,19 @@ republishing data"), npm och arXiv (`okänd`), och Microsofts capex-guidance ur 
   regeln bakom dem ändras, och fälten är tillägg (`docs/steg3/datakontrakt.md`, Ändringar).
 - Loggarna och registret har båda sidornas poster i tidsordning. `quarterly.py` har mains omskrivning med "för få
   källor" i tillståndsordningen.
+
+## 2026-11-25 – S2: kraft, kylning, elnät och datacenterbolag ur XBRL
+
+- 27 katalogserier, inte kärnserier: intäkter, capex, segment och RPO för Vertiv, GE Vernova, Eaton och Quanta (G7),
+  och intäkter, RPO (G4) och capex (G5) för Equinix och Digital Realty. Taggvalen förregistrerades före hämtningen.
+  Källa och kontroller: `docs/kallor/sec_stack_kraft.md`.
+- **Capex för datacenterbolagen** är bygge och förbättring av egen kapacitet, utan köp av fastigheter och bolag. De två
+  är jämförbara med varandra, men inte helt med molnbolagen.
+- **Vertivs RPO är BLOCKED i XBRL.** Det Vertiv taggar som RPO är tidsfördelningen av långfristiga förutbetalda
+  intäkter. Orderstocken står bara i texten och tas av spår S3.
+- **Eatons orderstock** ("total backlog", fasta order) är taggad som RPO och blir `rpo_etn`.
+- **Brott:** GE Vernova Electrification delas 2026-04-22 (en del av Electrification Software flyttades till Power).
+  Två fel i inlämningarna hanteras med regler i registrets tillägg: en feldaterad fakta hos Equinix och Eatons
+  skalbolag 2012.
+- Rekommendation: inga av serierna blir kärnserier nu. De flesta är korta (GE Vernova 15 kvartal) eller mest annat än
+  AI. `rpo_etn`, `rpo_gev_equipment` och `rpo_pwr` är kandidater för G7 när datacenterandelen finns från S3.
