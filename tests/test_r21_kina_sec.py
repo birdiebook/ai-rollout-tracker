@@ -8,8 +8,9 @@ SHA-256 prefixes are kept here, never source text; the fixtures below are synthe
 - Passing tests: era boundaries as stated in the releases, no splice across eras, filing-date dating, Alibaba's fiscal
   quarters on calendar quarters, the third Baidu header layout and the iQIYI dash, the 55-day rule on its own, the US$
   dating, the H.10 licence part, the 26 curated rows as read by R21, and two wordings of the text coding.
-- Strict xfail: R21-1 (v4 label), R21-2 (the doc's "under 1 %" claim), R21-3 (the registered companyfacts check for
-  Alibaba's capex is not run), R21-4 (capex_baba_v1 does not say it holds licensed video copyrights).
+- Confirmed defects, strict xfail until fixed in auto14k/x18-kina-sec, now passing: R21-1 (v4 label), R21-2 (the doc's
+  "under 1 %" claim), R21-3 (the registered companyfacts check for Alibaba's capex is not run), R21-4 (capex_baba_v1
+  does not say it holds licensed video copyrights).
 """
 
 from __future__ import annotations
@@ -18,7 +19,6 @@ import hashlib
 import re
 
 import pandas as pd
-import pytest
 
 from ai_tracker import china_crosscheck, config, licenses
 from ai_tracker.series import china_sec as series_mod
@@ -226,16 +226,13 @@ def test_text_series_wait_for_publication_and_table_series_publish():
     assert all(s[k].publish for k in series_mod.TABLE)
 
 
-# ------------------------------------------------------------------ confirmed defects (strict xfail)
+# ------------------------------------------------------------------ confirmed defects (fixed in X18)
 
 
-@pytest.mark.xfail(strict=True, reason="R21-1: the label says 'från 2025Q2', the series starts 2026Q2 (contiguous_tail)")
 def test_v4_label_does_not_name_a_start_the_series_does_not_have():
     assert "2025Q2" not in specs()["rev_baba_cloud_v4"].label
 
 
-@pytest.mark.xfail(strict=True, reason="R21-2: the doc says every boundary restatement is under 1 %; the 2023 "
-                                       "boundary is +30 to +36 % and the 2018 capex boundary -28 to -54 %")
 def test_doc_does_not_claim_all_boundary_restatements_are_small():
     doc = re.sub(r"\s+", " ", SOURCE_DOC.read_text(encoding="utf-8"))
     assert "Omräkningarna vid gränserna är små (under 1 %)" not in doc
@@ -265,8 +262,6 @@ def _fake_companyfacts(cik: int) -> dict:
             _fact(6540e6, "2016-04-01", "2017-03-31", "2018-07-27")]}}}}}
 
 
-@pytest.mark.xfail(strict=True, reason="R21-3: the registered companyfacts check of Alibaba's capex is not run; it is "
-                                       "exact for capex_baba_v1 FY2017 (PP&E + intangibles) and capex_baba_v2 FY2020")
 def test_crosscheck_runs_the_registered_companyfacts_check_for_alibaba(monkeypatch):
     monkeypatch.setattr(cs, "series", _fake_series)
     monkeypatch.setattr(cs, "filings", lambda *a, **k: [])  # no 20-F instance: only companyfacts can answer
@@ -277,8 +272,6 @@ def test_crosscheck_runs_the_registered_companyfacts_check_for_alibaba(monkeypat
     assert abs(got[("capex_baba_v1", "2017-03-31")]) < 0.5
 
 
-@pytest.mark.xfail(strict=True, reason="R21-4: capex_baba_v1 holds licensed video copyrights (20-F FY2017 line; "
-                                       "2,680 of 8,002 in 2017Q3), which its note does not say")
 def test_capex_v1_note_says_it_holds_licensed_copyrights():
     note = specs()["capex_baba_v1"].note.lower()
     assert "upphovsr" in note or "copyright" in note

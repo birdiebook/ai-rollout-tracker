@@ -80,9 +80,10 @@ TABLE = {  # key: (company, measure, branch, label, question)
                           "Hur växte Alibabas moln med DingTalk, före omorganisationen 2023?"),
     "rev_baba_cloud_v3": ("baba", "rev_cloud", "G4", "Alibaba, Cloud Intelligence Group (2022Q3–2026Q1)",
                           "Hur snabbt växer Kinas största moln, före sammanslagningen med T-Head?"),
-    "rev_baba_cloud_v4": ("baba", "rev_cloud", "G4", "Alibaba, AI Cloud and Compute Services (från 2025Q2)",
+    "rev_baba_cloud_v4": ("baba", "rev_cloud", "G4", "Alibaba, AI Cloud and Compute Services",
                           "Hur snabbt växer Kinas största moln, med Alibabas chipenhet T-Head?"),
-    "capex_baba_v1": ("baba", "capex", "G5", "Alibaba, capex (anläggningstillgångar och immateriella, till 2018Q1)",
+    "capex_baba_v1": ("baba", "capex", "G5",
+                      "Alibaba, capex (anläggningstillgångar, immateriella och upphovsrätter, till 2018Q1)",
                       "Hur mycket investerade Alibaba innan definitionen ändrades 2018?"),
     "capex_baba_v2": ("baba", "capex", "G5", "Alibaba, capex (anläggningstillgångar utan kontorscampus)",
                       "Hur mycket investerar Kinas största molnbolag i datacenter och servrar?"),
@@ -119,7 +120,7 @@ def _table_spec(key: str) -> Spec:
     era = _era(key)
     closed = era.last is not None
     span = f"pressmeddelanden {era.first} – {era.last}" if closed else f"pressmeddelanden från {era.first}"
-    note = (f"Release-daterad: known_from = 6-K:ns inlämningsdatum. Definition: {era.definition} ({span}). "
+    note = (f"Release-daterad: known_from = 6-K:ns inlämningsdatum. Definition ({span}): {era.definition}. "
             "Varje omdefinition är en egen serie och skarvas aldrig. Jämförelsetal som ändras mer än 0,5 MRMB är nya "
             f"vintages. Räkenskapsår: {CALENDAR[company]}. ")
     if closed:

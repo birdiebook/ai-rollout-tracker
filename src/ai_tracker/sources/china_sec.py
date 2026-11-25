@@ -156,8 +156,10 @@ ERAS: dict[tuple[str, str], tuple[Era, ...]] = {
         Era("rev_baba_cloud_v2", "2021-08-03", "2023-05-18",
             "segmentet Cloud computing, från 2022-02 kallat Cloud, med DingTalk (omklassat från 2021-04-01)"),
         # 2023-08-10: the six business groups; segment revenue before consolidation (inter-segment) adjustments, with
-        # DingTalk. One release only, so no series. 2023-11-16: "Starting from the quarter ended September 30, 2023, we
-        # reclassified the revenue of our DingTalk business ... to All others" (stated in the 2024-08-15 release).
+        # DingTalk. One release only, so no series. 2023-11-16: DingTalk moves to All others from the quarter ended
+        # September 30, 2023, with reclassified comparatives, stated in the 2023-11-16 release itself (and again in
+        # 2024-08-15: "Starting from the quarter ended September 30, 2023, we reclassified the revenue of our DingTalk
+        # business ... to All others"; review R21, N-5).
         Era("", "2023-08-10", "2023-08-10", "Cloud Intelligence Group med DingTalk (bara ett pressmeddelande)"),
         Era("rev_baba_cloud_v3", "2023-11-16", "2026-05-13",
             "Cloud Intelligence Group utan DingTalk, segmentintäkt före koncernelimineringar (med intäkter från andra "
@@ -168,9 +170,15 @@ ERAS: dict[tuple[str, str], tuple[Era, ...]] = {
             "koncernelimineringar"),
     ),
     ("baba", "capex"): (
+        # v1's line holds licensed copyrights of video content at least from FY2017: the 20-F FY2017 element is
+        # PaymentsToAcquireOtherPropertyEquipmentIntangibleAssetsAndLicensedCopyrightsOfVideoContent, and the 2018-11-02
+        # release splits 2017Q3 (8,002) into 5,322 PP&E and 2,680 copyrights and intangible assets (review R21, R21-4).
         Era("capex_baba_v1", "2015-01-29", "2018-05-04",
             "Purchase of property and equipment and intangible assets (excluding land use rights and construction in "
-            "progress), avstämningen mot fritt kassaflöde"),
+            "progress), avstämningen mot fritt kassaflöde. Raden innehåller licensierade upphovsrätter till "
+            "videoinnehåll, åtminstone från FY2017 (begreppet i 20-F FY2017 slutar på "
+            "\"AndLicensedCopyrightsOfVideoContent\"). Pressmeddelandet 2018-11-02 delar upp 2017Q3: av 8 002 MRMB var "
+            "2 680 upphovsrätter och immateriella tillgångar och 5 322 anläggningstillgångar"),
         Era("", "2018-08-23", "2018-08-23",
             "property and equipment, intangible assets and licensed copyrights (bara ett pressmeddelande)"),
         Era("capex_baba_v2", "2018-11-02", None,
