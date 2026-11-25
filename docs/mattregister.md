@@ -1601,3 +1601,34 @@ meningar om åtaganden och RPO i sex inlämningar 2015–2023 och 2026-11-04, Su
 åtaganden i den senaste 10-Q:n, Lumentums och Coherents segmenttext och HPE:s segmenttext i 10-Q 2026-09-03. I de
 meningarna och i HPE:s tabell över intäkter per kategori syntes enskilda belopp. För Aristas tagg för åtaganden jämfördes
 taggen med meningen i två inlämningar (2015-11-06 och 2018-11-05). Inga kvartalsserier eller takter har räknats.
+
+### 2026-11-25 – S1: tillägg efter första bygget (brott i totala intäkter, HPE:s Server, Aristas RPO-datum)
+
+Tillägg till posten "S1: nät, optik och servrar som katalogserier". Den posten skrivs inte om. Skälet är vad
+brottskontrollen och bolagens texter visade vid första bygget, inte seriernas förlopp. Det som setts är storleken på
+omräkningarna (relativt), vilka inlämningar som räknar om, och texten om skälen.
+
+1. **Totala intäkter prövas också** med `definition_breaks`. Dell, HPE och Coherent räknade om tidigare år med mer än
+   2 % när en verksamhet redovisades som avvecklad: Dell Services, DSG och ECD (10-Q 2017-06-09) och VMware (10-K
+   2022-03-24), HPE:s Enterprise Services och mjukvara (10-Q 2017-06-08 och 2018-06-07), och II-VI:s produktlinje
+   tellurium (10-K 2014-08-28). Med versionsregeln i `sec.py` räknas bara de kvartal om som bolaget lämnar in igen, så
+   den senaste versionen blandar omfattningar (före tillägget låg Dells kvartal till 2020 med VMware och senare utan).
+   **Regel:** ett brott i totala intäkter som kommer av ändrad omfattning (avvecklad verksamhet, avknoppning) deklareras
+   som omfattningsbrott, och `rev_<co>` läser bara inlämningar från det senaste. Serien börjar alltså vid den nuvarande
+   omfattningen, och äldre omfattningar blir inga egna nycklar i S1. En omräkning som rättar samma definition (Super
+   Micro 2019-05-17, efter revisionsutskottets utredning) deklareras som rättelse och ger versioner. Coherents omräkning
+   2012-02-08 (+2,0 % för ett kvartal 2010) förklaras inte i textblocken. Den deklareras som rättelse och påverkar inte
+   serien, som börjar efter 2014-08-28. Lager prövas fortfarande inte.
+2. **HPE:s Server delas vid omorganisationen.** HPE slog ihop Server, Hybrid Cloud och Financial Services till segmentet
+   Cloud & AI från 2025-11-01 och räknade om tidigare perioder (10-Q 2026-03-10). Server räknades då om med +1,8 %, och
+   med +2,0 % i 10-Q 2026-06-02, så kontrollen slår till först i den senare inlämningen. **Regel:** ett deklarerat brott
+   delas vid den inlämning där bolaget enligt sin egen text inför den nya definitionen, även när omräkningen där är
+   under 2 %. Kontrollen måste då hitta exakt det senare datumet (fältet `detected`). `rev_hpe_server` i posten ovan
+   blir därför två nycklar: `rev_hpe_server_fy24` (avslutad) och `rev_hpe_server_fy26`.
+3. **Aristas RPO, fel datum i tre 10-Q.** 10-Q 2025-05-07, 2025-08-06 och 2025-11-05 taggar balansen med ett datum ett år
+   för tidigt (till exempel "$3.7 billion as of March 31, 2025" i kontexten 2024-03-31). Utan rättelse ser det ut som en
+   omräkning av 2024 års balanser, och 2025 års balanser saknas. I de tre inlämningarna dateras faktat om till
+   inlämningens egen balansdag (som AMD:s roterade medlemmar i `halvledare.py`).
+4. **Coherent, ingen omräkning 2026-11-04.** Coherent flyttade affärsenheter från Industrial till Datacenter &
+   Communications från FY2027 och skriver att tidigare perioder inte räknats om eftersom effekten inte är väsentlig. Det
+   går inte att upptäcka i datat och ger ingen ny nyckel. Det står som förbehåll i källdokumentet.
