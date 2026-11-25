@@ -134,7 +134,8 @@ def money(s: str | None) -> tuple[str, float] | None:
     m = MONEY_RE.search(s or "")
     if not m:
         return None
-    cur = CURRENCY[m.group(1).strip().upper() if m.group(1).strip().upper() in CURRENCY else m.group(1).strip()]
+    sym = m.group(1).strip()
+    cur = CURRENCY.get(sym.upper(), CURRENCY.get(sym))
     x = float(m.group(2).replace(",", ""))
     unit = (m.group(3) or "").lower()
     return cur, x * 1000 if unit == "billion" else x if unit == "million" else x / 1e6
@@ -327,7 +328,7 @@ def parse(doc_lines: list[str], filed: str) -> tuple[str, list[dict]]:
     hdate = header_date(doc_lines)
     rows = []
     shared = None
-    shared_ts = [t for t in ts if t.heading is None and t.lines]
+    shared_ts = [t for t in ts if t.col is not None and t.lines]  # keyed or column tranches share one table
     if shared_ts:
         used = set().union(*(t.lines for t in shared_ts))
         shared = (min(used), max(used))
@@ -362,7 +363,7 @@ def parse(doc_lines: list[str], filed: str) -> tuple[str, list[dict]]:
             bench = (v.get("benchmark") or "").strip()[:80] or None
             if spread_label == "spread_ms":
                 bench = "mid-swaps"
-        a, b = shared if shared and t.heading is None else (min(t.lines), max(t.lines))
+        a, b = shared if shared and t.col is not None else (min(t.lines), max(t.lines))
         rows.append({
             "key": t.key, "col": t.col, "layout": kind,
             "currency": currency, "rate_type": "floating" if floating else "fixed",

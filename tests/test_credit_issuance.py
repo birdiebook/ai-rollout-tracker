@@ -346,3 +346,24 @@ def test_cover_cross_check():
                                          ("EUR", 750.0, "2.5000", "2029")}
     rows = frame([tranche(currency="USD", principal=1000, coupon_pct=3.875, maturity="2028-11-15")])
     assert chk.row_tranches(rows) == {("USD", 1000.0, "3.8750", "2028")}
+
+
+def test_section_without_heading_keeps_its_own_block():
+    html = ("<TABLE>" + row("Principal Amount:", "$1,000,000,000") + row("Maturity:", "June 1, 2030")
+            + row("Coupon:", "4.000%") + row("Price to Public:", "99.500%") + row("Trade Date:", "May 28, 2025")
+            + "</TABLE>")
+    layout, rows = ct.parse(cc.lines(html), "2025-05-28")
+    assert layout == "sections" and rows[0]["col"] is None and ci.locator(rows[0]) == "lines #0-#4"
+
+
+def test_catalog_entries_are_unpublished_catalog_series():
+    from ai_tracker import catalog, licenses
+    from ai_tracker.series import credit_issuance as series
+
+    if not ci.PATH.exists():
+        pytest.skip("no curated file")
+    keys = {s.key for s in series.SPECS}
+    assert {"spread_issue_ai_q", "spread_issue_ai_7_12y_q"} <= keys
+    assert all(not s.publish and s.branch == "G5" and s.freq == "Q" for s in series.SPECS)
+    assert set(series.KNOWN_GAPS) == keys
+    assert {licenses.verdict(s, catalog.by_key()).klass for s in series.SPECS} == {licenses.JA}
