@@ -1645,6 +1645,102 @@ nettomått för `ai_invest_contrib_gross`, och något sådant registreras inte. 
 **Kontroll efter hämtningen.** Minst tre kvartal kontrolleras för hand mot tabell 1.2.2 i den arkiverade releasen.
 Resultatet står i `docs/kallor/makro_bea_bls.md`.
 
+### 2026-11-25 – S2: kraft, kylning, elnät och datacenterbolag som katalogserier (inte kärnserier)
+
+Spår S2, körning 14 (punkt 1 i `riktning.md`, avsnitt 8). Serierna är katalogserier. De ingår inte i diffusionsindexet,
+och här räknas inga takter eller tillstånd. Kod: `src/ai_tracker/series/sec_stack_kraft.py`. Källa och kontroller:
+`docs/kallor/sec_stack_kraft.md`.
+
+**Bolag.** Alla har kalenderår, och räkenskapskvartalen kontrolleras mot kalenderkvartalen i bygget.
+
+| Bolag | CIK | Anmärkning |
+|---|---|---|
+| Vertiv (VRT) | 1674101 | f.d. GS Acquisition Holdings Corp. 10-K och 10-Q som Vertiv från 2020-03-12 |
+| GE Vernova (GEV) | 1996810 | första 10-Q 2024-04-30. Form 10 (10-12B 2024-02-15, 10-12B/A 2024-03-05) har ingen XBRL, så historiken börjar med jämförelsetalen i 10-Q 2024 |
+| Eaton (ETN) | 1551182, 31277 | Eaton Corporation plc (Irland, lämnar 10-Q och 10-K) och föregångaren Eaton Corporation (till 10-Q 2012-10-31), som Alphabet och Google Inc. |
+| Quanta Services (PWR) | 1050915 | |
+| Equinix (EQIX) | 1101239 | REIT |
+| Digital Realty (DLR) | 1297996 | REIT. companyfacts saknar 10-Q 2026-07-31 och 2026-10-30, så flödena läses ur instanserna (nedan) |
+
+**Regel för taggval** (som P1). Taggen väljs per bolag efter täckning och definitionskonsistens, aldrig efter seriens
+förlopp. Byte av tagg för samma rad skarvas per kvartal med `sec.py`:s regel, och bara när taggarna är identiska i
+överlappet. En kandidattagg som avviker i överlappet används inte.
+
+| Mått | Bolag | Taggar (prioritet) och rad |
+|---|---|---|
+| `rev_<co>` | VRT | `RevenueFromContractWithCustomerExcludingAssessedTax` ("Net sales"). `Revenues` (2016–2019) avviker i alla sju överlappande perioder och används inte |
+| | GEV | `RevenueFromContractWithCustomerExcludingAssessedTax` |
+| | ETN | `RevenueFromContractWithCustomerExcludingAssessedTax`, `SalesRevenueNet` (identiska i 7 perioder), för båda CIK (föregångarens `SalesRevenueNet` är identisk i 7 perioder). `Revenues` avviker och används inte |
+| | PWR | `RevenueFromContractWithCustomerExcludingAssessedTax`, `SalesRevenueServicesNet` (identiska i 7 perioder) |
+| | EQIX | `RevenueFromContractWithCustomerExcludingAssessedTax`, `Revenues` (identiska i 7 perioder) |
+| | DLR | `Revenues` ur instanserna |
+| `capex_<co>` | VRT | `PaymentsToAcquirePropertyPlantAndEquipment` ("Capital expenditures"). Raden "Investments in capitalized software" ingår inte |
+| | GEV | `PaymentsToAcquireProductiveAssets` ("Additions to property, plant, and equipment and internal-use software") |
+| | ETN | `PaymentsToAcquirePropertyPlantAndEquipment` ("Capital expenditures for property, plant and equipment"), båda CIK |
+| | PWR | `PaymentsToAcquirePropertyPlantAndEquipment` ("Capital expenditures") |
+| | EQIX | `PaymentsToAcquireOtherPropertyPlantAndEquipment` ("Purchases of other property, plant and equipment"). Raden "Real estate acquisitions" (`PaymentsToAcquireRealEstate`) ingår inte |
+| | DLR | `PaymentsToDevelopRealEstateAssets` ("Improvements to investments in real estate") ur instanserna. Förvärv och investeringar i intresseföretag ingår inte |
+
+**Capex för datacenterbolagen** är utbyggnad och förbättring av egen kapacitet: raden för bygge och utrustning, inte
+köp av befintliga fastigheter eller bolag. Det gör de två jämförbara med varandra. De är inte helt jämförbara med de
+stora molnbolagens capex, som också innehåller köpt mark och byggnader.
+
+**Segmentintäkter** (ur instanserna). En fakta räknas bara när kontextens dimensioner är exakt de angivna.
+
+| Serie | Medlem (`StatementBusinessSegmentsAxis`) och markör (`ConsolidationItemsAxis`) |
+|---|---|
+| `rev_gev_power`, `rev_gev_wind`, `rev_gev_electrification` | `PowerSegmentMember`, `WindSegmentMember`, `ElectrificationSegmentMember`, med `OperatingSegmentsExcludingIntersegmentEliminationMember` (segmentets intäkter före eliminering av interna intäkter). Markören finns i alla elva inlämningar. `OperatingSegmentsMember` finns bara i 10-Q 2024, avviker upp till 5 % och används inte |
+| `rev_etn_electrical_americas`, `rev_etn_electrical_global` | `ElectricalAmericasSegmentMember`, `ElectricalGlobalSegmentMember`, utan markör och annars med `OperatingSegmentsMember` (identiska i 156 par). Bara inlämningar från 2020-01-01, eftersom medlemsnamnet `ElectricalAmericasSegmentMember` användes i 10-K för 2012 för ett äldre segment |
+| `rev_vrt_americas`, `rev_vrt_apac`, `rev_vrt_emea` | `AmericasSegmentMember`, `AsiaPacificSegmentMember`, `EMEASegmentMember`, med `OperatingSegmentsMember` (segmentets intäkter inklusive försäljning till andra segment). Markören finns i alla inlämningar från 2020-05. Medlemmen utan markör (avviker upp till 35 %) saknas i 10-K 2024-02-23 |
+
+Inte byggt: segment för PWR (fem segmentindelningar 2018–2026), regioner för EQIX och produktlinjer för VRT och GEV.
+
+**RPO och orderstock** (balans vid kvartalets slut, som `sec_rpo`, ur instanserna). Bara totalen, ingen uppdelning i
+tid: tidshinkarna är inkonsekvent taggade (PWR 2021 och 2023 har andelens startdatum och längden på olika hinkar,
+ETN 2022–2023 har inaktuella startdatum och en odimensionerad andel).
+
+| Serie | Gren | Tagg och kontext |
+|---|---|---|
+| `rpo_gev` | G7 | `RevenueRemainingPerformanceObligation` utan dimension |
+| `rpo_gev_equipment`, `rpo_gev_services` | G7 | samma med `ProductOrServiceAxis` = `ProductMember` respektive `ServiceMember` (alla elva inlämningar) |
+| `rpo_pwr` | G7 | utan dimension, från 10-Q 2018-05-09 |
+| `rpo_etn` | G7 | Eatons "total backlog" (fasta order), taggad som RPO: utan dimension 2020Q3–2024Q1, därefter med bara startdatumaxeln (en hink), som `sec_rpo.totals` läser som total. Samma mening i 10-Q 2020-11-03, 2023-10-31, 2024-08-01 och 2026-11-03 |
+| `rpo_eqix` | G4 | utan dimension, från 10-Q 2018-05-04 |
+
+**Vertiv: RPO och orderstock är BLOCKED i XBRL.** Vertiv taggar inget RPO. Fakta med `RevenueRemainingPerformanceObligation`
+och startdatumaxeln är tidsfördelningen av långfristiga förutbetalda intäkter ("expects to recognize noncurrent deferred
+revenue of ... in the next 13 to 24 months ..."), inte RPO, och används inte. Orderstocken ("estimated combined order
+backlog") står bara i texten. Spår S3 extraherar de uttalade siffrorna ur pressmeddelandena.
+
+**Omräkningar och brott.** Omräkningar är versioner med regeln om konsekvent bas i `sec.py`. En inlämning som räknar om
+tidigare värden av en segmentserie eller en balans med mer än 2 % (`sec_segment.definition_breaks`) deklareras efter
+granskning, och varje definition får en egen nyckel. En odeklarerad omräkning stoppar hämtningen. För totala intäkter
+och capex gäller P1:s regel: omräkningar är versioner och ger ingen ny nyckel. En senare version som bara avrundar
+tusental till hela miljoner tas bort, som i `neoclouds`.
+
+**DLR ur instanserna.** Fakta utan dimension gäller Digital Realty Trust, Inc. (partnerskapet har `LegalEntityAxis`).
+Samma kvartals- och versionslogik som för companyfacts. Kontroll i bygget: instansserien ska vara lika med
+companyfacts-serien i alla versioner till och med 2026-05-01.
+
+**Datering och kalender.** known_from är inlämningsdatumet för 10-Q eller 10-K. YTD-differens, Q4 = helår − 9M och
+mittpunktsregeln som i `sec.py`. `lag_days` = 25. Aktualitetsgräns per bolag = största observerade avstånd från
+kvartalets slut till första egna inlämning (2015–2026) + 92 + 30.
+
+**Grenar.** VRT, GEV, ETN och PWR (alla mått) i G7. EQIX och DLR: intäkter och RPO i G4, capex i G5, som CoreWeave
+(`rev_crwv` i G4, `capex_crwv` i G5). Alla har `unit` MUSD, `freq` Q, SEC-licensen (`series.sec.LICENSE`, klass `ja`)
+och `publish=True`. Inga värden extraheras ur text.
+
+**Förbehåll.** GEV och ETN är till största delen annat än AI (gasturbiner, vind, flyg, fordon). Datacenterandelen går
+inte att skilja ut i XBRL. Spår S3 extraherar bolagens uttalade datacentersiffror ur pressmeddelandena.
+
+**Vad som setts före denna post:** entitetsnamn, räkenskapsår och inlämningslistor. Vilka kandidattaggar som finns och
+vilka perioder och inlämningsdatum de täcker. Per inlämning: vilka segmentmedlemmar och markörer som finns på
+intäkterna, och hur RPO är taggat (dimension, hinkarnas startdatum och längd). Antal överlappande perioder och största
+relativa skillnad mellan kandidattaggar och mellan markörer. Radetiketterna i kassaflödesanalysen i senaste 10-K (och
+10-Q för EQIX och DLR). Texten kring RPO-fakta hos Vertiv (10-K 2026-02-13 och 10-Q 2026-10-28) och Eaton (10-Q 2020-11-03,
+2023-10-31, 2024-08-01, 2026-11-03), för att se vad som taggats. Där syntes enstaka orderstocksbelopp (Vertiv 15,0 och
+7,2 mdr USD, Eaton 5,4, 12,9, 15,2 och 26,2 mdr USD). Inga kvartalsserier eller takter har räknats.
+
 ### 2026-11-25 – S1: tillägg efter första bygget (brott i totala intäkter, HPE:s Server, Aristas RPO-datum)
 
 Tillägg till posten "S1: nät, optik och servrar som katalogserier". Den posten skrivs inte om. Skälet är vad
@@ -1675,6 +1771,32 @@ omräkningarna (relativt), vilka inlämningar som räknar om, och texten om skä
 4. **Coherent, ingen omräkning 2026-11-04.** Coherent flyttade affärsenheter från Industrial till Datacenter &
    Communications från FY2027 och skriver att tidigare perioder inte räknats om eftersom effekten inte är väsentlig. Det
    går inte att upptäcka i datat och ger ingen ny nyckel. Det står som förbehåll i källdokumentet.
+
+### 2026-11-25 – S2: tillägg efter första bygget (före analys)
+
+Första bygget av S2:s serier visade två fel i inlämningarna och ett segmentbrott. Inga takter har räknats. Reglerna för
+taggval ändras inte.
+
+1. **Feldaterade fakta i 10-Q.** En 10-Q redovisar perioden och samma period året före. En fakta i en 10-Q vars period
+   slutar mer än 550 dagar före inlämningen är därför felaktigt daterad och används inte. Det gäller en fakta: Equinix
+   10-Q 2025-04-30 taggar intäkten för Q1 2025 (2 225 MUSD) med datumen för Q1 2023. Utan regeln skulle `rev_eqix`
+   2023Q1 få det värdet som ny version. Regeln gäller alla S2-serier (flöden, segment och balanser).
+2. **Eatons skalbolag.** Eaton Corporation plc lämnade en 10-Q 2012-11-14, före sammanslagningen med Cooper, med
+   intäkten 0 för Q3 2012. Fakta som plc-bolaget lämnat in före 2013-01-01 används inte. Perioden täcks av
+   föregångaren Eaton Corporation (31277).
+3. **GE Vernova Electrification, brott deklarerat 2026-04-22.** Från 2026-01-01 flyttade GE Vernova en del av
+   Electrification Software till Gas Power i Power-segmentet (10-Q 2026-04-22). Kvartalen 2025 räknades om med −1,4 till
+   −2,1 %, alltså över gränsen 2 % för Q1. Enligt regeln får varje definition en egen nyckel:
+   `rev_gev_electrification_fy24` (inlämnat 2024-04 till 2026-01, avslutad) och `rev_gev_electrification_fy26`.
+   Power räknades om med +0,5 till +0,6 %, under gränsen, och det blir vanliga versioner av `rev_gev_power`.
+4. **Equinix capex börjar 2014Q1.** Raden taggades `PaymentsToAcquirePropertyPlantAndEquipment` i inlämningarna
+   2012–2013. Den taggen avviker från `PaymentsToAcquireOtherPropertyPlantAndEquipment` i en av 19 överlappande perioder
+   och skarvas därför inte (registrets regel).
+5. **DLR ur instanserna mot companyfacts.** Serierna är lika i alla versioner till och med 2026-05-01, utom tre rader i
+   `rev_dlr` (2009Q2 och första versionen av 2010Q2). Orsaken är att `sec_segment.instance_name` väljer filen
+   `defnref.xml` i fyra av DLR:s inlämningar 2010–2011, och då hittas inga fakta. Kvartalen får sin första version
+   senare (2011-08-05), vilket är konservativt. Samma fil finns i sju av Microsofts inlämningar 2009–2011. Felet
+   rättas inte här, eftersom koden är gemensam.
 
 ### 2026-11-25 – Rättelse: vad BB01RY omfattar (granskning R25-3)
 
@@ -1757,3 +1879,79 @@ lämnar in FY2020 igen, räknar också om, och hålet 2020Q2 hade kortat den ser
 syntes Dells ISG och Servers and networking 2016Q1–2017Q2 och Aristas åtaganden och kontraktsskulder 2015Q4–2018Q4.
 Textblock i cachade instanser lästes för Aristas åtaganden 2016–2018, HPE:s RPO 2022–2026 och EMC-fusionen. Inga
 takter räknades.
+
+### 2026-11-25 – X15: rättning av S2 efter R18, före ny hämtning (rättning efter `docs/granskning/r18-kraft-datacenter.md`)
+
+Rättningsspår X15, körning 14. Granskningen R18 av S2 fann fyra fel att rätta (R18-1–R18-4) och sex anmärkningar.
+Alla fel gav för sena första versioner eller saknad historik. Tidigare poster skrivs inte om. Punkterna nedan ändrar
+eller förtydligar S2:s regler och gäller från nästa hämtning. Serierna är fortfarande katalogserier, och inga takter
+har räknats.
+
+1. **Eatons segment, namnen i 2020 års 10-Q (R18-1).** 10-Q 2020-04-30, 2020-07-29 och 2020-11-03 taggar de nya
+   segmenten `ElectricalAmericasMember` och `ElectricalGlobalMember`. Från 10-K 2021-02-24 heter de
+   `ElectricalAmericasSegmentMember` och `ElectricalGlobalSegmentMember`. Båda namnen läses, utan markör och annars
+   med `OperatingSegmentsMember`. Per inlämning vinner den första kontext som har fakta (det senare namnet först).
+   Värdena är identiska i alla 14 par av segment och period där båda namnen finns. Skälet för starten 2020-01-01 i
+   S2-posten rättas: det var `ElectricalAmericasMember` som 10-K för 2012 använde för ett äldre segment. Startdatumet
+   står kvar, och det gör det säkert att läsa 2020 års namn.
+2. **550-dagarsregelns räckvidd (R18-9).** Regelns premiss är att en 10-Q redovisar perioden och samma period året
+   före. Det gäller huvudräkningarna, men inte segmentnoten efter en ny segmentindelning: Eatons 10-Q 2020-04-30
+   redovisar omräknade kvartal för 2018–2019, upp till 578 dagar gamla. Regeln gäller därför flöden och balanser
+   (totala intäkter, capex och RPO), inte segmentintäkter. Segmentfakta skyddas av den exakta kontexten och av
+   brottkontrollen: en fakta som avviker mer än 2 % från en tidigare version av samma kvartal stoppar hämtningen.
+3. **Equinix capex, den äldre taggen (R18-2).** `PaymentsToAcquirePropertyPlantAndEquipment` blir andra tagg för
+   `capex_eqix`, efter `PaymentsToAcquireOtherPropertyPlantAndEquipment`. Den äldre taggen är raden "Purchases of
+   property, plant and equipment" i 10-Q 2010-08-04 och 2010-10-29, i 10-Q 2012-04-27 till 2014-11-07 och i 10-Q
+   2016-11-04, och den står parallellt med den nya taggen i 10-Q 2017–2018. I två inlämningar har Equinix den nya
+   taggen på capex-raden och den äldre på ett fastighetsköp: 10-K 2011-02-25 ("Purchase of Amsterdam IBX property",
+   14 861 tusen USD för 2010) och 10-Q 2011-04-29 ("Purchase of Paris 4 IBX property", 14 951 för Q1 2011). Utan de
+   två fakta är taggarna identiska i alla 18 överlappande perioder. Regeln för taggval förtydligas, för alla S2:s
+   flöden: en fakta under en tagg med lägre prioritet används inte ur en inlämning där den har ett annat värde än en
+   tagg med högre prioritet för samma period. Då står taggen på en annan rad i just den inlämningen. Det tar i dag
+   bort exakt de två fakta. Granskningens förslag "bara fakta ur 10-Q" räcker inte, eftersom 10-Q 2011-04-29 också har
+   fastighetsköpet under den äldre taggen.
+4. **Vertivs segment (R18-3).** Täckningsskälet för brutto i S2-posten håller inte. 10-K 2024-02-23 saknar medlemmen
+   utan markör, men 10-K 2025-02-18 har helåret 2023 som jämförelsetal, så den externa försäljningen förlorar inget
+   kvartal. Bruttoserierna `rev_vrt_americas`, `rev_vrt_apac` och `rev_vrt_emea` behålls: segmentnotens tabell är
+   "Sales" med en rad "Eliminations". Nya katalogserier: `rev_vrt_americas_net`, `rev_vrt_apac_net` och
+   `rev_vrt_emea_net`, segmentets externa försäljning ("Net sales"). Kontext exakt: bara
+   `StatementBusinessSegmentsAxis` med `AmericasSegmentMember`, `AsiaPacificSegmentMember` respektive
+   `EMEASegmentMember`. Inlämningar från 2020-01-01. Gren G7, och datering, brottkontroll, aktualitetsgräns, licens
+   (SEC, klass `ja`) och `publish=True` som bruttoserierna. Ett odeklarerat brott stoppar hämtningen.
+5. **`instance_name` väljer inte `defnref.xml` (R18-4, gemensam kod).** `sec_segment.instance_name` sorterar
+   kandidaterna efter längd, och `defnref.xml` (en referensfil i inlämningar 2009–2011) vann. Filen utesluts nu. I den
+   delade cachen finns den i 11 inlämningar: Digital Realty (10-Q/A 2010-08-12, 10-Q 2010-11-09, 10-K/A 2011-03-25,
+   10-Q 2011-05-09) och Microsoft (sju inlämningar, 10-Q 2009-10-23 till 10-Q 2011-04-28). Nvidias inlämningar
+   2012–2013 har den inte. Serierna på denna gren som läser instanser före 2012 är `rev_dlr`, `capex_dlr` och
+   `dep_msft`. Det är en läsrättning, och ingen regel för dem ändras. Bland Microsofts sju inlämningar har bara 10-Q
+   2011-01-27 och 2011-04-28 `msft:DepreciationAmortizationAndOther` utan dimension. De fem tidigare använder en annan
+   tagg, som P1 skrev.
+6. **Digital Realty, bolagets fakta 2010–2011 (följd av R18-4).** I 10-Q 2010-11-09, 10-K/A 2011-03-25 och 10-Q
+   2011-05-09 har alla fakta för intäkter och capex `LegalEntityAxis`: Digital Realty Trust, Inc. med
+   `ParentCompanyMember` och partnerskapet med `DigitalRealtyTrustLPMember`, med samma värden. Där finns inga fakta
+   utan dimension. Det är därför 2010Q3–2011Q1 får sin första version ett år för sent, inte `defnref.xml` som
+   granskningen trodde. Regel: per inlämning och tagg läses fakta utan dimension. Saknas de, läses fakta med bara
+   `LegalEntityAxis` = `ParentCompanyMember`. Den medlemmen förekommer bara i de tre inlämningarna.
+7. **Pariteten för DLR (R18-10).** Jämförelsen mellan instansserien och companyfacts-serien (S2-tillägget, punkt 5)
+   är en engångskontroll vid bygget, inte en kontroll i koden. Den görs om efter rättningarna, och resultatet står i
+   `docs/kallor/sec_stack_kraft.md`.
+
+**Vad som setts före denna post:** granskningen R18 med alla dess siffror, också de simulerade rättningarna (Eatons
+segment 32 kvartal från 2018Q4, `capex_eqix` 69 kvartal från 2009Q3, Vertivs externa EMEA 31 kvartal och de interna
+andelarna 5 och 34 %). Egna kontroller av täckning och konsistens: medlemmar och markörer per inlämning hos Eaton
+2020–2021 och om värdena är lika i överlappet. Båda capex-taggarnas fakta per inlämning hos Equinix i companyfacts,
+med värden (YTD 2009–2019), och kassaflödesanalysen i 10-Q 2011-04-29. Digital Realtys fakta för intäkter och capex
+(värden och dimensioner) i de fyra inlämningarna med `defnref.xml`, och vilka inlämningar som har
+`ParentCompanyMember`. Antalet fakta med Microsofts tagg i de sju inlämningarna. Nvidias indexfiler 2012–2013. Inga
+serier har byggts med reglerna ovan.
+
+### 2026-11-25 – X15: utfall efter hämtningen
+
+Reglerna i X15-posten ovan gjorde vid hämtningen det posten säger. Regeln för taggval tar bort exakt två fakta, båda
+Equinix äldre capex-tagg (10-K 2011-02-25 och 10-Q 2011-04-29). Undantaget från 550-dagarsregeln behåller exakt sex
+segmentfakta, Eatons 2018Q1–Q3 för båda segmenten ur 10-Q 2020-04-30. Inga brott upptäcktes, och inga värden i
+tidigare hämtade kvartal ändrades. En rättelse av en detalj i punkt 2: kvartalen 2018Q1–Q3 slutar 578–761 dagar före
+inlämningen, inte "upp till 578". Och i punkt 3: radens namn "Purchases of property, plant and equipment" gäller 10-Q
+2010–2014. I 10-Q 2016-11-04 och 2017–2018 heter samma rad "Purchases of other property, plant and equipment".
+Effekterna per serie står i `docs/kallor/sec_stack_kraft.md` ("Rättning efter R18") och för `dep_msft` i
+`docs/kallor/sec_avskrivningar.md`.

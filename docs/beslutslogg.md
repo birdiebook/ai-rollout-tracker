@@ -778,6 +778,22 @@ republishing data"), npm och arXiv (`okänd`), och Microsofts capex-guidance ur 
 - Loggarna och registret har båda sidornas poster i tidsordning. `quarterly.py` har mains omskrivning med "för få
   källor" i tillståndsordningen.
 
+## 2026-11-25 – S2: kraft, kylning, elnät och datacenterbolag ur XBRL
+
+- 27 katalogserier, inte kärnserier: intäkter, capex, segment och RPO för Vertiv, GE Vernova, Eaton och Quanta (G7),
+  och intäkter, RPO (G4) och capex (G5) för Equinix och Digital Realty. Taggvalen förregistrerades före hämtningen.
+  Källa och kontroller: `docs/kallor/sec_stack_kraft.md`.
+- **Capex för datacenterbolagen** är bygge och förbättring av egen kapacitet, utan köp av fastigheter och bolag. De två
+  är jämförbara med varandra, men inte helt med molnbolagen.
+- **Vertivs RPO är BLOCKED i XBRL.** Det Vertiv taggar som RPO är tidsfördelningen av långfristiga förutbetalda
+  intäkter. Orderstocken står bara i texten och tas av spår S3.
+- **Eatons orderstock** ("total backlog", fasta order) är taggad som RPO och blir `rpo_etn`.
+- **Brott:** GE Vernova Electrification delas 2026-04-22 (en del av Electrification Software flyttades till Power).
+  Två fel i inlämningarna hanteras med regler i registrets tillägg: en feldaterad fakta hos Equinix och Eatons
+  skalbolag 2012.
+- Rekommendation: inga av serierna blir kärnserier nu. De flesta är korta (GE Vernova 15 kvartal) eller mest annat än
+  AI. `rpo_etn`, `rpo_gev_equipment` och `rpo_pwr` är kandidater för G7 när datacenterandelen finns från S3.
+
 ## 2026-11-25 – S1: nät, optik och servrar ur SEC XBRL
 
 - 42 katalogserier i G6 för lagren mellan chip och datacenter: Arista, Cisco, Coherent, Lumentum, Super Micro, Dell,
@@ -909,3 +925,32 @@ Johannes svarade "kör på dina rekommendationer" på tre rekommendationer samma
   hamnar i repot. Sedan en privat byggning som också visar inhållna serier och aldrig publiceras.
 - Användningen loggas i "Värde för Johannes" i `docs/agentkalibrering.md`. Nästa körning efter 14 bygger läsprodukten,
   en lagervy med vad som ändrades per månad, i stället för fler serier.
+
+## 2026-11-25 – R18: granskning av S2 (kraft, kylning, elnät och datacenterbolag)
+
+- **Dom: godkänd med anmärkningar** (`docs/granskning/r18-kraft-datacenter.md`). Registret kom före värdena, och
+  tilläggets två regler är regler för datafel. Inga läckage och inga fel värden i 12 handkontroller över alla sex
+  bolagen.
+- Fyra rättningar före analys: Eatons segment läser inte 2020 års 10-Q (R18-1), Equinix capex förkastar en tagg på
+  en rad som inte hör till måttet (R18-2), Vertivs bruttosegment har ett täckningsskäl som inte håller (R18-3), och
+  den gemensamma `instance_name` väljer `defnref.xml` i inlämningar 2009–2011 (R18-4, eget spår). Alla ger för sena
+  första versioner eller saknad historik, alltså den konservativa sidan.
+- Ägarbeslut: ska Vertivs externa segmentförsäljning läggas till bredvid bruttot? Rekommendation: ja.
+
+## 2026-11-25 – X15: rättning av S2 efter R18
+
+- Alla fyra fel är rättade, och registrets tillägg kom före den nya hämtningen (d2c14cc). Inga värden i redan hämtade
+  kvartal ändras. Rättningarna ger längre historik och tidigare första versioner, alltså rätt datering i stället för
+  för sen.
+- **Eaton** läser segmentnamnen i 2020 års 10-Q. Segmenten börjar 2018Q1, med de omräknade kvartalen 2018–2019 ur 10-Q
+  2020-04-30. **Beslut:** 550-dagarsregeln gäller flöden och balanser, inte segmentintäkter, eftersom segmentnoten efter
+  en ny indelning redovisar äldre kvartal.
+- **Equinix capex** skarvar den äldre taggen och börjar 2009Q3. Taggen står på ett fastighetsköp i två inlämningar,
+  inte en: också 10-Q 2011-04-29 (Paris 4). Granskningens förslag "bara 10-Q" räckte därför inte. Regeln utesluter
+  taggen ur en inlämning där den skiljer sig från den prioriterade taggen.
+- **Vertiv:** de externa segmentserierna `rev_vrt_*_net` är tillagda bredvid bruttot, enligt granskningens
+  rekommendation. Rekommendation: använd de externa för tillväxt per region.
+- **`defnref.xml`** utesluts i den gemensamma `instance_name`. `dep_msft` får tre kvartal till (från 2009Q4) och tidigare
+  versioner 2010Q4–2011Q2. N7 påverkas inte. Digital Realtys sena versioner 2010–2011 hade en annan orsak
+  (`ParentCompanyMember` på alla fakta i tre inlämningar), och den är också rättad.
+

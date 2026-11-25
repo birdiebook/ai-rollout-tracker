@@ -69,6 +69,7 @@ En rad per spår, fylls på efter varje körning. Tumreglerna justeras när siff
 | 2026-11-25 | 14 | RW1-X rättning | rättning (schema, CI, scan) | ~43 | ~132 | ~285 | backfill_fetched, commit per skarp prognos, scan-build, tidlös citering |
 | 2026-11-25 | 14 | R-W3 neutralitet | granskning | ~20 | ~98 | ~230 | speglingstest symmetriskt; 3 mallasymmetrier rättade; 4 krav före byte av huvudsida |
 | 2026-11-25 | 14 | R-W2 tillgänglighet | granskning + rättning | ~56 | ~116 | ~270 | axe 0 i 54 körningar; 4 tangentbordsfel rättade; LCP 0,8 s; TBT kvar (P1) |
+| 2026-11-25 | 14 | S2 kraft, kylning och datacenter | bygge (SEC XBRL, 6 bolag, instanser) | ~95 | ~75 | ~400 | 27 serier (986 rader), register före hämtning (009602a), RPO för Vertiv BLOCKED, 7 handkontroller OK, 14 tester |
 | 2026-11-25 | 14 | S1 nät, optik och servrar | bygge (SEC XBRL, 8 bolag) | ~50 + tester | ~95 | – | 42 serier, 1 327 rader; register före hämtning; 2 taggningsfel och omfattningsbrott hittade; 11 handkontroller |
 | 2026-11-25 | 14 | WX2 rättning | webbrättning (R-W2/R-W3) | ~115 | ~280 | – | TBT 142–256 ms, uppskjutna tabeller, pilar dolda för skärmläsare |
 | 2026-11-25 | 14 | W14 kvartalsrapport | webbspår | ~48 | ~152 | – | report/ i paketet (1.3), /kvartal/[kvartal] |
@@ -78,6 +79,8 @@ En rad per spår, fylls på efter varje körning. Tumreglerna justeras när siff
 | 2026-11-25 | 14 | R17 granskning av S1 | granskning mot primärkälla (13 huvuddokument, ombygge offline) | ~90 | ~95 | – | 12 handkontroller i 8 bolag, 85 Q4-rader med egen kod, 2 must_fix (fel post 2018Q3, Q4 över basbyte), 4 should_fix, 23 tester varav 6 strikt xfail |
 | 2026-11-25 | 14 | X22 rättning efter R25 | rättning (katalog, notering, brev, dokument) | ~40 | ~60 | – | R25-1 och R25-2 rättade (3 strikta xfail nu vanliga tester), R25-3–R25-5 också; indexet inhållet med skäl (`Spec.withheld_reason`), definitionsbyte i not och brev; torrkörning brev 2026-10 och paket; 5 nya tester |
 | 2026-11-25 | 14 | X14 rättning av S1 efter R17 | rättning (kod, register, noter, ombygge) | ~45 + 13 tester | ~100 | – | 2 must_fix och 4 should_fix rättade, 6 strikta xfail passerar; smalare Q4-regel än förslaget (5 rader räddade); 42 serier ombyggda, 1 324 rader (4 ändrade) |
+| 2026-11-25 | 14 | R18 kraft och datacenter | granskning | ~75 | ~95 | ~330 | 12 handkontroller OK; 4 should_fix (ETN 2020, EQIX capex, VRT brutto, defnref.xml); 6 strikta xfail |
+| 2026-11-25 | 14 | X15 kraft och datacenter | rättning (4 should_fix, gemensam kod) | ~60 | ~70 | ~300 | register före hämtning (d2c14cc); 30 serier (1 121 rader); ETN från 2018Q1, `capex_eqix` från 2009Q3, DLR från 2009Q2, `dep_msft` från 2009Q4; 3 nya Vertiv-serier; 7 handkontroller OK; 6 xfail blev vanliga tester |
 
 ## Körning 1, sammanfattning (2026-11-23, orkestrerare)
 
