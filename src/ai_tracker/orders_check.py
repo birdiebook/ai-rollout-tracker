@@ -87,6 +87,8 @@ MEASURE_WORDS = {
     "leases_signed": r"\bbookings?\b|\bleases?\s+signed\b|\bsigned\b",
     "signed_not_commenced": r"\bnot[\s-]+yet[\s-]+commenced\b|\bbacklog\b",
     "bookings": r"\bbookings?\b",
+    "orders_new_contracts": r"\borders?\b",  # GE Vernova GW from 2025Q2 (register 2026-11-25, X16)
+    "orders_converted": r"\bconverted\b",
 }
 SEGMENT_WORDS = {
     "power": r"\bPower\b", "wind": r"\bWind\b", "electrification": r"\bElectrification\b",

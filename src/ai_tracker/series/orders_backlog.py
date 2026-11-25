@@ -26,6 +26,8 @@ MEASURE = {
         "Orderstock och reservationer av leveransplatser", "shipments": "Leveranser", "sales": "Försäljning",
     "leases_signed": "Tecknade nya hyresavtal (hyra per år)", "signed_not_commenced":
         "Tecknade hyresavtal som inte har börjat (hyra per år)", "bookings": "Bokningar",
+    "orders_new_contracts": "Order bland nya kontrakt (utan konverterade reservationer)",
+    "orders_converted": "Reservationer som blev order",
 }
 SEGMENT = {
     "total": "", "power": "Power", "wind": "Wind", "electrification": "Electrification", "gas_power": "Gas Power",
@@ -41,6 +43,42 @@ FORM = {"level": "", "yoy_pct": "förändring mot året före", "qoq_pct": "för
 ORGANIC = {"organic": "organisk", "cc": "fast valuta", "reported": "rapporterad", "unspecified": "bas ej angiven",
            "na": ""}
 UNIT = {"MUSD": "MUSD", "pct": "%", "ratio": "kvot", "GW": "GW", "MW": "MW"}
+
+
+# Series notes after review R19 (correction track X16, 2026-11-25). Swedish, like the rest of the catalog text.
+GEV_NEW = "ob_gev_orders_new_contracts_gas_power_equipment_q_level_gw"
+GEV_CONVERTED = "ob_gev_orders_converted_gas_power_equipment_q_level_gw"
+_GEV_INTAKE = (f"Kvartalets orderingång i GW är summan av {GEV_NEW} och {GEV_CONVERTED}. Den bildas inte som "
+               "serie. Orderstocken i GW går ihop med båda: förra kvartalets orderstock + order + konverteringar − "
+               "levererade GW (som inte kodas) = orderstocken, inom 1 GW. 2025Q1 ('gas turbine orders') har en annan "
+               "uppställning och skarvas inte (registret 2026-11-25, rättning efter R19).")
+EXTRA_NOTES = {
+    GEV_NEW: "Bara ordren bland kvartalets nya kontrakt. Reservationer som blev order i kvartalet ingår inte. "
+             + _GEV_INTAKE,
+    GEV_CONVERTED: "Reservationer av leveransplatser som blev order i kvartalet. " + _GEV_INTAKE,
+}
+DLR_SHARE_NOTE = (
+    "Vilken andel totalen gäller anges inte i pressmeddelandena före 2025. Andelen står i texten från 2025Q1 och i "
+    "tabellen från 2025Q3. Tidigare kvartal kodas som Digital Realtys andel (tolkning 9). Belägg: tabellens summa "
+    "2025Q1 och 2025Q2 är lika med textens tal vid Digital Realtys andel, och tilläggsmaterialets tolvmånaderssummor "
+    "från 2025Q1 lägger ihop 2024Q2–2024Q4 som de rapporterades. För 2021Q4–2024Q1 är andelen obelagd: fotnoten till "
+    "ett närliggande mått bytte behandling av samägda bolag 2023Q1 och 2024Q1. Pröva inte serien som kärnserie innan "
+    "basen är belagd (granskning R19, F-4).")
+ETN_SCOPE_NOTE = (
+    "Omfattning: tillväxten anges utan bas, alltså inte som organisk. Pressmeddelandet säger inte om köpta bolags "
+    "orderstock "
+    "ingår. Fibrebond (köpt 2025-04-01) redovisas i Electrical Americas och Boyd Thermal (köpt 2026-03-12) i "
+    "Electrical Global. Från 2026Q1 heter talet 'total backlog' (granskning R19, N-5).")
+
+
+def _extra_note(key: str, d: dict) -> str:
+    if key in EXTRA_NOTES:
+        return EXTRA_NOTES[key] + " "
+    if d["company"] == "dlr" and d["measure"] == "leases_signed" and d["component"] == "dlr_share":
+        return DLR_SHARE_NOTE + " "
+    if d["company"] == "etn" and d["measure"] == "backlog" and d["organic"] == "unspecified":
+        return ETN_SCOPE_NOTE + " "
+    return ""
 
 
 def _label(d: dict) -> str:
@@ -74,7 +112,8 @@ def _specs() -> tuple[list[Spec], dict[str, dict[str, str]]]:
         def fetch(k=key):
             return ob.series_frame(ob.load(), k)
 
-        note = (f"Bolagets ord: {stated}. Talen som de står i pressmeddelandet, daterade med 8-K:ns inlämningsdag. "
+        note = (f"Bolagets ord: {stated}. " + _extra_note(key, d)
+                + "Talen som de står i pressmeddelandet, daterade med 8-K:ns inlämningsdag. "
                 "Andra definitioner (organiskt eller inte, kvartal eller tolv månader, procent eller nivå) är egna "
                 "serier och skarvas inte. Agentextraherat, stickprov med python -m ai_tracker.orders_check. Se "
                 "docs/kallor/order_orderstock.md. "

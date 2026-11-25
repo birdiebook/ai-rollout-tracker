@@ -200,10 +200,10 @@ Talen räknar meningar med upprepningar. GE Vernova har 19 jämförelsetal ur se
 (12 första gången för 2023, 6 revideringar och ett "från 50 GW"). 15 upprepade jämförelsetal kodades inte, eftersom
 talet var detsamma som i det första dokumentet. 19 värden har `approx` och räknas som punkter.
 
-**Utanför läsmängden** kodades 4 rader, alla Dell: tre ur 2024-08-29 #14 ("AI-optimized server demand was $3.2
-billion, up 23% sequentially, and $5.8 billion year to date", ordet är "demand") och en ur 2025-08-28 #3 ("shipped $10
-billion of AI solutions in the first half of FY26", inget mått-ord). De hittades när agenten sökte efter "AI" och
-belopp i Dells pressmeddelanden.
+**Utanför läsmängden** kodades 4 rader, alla Dell: tre ur 2024-08-29 #14 (efterfrågan på AI-servrar i kvartalet, i
+USD och som tillväxt mot kvartalet före, och hittills i året; ordet är "demand") och en ur 2025-08-28 #3 (leveranser av
+"AI solutions" under första halvåret av FY26, inget mått-ord). De hittades när agenten sökte efter "AI" och belopp i
+Dells pressmeddelanden. Citaten är ersatta med egna ord efter R19 (F-3).
 
 **Läsning av långa meningar.** En tabell blir en lång "mening". För meningar över 700 tecken läste agenten fönster
 på 150–220 tecken runt varje mått-ord med en siffra i närheten. För Eaton bestämdes segmentet av blocket meningen står
@@ -238,7 +238,8 @@ Tolkningar som behövdes under kodningen. Reglerna ovan är oförändrade.
    delsegment i USD och kodas inte. Alla GW-rader har komponenten `equipment` (gasturbiner). Orderstocken för
    Electrification står i en punkt under segmentets rubrik utan segmentets namn, och noten säger det. Orderstocken från
    2026Q1 innehåller det köpta Prolec GE, och noten säger det. Det är samma definition med ny omfattning, inte en ny
-   serie (regeln om ny ordalydelse).
+   serie (regeln om ny ordalydelse). *Rättat efter R19 (F-1):* konverterade reservationer är order och kodas från
+   2025Q2, och ordren bland nya kontrakt har ett eget mått. Se avsnittet "Rättning efter granskning R19".
 7. **Eaton.** "Flat" är ett ord och kodas inte. Därför står ett stopp för Electrical Globals organiska order i 2025Q1.
    Ordertillväxten "excluding one large multi-year data center order" (2025Q1) kodas inte (en egen justering). Tal för
    hela bolaget ("23% Backlog Growth", "The company's backlog was up 18%") och book-to-bill för Electrical och
@@ -255,7 +256,8 @@ Tolkningar som behövdes under kodningen. Reglerna ovan är oförändrade.
    rad och samma mening från 2025Q1 (texten) och 2025Q3 (tabellen) heter "at Digital Realty's share". Talen vid 100 %
    andel (från 2025Q2) är en egen serie (`all`). Detta är den viktigaste tolkningen att granska. Kategorin "0–1
    megawatt plus interconnection" kodas inte, eftersom båda delarna kodas var för sig. "FY backlog cash NOI" i
-   NAV-tabellen är ett annat mått och kodas inte.
+   NAV-tabellen är ett annat mått och kodas inte. *Efter R19 (F-4):* andelen anges inte före 2025, och noterna för
+   de åtta serierna säger det. Beläggen står i avsnittet "Rättning efter granskning R19".
 10. **Datumraden.** Eatons pressmeddelande 2026-02-03 är daterat "February 26, 2026", alltså efter inlämningen. Det är
     ett skrivfel. `release_date` är tom och known_from är inlämningsdagen.
 11. **Avslutad serie.** En gräns ("more than 100%") efter ett stopp öppnar inte serien igen, eftersom en gräns inte är
@@ -331,3 +333,39 @@ konverteringarna står. Inga andra bilagor lästes.
   2025Q2, enligt stoppregeln.
 - Kvartalets orderingång i GW är `orders_new_contracts` + `orders_converted`. Den blir ingen egen serie.
 - Nya reservationer, summan av nya kontrakt och levererade GW kodas inte (tolkning 6 gäller för dem).
+
+### Utfall (efter omkodningen)
+
+- **R-1 (F-1).** Sex rader bytte mått från `orders` till `orders_new_contracts` (2025Q2–2026Q3: 2, 1, 3, 2, 2 och 3
+  GW). Sex nya rader har `orders_converted` (3, 7, 8, 6, 10 och 13 GW), ur samma mening som orderstocken. Raden för
+  2025Q1 ("gas turbine orders", 7 GW) behåller `orders`, och stoppet står i pressmeddelandet 2025-07-23. Kvartalets
+  orderingång i GW, summan av de två måtten, är 5, 8, 11, 8, 12 och 16 GW. Det är samma tal som R19 räknade fram.
+  Orderstocken går ihop inom 1 GW i alla sex kvartal (test). `orders_check` mot nyhämtade bilagor gav 35 rätt av 35
+  GW-rader. Stoppet gav ingen träff.
+- **R-2 (F-2).** En period där bara en gräns anges har nu luckorsaken "only a bound is stated". Det gäller Eatons
+  book-to-bill för Electrical 2023Q3, 2023Q4, 2025Q1 och 2025Q2. Efter ett stopp står stoppet kvar och gränsen läggs
+  till. Inga andra luckorsaker ändrades.
+- **R-3 (F-3).** De två citaten ur Dells pressmeddelanden är ersatta med egna ord. Det längsta citatet i dokumentet
+  har nu tio ord.
+- **R-4 (F-4).** Noten för de åtta serierna med `dlr_share` säger att andelen inte anges före 2025 och ger beläggen.
+  X16 kontrollerade beläggen i de sparade bilagorna:
+  - Fotnoten till "Estimated cash NOI related to signed leases" säger "Includes" till och med 2022Q4, "Excludes"
+    2023Q1–2023Q4 och "Includes" från 2024Q1. Det är samma byte som R19 såg.
+  - Tilläggsmaterialets tabell "Summary of Leasing Activity" (0–1 MW, över 1 MW och övrigt) har samma kvartalstal som
+    CSV:n i alla 17 kvartal 2021Q4–2025Q4. Från 2023Q4 är tabellens tolvmånaderssumma lika med summan av de fyra
+    kvartalen som de först angavs, inom 0,3 MUSD. Sedan 2025Q1 anger texten Digital Realtys andel, och summorna
+    2025Q1–2025Q3 innehåller 2024Q2–2024Q4. Det talar för samma bas för de kvartalen.
+  - Före 2023Q4 skiljer summorna upp till 49 MUSD från kvartalen (över 1 MW i 2022Q3). I 2022Q3 är summan för övrigt
+    mindre än kvartalet självt. Summorna före 2023Q4 är därför inget belägg, varken för eller emot. För 2021Q4–2024Q1
+    är andelen obelagd. Det kräver 10-Q och 10-K, som inte ingår i korpusen.
+- **Anmärkningar.** N-5: noten för Eatons tre orderstockserier utan bas och sju rader i CSV:n nämner Fibrebond (köpt
+  2025-04-01, Electrical Americas) och Boyd Thermal (köpt 2026-03-12, Electrical Global). Pressmeddelandet säger inte om
+  deras orderstock ingår. N-7: fotnoten om en ersatt hyra på 8 MW 2023Q2 står i noten för fyra rader. Den höjer hyran
+  men inte kapaciteten. N-1–N-4, N-6 och N-8 kräver ingen ändring. Skriptet för omkodningen är inte committat, liksom
+  S3:s (N-6). CSV:n och testerna bär allt.
+- **Antal efter rättningen:** 581 värden (10 gränser), 43 stopp, 73 definitioner och 62 katalogserier. GE Vernova har
+  203 värden, 2 stopp, 29 definitioner och 27 katalogserier.
+- **Effekt på serierna** (`python -m ai_tracker.observations` för alla 62 nycklar i X16:s arbetsyta, jämfört med S3:s
+  tabell): de 60 gemensamma serierna har samma perioder, värden och known_from.
+  `ob_gev_orders_gas_power_equipment_q_level_gw` (7 rader) finns inte längre. De två nya GW-serierna har 6 rader var.
+  Tabellen har 564 rader för `ob_`, mot S3:s 559.

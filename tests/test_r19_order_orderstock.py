@@ -7,7 +7,9 @@ acceptanceDateTime). Only ids, numbers, dates and SHA-256 prefixes are kept here
 - Pinned rows: the 65 rows of the stratified sample (58 drawn with seed 2026112519, 7 added for metric types the draw
   missed), as read by R19, plus a digest of the 610 reviewed rows outside the gas turbine GW flows (finding F-1).
 - Properties: table sums, complete quarters, GW stocks, dating, closed Vertiv series, no core series, short wording.
-- Findings F-1 to F-4 are strict xfail until corrected.
+- Findings F-1 to F-4 were strict xfail until corrected. Correction track X16 (register 2026-11-25) fixed them: the
+  markers are removed and the assertions are unchanged. After F-1 the GW orders of 2025Q2- have the measure
+  orders_new_contracts, so three references to that measure and the catalog count below follow the fix (marked X16).
 """
 
 from __future__ import annotations
@@ -166,7 +168,7 @@ SAMPLE = {
                           "1.4", "2024-06-30", "2024-07-24"),
     "gev-2026-07-22-17": ("10b622b9379ed96d", "slot_reservations/gas_power/equipment/end/level/na/GW",
                           "63", "2026-06-30", "2026-07-22"),
-    "gev-2026-07-22-15": ("ce0750a73da3f999", "orders/gas_power/equipment/q/level/na/GW",
+    "gev-2026-07-22-15": ("ce0750a73da3f999", "orders_new_contracts/gas_power/equipment/q/level/na/GW",  # X16
                           "2", "2026-06-30", "2026-07-22"),
     "gev-2026-07-22-16": ("10b622b9379ed96d", "backlog/gas_power/equipment/end/level/na/GW",
                           "53", "2026-06-30", "2026-07-22"),
@@ -193,7 +195,8 @@ def test_sample_covers_every_company_and_metric_type():
     companies = {rid.split("-")[0] for rid in SAMPLE}
     measures = {(rid.split("-")[0], d.split("/")[0], d.split("/")[-1]) for rid, (_, d, *_) in SAMPLE.items()}
     assert companies == {"vrt", "gev", "etn", "dell", "dlr"}
-    for want in [("vrt", "book_to_bill", "ratio"), ("gev", "slot_reservations", "GW"), ("gev", "orders", "GW"),
+    for want in [("vrt", "book_to_bill", "ratio"), ("gev", "slot_reservations", "GW"),
+                 ("gev", "orders_new_contracts", "GW"),  # X16: the measure after F-1
                  ("dell", "shipments", "MUSD"), ("dlr", "signed_not_commenced", "MUSD"), ("dlr", "leases_signed", "MW")]:
         assert want in measures
 
@@ -255,7 +258,7 @@ def test_coded_gw_orders_exclude_the_conversions_from_slot_reservations(raw, pts
     got = raw.set_index("id")
     g = pts[(pts["company"] == "gev") & (pts["unit"] == "GW")]
     backlog = g[g["measure"] == "backlog"].set_index("period")["value"]
-    orders = g[g["measure"] == "orders"].set_index("period")["value"]
+    orders = g[g["measure"] == "orders_new_contracts"].set_index("period")["value"]  # X16: measure after F-1
     for per, (rid, sha, converted, shipped) in GW_FLOWS.items():
         assert got.loc[rid].sentence_sha256.startswith(sha)
         prev = str(pd.Period(per, "Q") - 1)
@@ -304,19 +307,16 @@ def test_catalog_series_stay_unpublished_until_the_corrections():
     from ai_tracker import catalog
 
     specs = [s for s in catalog.ALL if s.key.startswith("ob_")]
-    assert len(specs) == 61 and not any(s.publish for s in specs)
+    assert len(specs) == 62 and not any(s.publish for s in specs)  # X16: F-1 drops one key and adds two
 
 
-# ------------------------------------------------------------------ findings (strict xfail until corrected)
+# ------------------------------------------------------------------ findings (strict xfail until corrected by X16)
 
-@pytest.mark.xfail(strict=True, reason="F-1: 2025Q1 'gas turbine orders' and 2025Q2- 'orders' among new contracts "
-                                       "(conversions excluded) are spliced into one series")
 def test_gas_turbine_orders_wording_change_is_split(df):
     rows = df.set_index("id")
     assert ob.series_key(rows.loc["gev-2025-04-23-15"]) != ob.series_key(rows.loc["gev-2025-07-23-15"])
 
 
-@pytest.mark.xfail(strict=True, reason="F-2: the gap reason says 'not stated' for quarters that state a bound")
 def test_gap_reason_names_the_bound():
     from ai_tracker.series import orders_backlog as series
 
@@ -325,15 +325,12 @@ def test_gap_reason_names_the_bound():
     assert not any(gaps[p].startswith("not stated") for p in ("2023Q3", "2023Q4", "2025Q1", "2025Q2"))
 
 
-@pytest.mark.xfail(strict=True, reason="F-3: the source doc quotes whole sentences (15 and 12 words)")
 def test_source_doc_has_no_long_quotes():
     text = re.sub(r"\n\s*", " ", SOURCE_DOC.read_text(encoding="utf-8"))
     quotes = [q for q in re.findall(r'"([^"]{3,300}?)"', text) if not re.search(r"[åäöÅÄÖ]", q)]
     assert max(len(q.split()) for q in quotes) < 11
 
 
-@pytest.mark.xfail(strict=True, reason="F-4: the Digital Realty share before 2025 is an unverified interpretation, "
-                                       "and the series note does not say so")
 def test_dlr_share_note_says_the_share_is_not_stated_before_2025():
     from ai_tracker.series import orders_backlog as series
 

@@ -14,6 +14,11 @@ Row types:
 
 A definition is (company, measure, segment, component, window, form, organic, unit). Different definitions are
 different series; nothing is converted or spliced. known_from = `filed` (EDGAR filingDate).
+
+GE Vernova's gas turbine orders in GW (register 2026-11-25, correction X16 after review R19, finding F-1): 'orders'
+in GW is the 2025Q1 figure ("gas turbine orders") only. From 2025Q2 the release states the orders among the quarter's
+new contracts (orders_new_contracts) and, apart from them, the slot reservations converted to orders
+(orders_converted). The quarter's GW order intake is their sum; it is not formed as a series.
 """
 
 from __future__ import annotations
@@ -39,7 +44,8 @@ COMPANIES = {"vrt": "Vertiv", "gev": "GE Vernova", "etn": "Eaton", "dell": "Dell
 BRANCH = {"vrt": "G7", "gev": "G7", "etn": "G7", "dell": "G6", "dlr": "G4", "eqix": "G4"}
 ROW_TYPES = ("value", "stop")
 STOCKS = ("backlog", "signed_not_commenced", "slot_reservations", "backlog_and_slot_reservations")
-FLOWS = ("orders", "book_to_bill", "shipments", "sales", "leases_signed", "bookings")
+FLOWS = ("orders", "book_to_bill", "shipments", "sales", "leases_signed", "bookings", "orders_new_contracts",
+         "orders_converted")
 MEASURES = STOCKS + FLOWS
 _ETN = ("electrical_americas", "electrical_global", "electrical")
 SEGMENTS = {
@@ -62,6 +68,10 @@ EXHIBITS = ("EX-99.1", "EX-99")
 FORM_TYPES = ("8-K", "8-K/A")
 EMPTY_SHA256 = hashlib.sha256(b"").hexdigest()  # a stop row (locator "absent")
 MAX_RELEASE_LEAD_DAYS = 3  # the dateline may precede the filing day by at most this many days
+# GE Vernova's GW orders from 2025Q2 (register 2026-11-25, X16 after R19): orders among new contracts and conversions
+GEV_GW_ORDER_MEASURES = ("orders_new_contracts", "orders_converted")
+GEV_GW_DEFINITION = ("gev", "gas_power", "equipment", "q", "level", "na", "GW")  # company, segment, ..., unit
+GEV_GW_NEW_FRAME = "2025-06-30"  # first period_end of the new frame (2025Q2); 'orders' in GW is valid before it only
 MIDPOINT_DAYS = 45  # fiscal quarter -> calendar quarter containing its midpoint (sources/sec.py)
 FY_MIDPOINT_DAYS = 182
 
@@ -106,6 +116,13 @@ def _check_row(r: dict) -> None:
         raise CsvError("window end is for stocks (backlog, signed-not-commenced, reservations) and only for them")
     if r["component"] == "dlr_share" and r["company"] != "dlr":
         raise CsvError("component dlr_share is Digital Realty's")
+    gw = tuple(r[c] for c in ("company", "segment", "component", "window", "form", "organic", "unit"))
+    if measure in GEV_GW_ORDER_MEASURES and gw != GEV_GW_DEFINITION:
+        raise CsvError(f"{measure} is GE Vernova's quarterly gas turbine GW orders and only that")
+    if (r["row_type"] == "value" and (r["company"], measure, unit) == ("gev", "orders", "GW")
+            and r["period_end"] >= GEV_GW_NEW_FRAME):
+        raise CsvError("GE Vernova's GW orders from 2025Q2 are orders_new_contracts or orders_converted "
+                       "(register 2026-11-25, X16 after R19)")
     if not re.fullmatch(r"[0-9a-f]{64}", r["sentence_sha256"]):
         raise CsvError("sentence_sha256 must be 64 hex characters")
     if not r["source_url"].startswith("https://www.sec.gov/Archives/edgar/data/"):
@@ -312,24 +329,37 @@ def expected_stops(df: pd.DataFrame, regular: dict[str, list[str]] | None = None
     return pd.DataFrame(out, columns=["company", "key", "accession"])
 
 
+GAP_STOP = "stop: the company stopped stating the figure (curated/orders_backlog.csv)"
+GAP_BOUND = "only a bound is stated (qualifier gt or lt in curated/orders_backlog.csv), not a series point"
+GAP_NONE = "not stated in any results release in the corpus"
+
+
 def gap_periods(df: pd.DataFrame, key: str) -> dict[str, str]:
-    """Missing periods within a series' span -> why (a stop covers it, or no release in the corpus states it)."""
+    """Missing periods within a series' span -> why: a stop covers it, only a bound is stated, or nothing is stated.
+
+    A period with a bound ("over 1.1") is stated, but not as a point (review R19, finding F-2). After a stop the
+    reason keeps the stop and adds the bound.
+    """
     f = series_frame(df, key)
     if f.empty:
         return {}
-    window = definition_rows(df, key)["window"].iloc[0]
+    rows = definition_rows(df, key)
+    window = rows["window"].iloc[0]
     freq = "Y-DEC" if window == "fy" else "Q-DEC"
     have = set(f["period"])
     idx = pd.period_range(min(have), max(have), freq=freq)
-    stops = definition_rows(df, key)
-    stops = stops[stops["row_type"] == "stop"]
+    stops = rows[rows["row_type"] == "stop"]
     stop_periods = sorted(period_of(e, window) for e in stops["period_end"])
+    bounds = rows[(rows["row_type"] == "value") & ~rows["qualifier"].isin(POINT_QUALIFIERS)]
+    bound_periods = {period_of(e, window) for e in bounds["period_end"]}
     out = {}
     for p in idx:
         s = str(p)
         if s in have:
             continue
-        after_stop = [sp for sp in stop_periods if sp <= s]
-        out[s] = ("stop: the company stopped stating the figure (curated/orders_backlog.csv)" if after_stop
-                  else "not stated in any results release in the corpus")
+        after_stop = any(sp <= s for sp in stop_periods)
+        if after_stop:
+            out[s] = GAP_STOP + ("; only a bound is stated for this period" if s in bound_periods else "")
+        else:
+            out[s] = GAP_BOUND if s in bound_periods else GAP_NONE
     return out
