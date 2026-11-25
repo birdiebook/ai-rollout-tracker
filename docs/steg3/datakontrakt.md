@@ -496,5 +496,7 @@ mekaniskt utslag per lager och per yttre bolag: talar för mekanismen, talar emo
 mönstren eller kan inte avgöras. Visa alltid talen bredvid utslaget, eftersom gränserna är fasta. En negativ förändring i
 takt betyder att tillväxten avtar, inte att capex minskar. Förbehåll: 8–12 kvartal per mått, så det är en beskrivning
 och inget test. RPO är klumpig. Neomolnens serier börjar 2024, så yttre lagrets förändring i takt finns först med
-2026Q4. Labbens och Metas belopp är tabellrader ur inlämningarna, inte serier. Lägg aldrig till larmnivåer eller en
+2026Q4. Labbens (Anthropic och SpaceX, som äger xAI) och Metas belopp är tabellrader ur inlämningarna, inte serier.
+SpaceX:s skuld gäller hela koncernen. Regeln läser bara uppgång i pris och beroende, och rapporten anger hur ofta A har
+gällt. Microsofts effektiva ränta innehåller ränta på finansiell leasing. Lägg aldrig till larmnivåer eller en
 sammanvägd siffra.

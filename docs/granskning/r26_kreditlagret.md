@@ -254,3 +254,31 @@ De 11 xfail är R26:s nio fynd och två äldre. Båda felen är kända och komme
 `tests/test_r26_kreditlagret.py`: 17 passerade och 9 strikta xfail. Med `--runxfail` faller vart och ett av de nio på
 just det fynd som testet gäller.
 
+## Rättat i auto15/x23-kreditlagret
+
+Rättningsspår X23, 2026-11-25. Registerposten "2026-11-25 – X23" committades före koden och före hämtningen av SpaceX:s
+dokument (`599b24e`). Alla nio fynd är verifierade mot de cachade dokumenten och rättade. De nio strikta xfail i
+`tests/test_r26_kreditlagret.py` är vanliga tester, och de 394 fastlåsta raderna är oförändrade.
+
+| Fynd | Rättning |
+|---|---|
+| R26-1 | `earliest` kräver samma balansdag i det tidigare dokumentet (`stated_dates`). De fem raderna har S-1/A `0001628280-26-068676`, `filed` 2026-11-02. Inga andra rader flyttades |
+| R26-2 | 1 750 MUSD ur 8-K:n `0001769628-26-000183`, rad #38, `filed` 2026-04-21. Skrivfelet i 8-K:n 2026-04-14 står i noten. Källdokumentet är rättat |
+| R26-3 | SpaceX (CIK 1181412) som tabellrader ur 10-Q 2026-08-04 och 2026-10-22: 44 rader, med xAI:s lån före köpet och Valors sale-leaseback. Rapportens avsnitt 5 och förbehållen nämner SpaceX och xAI |
+| R26-4 | `curated/kreditlagret_skipped.csv`: 753 okodade kandidater, 131 med agentens skäl och 622 med en regelkategori. Metas 2026Q1 och 2026Q2 kodade, och Anthropics åtaganden till SpaceXAI, Nscale och Lambda |
+| R26-5 | Raden i avsnitt 1 visar konvertiblernas andel (22,7 %) och räntan utan dem (10,4 % och 9,5 %) |
+| R26-6 | Förbehåll i avsnitt 1, avsnitt 7 och källdokumentet: 2 547 av 3 051 MUSD är ränta på finansiell leasing. Microsoft står kvar i det inre lagrets ränta |
+| R26-7 | En mening i resultatdokumentet och i rapporten: läsningarna är gjorda på sedda kvartal, den första på osedda kommer med Oracle omkring 2026-12-11 |
+| R26-8 | Avsnitt 4 säger att regeln bara läser uppgång och hur ofta A har gällt per enhet (Oracle 44 av 58 kvartal 2012Q2–2026Q3, 28 av 35 sedan 2018Q1 som R26). Regeln är oförändrad |
+| R26-9 | Kupongen för Googles och Amazons ramar gäller lån före noteringen, DDTL 2.0:s marginal står med förbehåll och den nya tranchens 425 bp. Metas rubrik har bara namnen i inlämningarna |
+
+Anmärkningarna (N-1): filtret mot konvertibler går på kodningen, och "(JSON)" mot Atom står i tillägget. `issue_date`
+för ramar och de konservativt sena datumen står i källdokumentet. JSON-skillnaden vid kapning och grenen på origin är
+inte ändrade.
+
+Självkontrollen mot nyhämtade dokument stoppades av HTTP 429 från SEC, enligt regeln. Mot de cachade kopiorna gav den
+458 av 458 rader ok. De 58 nya och de 6 ändrade raderna lästes för hand av spåret och behöver en egen granskning.
+
+Testsviten efter rättningen, en gång (9:28 min): **2 329 passerade, 2 fel, 1 överhoppad, 2 xfail** (de två äldre).
+Felen är de kända: `test_data_quality` för körning 14:s serier i den delade basen (ingen `kl_`-serie) och fixturens
+SHA-256 för registret. `tests/test_kreditlagret.py` och `tests/test_r26_kreditlagret.py`: 86 passerade.

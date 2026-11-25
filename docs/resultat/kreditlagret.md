@@ -9,7 +9,13 @@ byggs med
     python -m ai_tracker.followed kreditlagret --as-of 2026-11-25 [--json PATH] [--out PATH]
 
 Den använder bara rader som var kända på dagen. Nedan står rapporten per 2026-11-25 och per 2025-11-25, så att
-ändringen över ett år syns. Rapporterna är genererade av kommandot och inte redigerade.
+ändringen över ett år syns. Rapporterna är genererade av kommandot och inte redigerade. Rättade efter granskningen R26
+(spår X23, registret 2026-11-25 X23): dateringen av fem rader från Anthropic, CoreWeaves obligation 2031, SpaceX (xAI)
+i labbdelen, listan över okodade kandidater och förbehållen nedan.
+
+**Läsningarna är gjorda på sedda data.** Alla kvartal i båda läsningarna var kända före registerposten 2026-11-25, och
+flera av dem var sedda före posten (posten, avsnitt (e)). Utslagen är därför inga utfall på osedda data. Den första
+läsningen på osedda kvartal kommer med inlämningar efter 2026-11-25, för Oracle omkring 2026-12-11.
 
 ## Vad som skiljer de två dagarna (beskrivning, inget test)
 
@@ -17,15 +23,25 @@ Den använder bara rader som var kända på dagen. Nedan står rapporten per 202
   mekanismen" per 2026-11-25. Beroendet steg vid *t* − 2 båda åren. Skillnaden är capex-takten: förändringen i takt
   var +33,5 per 2025Q3 och −15,8 per 2026Q3, medan det inre lagret låg på +2,0 och +9,6. Oracles capex växer
   fortfarande med cirka 100 log-punkter per år. Det som föll är tillväxten.
+- **Regeln läser bara uppgång.** A kräver att pris eller beroende stiger med minst gränsen. För Oracle gällde A i 44
+  av 58 kvartal med minst en takt (2012Q2–2026Q3). Oracles utslag avgörs därför i praktiken av capex-takten. Ett fall i
+  pris och beroende följt av högre capex-takt ger "inget av mönstren". En regel åt båda hållen kräver en ny post.
 - **CoreWeave** ger "talar emot (1)" per 2026-11-25: tecknade leasingavtal steg mot capex vid 2026Q1, och capex-takten
   steg efter det (+35,7). Per 2025-11-25 fanns inga fyra kvartal kända.
 - **Yttre lagret som helhet** kan inte avgöras ännu. IREN:s capex finns från 2024Q3, så aggregatets förändring i takt
   finns först med 2026Q4 (inlämningarna i februari 2027). Nebius gav "inget av mönstren".
 - **Inre lagret:** (capex − OCF) / capex gick från −62,8 % till −10,0 % och nettoemission från 1,6 % till 43,8 % av
-  capex. Capex-takten ökade (förändring i takt +9,6).
+  capex. Capex-takten ökade (förändring i takt +9,6). Microsofts effektiva ränta (8,2 %) innehåller ränta på finansiell
+  leasing och är inte priset på skuld. Det gäller också inre lagrets ränta.
+- **CoreWeaves vägda ränta** föll från 10,4 % till 7,9 %. Utan konvertibler föll den från 10,4 % till 9,5 %.
+  Konvertiblerna, med 2–3 % ränta, är 22,7 % av utestående. Det mesta av fallet är alltså mixen.
 - **Nytt i underlaget:** Anthropics S-1 (2026-10-26) med en säkerställd kreditfacilitet på 15 mdr, konvertibelramar
   och åtaganden, CoreWeaves nya obligationer och lånefaciliteter, och Metas datacenterbolag (största möjliga förlust
   från 46,0 till 68,4 mdr).
+- **SpaceX (xAI)** ingår nu som tabellrader: 38,0 mdr i total skuld per 2026-09-30 för hela koncernen. Av det är
+  25,0 mdr obligationer från 2026-06 med 6,07 % effektiv ränta, och 12,9 mdr misslyckade sale-leaseback av AI-hårdvara
+  med Valor, som är närstående. xAI:s egna lån före köpet hade 12,5 % ränta. Anthropic har åtaganden på upp till
+  120,5 mdr till SpaceXAI.
 - Varje mönster kan vara slump. Med 8–12 kvartal per mått och klumpig RPO är detta en beskrivning.
 
 ## Kreditlagret per 2026-11-25
@@ -36,7 +52,7 @@ Yttre lagret: Oracle, CoreWeave, Nebius och IREN, och labben som tabellrader. In
 
 ### 1. Pris på skuld
 
-Effektiv ränta = räntekostnad över fyra kvartal / genomsnittlig långfristig skuld (efter aktiverad ränta, så den blir lägre hos bolag som bygger mycket).
+Effektiv ränta = räntekostnad över fyra kvartal / genomsnittlig långfristig skuld (efter aktiverad ränta, så den blir lägre hos bolag som bygger mycket). Microsofts räntekostnad innehåller ränta på finansiell leasing, men nämnaren är bara skulden. Microsofts tal, och därmed inre lagrets, är alltså ränta på skuld och leasing tillsammans och inte priset på skuld.
 
 | Vem | Nivå | Takt | Förändring i takt | Överraskning (B1) | Senaste kvartal | known_from | Serie |
 |---|---|---|---|---|---|---|---|
@@ -49,7 +65,7 @@ Effektiv ränta = räntekostnad över fyra kvartal / genomsnittlig långfristig 
 | Amazon | 3,8 % | +0,1 | +0,9 | +0,3 | 2026Q3 | 2026-10-30 | `kl_rate_eff_amzn` |
 | Meta | 4,6 % | +1,5 | – | +1,3 | 2026Q3 | 2026-10-22 | `kl_rate_eff_meta` |
 
-CoreWeave, angiven effektiv ränta på utestående skuld (vägd, hela procent i tabellen): **7,9 %** vid 2026Q3 (täckning 100 % av utestående, known_from 2026-11-12, `kl_coupon_out_crwv_q`). Takt: -2,5 procentenheter, förändring i takt +0,6.
+CoreWeave, angiven effektiv ränta på utestående skuld (vägd, hela procent i tabellen): **7,9 %** vid 2026Q3 (täckning 100 % av utestående, known_from 2026-11-12, `kl_coupon_out_crwv_q`). Takt: -2,5 procentenheter, förändring i takt +0,6. Konvertibler (angiven ränta 2–3 %) är 22,7 % av utestående. Utan konvertibler: 9,5 % vid 2026Q3 och 10,4 % vid 2025Q3. Med konvertibler: 7,9 % och 10,4 %. Skillnaden visar hur mycket mixen med konvertibler betyder.
 
 Spread vid emission (KR1, registrerade obligationer, bp; oregelbundet, ingår inte i läsregeln):
 
@@ -169,38 +185,55 @@ Spread vid emission (KR1, registrerade obligationer, bp; oregelbundet, ingår in
 
 Gränser (låsta): A = vid t − 2 har den effektiva räntan en takt ≥ +0,25 procentenheter eller ett beroendemått ≥ +5. Capex-takten föll om förändringen i takt ≤ -5. Lika fall: inre ≤ 0,5 × yttre. En negativ förändring i takt betyder att tillväxten avtar, inte att capex minskar. Utslaget är en beskrivning, inget test.
 
+Regeln läser bara uppgång i pris och beroende: A kräver en takt på minst gränsen. Ett fall i pris och beroende följt av högre capex-takt blir "inget av mönstren". Hur ofta A har gällt står under varje utslag. När A nästan alltid gäller, avgörs utslaget i praktiken av capex-takten. En regel som läser båda riktningarna kräver en ny daterad registerpost.
+
+Alla kvartal i den här läsningen var kända före registerposten 2026-11-25, och flera av dem var sedda före posten (posten, avsnitt (e)). Läsningen är därför inget utfall på osedda data. Den första läsningen på osedda kvartal kommer med inlämningar efter 2026-11-25, för Oracle omkring 2026-12-11.
+
 - **Yttre lagret (huvudläsning):** kan inte avgöras (ett mått som regeln behöver saknas). t = 2026Q3; A = True (takt vid 2026Q1: rate_eff –, fcfgap –, netdebt +3,4, leases +172,1); förändring i capex-takt yttre –, inre +9,6 (2026Q3).
+  A har gällt i 4 av 4 kvartal med minst en takt (2025Q4–2026Q3).
   Saknas: kl_rate_eff_outer (takt vid 2026Q1); kl_fcfgap_outer (takt vid 2026Q1); kl_capex4_outer (förändring i takt vid 2026Q3).
 - **Oracle mot inre lagret:** talar för mekanismen (pris eller beroende steg först, sedan föll takten i yttre lagret medan det inre höll). t = 2026Q3; A = True (takt vid 2026Q1: rate_eff -0,2, fcfgap +90,2, netdebt +9,7, leases +216,8); förändring i capex-takt yttre -15,8, inre +9,6 (2026Q3).
+  A har gällt i 44 av 58 kvartal med minst en takt (2012Q2–2026Q3).
 - **CoreWeave mot inre lagret:** talar emot (1): pris eller beroende steg, men takten i yttre lagret höll eller steg. t = 2026Q3; A = True (takt vid 2026Q1: rate_eff –, fcfgap -26,8, netdebt -12,5, leases +7,4); förändring i capex-takt yttre +35,7, inre +9,6 (2026Q3).
+  A har gällt i 2 av 4 kvartal med minst en takt (2025Q4–2026Q3).
 - **Nebius mot inre lagret:** inget av mönstren. t = 2026Q3; A = False (takt vid 2026Q1: fcfgap -77,7); förändring i capex-takt yttre +44,0, inre +9,6 (2026Q3).
+  A har gällt i 0 av 4 kvartal med minst en takt (2025Q4–2026Q3).
 - **IREN mot inre lagret:** kan inte avgöras (ett mått som regeln behöver saknas). t = 2026Q3; A = None (takt vid 2026Q1: fcfgap –); förändring i capex-takt yttre –, inre +9,6 (2026Q3).
+  A har gällt i 1 av 2 kvartal med minst en takt (2026Q2–2026Q3).
   Saknas: kl_fcfgap_iren (takt vid 2026Q1); kl_capex4_iren (förändring i takt vid 2026Q3).
 
 ### 5. Labben och utvecklar- och SPV-kanalen (tabellrader ur inlämningarna)
 
 - **Anthropic** (S-1 och ändringar, första 2026-10-26). Läge 2026-09-30:
   - säkerställd revolverande kreditfacilitet: 15,0 mdr (2026-09; known_from 2026-11-02)
-  - konvertibelram för hyra (Broadcom), PIK: 42,0 mdr (2026-09-30, kupong 9,00 %; known_from 2026-10-26)
-  - ram Google 2026: 20,0 mdr (2026-09-30, kupong 9,00 %; known_from 2026-10-26)
-  - ram Amazon 2026: 15,0 mdr (2026-09-30, kupong 8,00 %; known_from 2026-10-26)
-  - utestående konvertibla lån till Amazon: 6,2 mdr, räntefria (known_from 2026-10-26)
+  - konvertibelram för hyra (Broadcom), PIK: 42,0 mdr (2026-09-30, kupong 9,00 %; known_from 2026-11-02)
+  - ram Google 2026: 20,0 mdr (2026-09-30, kupong 9,00 % för lån före noteringen; efter noteringen ska villkoren avtalas; known_from 2026-11-02)
+  - ram Amazon 2026: 15,0 mdr (2026-09-30, kupong 8,00 % för lån före noteringen; efter noteringen regleras dragningar i aktier; known_from 2026-11-02)
+  - utestående konvertibla lån till Amazon: 6,2 mdr, räntefria (known_from 2026-11-02)
   - köpåtaganden i tabellen: 313,8 mdr (known_from 2026-11-02)
   - leasingavtal som inte börjat, cirka: 451,2 mdr (known_from 2026-11-02)
   - åtaganden totalt enligt bolaget, cirka: 900,9 mdr (known_from 2026-11-10)
   - köpåtaganden per år 2026–2030: 5,1 mdr, 28,4 mdr, 43,5 mdr, 46,9 mdr, 44,2 mdr
+  - åtaganden för beräkningskraft per motpart (avtalsmånad): Microsoft minst 47,2 mdr (2025-11), Google minst 121,3 mdr (2026-03), Amazon minst 110,0 mdr (2026-04), SpaceXAI (SpaceX) upp till 120,5 mdr (2026-05), Nscale upp till 44,6 mdr (2026-08), Lambda cirka 41,3 mdr (2026-05); known_from senast 2026-11-10
 - OpenAI: ingen registreringsansökan på EDGAR (sökning på namnet 2026-11-25: bara fonder och SPV med Form D).
-- **Meta, datacenterbolag med Blue Owl m.fl. (Hyperion och Texas)**, 2025-12-31: största möjliga förlust 46,0 mdr (known_from 2026-01-29)
-- **Meta, datacenterbolag med Blue Owl m.fl. (Hyperion och Texas)**, 2026-09-30: leasingåtaganden 18,5 mdr, restvärdesgarantier 41,5 mdr, största möjliga förlust 68,4 mdr (known_from 2026-10-22)
+- **SpaceX** (äger xAI sedan 2026-02-02; 10-Q). Skulden gäller hela koncernen: uppskjutning, Starlink och xAI. Läge 2026-09-30:
+  - total skuld 38,0 mdr; SpaceX Notes 25,0 mdr (effektiv ränta 6,07 %, vägd kupong 5,855 %, emitterade 2026-06); övrig finansiering 13,0 mdr (vägd fast ränta 6,3 %), varav misslyckade sale-leaseback av AI-hårdvara med Valor (närstående) 12,9 mdr; known_from 2026-10-22
+  - kreditfacilitet upp till 5,0 mdr (2026-05, utan säkerhet; known_from 2026-08-04)
+  - xAI:s egna lån före köpet (2025-06): säkerställda obligationer 3,0 mdr med 12,5 %, terminslån 1,0 mdr med 12,50 % och 1,0 mdr med SOFR + 725 bp; inte kvar i tabellen per 2026-09-30
+- **Meta, datacenterbolag** (Louisiana, med fonder förvaltade av Blue Owl; Texas från 2026-07). Per balansdag:
+  - 2025-12-31: största möjliga förlust 46,0 mdr (known_from 2026-01-29)
+  - 2026-03-31: största möjliga förlust 46,0 mdr (known_from 2026-04-30)
+  - 2026-06-30: största möjliga förlust 46,0 mdr (known_from 2026-07-30)
+  - 2026-09-30: leasingåtaganden 18,5 mdr, restvärdesgarantier 41,5 mdr, största möjliga förlust 68,4 mdr (known_from 2026-10-22)
 - Oracle: inga belopp för datacenter-SPV eller samriskbolag i 10-Q och 10-K 2025–2026.
 - **CoreWeave, nya obligationer** (8-K, senaste sex; konvertibler ingår inte i kupongmåttet):
-  - 2026-04-14: 2031 9 75 senior notes, 1,75 MUSD, kupong 9,750 % (known_from 2026-04-14) – beloppet som det står i 8-K, se noten i CSV:n
+  - 2026-04-14: 2031 9 75 senior notes, 1 750 MUSD, kupong 9,750 % (known_from 2026-04-21)
   - 2026-04-14: 2032 convertible senior notes, 4 000 MUSD, kupong 1,750 % (known_from 2026-04-14)
   - 2026-04-21: 2031 9 75 senior notes addon, 1 000 MUSD, kupong 9,750 % (known_from 2026-04-21)
   - 2026-06-18: 2032 9 625 senior notes, 1 250 MUSD, kupong 9,625 % (known_from 2026-06-18)
   - 2026-06-18: 2032 eur senior notes, 2 000 MEUR, kupong 8,500 % (known_from 2026-06-18)
   - 2026-09-22: 2033 convertible senior notes, 4 200 MUSD, kupong 2,875 % (known_from 2026-09-22)
-- CoreWeave, marginal över SOFR för lånefaciliteter (bp): ddtl 3 0 facility 400, ddtl 2 0 facility 1 300, ddtl 4 0 facility 225, ddtl 5 0 facility 450, ddtl 5 5 facility 550
+- CoreWeave, marginal över SOFR för lånefaciliteter (bp): ddtl 3 0 facility 400, ddtl 2 0 facility 1 300 (före femte tillägget och utan investment grade; med investment grade 600–650), ddtl 2 0 facility incremental 425, ddtl 4 0 facility 225, ddtl 5 0 facility 450, ddtl 5 5 facility 550
 
 ### 6. Att bevaka
 
@@ -222,8 +255,9 @@ Nästa inlämning per bolag, uppskattad som nästa kvartals slut plus medianen a
 - Med cirka 8–12 kvartal per mått är detta en beskrivning och inget test. Ett mönster kan vara slump.
 - RPO är klumpig: enstaka mycket stora avtal flyttar ett kvartal.
 - Neomolnens serier börjar 2024, så yttre lagrets takt och förändring i takt finns bara för de senaste kvartalen. Nebius och IREN saknar skuldserier och ingår bara i capex och (capex − OCF) / capex.
-- Den effektiva räntan är efter aktiverad ränta. CoreWeaves räntor i skuldtabellen står i hela procent.
-- Utanför ramen: privat kredit utanför EDGAR, labbens oregistrerade skuld, spreadar på andrahandsmarknaden (licens) och 144A-affärer utan 8-K. OpenAI har ingen registreringsansökan på EDGAR.
+- Den effektiva räntan är efter aktiverad ränta. Microsofts räntekostnad innehåller ränta på finansiell leasing. CoreWeaves räntor i skuldtabellen står i hela procent. Konvertiblerna sänker den vägda räntan (avsnitt 1).
+- Regeln läser bara uppgång i pris och beroende. Hur ofta A har gällt står i avsnitt 4.
+- Utanför ramen: privat kredit utanför EDGAR, labbens oregistrerade skuld, spreadar på andrahandsmarknaden (licens) och 144A-affärer utan 8-K. OpenAI har ingen registreringsansökan på EDGAR. SpaceX:s skuld gäller hela koncernen (uppskjutning, Starlink och xAI).
 - Nyhetsuppgifter om kreditbetyg (KBRA, Moody's) är sekundära och används inte som data.
 
 ## Kreditlagret per 2025-11-25
@@ -234,7 +268,7 @@ Yttre lagret: Oracle, CoreWeave, Nebius och IREN, och labben som tabellrader. In
 
 ### 1. Pris på skuld
 
-Effektiv ränta = räntekostnad över fyra kvartal / genomsnittlig långfristig skuld (efter aktiverad ränta, så den blir lägre hos bolag som bygger mycket).
+Effektiv ränta = räntekostnad över fyra kvartal / genomsnittlig långfristig skuld (efter aktiverad ränta, så den blir lägre hos bolag som bygger mycket). Microsofts räntekostnad innehåller ränta på finansiell leasing, men nämnaren är bara skulden. Microsofts tal, och därmed inre lagrets, är alltså ränta på skuld och leasing tillsammans och inte priset på skuld.
 
 | Vem | Nivå | Takt | Förändring i takt | Överraskning (B1) | Senaste kvartal | known_from | Serie |
 |---|---|---|---|---|---|---|---|
@@ -247,7 +281,7 @@ Effektiv ränta = räntekostnad över fyra kvartal / genomsnittlig långfristig 
 | Amazon | 3,8 % | -0,2 | +0,5 | +0,1 | 2025Q3 | 2025-10-31 | `kl_rate_eff_amzn` |
 | Meta | – | – | – | – | – | – | `kl_rate_eff_meta` |
 
-CoreWeave, angiven effektiv ränta på utestående skuld (vägd, hela procent i tabellen): **10,4 %** vid 2025Q3 (täckning 92 % av utestående, known_from 2025-11-13, `kl_coupon_out_crwv_q`). Takt: – procentenheter, förändring i takt –.
+CoreWeave, angiven effektiv ränta på utestående skuld (vägd, hela procent i tabellen): **10,4 %** vid 2025Q3 (täckning 92 % av utestående, known_from 2025-11-13, `kl_coupon_out_crwv_q`). Takt: – procentenheter, förändring i takt –. Inga konvertibler i skuldtabellen.
 
 Spread vid emission (KR1, registrerade obligationer, bp; oregelbundet, ingår inte i läsregeln):
 
@@ -362,9 +396,14 @@ Spread vid emission (KR1, registrerade obligationer, bp; oregelbundet, ingår in
 
 Gränser (låsta): A = vid t − 2 har den effektiva räntan en takt ≥ +0,25 procentenheter eller ett beroendemått ≥ +5. Capex-takten föll om förändringen i takt ≤ -5. Lika fall: inre ≤ 0,5 × yttre. En negativ förändring i takt betyder att tillväxten avtar, inte att capex minskar. Utslaget är en beskrivning, inget test.
 
+Regeln läser bara uppgång i pris och beroende: A kräver en takt på minst gränsen. Ett fall i pris och beroende följt av högre capex-takt blir "inget av mönstren". Hur ofta A har gällt står under varje utslag. När A nästan alltid gäller, avgörs utslaget i praktiken av capex-takten. En regel som läser båda riktningarna kräver en ny daterad registerpost.
+
+Alla kvartal i den här läsningen var kända före registerposten 2026-11-25, och flera av dem var sedda före posten (posten, avsnitt (e)). Läsningen är därför inget utfall på osedda data. Den första läsningen på osedda kvartal kommer med inlämningar efter 2026-11-25.
+
 - **Yttre lagret (huvudläsning):** kan inte avgöras (ett mått som regeln behöver saknas). t = –; A = None (takt vid –: rate_eff –, fcfgap –, netdebt –, leases –); förändring i capex-takt yttre –, inre +2,0 (2025Q3).
   Saknas: kl_capex4_outer (inget kvartal känt på dagen).
 - **Oracle mot inre lagret:** talar emot (1): pris eller beroende steg, men takten i yttre lagret höll eller steg. t = 2025Q3; A = True (takt vid 2025Q1: rate_eff -0,2, fcfgap +166,0, netdebt +124,0, leases +9,8); förändring i capex-takt yttre +33,5, inre +2,0 (2025Q3).
+  A har gällt i 40 av 54 kvartal med minst en takt (2012Q2–2025Q3).
 - **CoreWeave mot inre lagret:** kan inte avgöras (ett mått som regeln behöver saknas). t = –; A = None (takt vid –: rate_eff –, fcfgap –, netdebt –, leases –); förändring i capex-takt yttre –, inre +2,0 (2025Q3).
   Saknas: kl_capex4_crwv (inget kvartal känt på dagen).
 - **Nebius mot inre lagret:** kan inte avgöras (ett mått som regeln behöver saknas). t = –; A = None (takt vid –: fcfgap –); förändring i capex-takt yttre –, inre +2,0 (2025Q3).
@@ -376,12 +415,12 @@ Gränser (låsta): A = vid t − 2 har den effektiva räntan en takt ≥ +0,25 p
 
 - Anthropic: ingen registreringsansökan känd på dagen.
 - OpenAI: ingen registreringsansökan på EDGAR (sökning på namnet 2026-11-25: bara fonder och SPV med Form D).
-- **Meta, Hyperion (Louisiana) med Blue Owl**, bildat 2025-10: Metas insats 4,3 mdr, leasingåtagande cirka 12,3 mdr, restvärdesgaranti från 28,0 mdr (known_from 2025-10-30)
+- **Meta, datacenterbolag i Louisiana med fonder förvaltade av Blue Owl**, bildat 2025-10: Metas insats 4,3 mdr, leasingåtagande cirka 12,3 mdr, restvärdesgaranti från 28,0 mdr (known_from 2025-10-30)
 - Oracle: inga belopp för datacenter-SPV eller samriskbolag i 10-Q och 10-K 2025–2026.
 - **CoreWeave, nya obligationer** (8-K, senaste sex; konvertibler ingår inte i kupongmåttet):
   - 2025-05-27: 2030 senior notes, 2 000 MUSD, kupong 9,250 % (known_from 2025-05-28)
   - 2025-07-25: 2031 9 00 senior notes, 1 750 MUSD, kupong 9,000 % (known_from 2025-07-28)
-- CoreWeave, marginal över SOFR för lånefaciliteter (bp): ddtl 3 0 facility 400, ddtl 2 0 facility 1 300
+- CoreWeave, marginal över SOFR för lånefaciliteter (bp): ddtl 3 0 facility 400, ddtl 2 0 facility 1 300 (före femte tillägget och utan investment grade; med investment grade 600–650), ddtl 2 0 facility incremental 425
 
 ### 6. Att bevaka
 
@@ -403,6 +442,7 @@ Nästa inlämning per bolag, uppskattad som nästa kvartals slut plus medianen a
 - Med cirka 8–12 kvartal per mått är detta en beskrivning och inget test. Ett mönster kan vara slump.
 - RPO är klumpig: enstaka mycket stora avtal flyttar ett kvartal.
 - Neomolnens serier börjar 2024, så yttre lagrets takt och förändring i takt finns bara för de senaste kvartalen. Nebius och IREN saknar skuldserier och ingår bara i capex och (capex − OCF) / capex.
-- Den effektiva räntan är efter aktiverad ränta. CoreWeaves räntor i skuldtabellen står i hela procent.
+- Den effektiva räntan är efter aktiverad ränta. Microsofts räntekostnad innehåller ränta på finansiell leasing. CoreWeaves räntor i skuldtabellen står i hela procent.
+- Regeln läser bara uppgång i pris och beroende. Hur ofta A har gällt står i avsnitt 4.
 - Utanför ramen: privat kredit utanför EDGAR, labbens oregistrerade skuld, spreadar på andrahandsmarknaden (licens) och 144A-affärer utan 8-K. OpenAI har ingen registreringsansökan på EDGAR.
 - Nyhetsuppgifter om kreditbetyg (KBRA, Moody's) är sekundära och används inte som data.
