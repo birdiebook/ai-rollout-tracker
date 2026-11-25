@@ -5,7 +5,10 @@ Pattern of KR1 and CN1: document, location, verbatim quote and its SHA-256; the 
 
 Corpus (rule "Korpus"):
 - Anthropic, PBC (CIK 2130357): every S-1, S-1/A and 424B4 filed up to 2026-11-25 (no DRS drafts). The source is the
-  latest of them; a row's known_from is the filing date of the earliest public document holding the same line (hash).
+  latest of them; a row's known_from is the filing date of the earliest public document holding the same line (hash)
+  and, for a row with a full balance date, stating that date for it (register X23, point 1; `stated_dates`).
+- SpaceX (CIK 1181412, owner of xAI): 10-Q and 10-K filed 2026-06-12..2026-11-25 (register X23, point 3), coded like
+  CoreWeave's periodic reports but by the agent, row by row.
 - OpenAI: the EDGAR company search (browse-edgar, Atom) by name; a registration statement (S-1, S-1/A, F-1, F-1/A) is
   looked for in every match's submissions. None found -> recorded as a fact (docs/kallor/kreditlagret.md).
 - CoreWeave (CIK 1769628): 10-Q and 10-K filed 2025-04-01..2026-11-25, and 8-Ks of the same period with item 1.01 or
@@ -23,6 +26,7 @@ note). `value_in_quote` is the number test that both the build and the self-chec
     python -m ai_tracker.sources.kreditlagret candidates ACC    # candidate lines of one document, for the coder
     python -m ai_tracker.sources.kreditlagret openai            # the OpenAI search, written to data/raw
     python -m ai_tracker.sources.kreditlagret quotes            # rebuild data/raw quotes from the CSV locators
+    python -m ai_tracker.sources.kreditlagret build             # the CSV and the list of uncoded candidates
 
 SEC: the generic client identity from .env (ai_tracker.http), one request at a time, BULK_SLEEP between documents,
 and a stop on 403 or 429 (no retries on those).
@@ -46,6 +50,7 @@ from ai_tracker.sources import credit_issuance_corpus as cc
 
 SOURCE = "kreditlagret"
 CSV_PATH = config.REPO / "curated" / "kreditlagret.csv"
+SKIPPED_PATH = config.REPO / "curated" / "kreditlagret_skipped.csv"  # uncoded candidate lines with the reason (X23)
 QUOTES_DIR = config.REPO / "data" / "raw" / "kreditlagret_quotes"  # gitignored
 CORPUS_DIR = config.REPO / "data" / "raw" / "kreditlagret_corpus"  # gitignored
 LAST = "2026-11-25"
@@ -55,8 +60,10 @@ SUBMISSIONS_FILE = "https://data.sec.gov/submissions/{name}"
 ARCHIVE = "https://www.sec.gov/Archives/edgar/data/{cik}/{folder}/{doc}"
 COMPANY_SEARCH = "https://www.sec.gov/cgi-bin/browse-edgar"
 
-CIKS = {"anthropic": 2130357, "crwv": 1769628, "meta": 1326801, "orcl": 1341439}
-NAMES = {"anthropic": "Anthropic", "openai": "OpenAI", "crwv": "CoreWeave", "meta": "Meta", "orcl": "Oracle"}
+CIKS = {"anthropic": 2130357, "crwv": 1769628, "meta": 1326801, "orcl": 1341439, "spacex": 1181412}
+NAMES = {"anthropic": "Anthropic", "openai": "OpenAI", "crwv": "CoreWeave", "meta": "Meta", "orcl": "Oracle",
+         "spacex": "SpaceX"}
+SPACEX_FIRST = "2026-06-12"  # the 424B4 (IPO); SpaceX's 10-Q/10-K from here (register X23, point 3)
 REGISTRATION_FORMS = ("S-1", "S-1/A", "F-1", "F-1/A")
 LAB_FORMS = ("S-1", "S-1/A", "424B4")
 
@@ -80,6 +87,9 @@ COMMIT_CANDIDATE = re.compile(r"(?i)\b(purchase (?:commitments?|obligations?)|co
                               r"compute|cloud (?:services|computing|commitments?)|non-?cancel+able)\b")
 SPV_CANDIDATE = re.compile(r"(?i)\b(Hyperion|joint venture|variable interest entit(?:y|ies)|residual value guarantee|"
                            r"special purpose)\b")
+VENTURE_CANDIDATE = re.compile(r"\bVentures?\b")  # Meta's name for its data-centre ventures (register X23, point 2)
+CANDIDATE_KINDS = {"anthropic": ("debt", "commit", "spv"), "crwv": ("debt",), "meta": ("spv", "venture"),
+                   "orcl": ("spv",), "spacex": ("debt",)}
 AMOUNT = re.compile(r"\$\s?\d|\d\s?%|\d[\d,]*\.?\d*\s*(?:million|billion)")
 
 
@@ -171,6 +181,8 @@ def in_corpus(company: str, f: dict) -> bool:
         return form in ("10-Q", "10-K") or (form == "8-K" and bool({"1.01", "2.03"} & set(items.split(","))))
     if company in ("meta", "orcl"):
         return filed >= "2025-01-01" and form in ("10-Q", "10-K")
+    if company == "spacex":  # owner of xAI; periodic reports after the IPO (register X23, point 3)
+        return filed >= SPACEX_FIRST and form in ("10-Q", "10-K")
     return False
 
 
@@ -244,7 +256,7 @@ def find_hash(lines: list[str], digest: str, width: int = 1) -> int | None:
 
 def candidates(lines: list[str], kinds: tuple[str, ...] = ("debt", "commit", "spv")) -> list[tuple[int, str, str]]:
     """(k, kind, line) of the candidate lines (rule "Kandidatrader"): a pattern of the kind and an amount or a rate."""
-    pats = {"debt": DEBT_CANDIDATE, "commit": COMMIT_CANDIDATE, "spv": SPV_CANDIDATE}
+    pats = {"debt": DEBT_CANDIDATE, "commit": COMMIT_CANDIDATE, "spv": SPV_CANDIDATE, "venture": VENTURE_CANDIDATE}
     out = []
     for k, line in enumerate(lines):
         if not AMOUNT.search(line):
@@ -548,10 +560,44 @@ def manual_row(doc: Doc, lines: list[str], locator: str, instrument: str, field:
                doc.accession, doc.url, locator, quote_hash(quote), qualifier, note or "agent-coded")
 
 
-def earliest(rows: list[Row], earlier: list[Doc]) -> list[Row]:
+FULL_DATE = re.compile(r"\d{4}-\d{2}-\d{2}")
+_MONTH_RE = "|".join(MONTHS)
+ANY_DATE = re.compile(rf"(?i)\b({_MONTH_RE})\s+(\d{{1,2}})\s*,\s*(\d{{4}})")
+AS_OF = re.compile(rf"(?i)\bA\s?s\s+of\s+(?:and\s+subsequent\s+to\s+)?({_MONTH_RE})\s+(\d{{1,2}})\s*,\s*(\d{{4}})")
+PAGE_FILL = re.compile(r"^(?:\d{1,3}|Table of Contents|_+)$")  # page numbers and rules inside a table
+NOTE_LINE = re.compile(r"^\(\d+\)")
+CONTEXT_LINES = 30
+
+
+def _dates(pattern: re.Pattern, text: str) -> set[str]:
+    return {f"{y}-{[m.lower() for m in MONTHS].index(mo.lower()) + 1:02d}-{int(d):02d}"
+            for mo, d, y in pattern.findall(text)}
+
+
+def stated_dates(lines: list[str], a: int, b: int, width: int = CONTEXT_LINES) -> set[str]:
+    """Balance dates a document states for the quote lines[a..b] (register X23, point 1): every date in the quote, and
+    "as of <day>" in the `width` lines before the quote's table and in the table's notes ("(n)" lines within `width`
+    after it). A quote that is not a table row: "as of <day>" in the `width` lines before and after it."""
+    out = _dates(ANY_DATE, "\n".join(lines[a:b + 1]))
+    if " | " in lines[a]:
+        s, e = a, b
+        while s > 0 and (" | " in lines[s - 1] or PAGE_FILL.match(lines[s - 1].strip())):
+            s -= 1
+        while e + 1 < len(lines) and (" | " in lines[e + 1] or PAGE_FILL.match(lines[e + 1].strip())):
+            e += 1
+        out |= _dates(AS_OF, "\n".join(lines[max(0, s - width):s]))
+        out |= _dates(AS_OF, "\n".join(x for x in lines[e + 1:e + 1 + width] if NOTE_LINE.match(x)))
+    else:
+        out |= _dates(AS_OF, "\n".join(lines[max(0, a - width):a] + lines[b + 1:b + 1 + width]))
+    return out
+
+
+def earliest(rows: list[Row], earlier: list[Doc], lines_of=None) -> list[Row]:
     """known_from rule for the lab's registration statement: a row moves to the earliest public document (oldest first
-    in `earlier`) whose line list holds the same quote (same SHA-256); filed, accepted, form, accession, URL and
-    locator then point to that document."""
+    in `earlier`) whose line list holds the same quote (same SHA-256) and, for a row with a full balance date (period
+    YYYY-MM-DD), states that date for it (`stated_dates`, register X23, point 1); filed, accepted, form, accession, URL
+    and locator then point to that document. `lines_of(url)` gives a document's lines (default: the cached copy)."""
+    lines_of = lines_of or _cached_lines
     out = []
     for r in rows:
         a, b = span(r.locator)
@@ -561,10 +607,13 @@ def earliest(rows: list[Row], earlier: list[Doc]) -> list[Row]:
             if d.filed >= r.filed:
                 continue
             k = _hash_index(d.url, width).get(r.quote_sha256)
-            if k is not None:
-                best = Row(**{**asdict(r), "filed": d.filed, "accepted": d.accepted, "form": d.form,
-                              "accession": d.accession, "source_url": d.url, "locator": locator_of(k, k + width - 1)})
-                break
+            if k is None:
+                continue
+            if FULL_DATE.fullmatch(r.period) and r.period not in stated_dates(list(lines_of(d.url)), k, k + width - 1):
+                continue  # the earlier document states another balance date for the same line
+            best = Row(**{**asdict(r), "filed": d.filed, "accepted": d.accepted, "form": d.form,
+                          "accession": d.accession, "source_url": d.url, "locator": locator_of(k, k + width - 1)})
+            break
         out.append(best)
     return out
 
@@ -601,6 +650,94 @@ def build() -> list[Row]:
     if dup:
         raise ValueError(f"duplicate row ids: {dup}")
     return rows
+
+
+# ------------------------------------------------------------------ uncoded candidates (register X23, point 2)
+
+SKIPPED_COLUMNS = ("company", "accession", "filed", "form", "locator", "kind", "reason", "reason_by")
+EXHIBIT = re.compile(r"^\d+\.\d+\s*\|")
+SKIP_RULES = (  # (pattern, reason), first match wins; applied after the agent's own reasons
+    (re.compile(r"(?i)fair value|expenses?\b|\bincome\b|net loss|\blosses\b|loss on|accumulated deficit|revenue|"
+                r"amortiz|issuance costs|\bdiscount\b|capitalized|cash (?:used|provided)"),
+     "verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument"),
+    (re.compile(r"(?i)\bpreferred\b|common stock|\bshares?\b|\bSAFEs?\b|stock-based|share-based|\bRS[AU]s?\b|"
+                r"\bSeries [A-H]\b|equity awards?|capped call|conversion (?:rate|price)|"
+                r"\bconvert(?:ed|s)? (?:their|at|into|in full)|put right|stockholders|shareholders|net tangible book"),
+     "aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld"),
+    (re.compile(r"(?i)\bredeem|redemption|repurchase|change of control|fundamental change|events? of default|"
+                r"covenant|make-whole|prepa(?:y|id|yment)|\bswap\b|hedg|sinking fund|undrawn fees?|commitment fee"),
+     "villkor utanför kodningsreglerna (inlösen, återköp, kovenanter, säkringar, avgifter, utfallshändelser)"),
+    (re.compile(r"(?i)guarantee|guarantor|pledge|collateral"),
+     "garanti eller säkerhet: fälten guarantor och collateral kodades inte för raden (ingen serie och ingen "
+     "rapportrad använder dem)"),
+)
+PERIODIC_REASON = ("text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren "
+                   "ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K")
+TABLE_REASON = "rad i skuldtabellen som tolkningen inte kodar (delsumma, Less/Total eller inget utestående; tillägget punkt 3)"
+NOT_ASSESSED = "inte bedömd rad för rad"
+
+
+def _debt_table_span(lines: list[str]) -> tuple[int, int] | None:
+    rows = debt_table(lines)
+    start = next((k for k, line in enumerate(lines) if TABLE_START.match(line)), None)
+    if start is None:
+        return None
+    end = start
+    for k in range(start + 1, len(lines)):
+        if " | " not in lines[k] and not SECTION.match(lines[k]):
+            break
+        end = k
+    return (start, max([end] + [t.k for t in rows]))
+
+
+def skip_reason(company: str, doc: Doc, k: int, line: str, agent: dict, table: tuple[int, int] | None) -> tuple[str, str]:
+    """(reason, by) for an uncoded candidate line: the agent's own reason for the line, else the first rule."""
+    if (doc.accession, f"line #{k}") in agent:
+        return agent[(doc.accession, f"line #{k}")], "agent"
+    if EXHIBIT.match(line):
+        return "bilageförteckning", "regel"
+    if company == "crwv" and doc.form in ("10-Q", "10-K") and table and table[0] <= k <= table[1]:
+        return TABLE_REASON, "regel"
+    for pat, reason in SKIP_RULES:
+        if pat.search(line):
+            return reason, "regel"
+    if company == "crwv" and doc.form in ("10-Q", "10-K"):
+        return PERIODIC_REASON, "regel"
+    return NOT_ASSESSED, "ingen"
+
+
+def skipped(csv_rows: pd.DataFrame | None = None) -> pd.DataFrame:
+    """Every candidate line of the corpus that no coded row covers, with the reason (register X23, point 2). The lab's
+    candidates are read in its source (the latest document); other companies in every corpus document."""
+    from ai_tracker.sources import kreditlagret_coding as coding
+
+    df = load() if csv_rows is None else csv_rows
+    covered: dict[str, set[int]] = {}
+    for r in df.itertuples(index=False):
+        a, b = span(r.locator)
+        covered.setdefault(r.accession, set()).update(range(a, b + 1))
+    for codes in coding.ALL.values():
+        for c in codes:
+            a, b = span(c.locator)
+            covered.setdefault(c.accession, set()).update(range(a, b + 1))
+    out = []
+    for company, kinds in CANDIDATE_KINDS.items():
+        docs = sorted(load_corpus(company), key=lambda d: (d.filed, d.accepted))
+        if company == "anthropic":
+            docs = docs[-1:]
+        for d in docs:
+            lines = doc_lines(d.url)
+            table = _debt_table_span(lines) if company == "crwv" and d.form in ("10-Q", "10-K") else None
+            for k, kind, line in candidates(lines, kinds):
+                if k in covered.get(d.accession, set()):
+                    continue
+                reason, by = skip_reason(company, d, k, line, coding.SKIP, table)
+                out.append((company, d.accession, d.filed, d.form, f"line #{k}", kind, reason, by))
+    return pd.DataFrame(out, columns=SKIPPED_COLUMNS)
+
+
+def write_skipped(df: pd.DataFrame, path=SKIPPED_PATH) -> None:
+    df.sort_values(["company", "filed", "accession"], kind="stable").to_csv(path, index=False, lineterminator="\n")
 
 
 def main() -> None:
@@ -642,6 +779,10 @@ def main() -> None:
         write(rows)
         errors = validate(load())
         print(f"wrote {len(rows)} rows to {CSV_PATH}" + (f"; {len(errors)} problems" if errors else ""))
+        sk = skipped()
+        write_skipped(sk)
+        print(f"wrote {len(sk)} uncoded candidates to {SKIPPED_PATH} "
+              f"({(sk['reason_by'] == 'ingen').sum()} not assessed)")
 
 
 if __name__ == "__main__":

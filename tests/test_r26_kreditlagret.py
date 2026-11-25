@@ -10,8 +10,8 @@ hashes are kept here, never filing text.
   pinned and need their own review.
 - Properties that hold: the registered limits equal the code, the reading's truth table, licence class and publish
   flag, an independent recomputation of three derived series from their components (real data).
-- Findings R26-1 to R26-9 are strict xfail. Each flips (XPASS -> failure) when the finding is fixed; then remove the
-  marker and keep the assertion.
+- Findings R26-1 to R26-9 were strict xfail. Fixed in X23 (register 2026-11-25 "X23"); the markers are removed and
+  the assertions kept as normal tests.
 """
 
 from __future__ import annotations
@@ -234,19 +234,15 @@ def test_report_reading_and_caveats_as_registered(report, text):
     assert "beskrivning och inget test" in caveats and "slump" in caveats and "aktiverad ränta" in caveats
 
 
-# ------------------------------------------------------------------ findings (strict xfail until fixed)
+# ------------------------------------------------------------------ findings (fixed in X23, normal tests)
 
 
-@pytest.mark.xfail(strict=True, reason="R26-1 (must_fix): five rows dated 2026-09-30 come from the S-1, which states "
-                   "them as of June 30, 2026")
 def test_r26_1_september_balances_are_not_dated_to_the_june_s1(csv):
     ant = csv[(csv["company"] == "anthropic") & (csv["period"] == "2026-09-30")]
     assert not (ant["accession"] == S1).any()
     assert (ant["filed"] >= S1A1_FILED).all()
 
 
-@pytest.mark.xfail(strict=True, reason="R26-2 (must_fix): the 9.750% 2031 notes are coded as 1.75 MUSD; the 8-K of "
-                   "2026-04-21 states $1,750,000,000")
 def test_r26_2_coreweave_9_75_notes_principal(csv):
     p = csv[(csv["instrument"] == "crwv_2031_9_75_senior_notes") & (csv["field"] == "principal")]
     assert len(p) == 1
@@ -257,15 +253,11 @@ def test_r26_2_coreweave_9_75_notes_principal(csv):
     assert "1,75 MUSD" not in "\n".join(F._lab_lines(F.extraction(REVIEW_DAY, csv)["rows"]))
 
 
-@pytest.mark.xfail(strict=True, reason="R26-3 (should_fix): SpaceX (xAI since 2026-02-02) has an S-1, a 424B4 and "
-                   "10-Qs on EDGAR, and the lab section does not say so")
 def test_r26_3_lab_section_names_spacex_xai(csv):
     lab = "\n".join(F._lab_lines(F.extraction(REVIEW_DAY, csv)["rows"]))
     assert re.search(r"SpaceX|xAI", lab)
 
 
-@pytest.mark.xfail(strict=True, reason="R26-4 (should_fix): candidate lines that are not coded are not counted or "
-                   "listed with a reason (register, 'Kandidatrader')")
 def test_r26_4_uncoded_candidates_are_listed_with_a_reason(csv):
     sk = pd.read_csv(SKIPPED, dtype=str, keep_default_na=False)
     assert {"accession", "locator", "reason"} <= set(sk.columns) and len(sk) > 0
@@ -274,39 +266,29 @@ def test_r26_4_uncoded_candidates_are_listed_with_a_reason(csv):
 
 
 @pytest.mark.real_data
-@pytest.mark.xfail(strict=True, reason="R26-5 (should_fix): CoreWeave's weighted rate falls mostly by the mix of "
-                   "convertibles, and the report does not say so")
 def test_r26_5_coreweave_rate_states_the_convertible_mix(text):
     line = next(x for x in text.splitlines() if x.startswith("CoreWeave, angiven effektiv ränta"))
     assert re.search(r"(?i)konvertib", line)
 
 
 @pytest.mark.real_data
-@pytest.mark.xfail(strict=True, reason="R26-6 (should_fix): Microsoft's interest expense includes interest on finance "
-                   "leases (10-K FY2026: 2,547 of 3,051 MUSD), not said in the report")
 def test_r26_6_effective_rate_caveat_names_lease_interest(text):
     price = _part(text, "## 1. Pris på skuld", "## 2.")
     assert re.search(r"(?i)leasing", price)
 
 
-@pytest.mark.xfail(strict=True, reason="R26-7 (should_fix): the readings per 2026-11-25 use quarters that were seen "
-                   "before the register entry, and the results do not say so")
 def test_r26_7_results_say_the_first_readings_are_on_seen_data():
     res = RESULTS.read_text(encoding="utf-8")
     assert re.search(r"(?i)(sett|sedd|sedda|tittade)[^.\n]{0,120}(före|innan)[^.\n]{0,60}(post|regist)", res)
 
 
 @pytest.mark.real_data
-@pytest.mark.xfail(strict=True, reason="R26-8 (should_fix): the rule reads only rises in price or dependence, and A "
-                   "held in 28 of 35 Oracle quarters since 2018; the report says neither")
 def test_r26_8_reading_states_its_direction_and_how_often_a_holds(text):
     rule = _part(text, "## 4. Läsregeln", "## 5.")
     assert re.search(r"(?i)(bara|endast)[^.\n]{0,80}(stig|uppgång|åtstram)", rule)
     assert re.search(r"\d+ av \d+", rule)
 
 
-@pytest.mark.xfail(strict=True, reason="R26-9 (should_fix): the lab lines show Google's pre-IPO 9 % coupon and "
-                   "DDTL 2.0's pre-amendment 13 % margin without saying so")
 def test_r26_9_lab_lines_qualify_coupon_and_margin(csv):
     lab = F._lab_lines(F.extraction(REVIEW_DAY, csv)["rows"])
     google = next(x for x in lab if "ram Google 2026" in x)

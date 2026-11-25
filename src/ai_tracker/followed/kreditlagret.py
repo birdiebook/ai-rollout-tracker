@@ -46,6 +46,7 @@ DIRECTIONS = ("guid_capex_amzn_cy_dir_yoy", "guid_capex_googl_cy_dir_yoy", "guid
               "guid_capex_msft_fy_dir_prior_fy")
 POWER = ("plan_crwv_contracted_power_asof_value", "plan_crwv_active_power_asof_value")
 MAX_LAG = 200  # days from quarter end: a longer first appearance is a comparative in a later filing
+REGISTERED = "2026-11-25"  # the register entry; quarters known by then were seen before it (entry, (e); X23, point 4)
 LABEL = {"kl_leases_msft_cond": "Microsoft (inkl. villkorade, från 2026Q2)",
          "plan_crwv_contracted_power_asof_value": "CoreWeave, kontrakterad", "plan_crwv_active_power_asof_value":
          "CoreWeave, aktiv", "kl_coupon_out_crwv_q": "CoreWeave"}
@@ -116,6 +117,23 @@ def condition_a(entity: str, t: str | None, ms: dict[str, dict]) -> tuple[bool |
     return False, missing, paces
 
 
+def a_history(entity: str, ms: dict[str, dict]) -> dict:
+    """How often A has held (register X23, point 4): quarters where at least one price or dependence measure of the
+    entity reaches its limit, of the quarters where at least one of them has a pace, over the history known on the day."""
+    paths = {m: (ms[f"kl_{m}_{entity}"].get("path") or {}) for m in measures_of(entity)}
+    quarters = sorted(set().union(*[set(p) for p in paths.values()]))
+    held = known = 0
+    first = last = None
+    for q in quarters:
+        paces = {m: p.get(q, {}).get("pace") for m, p in paths.items()}
+        if all(v is None for v in paces.values()):
+            continue
+        known += 1
+        first, last = first or q, q
+        held += any(v is not None and v >= LIMIT[m] for m, v in paces.items())
+    return {"held": held, "of": known, "first": first, "last": last}
+
+
 def reading(a: bool | None, d_outer: float | None, d_inner: float | None) -> str:
     """The registered outcome from A, the outer and the inner change in capex pace (log x100)."""
     if d_outer is not None and d_inner is not None and d_outer <= CAPEX_FALL and d_inner <= CAPEX_FALL \
@@ -161,7 +179,8 @@ def apply_reading(entity: str, ms: dict[str, dict]) -> dict:
     out = reading(a, d_out, d_in)
     return {"entity": entity, "t": t, "t_minus_2": _minus(t, 2), "a": a, "paces_t_minus_2": paces,
             "capex_change_outer": d_out, "capex_change_inner": d_in, "inner_period": inner.get("period"),
-            "outcome": out, "text": OUTCOME[out], "missing": missing if out == "kan_inte_avgoras" else []}
+            "outcome": out, "text": OUTCOME[out], "missing": missing if out == "kan_inte_avgoras" else [],
+            "a_history": a_history(entity, ms)}
 
 
 # ------------------------------------------------------------------ context blocks
@@ -312,6 +331,26 @@ def coupon_rows(csv: pd.DataFrame | None, when) -> pd.DataFrame | None:
     return csv[csv["filed"] <= str(pd.Timestamp(when).date())]
 
 
+def convertible_mix(csv: pd.DataFrame, period: str) -> dict:
+    """CoreWeave's weighted rate without convertibles at `period` and four quarters earlier, and the convertibles'
+    share of outstanding (a description, register X23, point 4)."""
+    ex = S.coupon_out(csv, "crwv", convertibles=False).set_index("period")["value"]
+    prev = str(pd.Period(period, freq="Q-DEC") - 4)
+    d = csv[(csv["company"] == "crwv") & (csv["field"] == "outstanding")]
+    d = d[d["period"].map(lambda x: str(pd.Period(pd.Timestamp(x), freq="Q-DEC"))) == period]
+    total = d["value"].astype(float).sum()
+    conv = d[d["instrument"].str.contains(S.CONVERTIBLE)]["value"].astype(float).sum()
+    r = csv[(csv["company"] == "crwv") & (csv["field"] == "rate_pct") & csv["instrument"].str.contains(S.CONVERTIBLE)
+            & (csv["period"].map(lambda x: str(pd.Period(pd.Timestamp(x), freq="Q-DEC"))) == period)]
+    rates = r["value"].astype(float)
+    allr = S.coupon_out(csv, "crwv").set_index("period")["value"]
+    return {"value_ex_conv": _num(ex.get(period)), "value_ex_conv_prev": _num(ex.get(prev)),
+            "value_prev": _num(allr.get(prev)), "prev_period": prev,
+            "conv_share": _num(conv / total) if total > 0 else None,
+            "conv_rate_lo": _num(rates.min()) if len(rates) else None,
+            "conv_rate_hi": _num(rates.max()) if len(rates) else None}
+
+
 # ------------------------------------------------------------------ compute
 
 
@@ -344,8 +383,10 @@ def compute(as_of, table: pd.DataFrame | None = None, csv: pd.DataFrame | None =
             last = co.iloc[-1]
             crwv_cov = {"period": last.period, "value": float(last.value), "coverage": float(last.coverage),
                         "known_from": str(pd.Timestamp(last.known_from).date())}
+            crwv_cov.update(convertible_mix(cur, last.period))
     return {
         "question": QUESTION, "as_of": str(when.date()), "generated": str(date.today()),
+        "seen_before_register": str(when.date()) <= REGISTERED,
         "groups": groups, "measures": ms, "readings": readings,
         "limits": {"rate_rise_pp": RATE_RISE, "dependence_rise_pp": DEP_RISE, "capex_fall": CAPEX_FALL,
                    "equal_share": EQUAL_SHARE},
@@ -407,7 +448,9 @@ def render(r: dict) -> str:
            "`docs/mattregister.md`, 2026-11-25 KL1.", ""]
 
     out += ["## 1. Pris på skuld", "", "Effektiv ränta = räntekostnad över fyra kvartal / genomsnittlig långfristig skuld "
-            "(efter aktiverad ränta, så den blir lägre hos bolag som bygger mycket).", ""]
+            "(efter aktiverad ränta, så den blir lägre hos bolag som bygger mycket). Microsofts räntekostnad innehåller "
+            "ränta på finansiell leasing, men nämnaren är bara skulden. Microsofts tal, och därmed inre lagrets, är "
+            "alltså ränta på skuld och leasing tillsammans och inte priset på skuld.", ""]
     out += _table(ms, [k for k in g["price"] if k.startswith("kl_rate_eff")], _pct)
     co = r.get("coupon_out_crwv")
     m = ms.get("kl_coupon_out_crwv_q", {})
@@ -416,6 +459,14 @@ def render(r: dict) -> str:
                 f"**{_f(co['value'], 1)} %** vid {co['period']} (täckning {_f(100 * co['coverage'], 0)} % av "
                 f"utestående, known_from {co['known_from']}, `kl_coupon_out_crwv_q`). Takt: {_f(m.get('pace'), 1, True)} "
                 f"procentenheter, förändring i takt {_f(m.get('change'), 1, True)}."]
+        if co.get("conv_share"):
+            out[-1] += (f" Konvertibler (angiven ränta {_f(co['conv_rate_lo'], 0)}–{_f(co['conv_rate_hi'], 0)} %) är "
+                        f"{_f(100 * co['conv_share'], 1)} % av utestående. Utan konvertibler: "
+                        f"{_pct(co.get('value_ex_conv'))} vid {co['period']} och {_pct(co.get('value_ex_conv_prev'))} "
+                        f"vid {co.get('prev_period')}. Med konvertibler: {_pct(co['value'])} och "
+                        f"{_pct(co.get('value_prev'))}. Skillnaden visar hur mycket mixen med konvertibler betyder.")
+        elif co.get("conv_share") == 0:
+            out[-1] += " Inga konvertibler i skuldtabellen."
     if r["spreads"]:
         out += ["", "Spread vid emission (KR1, registrerade obligationer, bp; oregelbundet, ingår inte i läsregeln):", ""]
         for s in r["spreads"]:
@@ -457,7 +508,17 @@ def render(r: dict) -> str:
             f"Gränser (låsta): A = vid t − 2 har den effektiva räntan en takt ≥ +{_f(RATE_RISE, 2)} procentenheter "
             f"eller ett beroendemått ≥ +{_f(DEP_RISE, 0)}. Capex-takten föll om förändringen i takt ≤ {_f(CAPEX_FALL, 0)}. "
             "Lika fall: inre ≤ 0,5 × yttre. En negativ förändring i takt betyder att tillväxten avtar, inte att capex "
-            "minskar. Utslaget är en beskrivning, inget test.", ""]
+            "minskar. Utslaget är en beskrivning, inget test.", "",
+            "Regeln läser bara uppgång i pris och beroende: A kräver en takt på minst gränsen. Ett fall i pris och "
+            "beroende följt av högre capex-takt blir \"inget av mönstren\". Hur ofta A har gällt står under varje "
+            "utslag. När A nästan alltid gäller, avgörs utslaget i praktiken av capex-takten. En regel som läser båda "
+            "riktningarna kräver en ny daterad registerpost.", ""]
+    if r.get("seen_before_register"):
+        oracle = next((x for x in r["next_filings"] if x["company"] == "orcl"), None)
+        when = f", för Oracle omkring {oracle['estimated']}" if oracle and oracle["estimated"] > REGISTERED else ""
+        out += ["Alla kvartal i den här läsningen var kända före registerposten 2026-11-25, och flera av dem var sedda "
+                "före posten (posten, avsnitt (e)). Läsningen är därför inget utfall på osedda data. Den första läsningen "
+                f"på osedda kvartal kommer med inlämningar efter 2026-11-25{when}.", ""]
     for e, x in r["readings"].items():
         who = "Yttre lagret (huvudläsning)" if e == "outer" else f"{S.NAMES[e]} mot inre lagret"
         paces = ", ".join(f"{k} {_f(v, 1, True)}" for k, v in x["paces_t_minus_2"].items())
@@ -465,6 +526,9 @@ def render(r: dict) -> str:
                    f" (takt vid {x['t_minus_2'] or '–'}: {paces or '–'}); förändring i capex-takt yttre "
                    f"{_f(x['capex_change_outer'], 1, True)}, inre {_f(x['capex_change_inner'], 1, True)} "
                    f"({x['inner_period'] or '–'}).")
+        h = x.get("a_history") or {}
+        if h.get("of"):
+            out.append(f"  A har gällt i {h['held']} av {h['of']} kvartal med minst en takt ({h['first']}–{h['last']}).")
         if x["missing"]:
             out.append(f"  Saknas: {'; '.join(x['missing'])}.")
 
@@ -485,11 +549,27 @@ def render(r: dict) -> str:
             "- RPO är klumpig: enstaka mycket stora avtal flyttar ett kvartal.",
             "- Neomolnens serier börjar 2024, så yttre lagrets takt och förändring i takt finns bara för de senaste "
             "kvartalen. Nebius och IREN saknar skuldserier och ingår bara i capex och (capex − OCF) / capex.",
-            "- Den effektiva räntan är efter aktiverad ränta. CoreWeaves räntor i skuldtabellen står i hela procent.",
+            "- Den effektiva räntan är efter aktiverad ränta. Microsofts räntekostnad innehåller ränta på finansiell "
+            "leasing. CoreWeaves räntor i skuldtabellen står i hela procent."
+            + (" Konvertiblerna sänker den vägda räntan (avsnitt 1)." if (co or {}).get("conv_share") else ""),
+            "- Regeln läser bara uppgång i pris och beroende. Hur ofta A har gällt står i avsnitt 4.",
             "- Utanför ramen: privat kredit utanför EDGAR, labbens oregistrerade skuld, spreadar på andrahandsmarknaden "
-            "(licens) och 144A-affärer utan 8-K. OpenAI har ingen registreringsansökan på EDGAR.",
+            "(licens) och 144A-affärer utan 8-K. OpenAI har ingen registreringsansökan på EDGAR."
+            + (" SpaceX:s skuld gäller hela koncernen (uppskjutning, Starlink och xAI)."
+               if any(x["company"] == "spacex" for x in r["extraction"]["rows"]) else ""),
             "- Nyhetsuppgifter om kreditbetyg (KBRA, Moody's) är sekundära och används inte som data.", ""]
     return "\n".join(out)
+
+
+QUAL = {"at_least": "minst", "up_to": "upp till", "approx": "cirka"}
+COUPON_NOTE = {  # the note's qualification, shown on the line (register X23, point 4)
+    "anthropic_google_npa_2026": "för lån före noteringen; efter noteringen ska villkoren avtalas",
+    "anthropic_amazon_npa_2026": "för lån före noteringen; efter noteringen regleras dragningar i aktier",
+}
+MARGIN_NOTE = {"crwv_ddtl_2_0_facility": "före femte tillägget och utan investment grade; med investment grade 600–650"}
+COUNTERPARTIES = (("anthropic_commit_microsoft", "Microsoft"), ("anthropic_commit_google", "Google"),
+                  ("anthropic_commit_amazon", "Amazon"), ("anthropic_commit_spacexai", "SpaceXAI (SpaceX)"),
+                  ("anthropic_commit_nscale", "Nscale"), ("anthropic_commit_lambda", "Lambda"))
 
 
 def _lab_lines(rows: list[dict]) -> list[str]:
@@ -500,6 +580,9 @@ def _lab_lines(rows: list[dict]) -> list[str]:
     def val(inst, field, period=""):
         x = by.get((inst, field, period))
         return None if x is None else x
+
+    def num(x) -> float:
+        return float(x["value"]) if x else 0.0
 
     out = []
     ant = [x for x in rows if x["company"] == "anthropic"]
@@ -517,6 +600,8 @@ def _lab_lines(rows: list[dict]) -> list[str]:
                 last = sorted(com, key=lambda x: x["period"])[-1]
                 cp = val(inst, "coupon_pct")
                 cps = f", kupong {_f(cp['value'], 2)} %" if cp else ""
+                if cp and inst in COUPON_NOTE:
+                    cps += f" {COUPON_NOTE[inst]}"
                 out.append(f"  - {label}: {_bn(last['value'])} ({last['period']}{cps}; known_from {last['filed']})")
         notes = [x for x in ant if x["field"] == "outstanding" and x["instrument"].startswith("anthropic_amazon_20")]
         if notes:
@@ -532,10 +617,54 @@ def _lab_lines(rows: list[dict]) -> list[str]:
         years = [val("anthropic_oblig_purchase_commitments", f"due_{y}", "2026-09-30") for y in range(2026, 2031)]
         if all(years):
             out.append("  - köpåtaganden per år 2026–2030: " + ", ".join(_bn(y["value"]) for y in years))
+        cps = [(name, x) for inst, name in COUNTERPARTIES
+               for x in [next((y for y in ant if y["instrument"] == inst and y["field"] == "commitment"), None)] if x]
+        if cps:
+            out.append("  - åtaganden för beräkningskraft per motpart (avtalsmånad): " + ", ".join(
+                f"{name} {QUAL.get(x['qualifier'], '')} {_bn(x['value'])} ({x['period']})".replace("  ", " ")
+                for name, x in cps) + f"; known_from senast {max(x['filed'] for _, x in cps)}")
     out.append("- OpenAI: ingen registreringsansökan på EDGAR (sökning på namnet 2026-11-25: bara fonder och SPV med "
                "Form D).")
+    sx = [x for x in rows if x["company"] == "spacex"]
+    if sx:
+        last = max(x["period"] for x in sx if x["instrument"] == "spacex_total_debt")
+        tot, notes = val("spacex_total_debt", "outstanding", last), val("spacex_notes", "outstanding", last)
+        nr, cp = val("spacex_notes", "rate_pct", last), val("spacex_notes", "coupon_pct")
+        other, orate = val("spacex_other_financings", "outstanding", last), val("spacex_other_financings", "rate_pct", last)
+        valor = [val(f"spacex_valor_{k}", "outstanding", last) for k in ("current", "noncurrent")]
+        kf = max(x["filed"] for x in sx if x["period"] == last)
+        out.append(f"- **SpaceX** (äger xAI sedan 2026-02-02; 10-Q). Skulden gäller hela koncernen: uppskjutning, "
+                   f"Starlink och xAI. Läge {last}:")
+        parts = [f"total skuld {_bn(num(tot))}"]
+        if notes:
+            parts.append(f"SpaceX Notes {_bn(num(notes))} (effektiv ränta {_f(num(nr), 2)} %, vägd kupong "
+                         f"{_f(num(cp), 3)} %, emitterade 2026-06)" if nr and cp else f"SpaceX Notes {_bn(num(notes))}")
+        if other:
+            o = f"övrig finansiering {_bn(num(other))}" + (f" (vägd fast ränta {_f(num(orate), 1)} %)" if orate else "")
+            if all(valor):
+                o += (f", varav misslyckade sale-leaseback av AI-hårdvara med Valor (närstående) "
+                      f"{_bn(sum(num(v) for v in valor))}")
+            parts.append(o)
+        out.append(f"  - {'; '.join(parts)}; known_from {kf}")
+        cf = sorted([x for x in sx if x["instrument"] == "spacex_credit_facility" and x["field"] == "commitment"],
+                    key=lambda x: x["period"])
+        if cf:
+            out.append(f"  - kreditfacilitet upp till {_bn(cf[-1]['value'])} ({cf[-1]['period']}, utan säkerhet; "
+                       f"known_from {cf[-1]['filed']})")
+        xai = [(i, val(i, "principal", "2025-06")) for i in ("spacex_xai_secured_notes", "spacex_xai_fixed_term_loan",
+                                                             "spacex_xai_floating_term_loan")]
+        if all(x for _, x in xai):
+            c1, c2 = val("spacex_xai_secured_notes", "coupon_pct"), val("spacex_xai_fixed_term_loan", "coupon_pct")
+            mg = val("spacex_xai_floating_term_loan", "margin_bp")
+            out.append(f"  - xAI:s egna lån före köpet (2025-06): säkerställda obligationer {_bn(num(xai[0][1]))} med "
+                       f"{_f(num(c1), 1)} %, terminslån {_bn(num(xai[1][1]))} med {_f(num(c2), 2)} % och "
+                       f"{_bn(num(xai[2][1]))} med SOFR + {_f(num(mg), 0)} bp; inte kvar i tabellen per {last}")
     meta = [x for x in rows if x["company"] == "meta" and x["instrument"] == "meta_dc_ventures"]
     if meta:
+        names = ["Louisiana, med fonder förvaltade av Blue Owl"]
+        if any(x["instrument"] == "meta_texas_venture" for x in rows):
+            names.append("Texas från 2026-07")
+        out.append(f"- **Meta, datacenterbolag** ({'; '.join(names)}). Per balansdag:")
         for period in sorted({x["period"] for x in meta}):
             got = {x["field"]: x for x in meta if x["period"] == period}
             parts = [f"{lab} {_bn(got[f]['value'])}" for f, lab in (("lease_commitment", "leasingåtaganden"),
@@ -543,16 +672,15 @@ def _lab_lines(rows: list[dict]) -> list[str]:
                                                                      ("exposure_max", "största möjliga förlust"))
                      if f in got]
             kf = max(x["filed"] for x in got.values())
-            out.append(f"- **Meta, datacenterbolag med Blue Owl m.fl. (Hyperion och Texas)**, {period}: "
-                       f"{', '.join(parts)} (known_from {kf})")
+            out.append(f"  - {period}: {', '.join(parts)} (known_from {kf})")
     lou = {x["field"]: x for x in rows if x["instrument"] == "meta_louisiana_venture"}
     if lou and not meta:
         parts = [f"{lab} {_bn(lou[f]['value'])}" for f, lab in (("contribution", "Metas insats"),
                                                                  ("lease_commitment", "leasingåtagande cirka"),
                                                                  ("rvg_max", "restvärdesgaranti från"))
                  if f in lou]
-        out.append(f"- **Meta, Hyperion (Louisiana) med Blue Owl**, bildat 2025-10: {', '.join(parts)} "
-                   f"(known_from {max(x['filed'] for x in lou.values())})")
+        out.append(f"- **Meta, datacenterbolag i Louisiana med fonder förvaltade av Blue Owl**, bildat 2025-10: "
+                   f"{', '.join(parts)} (known_from {max(x['filed'] for x in lou.values())})")
     out.append("- Oracle: inga belopp för datacenter-SPV eller samriskbolag i 10-Q och 10-K 2025–2026.")
     crwv = [x for x in rows if x["company"] == "crwv" and x["field"] == "principal"]
     if crwv:
@@ -562,11 +690,11 @@ def _lab_lines(rows: list[dict]) -> list[str]:
             unit = "MEUR" if x["unit"] == "MEUR" else "MUSD"
             out.append(f"  - {x['period']}: {x['instrument'].removeprefix('crwv_').replace('_', ' ')}, "
                        f"{_f(x['value'], 2 if float(x['value']) < 10 else 0)} {unit}"
-                       f"{', kupong ' + _f(cp['value'], 3) + ' %' if cp else ''} (known_from {x['filed']})"
-                       + (" – beloppet som det står i 8-K, se noten i CSV:n" if float(x["value"]) < 10 else ""))
+                       f"{', kupong ' + _f(cp['value'], 3) + ' %' if cp else ''} (known_from {x['filed']})")
     margins = [x for x in rows if x["company"] == "crwv" and x["field"] == "margin_bp"]
     if margins:
         out.append("- CoreWeave, marginal över SOFR för lånefaciliteter (bp): " + ", ".join(
             f"{x['instrument'].removeprefix('crwv_').replace('_', ' ')} {_f(x['value'], 0)}"
+            + (f" ({MARGIN_NOTE[x['instrument']]})" if x["instrument"] in MARGIN_NOTE else "")
             for x in sorted(margins, key=lambda x: x["filed"])))
     return out

@@ -138,19 +138,76 @@ def test_manual_row_locator_range_and_hash(tmp_path, monkeypatch):
         kl.manual_row(d, lines, "line #9", "x_rcf", "commitment", "15000", "MUSD")
 
 
+def _hash_index_of(lines: dict[str, list[str]]):
+    return lambda url, width: {kl.quote_hash("\n".join(lines[url][k:k + width])): k
+                               for k in range(len(lines[url]) - width + 1)}
+
+
 def test_earliest_moves_a_row_to_the_first_document_with_the_line(monkeypatch, tmp_path):
     monkeypatch.setattr(kl, "QUOTES_DIR", tmp_path)
     quote_lines = ["Purchase commitments | 313,819 | 5,053"]
+    head = "The following table summarizes our contractual obligations as of September 30, 2026 :"
     final = _doc("anthropic", "424B4", "2026-11-19", "acc-3", "u3")
-    r = kl.manual_row(final, ["x", *quote_lines], "line #1", "a_pc", "due_total", "313819", "MUSD", "2026-09-30")
+    r = kl.manual_row(final, [head, *quote_lines], "line #1", "a_pc", "due_total", "313819", "MUSD", "2026-09-30")
     docs = [_doc("anthropic", "S-1", "2026-10-26", "acc-1", "u1"), _doc("anthropic", "S-1/A", "2026-11-02", "acc-2", "u2"),
             final]
-    lines = {"u1": ["Purchase commitments | 300,000 | 5,053"], "u2": ["a", "b", *quote_lines], "u3": ["x", *quote_lines]}
-    monkeypatch.setattr(kl, "_hash_index", lambda url, width: {kl.quote_hash("\n".join(lines[url][k:k + width])): k
-                                                               for k in range(len(lines[url]) - width + 1)})
-    (moved,) = kl.earliest([r], docs)
+    lines = {"u1": ["Purchase commitments | 300,000 | 5,053"], "u2": ["a", head, *quote_lines], "u3": [head, *quote_lines]}
+    monkeypatch.setattr(kl, "_hash_index", _hash_index_of(lines))
+    (moved,) = kl.earliest([r], docs, lines_of=lines.__getitem__)
     assert (moved.filed, moved.form, moved.accession, moved.locator) == ("2026-11-02", "S-1/A", "acc-2", "line #2")
     assert moved.quote_sha256 == r.quote_sha256
+
+
+def test_earliest_keeps_a_balance_where_the_earlier_document_states_another_date(monkeypatch, tmp_path):
+    """R26-1: the S-1 has the same table line, but its table is as of June 30; the September balance is known from the
+    first amendment that states September 30 (here in the note under the table)."""
+    monkeypatch.setattr(kl, "QUOTES_DIR", tmp_path)
+    row = "Amazon 2026 NPA | $15.0 billion | $15.0 billion (2) | $ — | N/A"
+    june = ["The following table summarizes the principal terms as of June 30, 2026.", "Agreement | Original | Remaining (1)",
+            row, "______________", "(1) A s of June 30, 2026."]
+    sept = ["The following table summarizes the principal terms.", "Agreement | Original | Remaining (1)", row, "174",
+            "Table of Contents", "______________", "(1) As of September 30, 2026."]
+    final = _doc("anthropic", "424B4", "2026-11-19", "acc-3", "u3")
+    r = kl.manual_row(final, sept, "line #2", "a_npa", "commitment", "15000", "MUSD", "2026-09-30")
+    monthly = kl.manual_row(final, sept, "line #2", "a_npa", "commitment", "15000", "MUSD", "2026-04", rid="m")
+    docs = [_doc("anthropic", "S-1", "2026-10-26", "acc-1", "u1"), _doc("anthropic", "S-1/A", "2026-11-02", "acc-2", "u2"),
+            final]
+    lines = {"u1": june, "u2": sept, "u3": sept}
+    monkeypatch.setattr(kl, "_hash_index", _hash_index_of(lines))
+    moved, month = kl.earliest([r, monthly], docs, lines_of=lines.__getitem__)
+    assert (moved.filed, moved.accession) == ("2026-11-02", "acc-2")
+    assert (month.filed, month.accession) == ("2026-10-26", "acc-1")  # a month period moves on the hash alone
+    lines["u2"] = june  # no document before the source states September 30: the row stays in the source
+    monkeypatch.setattr(kl, "_hash_index", _hash_index_of(lines))
+    (kept,) = kl.earliest([r], docs, lines_of=lines.__getitem__)
+    assert (kept.filed, kept.accession) == ("2026-11-19", "acc-3")
+
+
+def test_stated_dates_quote_heading_notes_and_prose():
+    lines = ["Notes outstanding as of June 30, 2026, which consist", "x", "A | B", "Amazon | 2,186", "Total | 2,186",
+             "17", "Table of Contents", "(1) As of September 30, 2026.", "Other text as of March 31, 2026."]
+    assert kl.stated_dates(lines, 3, 3) == {"2026-06-30", "2026-09-30"}  # heading and note, not the prose after
+    assert kl.stated_dates(lines, 3, 3, width=1) == {"2026-09-30"}
+    prose = ["The table below is as of September 30, 2026 :", "In aggregate, about $900.9 billion.", "end"]
+    assert kl.stated_dates(prose, 1, 1) == {"2026-09-30"}
+    assert kl.stated_dates(["As of December 31, 2025 and September 30, 2026 (unaudited), no amounts"], 0, 0) == {
+        "2025-12-31", "2026-09-30"}
+
+
+def test_uncoded_candidate_reasons():
+    d = _doc("crwv", "10-Q", "2026-11-12", "acc-q")
+    agent = {("acc-q", "line #5"): "egen bedömning"}
+    assert kl.skip_reason("crwv", d, 5, "4.2 | Form of Note", agent, None) == ("egen bedömning", "agent")
+    assert kl.skip_reason("crwv", d, 1, "4.2 | Form of 9.750% Senior Notes due 2031", {}, None) == (
+        "bilageförteckning", "regel")
+    assert kl.skip_reason("crwv", d, 12, "Total debt | 21,000", {}, (10, 20))[0] == kl.TABLE_REASON
+    assert kl.skip_reason("crwv", d, 30, "the conversion rate will be 9.2764 shares", {}, (10, 20))[0].startswith("aktier")
+    assert kl.skip_reason("crwv", d, 30, "We may redeem the Notes at 101%", {}, (10, 20))[0].startswith("villkor")
+    assert kl.skip_reason("crwv", d, 30, "We had $17.6 billion outstanding under DDTL facilities", {}, None)[0] == \
+        kl.PERIODIC_REASON
+    sx = _doc("spacex", "10-Q", "2026-10-22", "acc-s")
+    assert kl.skip_reason("spacex", sx, 3, "We had $17.6 billion outstanding under loans", {}, None) == (
+        kl.NOT_ASSESSED, "ingen")
 
 
 # ------------------------------------------------------------------ the self-check
@@ -271,6 +328,54 @@ def test_coupon_series_from_curated_rows():
     assert list(new["period"]) == ["2025Q2"]  # convertible and EUR excluded
     assert new.iloc[0].value == pytest.approx((2000 * 9.25 + 1000 * 10) / 3000)
     assert new.iloc[0].known_from == pd.Timestamp("2025-07-02")  # the quarter is over before the last filing
+
+
+def test_coupon_out_leaves_out_totals_parts_and_on_request_convertibles():
+    def r(inst, field, value, co="spacex"):
+        return {"company": co, "instrument": inst, "field": field, "value": value, "unit": "%" if field == "rate_pct"
+                else "MUSD", "period": "2026-09-30", "filed": "2026-10-22", "qualifier": ""}
+    df = pd.DataFrame([r("spacex_total_debt", "outstanding", "38000"), r("spacex_notes", "outstanding", "25000"),
+                       r("spacex_notes", "rate_pct", "6"), r("spacex_other", "outstanding", "13000"),
+                       r("spacex_other", "rate_pct", "7"), r("spacex_valor_current", "outstanding", "2000"),
+                       r("spacex_valor_noncurrent", "outstanding", "11000"),
+                       r("crwv_2031_convertible_senior_notes", "outstanding", "1000", "crwv"),
+                       r("crwv_2031_convertible_senior_notes", "rate_pct", "2", "crwv"),
+                       r("crwv_ddtl", "outstanding", "3000", "crwv"), r("crwv_ddtl", "rate_pct", "10", "crwv")])
+    sx = S.coupon_out(df, "spacex").iloc[0]
+    assert sx.value == pytest.approx((25000 * 6 + 13000 * 7) / 38000) and sx.coverage == pytest.approx(1.0)
+    assert S.coupon_out(df, "crwv").iloc[0].value == pytest.approx(8.0)
+    assert S.coupon_out(df, "crwv", convertibles=False).iloc[0].value == pytest.approx(10.0)
+    mix = F.convertible_mix(df, "2026Q3")
+    assert mix["conv_share"] == pytest.approx(0.25) and mix["value_ex_conv"] == pytest.approx(10.0)
+    assert (mix["conv_rate_lo"], mix["conv_rate_hi"]) == (2.0, 2.0) and mix["value_prev"] is None
+    assert S.CONVERTIBLE.search("anthropic_google_2024_npa") and not S.CONVERTIBLE.search("crwv_2030_senior_notes")
+
+
+def test_a_history_counts_quarters_with_a_pace():
+    path = {"2025Q1": {"pace": None}, "2025Q2": {"pace": 6.0}, "2025Q3": {"pace": 1.0}, "2025Q4": {"pace": None}}
+    ms = {f"kl_{m}_nbis": {"path": {}} for m in F.PRICE_DEP}
+    ms["kl_fcfgap_nbis"] = {"path": path}
+    assert F.a_history("nbis", ms) == {"held": 1, "of": 2, "first": "2025Q2", "last": "2025Q3"}
+
+
+def test_lab_lines_qualify_and_name_spacex_only_with_its_rows():
+    def row(co, inst, field, value, period="", filed="2026-11-02", qualifier=""):
+        return {"id": f"{inst}-{field}-{period}", "company": co, "instrument": inst, "field": field, "value": value,
+                "unit": "", "period": period, "filed": filed, "form": "", "qualifier": qualifier, "note": ""}
+    rows = [row("anthropic", "anthropic_google_npa_2026", "commitment", "20000", "2026-09-30"),
+            row("anthropic", "anthropic_google_npa_2026", "coupon_pct", "9.0"),
+            row("anthropic", "anthropic_commit_spacexai", "commitment", "120500", "2026-05", qualifier="up_to"),
+            row("crwv", "crwv_ddtl_2_0_facility", "margin_bp", "1300", filed="2025-10-02")]
+    lab = "\n".join(F._lab_lines(rows))
+    assert "kupong 9,00 % för lån före noteringen" in lab and "SpaceXAI (SpaceX) upp till 120,5 mdr (2026-05)" in lab
+    assert "ddtl 2 0 facility 1 300 (före femte tillägget" in lab
+    assert "**SpaceX**" not in lab and "xAI (" not in lab  # no SpaceX rows known: nothing about it
+    rows += [row("spacex", "spacex_total_debt", "outstanding", "38006", "2026-09-30", "2026-10-22"),
+             row("spacex", "spacex_notes", "outstanding", "25000", "2026-09-30", "2026-10-22"),
+             row("spacex", "spacex_notes", "rate_pct", "6.072", "2026-09-30", "2026-10-22"),
+             row("spacex", "spacex_notes", "coupon_pct", "5.855", "", "2026-08-04")]
+    lab = "\n".join(F._lab_lines(rows))
+    assert "**SpaceX** (äger xAI" in lab and "total skuld 38,0 mdr; SpaceX Notes 25,0 mdr (effektiv ränta 6,07 %" in lab
 
 
 def test_catalog_specs_valid_publish_false_and_not_core():

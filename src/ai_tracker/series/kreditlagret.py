@@ -26,6 +26,7 @@ registered reading come from ai_tracker.followed.
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 
 import numpy as np
@@ -56,6 +57,10 @@ SOURCE = "Härledd (KL1) ur SEC EDGAR XBRL-serier och extraherade serier i katal
 LICENSE = _sec.LICENSE
 MAX_AGE = 183  # as the longest component (CoreWeave: 10-K up to 61 days after the quarter, + 92 + 30)
 MIN_QUARTERS = 4  # a coupon series needs at least four quarters with a value (register entry, (b))
+# a total or a coded part of another line is not an instrument of its own in the weighted rate (register X23, point 3)
+NOT_AN_INSTRUMENT = re.compile(r"_total_debt$|_valor_(?:current|noncurrent)$")
+# convertibles by the coding: the name, or Anthropic's note purchase agreements (convertible promissory notes)
+CONVERTIBLE = re.compile(r"convertible|_npa(?:_|$)")
 
 
 @dataclass(frozen=True)
@@ -241,11 +246,14 @@ CURATED_LICENSE = ("SEC EDGAR: public information (sec.gov/privacy). Bara extrah
                    "publiceras, aldrig text")
 
 
-def coupon_out(df: pd.DataFrame, company: str) -> pd.DataFrame:
+def coupon_out(df: pd.DataFrame, company: str, convertibles: bool = True) -> pd.DataFrame:
     """Outstanding-weighted mean of rate_pct per balance date (calendar quarter); known_from = max(day after the
     quarter, latest filed of the rows used). Rows: period, value, known_from, coverage (share of outstanding with a
-    rate)."""
-    d = df[df["company"] == company]
+    rate). Totals and coded parts of another line are left out; convertibles=False leaves out convertibles too (a
+    description in the report, register X23, point 4)."""
+    d = df[(df["company"] == company) & ~df["instrument"].str.contains(NOT_AN_INSTRUMENT)]
+    if not convertibles:
+        d = d[~d["instrument"].str.contains(CONVERTIBLE)]
     out = d[d["field"] == "outstanding"][["instrument", "period", "value", "filed"]].rename(columns={"value": "out"})
     rate = d[d["field"] == "rate_pct"][["instrument", "period", "value", "filed"]].rename(columns={"value": "rate"})
     m = out.merge(rate, on=["instrument", "period"], how="left", suffixes=("", "_rate"))
@@ -276,7 +284,7 @@ def coupon_new(df: pd.DataFrame, company: str) -> pd.DataFrame:
         wide.setdefault(r.instrument, {})[r.field] = (r.value, r.unit, r.filed, r.qualifier)
     rows = []
     for inst, f in wide.items():
-        if "convertible" in inst or not {"principal", "coupon_pct", "issue_date"} <= set(f):
+        if CONVERTIBLE.search(inst) or not {"principal", "coupon_pct", "issue_date"} <= set(f):
             continue
         if f["principal"][1] != "MUSD" or f["principal"][3] or len(f["issue_date"][0]) != 10:
             continue  # other currency, a qualified amount or a month-only date
