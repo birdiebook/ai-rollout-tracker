@@ -77,7 +77,7 @@ def test_real_snapshot_carries_no_withheld_value(tmp_path):
     if "error" not in ex and not EX.csv_public(lambda k: D.publishable(k, ctx)):
         for b in ex["break_statements"]:
             if EX.from_csv(b["company"]):
-                assert not {"value", "prev_value", "size"} & set(b)
+                assert not {"value", "prev_value", "size", "reason"} & set(b)
         for c in ex["surprise"]["companies"]:
             if EX.from_csv(c["company"]):
                 assert set(c) <= {"company", "measure", "period", "known_from", "guidance_known_from"}
@@ -109,7 +109,7 @@ def test_expectations_keep_no_curated_value_while_its_series_are_withheld():
     text = json.dumps(s)
     for v in ("175000", "190000", "92000", "-8.2", "7.7", "-0.5", "0.4"):
         assert v not in text, v
-    assert s["break_statements"][0] == {"ref": "msft-r11f1", "company": "msft", "reason": "r"}
+    assert s["break_statements"][0] == {"ref": "msft-r11f1", "company": "msft"}  # the reason quotes the figure
     assert s["break_statements"][1]["value"] == 40000.0  # TSMC's capex guidance is an SEC series
     assert s["events_recent"][0] == {"company": "meta", "known_from": "2026-04-29"}
     assert s["events_recent"][1]["size"] == 0.0 and s["events_per_company_year"] == {"tsmc": {"2026": {"n": 4}}}

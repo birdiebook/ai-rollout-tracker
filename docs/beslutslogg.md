@@ -758,8 +758,9 @@ republishing data"), npm och arXiv (`okänd`), och Microsofts capex-guidance ur 
   brottsannolikhet (C4). Riktningen står kvar, eftersom den räknas i grenens publicerade index (beslutet 2026-11-24).
   Brottflaggan i C4 står kvar, eftersom kort K4 räknar den. Rekonstruktioner i minnet påverkas inte.
 - **Förväntningsavsnittet** har inga siffror ur den kurerade filen så länge serierna som läser den har
-  `publish=False`: brottraden för Microsoft visas utan storlek, och revideringsindexet, överraskningsindexet och
-  Metas och Alphabets överraskningar har bara period och datum. Det ändrar X8:s "visas med sin storlek (−8,2) i
+  `publish=False`. Brottraden för Microsoft visas utan storlek och utan skälstexten, som citerar bolagets siffra
+  (`ref` pekar på skälet i koden). Revideringsindexet, överraskningsindexet och Metas och Alphabets överraskningar har
+  bara period och datum. Det ändrar X8:s "visas med sin storlek (−8,2) i
   ögonblicksbilden" tills R11-4 är avgjort. TSMC och Nvidia (SEC) visas som förut. Värdena går att räkna fram igen ur
   de daterade serierna när ägaren beslutar.
 - **Månadens berättelse** prövar därför inte inhållna serier i K5 och K6, i någon månad (daterad registerändring

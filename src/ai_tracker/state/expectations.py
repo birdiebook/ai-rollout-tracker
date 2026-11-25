@@ -221,7 +221,8 @@ def withhold(section: dict, publishable: Callable[[str], bool]) -> dict:
                 entry[k] = _ids(entry.get(k))
     if isinstance(s.get("composition_main_window"), dict):
         s["composition_main_window"] = {k: v for k, v in s["composition_main_window"].items() if k == "period"}
-    s["break_statements"] = [{k: v for k, v in b.items() if k not in ("value", "prev_value", "size")}
+    # the reason text of a CSV break quotes the company's figure (GR.DEFINITION_BREAKS): the ref points to it
+    s["break_statements"] = [{k: v for k, v in b.items() if k not in ("value", "prev_value", "size", "reason")}
                              if from_csv(b.get("company")) else b for b in s.get("break_statements") or []]
     s["events_recent"] = [{k: v for k, v in e.items() if k not in ("size", "direction")}
                           if from_csv(e.get("company")) else e for e in s.get("events_recent") or []]
