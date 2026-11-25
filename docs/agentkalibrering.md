@@ -71,6 +71,7 @@ En rad per spår, fylls på efter varje körning. Tumreglerna justeras när siff
 | 2026-11-25 | 14 | R-W2 tillgänglighet | granskning + rättning | ~56 | ~116 | ~270 | axe 0 i 54 körningar; 4 tangentbordsfel rättade; LCP 0,8 s; TBT kvar (P1) |
 | 2026-11-25 | 14 | S3 order och orderstock | extraktion ur 8-K (regler låsta först) | ~150 | ~95 | ~600 | 113 bilagor, 575 värden, 42 stopp, 61 katalogserier, stickprov 3/617 (falska stoppträffar), 49 tester; Equinix ej kodat |
 | 2026-11-25 | 14 | R19 granskning av S3 | granskning (extraktion, 113 SEC-bilagor nyhämtade, egna tabelltolkningar) | ~110 | ~110 | – | 0 fel av 65 i stickprovet och 0 i kontrollerna av hela filen (575 hashar, 171 DLR-rader, 99 GEV-tabelltal, 108 Eaton-segment), 42 av 42 stopp, 4 should_fix (GW-skarv, luckorsak, citat, DLR-andel), 8 noter, 17 tester varav 4 strikta xfail |
+| 2026-11-25 | 14 | X16 rättning av S3 efter R19 | rättning (registerpost först, omkodning, noter, tester) | ~50 | ~95 | – | R-1–R-4, N-5 och N-7; GE Vernovas order i GW delade, 6 konverteringar kodade (orderingång 5–16 GW), 35/35 GW-rader mot nyhämtade bilagor, 4 strikta xfail nu vanliga tester, 15 nya tester, 62 serier hämtade (60 oförändrade); hela sviten 2247 gröna, 2 kända miljöfel |
 
 ## Körning 1, sammanfattning (2026-11-23, orkestrerare)
 

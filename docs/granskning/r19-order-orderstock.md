@@ -252,3 +252,5 @@ Anmärkningar utan rättning:
   utesluter konverteringarna (beläggen för F-1), Eatons tolvmånadersorder är kompletta, known_from = inlämningsdagen
   och datumraden, Vertivs tio serier är avslutade, inga kärnserier, korta ord i CSV:n och `publish=False`.
 - Fynd F-1 till F-4 som strikta xfail.
+
+Rättat i auto14k/x16-order-orderstock

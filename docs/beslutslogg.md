@@ -802,3 +802,15 @@ republishing data"), npm och arXiv (`okänd`), och Microsofts capex-guidance ur 
   åtta serier med `dlr_share` väntar på R-1 och R-4. Som kärnkandidat i G7 är gasturbinernas orderstock och
   reservationer i GW bättre än ordren i GW.
 
+
+## 2026-11-25 – X16: rättning av S3 efter R19 (order och orderstock)
+
+- **R-1.** GE Vernovas order i GW delas (daterad registerpost, committad före omkodningen). 2025Q1 ("gas turbine
+  orders") står ensam med ett stopp. Från 2025Q2 finns två serier: order bland nya kontrakt och reservationer som blev
+  order. Orderingången i GW är summan: 5–16 GW per kvartal, inte 1–3. Orderstocken går ihop med båda.
+- **R-2–R-4.** Luckorsaken nämner gränsen. Dell-citaten är omskrivna. Noten för Digital Realtys åtta serier med
+  `dlr_share` säger att andelen inte anges före 2025 och ger beläggen. Andelen för 2021Q4–2024Q1 är fortfarande obelagd.
+- 62 katalogserier, alla `publish=False`. Inga kärnserier, och ingen takt är räknad.
+- **Rekommendation:** pröva `publish=True` för de 52 serierna utan fynd och för GE Vernovas två nya GW-serier efter en
+  kort granskning av konverteringarna. Vänta med Digital Realtys `dlr_share`-serier tills andelen före 2024Q2 är
+  belagd i 10-Q/10-K.
