@@ -233,7 +233,7 @@ def select(inp: dict, publishable: Callable[[str], bool], label: Callable[[str],
                     + (f" ({num(delta, 3, signed=True)})" if delta is not None else "") + ". "
                     + (f"Av {n_s} räknade serier: {counts}. " if n_s else "")
                     + f"Gränserna är {num(R.BRAKING, 2)} (bromsar in) och {num(R.ACCELERATING, 2)} (accelererar).")
-            title = f"{code} {name}: {p.get('state')} → {cur.get('state')}"
+            title = f"{code} {name}: från {p.get('state')} till {cur.get('state')}"
             card = {"type": "K1", "id": f"k1-{code}", "title": title,
                     "text": text, "direction": direction, "link": _link("branch", f"Till grenen {code}", code),
                     "facts": {"branch": code, "name": name, "from": p.get("state"), "to": cur.get("state"),
