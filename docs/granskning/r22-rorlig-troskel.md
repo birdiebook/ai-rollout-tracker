@@ -299,3 +299,5 @@ dag, och ögonblicksbilden 2026-11-30 påverkas inte.
 - strikt xfail: R22-1 – R22-5 (ett test per rättning, se tabellen)
 
 `python -m pytest -q tests/test_r22_rorlig_troskel.py tests/test_price_rolling.py`: 26 passerade, 5 xfail.
+
+Rättat i auto14k/x19-rorlig-troskel

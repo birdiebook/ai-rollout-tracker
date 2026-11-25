@@ -71,6 +71,7 @@ En rad per spår, fylls på efter varje körning. Tumreglerna justeras när siff
 | 2026-11-25 | 14 | R-W2 tillgänglighet | granskning + rättning | ~56 | ~116 | ~270 | axe 0 i 54 körningar; 4 tangentbordsfel rättade; LCP 0,8 s; TBT kvar (P1) |
 | 2026-11-25 | 14 | Q1 rörlig förmågetröskel (G2) | mått + katalogserier (förregistrerade) | ~50 | ~100 | – | 4 serier (L = 12, L = 6, frontpris, ECI backfill), register före värden (b5c652c), efterföljarregel i 9 av 22 månader, 9 handkontroller mot råfiler, kostnad per uppgift BLOCKED, 21 tester |
 | 2026-11-25 | 14 | R22 granskning av Q1 (rörlig tröskel) | granskning (oberoende omräkning, råfiler, känsligheter) | ~90 (två pass, kvotstopp) | ~95 | – | GODKÄND MED ANMÄRKNINGAR: 118 rader omräknade, 17 handkontroller mot råfiler, efterföljarens spridning upp till 25 poäng, R22-1 – R22-5 (strikt xfail), 6 passerande tester |
+| 2026-11-25 | 14 | X19 rättning av Q1 efter R22 (rörlig tröskel) | rättning (register före omräkning, kod, data, dokument) | ~45 | ~60 | – | R22-1 – R22-5 rättade (5 strikta xfail nu vanliga tester), median över efterföljare, 2 namnbyten, L = 12 ändras i 4 av 22 månader, övriga serier oförändrade, 11 nya tester |
 
 ## Körning 1, sammanfattning (2026-11-23, orkestrerare)
 

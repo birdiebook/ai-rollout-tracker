@@ -803,3 +803,18 @@ republishing data"), npm och arXiv (`okänd`), och Microsofts capex-guidance ur 
   och i 5 av 22 månader beror värdet på vilken kandidat som står först (R22-3). Två namnbyten utan överlapp saknas
   (R22-2). ECI-varianten ligger på golvet i 7 av 18 månader utan att dokumentet säger det (R22-4).
 - Fem should_fix med strikta xfail-tester, sex nya passerande tester. Grenindex och tillstånd ändras inte.
+
+## 2026-11-25 – X19: rättning av Q1 efter granskningen R22 (pris vid rörlig förmågetröskel)
+
+- Registerposten "2026-11-25 – X19" committades före omräkningen. Den ändrar tre regler efter att värdena setts, med
+  granskningens fynd som skäl: två namnbyten utan överlapp till (`chatgpt-4o-latest`, `claude-opus-4-6-thinking`),
+  tröskeln som median över alla giltiga efterföljare i stället för den första, och versionen på månadsslut + 1 med
+  tavlor belagda samma dag. `docs/kallor/g2_rorlig_troskel.md` avsnitt 11.
+- **Medianen gäller alltid, utan åldersgräns för Δ.** Villkoret "median när Δ är äldre än 90 dagar" ger samma rader på
+  dagens data, och en lucka hade tagit bort 2026-03 – 2026-05 för L = 12. Utan gräns väljs ingen gräns i efterhand.
+- Effekt: L = 12 ändras i 4 av 22 månader (2025-08 0,13125 → 0,175, 2026-02, 2026-04 och 2026-05). L = 6, frontpriset och
+  ECI-varianten ändras inte. Värdet beror inte längre på kandidatordningen, men kandidaternas spridning gör 2026-02 –
+  2026-05 osäkra (förbehåll 5).
+- Den delade versionsregeln i `vintages.monthly` och `arena_price.build` ändras inte (kärnserier, skyddade moduler). Den
+  rättningen hör hemma i ett eget spår.
+- Serierna är fortfarande katalogserier. Grenindex och tillstånd ändras inte.
