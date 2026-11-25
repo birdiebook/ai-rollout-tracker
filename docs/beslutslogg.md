@@ -1227,3 +1227,46 @@ Johannes svarade "kör på dina rekommendationer" på tre rekommendationer samma
 - **Inte ändrat:** publiceringsflaggor och kärnserier. Ägarbesluten som väntar står i `steg2/STATUS.md`. R18-4
   (`defnref.xml` i gemensam instanskod 2009–2011) är rättat för S2:s serier och `dep_msft` men inte kontrollerat för
   alla äldre serier. Det står som öppen fråga.
+
+## 2026-11-25 – KL1: Kreditlagret som följd fråga
+
+- Johannes vill följa tesen om skuld och vilja eller förmåga att investera i de yttre lagren. Den blir en **följd
+  fråga**, inte en gren: en registerpost (2026-11-25 KL1), katalogserier med `publish=False` och en månadsrapport
+  (`python -m ai_tracker.followed kreditlagret --as-of D`). Inga kärnserier, inget grenindex och ingen tillståndsregel
+  ändras, och ögonblicksbilden 2026-11-30 påverkas inte.
+- Frågan är symmetrisk, och läsregeln låstes med fasta gränser före beräkningen: pris eller beroende steg först, sedan
+  föll capex-takten i yttre lagret medan det inre höll (talar för), eller priset steg och takten höll (emot 1), eller
+  takten föll lika i båda lagren (emot 2). Vad orkestreraren och Johannes hade sett i chatten står i posten.
+- Extraktionen ur EDGAR följer KR1 och CN1: dokument, plats, SHA-256 och citatet bara under `data/raw`. 400 rader
+  (Anthropics S-1, CoreWeaves 8-K och skuldtabeller, Metas datacenterbolag). Självkontroll mot nyhämtade dokument: 400
+  av 400 ok. OpenAI har ingen registreringsansökan på EDGAR, och Oracle anger inga belopp för datacenter-SPV.
+- Utslag per 2026-11-25: Oracle "talar för", CoreWeave "talar emot (1)", Nebius "inget av mönstren", yttre lagret och
+  IREN "kan inte avgöras" (för kort). Per 2025-11-25 gav Oracle "talar emot (1)". Det är en beskrivning, inget test.
+- **Rekommendation till Johannes:** läs rapporten månadsvis. Låt en oberoende granskning stickprova extraktionen (minst
+  30 % av de agentkodade raderna och en tabell per CoreWeave-rapport) innan något av beloppen används för beslut.
+  Gör ingen kärnserie av måtten: med 8–12 kvartal räcker inte historiken för grenarnas regel.
+
+## 2026-11-25 – X23: rättning av KL1 efter granskningen R26 (kreditlagret)
+
+- Registerposten "2026-11-25 – X23" committades före koden och före hämtningen av SpaceX:s dokument. Den ändrar inget
+  mått, ingen läsregel och ingen gräns. Den skärper dateringen i labbens korpus, beskriver listan över okodade
+  kandidater, tar med SpaceX som tabellrader och säger vilka förbehåll rapporten ska visa.
+- **R26-1 och R26-2 (must_fix) är rättade.** En rad med full balansdag flyttas bara till ett tidigare dokument som anger
+  samma balansdag. De fem raderna från Anthropic per 2026-09-30 har nu S-1/A 2026-11-02 i stället för S-1:an
+  2026-10-26. CoreWeaves 9,750 %-obligation 2031 är 1 750 MUSD ur 8-K:n 2026-04-21. Inga andra av de 394 granskade
+  raderna ändrades, och de 53 serierna är oförändrade (1 870 rader).
+- **SpaceX (xAI) är med** som tabellrader ur två 10-Q: 38,0 mdr i total skuld per 2026-09-30 för hela koncernen, varav
+  25,0 mdr obligationer från 2026-06 (effektiv ränta 6,07 %) och 12,9 mdr misslyckade sale-leaseback av AI-hårdvara
+  med Valor, som är närstående. xAI:s egna lån från 2025 hade 12,5 %. SpaceX ingår inte i lagren eller i läsregeln, och
+  ingen ny serie skapas (två balansdagar).
+- **Okodade kandidater** står med skäl i `curated/kreditlagret_skipped.csv`: 753 rader, 131 med agentens eget skäl och
+  622 med en regelkategori. Metas 2026Q1 och 2026Q2, Anthropics åtaganden till SpaceXAI, Nscale och Lambda, DDTL 3.0:s
+  ram och DDTL 2.0:s nya marginal är kodade.
+- **Microsoft står kvar i det inre lagrets ränta**, med förbehåll. Måttet är låst, och läsregeln läser bara det yttre
+  lagrets ränta. Att ta ut Microsoft efter att ha sett talet vore en ändring i efterhand.
+- **Läsregeln ändras inte.** Rapporten säger nu att regeln bara läser uppgång och hur ofta A har gällt (Oracle 44 av 58
+  kvartal). En regel åt båda hållen är Johannes beslut och kräver en ny post före nästa läsning.
+- Självkontrollen mot nyhämtade dokument stoppades av HTTP 429 från SEC, enligt regeln. Mot cachen: 458 av 458 ok.
+- **Rekommendation till Johannes:** låt en oberoende granskning läsa de 58 nya och de 6 ändrade raderna (SpaceX,
+  Anthropics motparter, Meta, CoreWeave) innan beloppen används för beslut. Den första läsningen på osedda kvartal
+  kommer med Oracles inlämning omkring 2026-12-11.

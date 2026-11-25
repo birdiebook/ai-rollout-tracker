@@ -621,3 +621,24 @@ från 2013-01. Census-notisen ska nu stå med serierna och i sidfoten (Läsanvis
 Tillstånden är stabila mot revideringar (kappa 0,83 med v2), men träffkvoten mot nästa takt (0,74 och 0,76) är inte
 skild från slumpen och persistensen (Holm-p 0,37). Läs ett tillstånd som en beskrivning av takten nu, inte som en
 prognos. Regeln och paketet är oförändrade.
+
+## Följda frågor
+
+En följd fråga är en fråga som Johannes läser varje månad, utanför grenarna. Den har en registerpost, katalogserier med
+`publish=False` och en rapport (`python -m ai_tracker.followed <fråga> --as-of ÅÅÅÅ-MM-DD [--json PATH]`). Den har
+inget tillstånd, inget index och inga kärnserier, och den finns inte i paketet än.
+
+**Kreditlagret (KL1, `kl_*`, `docs/resultat/kreditlagret.md`).** Frågan: "Ändras finansieringens pris och tillgång i
+de yttre lagren, och följer investeringstakten där med?" Läs kedjan i ordning: pris på skuld (effektiv ränta, spread
+vid emission, CoreWeaves vägda ränta), beroende (capex som inte bärs av kassaflödet, nettoemission och tecknade
+leasingavtal, allt i procent av capex) och vilja och förmåga (capex och RPO-tillskott över fyra kvartal, guidance,
+CoreWeaves effekt). Yttre lagret (Oracle, CoreWeave, Nebius, IREN) står mot det inre (Microsoft, Alphabet, Amazon,
+Meta). Varje mått har nivå, takt, förändring i takt och överraskning mot den naiva baslinjen. Läsregeln ger ett
+mekaniskt utslag per lager och per yttre bolag: talar för mekanismen, talar emot (1 eller 2), blandat, inget av
+mönstren eller kan inte avgöras. Visa alltid talen bredvid utslaget, eftersom gränserna är fasta. En negativ förändring i
+takt betyder att tillväxten avtar, inte att capex minskar. Förbehåll: 8–12 kvartal per mått, så det är en beskrivning
+och inget test. RPO är klumpig. Neomolnens serier börjar 2024, så yttre lagrets förändring i takt finns först med
+2026Q4. Labbens (Anthropic och SpaceX, som äger xAI) och Metas belopp är tabellrader ur inlämningarna, inte serier.
+SpaceX:s skuld gäller hela koncernen. Regeln läser bara uppgång i pris och beroende, och rapporten anger hur ofta A har
+gällt. Microsofts effektiva ränta innehåller ränta på finansiell leasing. Lägg aldrig till larmnivåer eller en
+sammanvägd siffra.

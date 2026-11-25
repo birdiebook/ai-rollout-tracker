@@ -1,0 +1,754 @@
+company,accession,filed,form,locator,kind,reason,reason_by
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #336,commit,"sammanfattning: del av de 900,9 mdr som väntas före 2031 (451,6 mdr); inte ett fält, totalen kodas ur MD&A",agent
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #552,commit,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #843,commit,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #847,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #852,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #869,debt,"konvertering av 612,7 MUSD i lån till aktier vid noteringen (kapitaliseringen): inte skuld efter noteringen",agent
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #1053,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #1089,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #1581,commit,sammanfattning: samma åtaganden som kodas ur MD&A (rad #8118-#8122),agent
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #2809,debt,"riskfaktor: samma ram på 42,0 mdr som kodas ur tabellen (rad #7981)",agent
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #2817,debt,andel av kapitaliseringen efter noteringen: inte ett belopp för skuld,agent
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #3110,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #6218,debt,"kapitaliseringstabell: konvertibla lån i verkligt värde, inte nominellt belopp",agent
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #6219,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #6552,commit,kostnad för beräkningskraft i resultatanalysen: inte ett instrument,agent
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #6582,commit,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #6589,commit,kostnad för beräkningskraft i resultatanalysen: inte ett instrument,agent
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #7114,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #7164,commit,kostnad för beräkningskraft i resultatanalysen: inte ett instrument,agent
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #7166,commit,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #7174,commit,kostnad för beräkningskraft i resultatanalysen: inte ett instrument,agent
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #7225,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #7271,commit,kostnad för beräkningskraft i resultatanalysen: inte ett instrument,agent
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #7273,commit,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #7333,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #7375,commit,kostnad för beräkningskraft i resultatanalysen: inte ett instrument,agent
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #7377,commit,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #7412,debt,kostnad för lokaler: inte ett instrument,agent
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #7423,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #7507,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #7593,commit,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #7601,commit,kostnad för beräkningskraft i resultatanalysen: inte ett instrument,agent
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #7636,commit,kostnad för beräkningskraft i resultatanalysen: inte ett instrument,agent
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #7694,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #7710,debt,"likviditet: 14,8 mdr tillgängligt under kreditfaciliteten; ramen och utnyttjandet kodas (rad #7796-#7807)",agent
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #7715,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #7869,debt,"beskrivning av Amazons konvertibla lån (6,2 mdr kvar): samma belopp som kodas ur tabellen (rad #7900-#7901)",agent
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #7961,debt,"villkor för dragningar (steg om 1,0 mdr): inte ett fält i kodningsreglerna",agent
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #8155,debt,"not till förpliktelsetabellen: Amazons lån (6,2 mdr) undantas, samma belopp som kodas ur rad #7900-#7901",agent
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #8156,debt,"möjliga nya konvertibla lån, 77,0 mdr = ramarna 42,0, 20,0 och 15,0 mdr, som kodas var för sig",agent
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #8180,commit,"andel som förfaller inom 12 månader: inte ett fält (förfall per år kodas ur tabellen, rad #8139-#8142)",agent
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #8590,commit,sammanfattning: samma uppdelning som rad #336,agent
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #8665,commit,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #8686,commit,"risktext om placeringar (36,3 mdr): inte skuld",agent
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #8809,commit,marknadsbeskrivning: inte bolagets belopp,agent
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #9324,commit,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #10761,spv,LTBT (stiftelse) som konsoliderad VIE: inte finansiering,agent
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #10985,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #12312,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #12313,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #12325,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #12326,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #12338,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #12339,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #12348,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #12349,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #12358,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #12359,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #12361,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #12371,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #12372,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #12376,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #12476,debt,LTBT (stiftelse) som konsoliderad VIE: inte finansiering,agent
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #12921,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #13083,debt,registreringsrätt för aktier vid konvertering: inte ett fält,agent
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #14893,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #14972,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #14989,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #15925,debt,"tabell över verkligt värde per nivå: konvertibla lån i verkligt värde, inte nominellt belopp",agent
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #16008,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #16011,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #16329,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #16330,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #16331,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #16332,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #16382,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #16384,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #16387,debt,historik: tredje tranchen till Google 2023 vid en tidigare balansdag; tranchens belopp kodas (rad #16374-#16377),agent
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #16396,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #16406,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #16416,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #16418,debt,inget utgivet under Google 2026 NPA per 2026-09-30: samma läge som tabellen (rad #8021),agent
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #16440,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #16446,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #16476,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #16477,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #16479,debt,historik över Amazons rollover-lån vid tidigare balansdagar; utestående per 2026-09-30 kodas ur tabellen (rad #7900-#7901),agent
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #16489,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #16490,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #16492,debt,historik över Amazons rollover-lån vid tidigare balansdagar; utestående per 2026-09-30 kodas ur tabellen (rad #7900-#7901),agent
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #16495,debt,historik över Amazons rollover-lån vid tidigare balansdagar; utestående per 2026-09-30 kodas ur tabellen (rad #7900-#7901),agent
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #16506,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #16513,debt,historik över Amazons rollover-lån vid tidigare balansdagar; utestående per 2026-09-30 kodas ur tabellen (rad #7900-#7901),agent
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #16522,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #16524,debt,inget utgivet under Amazon 2026 NPA per 2026-09-30: samma läge som tabellen (rad #7953),agent
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #16538,debt,"kupongen 9,0 % (PIK) för Broadcom-ramen: samma som kodas ur tabellen (rad #7981)",agent
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #16547,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #16596,debt,kreditfaciliteten i noterna (avrundade belopp); ramarna kodas ur MD&A (rad #7789-#7798),agent
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #16619,debt,kreditfaciliteten i noterna (avrundade belopp); ramarna kodas ur MD&A (rad #7789-#7798),agent
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #16621,debt,kreditfaciliteten i noterna (avrundade belopp); ramarna kodas ur MD&A (rad #7789-#7798),agent
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #16622,debt,kreditfaciliteten i noterna (avrundade belopp); ramarna kodas ur MD&A (rad #7789-#7798),agent
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #16626,debt,kreditfaciliteten i noterna (avrundade belopp); ramarna kodas ur MD&A (rad #7789-#7798),agent
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #16628,debt,kreditfaciliteten i noterna (avrundade belopp); ramarna kodas ur MD&A (rad #7789-#7798),agent
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #16632,debt,utnyttjande per 2025-12-31 (tidigare balansdag); läget per 2026-09-30 kodas (rad #7806-#7807),agent
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #16634,debt,"villkor utanför kodningsreglerna (inlösen, återköp, kovenanter, säkringar, avgifter, utfallshändelser)",regel
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #16637,debt,utnyttjande och remburser per 2026-09-30 i noterna: samma belopp som kodas ur MD&A (rad #7806-#7807),agent
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #16727,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #16728,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #16731,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #16732,debt,emission av preferensaktier: inte skuld,agent
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #16734,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #16735,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #16782,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #17307,commit,tabell per 2025-12-31 i noterna (tidigare balansdag); läget per 2026-09-30 kodas ur MD&A,agent
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #17520,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #17521,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #17534,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #17539,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #17543,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #17544,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+anthropic,0001628280-26-074944,2026-11-19,424B4,line #17552,debt,"noter: samma ram på 42,0 mdr som kodas ur tabellen (rad #7981)",agent
+crwv,0001769628-25-000014,2025-05-15,10-Q,line #152,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-25-000014,2025-05-15,10-Q,line #163,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-25-000014,2025-05-15,10-Q,line #318,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-25-000014,2025-05-15,10-Q,line #319,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-25-000014,2025-05-15,10-Q,line #320,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-25-000014,2025-05-15,10-Q,line #524,debt,garanti eller säkerhet: fälten guarantor och collateral kodades inte för raden (ingen serie och ingen rapportrad använder dem),regel
+crwv,0001769628-25-000014,2025-05-15,10-Q,line #561,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-25-000014,2025-05-15,10-Q,line #563,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-25-000014,2025-05-15,10-Q,line #565,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-25-000014,2025-05-15,10-Q,line #566,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-25-000014,2025-05-15,10-Q,line #570,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-25-000014,2025-05-15,10-Q,line #571,debt,garanti eller säkerhet: fälten guarantor och collateral kodades inte för raden (ingen serie och ingen rapportrad använder dem),regel
+crwv,0001769628-25-000014,2025-05-15,10-Q,line #572,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-25-000014,2025-05-15,10-Q,line #574,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-25-000014,2025-05-15,10-Q,line #576,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-25-000014,2025-05-15,10-Q,line #585,debt,"villkor utanför kodningsreglerna (inlösen, återköp, kovenanter, säkringar, avgifter, utfallshändelser)",regel
+crwv,0001769628-25-000014,2025-05-15,10-Q,line #586,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-25-000014,2025-05-15,10-Q,line #591,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-25-000014,2025-05-15,10-Q,line #593,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-25-000014,2025-05-15,10-Q,line #609,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-25-000014,2025-05-15,10-Q,line #621,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-25-000014,2025-05-15,10-Q,line #625,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-25-000014,2025-05-15,10-Q,line #626,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-25-000014,2025-05-15,10-Q,line #630,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-25-000014,2025-05-15,10-Q,line #641,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-25-000014,2025-05-15,10-Q,line #642,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-25-000014,2025-05-15,10-Q,line #732,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-25-000014,2025-05-15,10-Q,line #735,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-25-000014,2025-05-15,10-Q,line #737,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-25-000014,2025-05-15,10-Q,line #739,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-25-000014,2025-05-15,10-Q,line #740,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-25-000014,2025-05-15,10-Q,line #742,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-25-000014,2025-05-15,10-Q,line #757,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-25-000014,2025-05-15,10-Q,line #761,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-25-000014,2025-05-15,10-Q,line #898,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-25-000014,2025-05-15,10-Q,line #904,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-25-000014,2025-05-15,10-Q,line #936,debt,garanti eller säkerhet: fälten guarantor och collateral kodades inte för raden (ingen serie och ingen rapportrad använder dem),regel
+crwv,0001769628-25-000014,2025-05-15,10-Q,line #937,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-25-000014,2025-05-15,10-Q,line #943,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-25-000014,2025-05-15,10-Q,line #944,debt,"villkor utanför kodningsreglerna (inlösen, återköp, kovenanter, säkringar, avgifter, utfallshändelser)",regel
+crwv,0001769628-25-000014,2025-05-15,10-Q,line #945,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-25-000014,2025-05-15,10-Q,line #947,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-25-000014,2025-05-15,10-Q,line #948,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-25-000014,2025-05-15,10-Q,line #952,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-25-000014,2025-05-15,10-Q,line #954,debt,garanti eller säkerhet: fälten guarantor och collateral kodades inte för raden (ingen serie och ingen rapportrad använder dem),regel
+crwv,0001769628-25-000014,2025-05-15,10-Q,line #955,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-25-000014,2025-05-15,10-Q,line #958,debt,garanti eller säkerhet: fälten guarantor och collateral kodades inte för raden (ingen serie och ingen rapportrad använder dem),regel
+crwv,0001769628-25-000014,2025-05-15,10-Q,line #983,debt,garanti eller säkerhet: fälten guarantor och collateral kodades inte för raden (ingen serie och ingen rapportrad använder dem),regel
+crwv,0001769628-25-000014,2025-05-15,10-Q,line #984,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-25-000014,2025-05-15,10-Q,line #1477,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-25-000014,2025-05-15,10-Q,line #1509,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-25-000014,2025-05-15,10-Q,line #1512,debt,garanti eller säkerhet: fälten guarantor och collateral kodades inte för raden (ingen serie och ingen rapportrad använder dem),regel
+crwv,0001769628-25-000014,2025-05-15,10-Q,line #1520,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-25-000014,2025-05-15,10-Q,line #1654,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-25-000025,2025-05-28,8-K,line #41,debt,"villkor utanför kodningsreglerna (inlösen, återköp, kovenanter, säkringar, avgifter, utfallshändelser)",regel
+crwv,0001769628-25-000025,2025-05-28,8-K,line #42,debt,"villkor utanför kodningsreglerna (inlösen, återköp, kovenanter, säkringar, avgifter, utfallshändelser)",regel
+crwv,0001769628-25-000025,2025-05-28,8-K,line #55,debt,bilageförteckning,regel
+crwv,0001193125-25-165924,2025-07-28,8-K,line #35,debt,"villkor utanför kodningsreglerna (inlösen, återköp, kovenanter, säkringar, avgifter, utfallshändelser)",regel
+crwv,0001193125-25-165924,2025-07-28,8-K,line #36,debt,"villkor utanför kodningsreglerna (inlösen, återköp, kovenanter, säkringar, avgifter, utfallshändelser)",regel
+crwv,0001193125-25-165924,2025-07-28,8-K,line #48,debt,bilageförteckning,regel
+crwv,0001769628-25-000033,2025-07-31,8-K,line #43,debt,garanti eller säkerhet: fälten guarantor och collateral kodades inte för raden (ingen serie och ingen rapportrad använder dem),regel
+crwv,0001769628-25-000041,2025-08-13,10-Q,line #152,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-25-000041,2025-08-13,10-Q,line #164,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-25-000041,2025-08-13,10-Q,line #259,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-25-000041,2025-08-13,10-Q,line #353,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-25-000041,2025-08-13,10-Q,line #354,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-25-000041,2025-08-13,10-Q,line #448,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-25-000041,2025-08-13,10-Q,line #636,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-25-000041,2025-08-13,10-Q,line #650,debt,"rad i skuldtabellen som tolkningen inte kodar (delsumma, Less/Total eller inget utestående; tillägget punkt 3)",regel
+crwv,0001769628-25-000041,2025-08-13,10-Q,line #675,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-25-000041,2025-08-13,10-Q,line #679,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-25-000041,2025-08-13,10-Q,line #681,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-25-000041,2025-08-13,10-Q,line #682,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-25-000041,2025-08-13,10-Q,line #684,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-25-000041,2025-08-13,10-Q,line #685,debt,garanti eller säkerhet: fälten guarantor och collateral kodades inte för raden (ingen serie och ingen rapportrad använder dem),regel
+crwv,0001769628-25-000041,2025-08-13,10-Q,line #687,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-25-000041,2025-08-13,10-Q,line #688,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-25-000041,2025-08-13,10-Q,line #691,debt,"villkor utanför kodningsreglerna (inlösen, återköp, kovenanter, säkringar, avgifter, utfallshändelser)",regel
+crwv,0001769628-25-000041,2025-08-13,10-Q,line #692,debt,"villkor utanför kodningsreglerna (inlösen, återköp, kovenanter, säkringar, avgifter, utfallshändelser)",regel
+crwv,0001769628-25-000041,2025-08-13,10-Q,line #694,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-25-000041,2025-08-13,10-Q,line #703,debt,"villkor utanför kodningsreglerna (inlösen, återköp, kovenanter, säkringar, avgifter, utfallshändelser)",regel
+crwv,0001769628-25-000041,2025-08-13,10-Q,line #704,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-25-000041,2025-08-13,10-Q,line #709,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-25-000041,2025-08-13,10-Q,line #711,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-25-000041,2025-08-13,10-Q,line #728,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-25-000041,2025-08-13,10-Q,line #740,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-25-000041,2025-08-13,10-Q,line #744,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-25-000041,2025-08-13,10-Q,line #745,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-25-000041,2025-08-13,10-Q,line #749,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-25-000041,2025-08-13,10-Q,line #759,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-25-000041,2025-08-13,10-Q,line #760,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-25-000041,2025-08-13,10-Q,line #854,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-25-000041,2025-08-13,10-Q,line #855,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-25-000041,2025-08-13,10-Q,line #857,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-25-000041,2025-08-13,10-Q,line #859,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-25-000041,2025-08-13,10-Q,line #860,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-25-000041,2025-08-13,10-Q,line #862,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-25-000041,2025-08-13,10-Q,line #881,debt,"villkor utanför kodningsreglerna (inlösen, återköp, kovenanter, säkringar, avgifter, utfallshändelser)",regel
+crwv,0001769628-25-000041,2025-08-13,10-Q,line #882,debt,garanti eller säkerhet: fälten guarantor och collateral kodades inte för raden (ingen serie och ingen rapportrad använder dem),regel
+crwv,0001769628-25-000041,2025-08-13,10-Q,line #886,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-25-000041,2025-08-13,10-Q,line #898,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-25-000041,2025-08-13,10-Q,line #1028,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-25-000041,2025-08-13,10-Q,line #1034,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-25-000041,2025-08-13,10-Q,line #1068,debt,garanti eller säkerhet: fälten guarantor och collateral kodades inte för raden (ingen serie och ingen rapportrad använder dem),regel
+crwv,0001769628-25-000041,2025-08-13,10-Q,line #1069,debt,"villkor utanför kodningsreglerna (inlösen, återköp, kovenanter, säkringar, avgifter, utfallshändelser)",regel
+crwv,0001769628-25-000041,2025-08-13,10-Q,line #1072,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-25-000041,2025-08-13,10-Q,line #1073,debt,"villkor utanför kodningsreglerna (inlösen, återköp, kovenanter, säkringar, avgifter, utfallshändelser)",regel
+crwv,0001769628-25-000041,2025-08-13,10-Q,line #1074,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-25-000041,2025-08-13,10-Q,line #1078,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-25-000041,2025-08-13,10-Q,line #1079,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-25-000041,2025-08-13,10-Q,line #1081,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-25-000041,2025-08-13,10-Q,line #1083,debt,"villkor utanför kodningsreglerna (inlösen, återköp, kovenanter, säkringar, avgifter, utfallshändelser)",regel
+crwv,0001769628-25-000041,2025-08-13,10-Q,line #1085,debt,garanti eller säkerhet: fälten guarantor och collateral kodades inte för raden (ingen serie och ingen rapportrad använder dem),regel
+crwv,0001769628-25-000041,2025-08-13,10-Q,line #1090,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-25-000041,2025-08-13,10-Q,line #1091,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-25-000041,2025-08-13,10-Q,line #1092,debt,"villkor utanför kodningsreglerna (inlösen, återköp, kovenanter, säkringar, avgifter, utfallshändelser)",regel
+crwv,0001769628-25-000041,2025-08-13,10-Q,line #1093,debt,"villkor utanför kodningsreglerna (inlösen, återköp, kovenanter, säkringar, avgifter, utfallshändelser)",regel
+crwv,0001769628-25-000041,2025-08-13,10-Q,line #1095,debt,garanti eller säkerhet: fälten guarantor och collateral kodades inte för raden (ingen serie och ingen rapportrad använder dem),regel
+crwv,0001769628-25-000041,2025-08-13,10-Q,line #1120,debt,garanti eller säkerhet: fälten guarantor och collateral kodades inte för raden (ingen serie och ingen rapportrad använder dem),regel
+crwv,0001769628-25-000041,2025-08-13,10-Q,line #1121,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-25-000041,2025-08-13,10-Q,line #1620,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-25-000041,2025-08-13,10-Q,line #1651,debt,garanti eller säkerhet: fälten guarantor och collateral kodades inte för raden (ingen serie och ingen rapportrad använder dem),regel
+crwv,0001769628-25-000041,2025-08-13,10-Q,line #1654,debt,garanti eller säkerhet: fälten guarantor och collateral kodades inte för raden (ingen serie och ingen rapportrad använder dem),regel
+crwv,0001769628-25-000041,2025-08-13,10-Q,line #1662,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-25-000041,2025-08-13,10-Q,line #1802,debt,bilageförteckning,regel
+crwv,0001769628-25-000041,2025-08-13,10-Q,line #1804,debt,bilageförteckning,regel
+crwv,0001769628-25-000062,2025-11-13,10-Q,line #152,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-25-000062,2025-11-13,10-Q,line #163,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-25-000062,2025-11-13,10-Q,line #267,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-25-000062,2025-11-13,10-Q,line #380,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-25-000062,2025-11-13,10-Q,line #381,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-25-000062,2025-11-13,10-Q,line #489,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-25-000062,2025-11-13,10-Q,line #673,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-25-000062,2025-11-13,10-Q,line #684,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-25-000062,2025-11-13,10-Q,line #701,debt,"rad i skuldtabellen som tolkningen inte kodar (delsumma, Less/Total eller inget utestående; tillägget punkt 3)",regel
+crwv,0001769628-25-000062,2025-11-13,10-Q,line #726,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-25-000062,2025-11-13,10-Q,line #729,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-25-000062,2025-11-13,10-Q,line #731,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-25-000062,2025-11-13,10-Q,line #733,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-25-000062,2025-11-13,10-Q,line #734,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-25-000062,2025-11-13,10-Q,line #735,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-25-000062,2025-11-13,10-Q,line #737,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-25-000062,2025-11-13,10-Q,line #742,debt,"villkor utanför kodningsreglerna (inlösen, återköp, kovenanter, säkringar, avgifter, utfallshändelser)",regel
+crwv,0001769628-25-000062,2025-11-13,10-Q,line #743,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-25-000062,2025-11-13,10-Q,line #744,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-25-000062,2025-11-13,10-Q,line #746,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-25-000062,2025-11-13,10-Q,line #747,debt,garanti eller säkerhet: fälten guarantor och collateral kodades inte för raden (ingen serie och ingen rapportrad använder dem),regel
+crwv,0001769628-25-000062,2025-11-13,10-Q,line #749,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-25-000062,2025-11-13,10-Q,line #750,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-25-000062,2025-11-13,10-Q,line #751,debt,"villkor utanför kodningsreglerna (inlösen, återköp, kovenanter, säkringar, avgifter, utfallshändelser)",regel
+crwv,0001769628-25-000062,2025-11-13,10-Q,line #754,debt,"villkor utanför kodningsreglerna (inlösen, återköp, kovenanter, säkringar, avgifter, utfallshändelser)",regel
+crwv,0001769628-25-000062,2025-11-13,10-Q,line #756,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-25-000062,2025-11-13,10-Q,line #757,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-25-000062,2025-11-13,10-Q,line #758,debt,"villkor utanför kodningsreglerna (inlösen, återköp, kovenanter, säkringar, avgifter, utfallshändelser)",regel
+crwv,0001769628-25-000062,2025-11-13,10-Q,line #759,debt,"villkor utanför kodningsreglerna (inlösen, återköp, kovenanter, säkringar, avgifter, utfallshändelser)",regel
+crwv,0001769628-25-000062,2025-11-13,10-Q,line #761,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-25-000062,2025-11-13,10-Q,line #770,debt,"villkor utanför kodningsreglerna (inlösen, återköp, kovenanter, säkringar, avgifter, utfallshändelser)",regel
+crwv,0001769628-25-000062,2025-11-13,10-Q,line #771,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-25-000062,2025-11-13,10-Q,line #772,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-25-000062,2025-11-13,10-Q,line #777,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-25-000062,2025-11-13,10-Q,line #781,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-25-000062,2025-11-13,10-Q,line #796,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-25-000062,2025-11-13,10-Q,line #810,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-25-000062,2025-11-13,10-Q,line #812,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-25-000062,2025-11-13,10-Q,line #816,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-25-000062,2025-11-13,10-Q,line #828,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-25-000062,2025-11-13,10-Q,line #829,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-25-000062,2025-11-13,10-Q,line #926,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-25-000062,2025-11-13,10-Q,line #927,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-25-000062,2025-11-13,10-Q,line #929,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-25-000062,2025-11-13,10-Q,line #931,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-25-000062,2025-11-13,10-Q,line #932,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-25-000062,2025-11-13,10-Q,line #934,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-25-000062,2025-11-13,10-Q,line #955,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-25-000062,2025-11-13,10-Q,line #957,debt,"villkor utanför kodningsreglerna (inlösen, återköp, kovenanter, säkringar, avgifter, utfallshändelser)",regel
+crwv,0001769628-25-000062,2025-11-13,10-Q,line #969,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-25-000062,2025-11-13,10-Q,line #1099,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-25-000062,2025-11-13,10-Q,line #1105,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-25-000062,2025-11-13,10-Q,line #1140,debt,garanti eller säkerhet: fälten guarantor och collateral kodades inte för raden (ingen serie och ingen rapportrad använder dem),regel
+crwv,0001769628-25-000062,2025-11-13,10-Q,line #1141,debt,"villkor utanför kodningsreglerna (inlösen, återköp, kovenanter, säkringar, avgifter, utfallshändelser)",regel
+crwv,0001769628-25-000062,2025-11-13,10-Q,line #1142,debt,"villkor utanför kodningsreglerna (inlösen, återköp, kovenanter, säkringar, avgifter, utfallshändelser)",regel
+crwv,0001769628-25-000062,2025-11-13,10-Q,line #1145,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-25-000062,2025-11-13,10-Q,line #1146,debt,"villkor utanför kodningsreglerna (inlösen, återköp, kovenanter, säkringar, avgifter, utfallshändelser)",regel
+crwv,0001769628-25-000062,2025-11-13,10-Q,line #1147,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-25-000062,2025-11-13,10-Q,line #1151,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-25-000062,2025-11-13,10-Q,line #1152,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-25-000062,2025-11-13,10-Q,line #1154,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-25-000062,2025-11-13,10-Q,line #1155,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-25-000062,2025-11-13,10-Q,line #1156,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-25-000062,2025-11-13,10-Q,line #1157,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-25-000062,2025-11-13,10-Q,line #1159,debt,"villkor utanför kodningsreglerna (inlösen, återköp, kovenanter, säkringar, avgifter, utfallshändelser)",regel
+crwv,0001769628-25-000062,2025-11-13,10-Q,line #1164,debt,"villkor utanför kodningsreglerna (inlösen, återköp, kovenanter, säkringar, avgifter, utfallshändelser)",regel
+crwv,0001769628-25-000062,2025-11-13,10-Q,line #1165,debt,"villkor utanför kodningsreglerna (inlösen, återköp, kovenanter, säkringar, avgifter, utfallshändelser)",regel
+crwv,0001769628-25-000062,2025-11-13,10-Q,line #1167,debt,garanti eller säkerhet: fälten guarantor och collateral kodades inte för raden (ingen serie och ingen rapportrad använder dem),regel
+crwv,0001769628-25-000062,2025-11-13,10-Q,line #1170,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-25-000062,2025-11-13,10-Q,line #1171,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-25-000062,2025-11-13,10-Q,line #1172,debt,"villkor utanför kodningsreglerna (inlösen, återköp, kovenanter, säkringar, avgifter, utfallshändelser)",regel
+crwv,0001769628-25-000062,2025-11-13,10-Q,line #1176,debt,"villkor utanför kodningsreglerna (inlösen, återköp, kovenanter, säkringar, avgifter, utfallshändelser)",regel
+crwv,0001769628-25-000062,2025-11-13,10-Q,line #1178,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-25-000062,2025-11-13,10-Q,line #1179,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-25-000062,2025-11-13,10-Q,line #1180,debt,"villkor utanför kodningsreglerna (inlösen, återköp, kovenanter, säkringar, avgifter, utfallshändelser)",regel
+crwv,0001769628-25-000062,2025-11-13,10-Q,line #1181,debt,"villkor utanför kodningsreglerna (inlösen, återköp, kovenanter, säkringar, avgifter, utfallshändelser)",regel
+crwv,0001769628-25-000062,2025-11-13,10-Q,line #1206,debt,garanti eller säkerhet: fälten guarantor och collateral kodades inte för raden (ingen serie och ingen rapportrad använder dem),regel
+crwv,0001769628-25-000062,2025-11-13,10-Q,line #1207,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-25-000062,2025-11-13,10-Q,line #1724,debt,"villkor utanför kodningsreglerna (inlösen, återköp, kovenanter, säkringar, avgifter, utfallshändelser)",regel
+crwv,0001769628-25-000062,2025-11-13,10-Q,line #1735,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-25-000062,2025-11-13,10-Q,line #1849,debt,garanti eller säkerhet: fälten guarantor och collateral kodades inte för raden (ingen serie och ingen rapportrad använder dem),regel
+crwv,0001769628-25-000062,2025-11-13,10-Q,line #1874,debt,bilageförteckning,regel
+crwv,0001769628-25-000062,2025-11-13,10-Q,line #1876,debt,bilageförteckning,regel
+crwv,0001769628-25-000105,2025-12-11,8-K,line #40,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-25-000105,2025-12-11,8-K,line #41,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-25-000105,2025-12-11,8-K,line #42,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-25-000105,2025-12-11,8-K,line #43,debt,"villkor utanför kodningsreglerna (inlösen, återköp, kovenanter, säkringar, avgifter, utfallshändelser)",regel
+crwv,0001769628-25-000105,2025-12-11,8-K,line #44,debt,"villkor utanför kodningsreglerna (inlösen, återköp, kovenanter, säkringar, avgifter, utfallshändelser)",regel
+crwv,0001769628-25-000105,2025-12-11,8-K,line #45,debt,"villkor utanför kodningsreglerna (inlösen, återköp, kovenanter, säkringar, avgifter, utfallshändelser)",regel
+crwv,0001769628-25-000105,2025-12-11,8-K,line #46,debt,"villkor utanför kodningsreglerna (inlösen, återköp, kovenanter, säkringar, avgifter, utfallshändelser)",regel
+crwv,0001769628-25-000105,2025-12-11,8-K,line #51,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-25-000105,2025-12-11,8-K,line #67,debt,bilageförteckning,regel
+crwv,0001769628-26-000003,2026-01-02,8-K,line #38,debt,"villkor utanför kodningsreglerna (inlösen, återköp, kovenanter, säkringar, avgifter, utfallshändelser)",regel
+crwv,0001769628-26-000104,2026-03-02,10-K,line #725,debt,"villkor utanför kodningsreglerna (inlösen, återköp, kovenanter, säkringar, avgifter, utfallshändelser)",regel
+crwv,0001769628-26-000104,2026-03-02,10-K,line #726,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-26-000104,2026-03-02,10-K,line #736,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-26-000104,2026-03-02,10-K,line #891,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-26-000104,2026-03-02,10-K,line #930,debt,garanti eller säkerhet: fälten guarantor och collateral kodades inte för raden (ingen serie och ingen rapportrad använder dem),regel
+crwv,0001769628-26-000104,2026-03-02,10-K,line #1032,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-26-000104,2026-03-02,10-K,line #1038,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-26-000104,2026-03-02,10-K,line #1092,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-26-000104,2026-03-02,10-K,line #1098,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-26-000104,2026-03-02,10-K,line #1104,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-26-000104,2026-03-02,10-K,line #1151,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-26-000104,2026-03-02,10-K,line #1167,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-26-000104,2026-03-02,10-K,line #1168,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-26-000104,2026-03-02,10-K,line #1169,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-26-000104,2026-03-02,10-K,line #1170,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-26-000104,2026-03-02,10-K,line #1171,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-26-000104,2026-03-02,10-K,line #1173,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-26-000104,2026-03-02,10-K,line #1204,debt,garanti eller säkerhet: fälten guarantor och collateral kodades inte för raden (ingen serie och ingen rapportrad använder dem),regel
+crwv,0001769628-26-000104,2026-03-02,10-K,line #1205,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-26-000104,2026-03-02,10-K,line #1306,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-26-000104,2026-03-02,10-K,line #1316,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-26-000104,2026-03-02,10-K,line #1357,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-26-000104,2026-03-02,10-K,line #1370,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-26-000104,2026-03-02,10-K,line #1486,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-26-000104,2026-03-02,10-K,line #1487,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-26-000104,2026-03-02,10-K,line #1488,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-26-000104,2026-03-02,10-K,line #1806,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-26-000104,2026-03-02,10-K,line #1823,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-26-000104,2026-03-02,10-K,line #1959,debt,garanti eller säkerhet: fälten guarantor och collateral kodades inte för raden (ingen serie och ingen rapportrad använder dem),regel
+crwv,0001769628-26-000104,2026-03-02,10-K,line #1980,debt,"rad i skuldtabellen som tolkningen inte kodar (delsumma, Less/Total eller inget utestående; tillägget punkt 3)",regel
+crwv,0001769628-26-000104,2026-03-02,10-K,line #2010,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-26-000104,2026-03-02,10-K,line #2011,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-26-000104,2026-03-02,10-K,line #2012,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-26-000104,2026-03-02,10-K,line #2013,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-26-000104,2026-03-02,10-K,line #2014,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-26-000104,2026-03-02,10-K,line #2018,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-26-000104,2026-03-02,10-K,line #2019,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-26-000104,2026-03-02,10-K,line #2020,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-26-000104,2026-03-02,10-K,line #2021,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-26-000104,2026-03-02,10-K,line #2029,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-26-000104,2026-03-02,10-K,line #2030,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-26-000104,2026-03-02,10-K,line #2032,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-26-000104,2026-03-02,10-K,line #2034,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-26-000104,2026-03-02,10-K,line #2035,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-26-000104,2026-03-02,10-K,line #2036,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-26-000104,2026-03-02,10-K,line #2037,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-26-000104,2026-03-02,10-K,line #2039,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-26-000104,2026-03-02,10-K,line #2043,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-26-000104,2026-03-02,10-K,line #2044,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-26-000104,2026-03-02,10-K,line #2046,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-26-000104,2026-03-02,10-K,line #2048,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-26-000104,2026-03-02,10-K,line #2049,debt,"villkor utanför kodningsreglerna (inlösen, återköp, kovenanter, säkringar, avgifter, utfallshändelser)",regel
+crwv,0001769628-26-000104,2026-03-02,10-K,line #2050,debt,garanti eller säkerhet: fälten guarantor och collateral kodades inte för raden (ingen serie och ingen rapportrad använder dem),regel
+crwv,0001769628-26-000104,2026-03-02,10-K,line #2063,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-26-000104,2026-03-02,10-K,line #2065,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-26-000104,2026-03-02,10-K,line #2069,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-26-000104,2026-03-02,10-K,line #2073,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-26-000104,2026-03-02,10-K,line #2075,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-26-000104,2026-03-02,10-K,line #2092,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-26-000104,2026-03-02,10-K,line #2095,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-26-000104,2026-03-02,10-K,line #2107,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-26-000104,2026-03-02,10-K,line #2111,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-26-000104,2026-03-02,10-K,line #2127,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-26-000104,2026-03-02,10-K,line #2145,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-26-000104,2026-03-02,10-K,line #2180,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-26-000104,2026-03-02,10-K,line #2317,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-26-000104,2026-03-02,10-K,line #2318,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-26-000104,2026-03-02,10-K,line #2320,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-26-000104,2026-03-02,10-K,line #2325,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-26-000104,2026-03-02,10-K,line #2329,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-26-000104,2026-03-02,10-K,line #2331,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-26-000104,2026-03-02,10-K,line #2352,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-26-000104,2026-03-02,10-K,line #2432,debt,bilageförteckning,regel
+crwv,0001769628-26-000104,2026-03-02,10-K,line #2434,debt,bilageförteckning,regel
+crwv,0001769628-26-000104,2026-03-02,10-K,line #2438,debt,bilageförteckning,regel
+crwv,0001769628-26-000129,2026-03-31,8-K,line #43,debt,garanti eller säkerhet: fälten guarantor och collateral kodades inte för raden (ingen serie och ingen rapportrad använder dem),regel
+crwv,0001769628-26-000164,2026-04-14,8-K,line #42,debt,"villkor utanför kodningsreglerna (inlösen, återköp, kovenanter, säkringar, avgifter, utfallshändelser)",regel
+crwv,0001769628-26-000164,2026-04-14,8-K,line #43,debt,"villkor utanför kodningsreglerna (inlösen, återköp, kovenanter, säkringar, avgifter, utfallshändelser)",regel
+crwv,0001769628-26-000164,2026-04-14,8-K,line #49,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-26-000164,2026-04-14,8-K,line #50,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-26-000164,2026-04-14,8-K,line #51,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-26-000164,2026-04-14,8-K,line #52,debt,"villkor utanför kodningsreglerna (inlösen, återköp, kovenanter, säkringar, avgifter, utfallshändelser)",regel
+crwv,0001769628-26-000164,2026-04-14,8-K,line #53,debt,"villkor utanför kodningsreglerna (inlösen, återköp, kovenanter, säkringar, avgifter, utfallshändelser)",regel
+crwv,0001769628-26-000164,2026-04-14,8-K,line #54,debt,"villkor utanför kodningsreglerna (inlösen, återköp, kovenanter, säkringar, avgifter, utfallshändelser)",regel
+crwv,0001769628-26-000164,2026-04-14,8-K,line #60,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-26-000164,2026-04-14,8-K,line #73,debt,bilageförteckning,regel
+crwv,0001769628-26-000164,2026-04-14,8-K,line #75,debt,bilageförteckning,regel
+crwv,0001769628-26-000183,2026-04-21,8-K,line #42,debt,"villkor utanför kodningsreglerna (inlösen, återköp, kovenanter, säkringar, avgifter, utfallshändelser)",regel
+crwv,0001769628-26-000183,2026-04-21,8-K,line #43,debt,"villkor utanför kodningsreglerna (inlösen, återköp, kovenanter, säkringar, avgifter, utfallshändelser)",regel
+crwv,0001769628-26-000222,2026-05-08,10-Q,line #292,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-26-000222,2026-05-08,10-Q,line #293,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-26-000222,2026-05-08,10-Q,line #609,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-26-000222,2026-05-08,10-Q,line #629,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-26-000222,2026-05-08,10-Q,line #630,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-26-000222,2026-05-08,10-Q,line #632,debt,"villkor utanför kodningsreglerna (inlösen, återköp, kovenanter, säkringar, avgifter, utfallshändelser)",regel
+crwv,0001769628-26-000222,2026-05-08,10-Q,line #638,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-26-000222,2026-05-08,10-Q,line #642,debt,garanti eller säkerhet: fälten guarantor och collateral kodades inte för raden (ingen serie och ingen rapportrad använder dem),regel
+crwv,0001769628-26-000222,2026-05-08,10-Q,line #646,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-26-000222,2026-05-08,10-Q,line #649,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-26-000222,2026-05-08,10-Q,line #651,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-26-000222,2026-05-08,10-Q,line #668,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-26-000222,2026-05-08,10-Q,line #671,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-26-000222,2026-05-08,10-Q,line #672,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-26-000222,2026-05-08,10-Q,line #679,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-26-000222,2026-05-08,10-Q,line #710,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-26-000222,2026-05-08,10-Q,line #730,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-26-000222,2026-05-08,10-Q,line #784,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-26-000222,2026-05-08,10-Q,line #785,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-26-000222,2026-05-08,10-Q,line #802,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-26-000222,2026-05-08,10-Q,line #803,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-26-000222,2026-05-08,10-Q,line #805,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-26-000222,2026-05-08,10-Q,line #929,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-26-000222,2026-05-08,10-Q,line #955,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-26-000222,2026-05-08,10-Q,line #988,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-26-000222,2026-05-08,10-Q,line #989,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-26-000222,2026-05-08,10-Q,line #990,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-26-000222,2026-05-08,10-Q,line #991,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-26-000222,2026-05-08,10-Q,line #992,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-26-000222,2026-05-08,10-Q,line #994,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-26-000222,2026-05-08,10-Q,line #1005,debt,garanti eller säkerhet: fälten guarantor och collateral kodades inte för raden (ingen serie och ingen rapportrad använder dem),regel
+crwv,0001769628-26-000222,2026-05-08,10-Q,line #1006,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-26-000222,2026-05-08,10-Q,line #1540,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-26-000222,2026-05-08,10-Q,line #1543,debt,"villkor utanför kodningsreglerna (inlösen, återköp, kovenanter, säkringar, avgifter, utfallshändelser)",regel
+crwv,0001769628-26-000222,2026-05-08,10-Q,line #1544,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-26-000222,2026-05-08,10-Q,line #1552,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-26-000222,2026-05-08,10-Q,line #1555,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-26-000222,2026-05-08,10-Q,line #1673,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-26-000222,2026-05-08,10-Q,line #1695,debt,bilageförteckning,regel
+crwv,0001769628-26-000222,2026-05-08,10-Q,line #1697,debt,bilageförteckning,regel
+crwv,0001769628-26-000236,2026-05-18,8-K,line #43,debt,garanti eller säkerhet: fälten guarantor och collateral kodades inte för raden (ingen serie och ingen rapportrad använder dem),regel
+crwv,0001769628-26-000291,2026-06-18,8-K,line #43,debt,"villkor utanför kodningsreglerna (inlösen, återköp, kovenanter, säkringar, avgifter, utfallshändelser)",regel
+crwv,0001769628-26-000291,2026-06-18,8-K,line #44,debt,"villkor utanför kodningsreglerna (inlösen, återköp, kovenanter, säkringar, avgifter, utfallshändelser)",regel
+crwv,0001769628-26-000291,2026-06-18,8-K,line #52,debt,bilageförteckning,regel
+crwv,0001769628-26-000291,2026-06-18,8-K,line #53,debt,bilageförteckning,regel
+crwv,0001769628-26-000291,2026-06-18,8-K,line #54,debt,bilageförteckning,regel
+crwv,0001769628-26-000291,2026-06-18,8-K,line #55,debt,bilageförteckning,regel
+crwv,0001769628-26-000357,2026-08-10,8-K,line #43,debt,garanti eller säkerhet: fälten guarantor och collateral kodades inte för raden (ingen serie och ingen rapportrad använder dem),regel
+crwv,0001769628-26-000366,2026-08-12,10-Q,line #329,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-26-000366,2026-08-12,10-Q,line #330,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-26-000366,2026-08-12,10-Q,line #451,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-26-000366,2026-08-12,10-Q,line #669,debt,"rad i skuldtabellen som tolkningen inte kodar (delsumma, Less/Total eller inget utestående; tillägget punkt 3)",regel
+crwv,0001769628-26-000366,2026-08-12,10-Q,line #670,debt,"rad i skuldtabellen som tolkningen inte kodar (delsumma, Less/Total eller inget utestående; tillägget punkt 3)",regel
+crwv,0001769628-26-000366,2026-08-12,10-Q,line #708,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-26-000366,2026-08-12,10-Q,line #709,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-26-000366,2026-08-12,10-Q,line #710,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-26-000366,2026-08-12,10-Q,line #711,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-26-000366,2026-08-12,10-Q,line #712,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-26-000366,2026-08-12,10-Q,line #713,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-26-000366,2026-08-12,10-Q,line #717,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-26-000366,2026-08-12,10-Q,line #720,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-26-000366,2026-08-12,10-Q,line #722,debt,"villkor utanför kodningsreglerna (inlösen, återköp, kovenanter, säkringar, avgifter, utfallshändelser)",regel
+crwv,0001769628-26-000366,2026-08-12,10-Q,line #724,debt,garanti eller säkerhet: fälten guarantor och collateral kodades inte för raden (ingen serie och ingen rapportrad använder dem),regel
+crwv,0001769628-26-000366,2026-08-12,10-Q,line #727,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-26-000366,2026-08-12,10-Q,line #735,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-26-000366,2026-08-12,10-Q,line #737,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-26-000366,2026-08-12,10-Q,line #738,debt,garanti eller säkerhet: fälten guarantor och collateral kodades inte för raden (ingen serie och ingen rapportrad använder dem),regel
+crwv,0001769628-26-000366,2026-08-12,10-Q,line #742,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-26-000366,2026-08-12,10-Q,line #743,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-26-000366,2026-08-12,10-Q,line #747,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-26-000366,2026-08-12,10-Q,line #748,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-26-000366,2026-08-12,10-Q,line #750,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-26-000366,2026-08-12,10-Q,line #752,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-26-000366,2026-08-12,10-Q,line #753,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-26-000366,2026-08-12,10-Q,line #755,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-26-000366,2026-08-12,10-Q,line #756,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-26-000366,2026-08-12,10-Q,line #757,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-26-000366,2026-08-12,10-Q,line #760,debt,"villkor utanför kodningsreglerna (inlösen, återköp, kovenanter, säkringar, avgifter, utfallshändelser)",regel
+crwv,0001769628-26-000366,2026-08-12,10-Q,line #761,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-26-000366,2026-08-12,10-Q,line #765,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-26-000366,2026-08-12,10-Q,line #768,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-26-000366,2026-08-12,10-Q,line #770,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-26-000366,2026-08-12,10-Q,line #788,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-26-000366,2026-08-12,10-Q,line #792,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-26-000366,2026-08-12,10-Q,line #795,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-26-000366,2026-08-12,10-Q,line #796,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-26-000366,2026-08-12,10-Q,line #800,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-26-000366,2026-08-12,10-Q,line #833,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-26-000366,2026-08-12,10-Q,line #852,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-26-000366,2026-08-12,10-Q,line #906,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-26-000366,2026-08-12,10-Q,line #921,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-26-000366,2026-08-12,10-Q,line #922,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-26-000366,2026-08-12,10-Q,line #1040,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-26-000366,2026-08-12,10-Q,line #1068,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-26-000366,2026-08-12,10-Q,line #1102,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-26-000366,2026-08-12,10-Q,line #1103,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-26-000366,2026-08-12,10-Q,line #1104,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-26-000366,2026-08-12,10-Q,line #1105,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-26-000366,2026-08-12,10-Q,line #1106,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-26-000366,2026-08-12,10-Q,line #1107,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-26-000366,2026-08-12,10-Q,line #1108,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-26-000366,2026-08-12,10-Q,line #1109,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-26-000366,2026-08-12,10-Q,line #1110,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-26-000366,2026-08-12,10-Q,line #1112,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-26-000366,2026-08-12,10-Q,line #1124,debt,garanti eller säkerhet: fälten guarantor och collateral kodades inte för raden (ingen serie och ingen rapportrad använder dem),regel
+crwv,0001769628-26-000366,2026-08-12,10-Q,line #1125,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-26-000366,2026-08-12,10-Q,line #1655,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-26-000366,2026-08-12,10-Q,line #1658,debt,"villkor utanför kodningsreglerna (inlösen, återköp, kovenanter, säkringar, avgifter, utfallshändelser)",regel
+crwv,0001769628-26-000366,2026-08-12,10-Q,line #1659,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-26-000366,2026-08-12,10-Q,line #1670,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-26-000366,2026-08-12,10-Q,line #1814,debt,bilageförteckning,regel
+crwv,0001769628-26-000366,2026-08-12,10-Q,line #1816,debt,bilageförteckning,regel
+crwv,0001769628-26-000366,2026-08-12,10-Q,line #1818,debt,bilageförteckning,regel
+crwv,0001769628-26-000366,2026-08-12,10-Q,line #1819,debt,bilageförteckning,regel
+crwv,0001769628-26-000366,2026-08-12,10-Q,line #1820,debt,bilageförteckning,regel
+crwv,0001769628-26-000366,2026-08-12,10-Q,line #1821,debt,bilageförteckning,regel
+crwv,0001769628-26-000432,2026-09-22,8-K,line #40,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-26-000432,2026-09-22,8-K,line #41,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-26-000432,2026-09-22,8-K,line #43,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-26-000432,2026-09-22,8-K,line #44,debt,"villkor utanför kodningsreglerna (inlösen, återköp, kovenanter, säkringar, avgifter, utfallshändelser)",regel
+crwv,0001769628-26-000432,2026-09-22,8-K,line #45,debt,"villkor utanför kodningsreglerna (inlösen, återköp, kovenanter, säkringar, avgifter, utfallshändelser)",regel
+crwv,0001769628-26-000432,2026-09-22,8-K,line #46,debt,"villkor utanför kodningsreglerna (inlösen, återköp, kovenanter, säkringar, avgifter, utfallshändelser)",regel
+crwv,0001769628-26-000432,2026-09-22,8-K,line #52,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-26-000432,2026-09-22,8-K,line #67,debt,bilageförteckning,regel
+crwv,0001769628-26-000465,2026-11-12,10-Q,line #353,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-26-000465,2026-11-12,10-Q,line #354,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-26-000465,2026-11-12,10-Q,line #488,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-26-000465,2026-11-12,10-Q,line #723,debt,"rad i skuldtabellen som tolkningen inte kodar (delsumma, Less/Total eller inget utestående; tillägget punkt 3)",regel
+crwv,0001769628-26-000465,2026-11-12,10-Q,line #739,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-26-000465,2026-11-12,10-Q,line #765,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-26-000465,2026-11-12,10-Q,line #766,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-26-000465,2026-11-12,10-Q,line #767,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-26-000465,2026-11-12,10-Q,line #768,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-26-000465,2026-11-12,10-Q,line #769,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-26-000465,2026-11-12,10-Q,line #770,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-26-000465,2026-11-12,10-Q,line #771,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-26-000465,2026-11-12,10-Q,line #772,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-26-000465,2026-11-12,10-Q,line #776,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-26-000465,2026-11-12,10-Q,line #777,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-26-000465,2026-11-12,10-Q,line #779,debt,"villkor utanför kodningsreglerna (inlösen, återköp, kovenanter, säkringar, avgifter, utfallshändelser)",regel
+crwv,0001769628-26-000465,2026-11-12,10-Q,line #783,debt,garanti eller säkerhet: fälten guarantor och collateral kodades inte för raden (ingen serie och ingen rapportrad använder dem),regel
+crwv,0001769628-26-000465,2026-11-12,10-Q,line #786,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-26-000465,2026-11-12,10-Q,line #790,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-26-000465,2026-11-12,10-Q,line #794,debt,"villkor utanför kodningsreglerna (inlösen, återköp, kovenanter, säkringar, avgifter, utfallshändelser)",regel
+crwv,0001769628-26-000465,2026-11-12,10-Q,line #797,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-26-000465,2026-11-12,10-Q,line #799,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-26-000465,2026-11-12,10-Q,line #800,debt,garanti eller säkerhet: fälten guarantor och collateral kodades inte för raden (ingen serie och ingen rapportrad använder dem),regel
+crwv,0001769628-26-000465,2026-11-12,10-Q,line #806,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-26-000465,2026-11-12,10-Q,line #807,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-26-000465,2026-11-12,10-Q,line #808,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-26-000465,2026-11-12,10-Q,line #809,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-26-000465,2026-11-12,10-Q,line #811,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-26-000465,2026-11-12,10-Q,line #812,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-26-000465,2026-11-12,10-Q,line #813,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-26-000465,2026-11-12,10-Q,line #814,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-26-000465,2026-11-12,10-Q,line #818,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-26-000465,2026-11-12,10-Q,line #820,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-26-000465,2026-11-12,10-Q,line #821,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-26-000465,2026-11-12,10-Q,line #823,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-26-000465,2026-11-12,10-Q,line #824,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-26-000465,2026-11-12,10-Q,line #825,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-26-000465,2026-11-12,10-Q,line #826,debt,"villkor utanför kodningsreglerna (inlösen, återköp, kovenanter, säkringar, avgifter, utfallshändelser)",regel
+crwv,0001769628-26-000465,2026-11-12,10-Q,line #827,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-26-000465,2026-11-12,10-Q,line #833,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-26-000465,2026-11-12,10-Q,line #836,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-26-000465,2026-11-12,10-Q,line #838,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-26-000465,2026-11-12,10-Q,line #855,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-26-000465,2026-11-12,10-Q,line #859,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-26-000465,2026-11-12,10-Q,line #862,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-26-000465,2026-11-12,10-Q,line #866,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-26-000465,2026-11-12,10-Q,line #902,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-26-000465,2026-11-12,10-Q,line #923,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-26-000465,2026-11-12,10-Q,line #976,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+crwv,0001769628-26-000465,2026-11-12,10-Q,line #980,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-26-000465,2026-11-12,10-Q,line #1105,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-26-000465,2026-11-12,10-Q,line #1133,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-26-000465,2026-11-12,10-Q,line #1168,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-26-000465,2026-11-12,10-Q,line #1169,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-26-000465,2026-11-12,10-Q,line #1170,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-26-000465,2026-11-12,10-Q,line #1171,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-26-000465,2026-11-12,10-Q,line #1172,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-26-000465,2026-11-12,10-Q,line #1173,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-26-000465,2026-11-12,10-Q,line #1174,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-26-000465,2026-11-12,10-Q,line #1175,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-26-000465,2026-11-12,10-Q,line #1176,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-26-000465,2026-11-12,10-Q,line #1177,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-26-000465,2026-11-12,10-Q,line #1179,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-26-000465,2026-11-12,10-Q,line #1190,debt,garanti eller säkerhet: fälten guarantor och collateral kodades inte för raden (ingen serie och ingen rapportrad använder dem),regel
+crwv,0001769628-26-000465,2026-11-12,10-Q,line #1191,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-26-000465,2026-11-12,10-Q,line #1607,debt,"villkor utanför kodningsreglerna (inlösen, återköp, kovenanter, säkringar, avgifter, utfallshändelser)",regel
+crwv,0001769628-26-000465,2026-11-12,10-Q,line #1610,debt,garanti eller säkerhet: fälten guarantor och collateral kodades inte för raden (ingen serie och ingen rapportrad använder dem),regel
+crwv,0001769628-26-000465,2026-11-12,10-Q,line #1611,debt,"text eller tabell i 10-Q/10-K utanför skuldtabellen: balanserna kodas ur skuldtabellen och villkoren ur 8-K (posten, Korpus); raden kan ange villkor för ett instrument utan eget 8-K",regel
+crwv,0001769628-26-000465,2026-11-12,10-Q,line #1620,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+crwv,0001769628-26-000465,2026-11-12,10-Q,line #1915,debt,bilageförteckning,regel
+meta,0001628280-25-036791,2025-07-31,10-Q,line #418,spv,andra okonsoliderade VIE före datacenterbolagen: förlusten är investeringarnas bokförda värde,agent
+meta,0001628280-25-047240,2025-10-30,10-Q,line #415,spv,andra okonsoliderade VIE före datacenterbolagen: förlusten är investeringarnas bokförda värde,agent
+meta,0001628280-26-003942,2026-01-29,10-K,line #1529,venture,"leasingåtagandet vid bildandet (cirka 12,31 mdr): samma som kodas ur 10-Q 2025Q3 (rad #603)",agent
+meta,0001628280-26-028526,2026-04-30,10-Q,line #402,venture,beskrivning av Louisiana-bolaget (20 % andel): inget nytt belopp utöver de som kodas,agent
+meta,0001628280-26-028526,2026-04-30,10-Q,line #403,venture,"leasingåtagandet (cirka 12,31 mdr): samma som kodas ur 10-Q 2025Q3 (rad #603)",agent
+meta,0001628280-26-050705,2026-07-30,10-Q,line #417,venture,beskrivning av Louisiana-bolaget (20 % andel): inget nytt belopp utöver de som kodas,agent
+meta,0001628280-26-050705,2026-07-30,10-Q,line #418,venture,"leasingåtagandet (cirka 12,31 mdr): samma som kodas ur 10-Q 2025Q3 (rad #603)",agent
+meta,0001628280-26-066773,2026-10-22,10-Q,line #419,venture,beskrivning av de två bolagen: inget nytt belopp; tabellen (rad #427-#431) kodas,agent
+meta,0001628280-26-066773,2026-10-22,10-Q,line #454,venture,"tillgångar som fördes till Texas-bolaget (2,26 mdr): samma belopp som kodas ur rad #418",agent
+orcl,0001193125-26-101045,2026-03-11,10-Q,line #270,spv,Oracles egna placeringar i onoterade skuldebrev och aktier: inte bolagets finansiering,agent
+orcl,0001193125-26-277521,2026-06-22,10-K,line #1432,spv,Oracles egna placeringar i onoterade skuldebrev och aktier: inte bolagets finansiering,agent
+orcl,0001193125-26-389274,2026-09-11,10-Q,line #268,spv,Oracles egna placeringar i onoterade skuldebrev och aktier: inte bolagets finansiering,agent
+spacex,0001628280-26-052535,2026-08-04,10-Q,line #100,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+spacex,0001628280-26-052535,2026-08-04,10-Q,line #110,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+spacex,0001628280-26-052535,2026-08-04,10-Q,line #390,debt,aktiverad ränta: inte ett instrument,agent
+spacex,0001628280-26-052535,2026-08-04,10-Q,line #416,debt,"spektrumaffären med EchoStar: betalningar till en trust som redovisas som förskott, inte bolagets upplåning",agent
+spacex,0001628280-26-052535,2026-08-04,10-Q,line #473,debt,"jämförelsekolumn per 2025-12-31, före den första 10-Q:n i korpusen",agent
+spacex,0001628280-26-052535,2026-08-04,10-Q,line #478,debt,"jämförelsekolumn per 2025-12-31, före den första 10-Q:n i korpusen",agent
+spacex,0001628280-26-052535,2026-08-04,10-Q,line #491,debt,"villkor utanför kodningsreglerna (inlösen, återköp, kovenanter, säkringar, avgifter, utfallshändelser)",regel
+spacex,0001628280-26-052535,2026-08-04,10-Q,line #494,debt,"villkor utanför kodningsreglerna (inlösen, återköp, kovenanter, säkringar, avgifter, utfallshändelser)",regel
+spacex,0001628280-26-052535,2026-08-04,10-Q,line #495,debt,"villkor utanför kodningsreglerna (inlösen, återköp, kovenanter, säkringar, avgifter, utfallshändelser)",regel
+spacex,0001628280-26-052535,2026-08-04,10-Q,line #496,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+spacex,0001628280-26-052535,2026-08-04,10-Q,line #499,debt,användning av lånet (återbetalning av xAI:s och X:s lån): inte ett fält i kodningsreglerna,agent
+spacex,0001628280-26-052535,2026-08-04,10-Q,line #500,debt,marginal i ett spann efter kreditbetyg: inte ett enskilt värde,agent
+spacex,0001628280-26-052535,2026-08-04,10-Q,line #503,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+spacex,0001628280-26-052535,2026-08-04,10-Q,line #510,debt,marginal i ett spann efter kreditbetyg: inte ett enskilt värde,agent
+spacex,0001628280-26-052535,2026-08-04,10-Q,line #513,debt,"X:s obligationer från 2019 och 2022: kvar 27 MUSD i en rad i tabellen (kodad), så ränta och belopp per serie vägs inte",agent
+spacex,0001628280-26-052535,2026-08-04,10-Q,line #514,debt,"X:s obligationer från 2019 och 2022: kvar 27 MUSD i en rad i tabellen (kodad), så ränta och belopp per serie vägs inte",agent
+spacex,0001628280-26-052535,2026-08-04,10-Q,line #515,debt,"villkor utanför kodningsreglerna (inlösen, återköp, kovenanter, säkringar, avgifter, utfallshändelser)",regel
+spacex,0001628280-26-052535,2026-08-04,10-Q,line #518,debt,"X Corp:s lån från köpet av Twitter (2022 och 2025), återbetalda 2026-03-02: labbdelen kodar xAI:s och SpaceX:s egen finansiering",agent
+spacex,0001628280-26-052535,2026-08-04,10-Q,line #519,debt,"X Corp:s lån från köpet av Twitter (2022 och 2025), återbetalda 2026-03-02: labbdelen kodar xAI:s och SpaceX:s egen finansiering",agent
+spacex,0001628280-26-052535,2026-08-04,10-Q,line #520,debt,"X Corp:s lån från köpet av Twitter (2022 och 2025), återbetalda 2026-03-02: labbdelen kodar xAI:s och SpaceX:s egen finansiering",agent
+spacex,0001628280-26-052535,2026-08-04,10-Q,line #521,debt,"villkor utanför kodningsreglerna (inlösen, återköp, kovenanter, säkringar, avgifter, utfallshändelser)",regel
+spacex,0001628280-26-052535,2026-08-04,10-Q,line #524,debt,"X Corp:s lån från köpet av Twitter (2022 och 2025), återbetalda 2026-03-02: labbdelen kodar xAI:s och SpaceX:s egen finansiering",agent
+spacex,0001628280-26-052535,2026-08-04,10-Q,line #529,debt,"villkor utanför kodningsreglerna (inlösen, återköp, kovenanter, säkringar, avgifter, utfallshändelser)",regel
+spacex,0001628280-26-052535,2026-08-04,10-Q,line #531,debt,rubrik,agent
+spacex,0001628280-26-052535,2026-08-04,10-Q,line #533,debt,samma kupong som kodas ur rad #532,agent
+spacex,0001628280-26-052535,2026-08-04,10-Q,line #534,debt,"villkor utanför kodningsreglerna (inlösen, återköp, kovenanter, säkringar, avgifter, utfallshändelser)",regel
+spacex,0001628280-26-052535,2026-08-04,10-Q,line #535,debt,garanti eller säkerhet: fälten guarantor och collateral kodades inte för raden (ingen serie och ingen rapportrad använder dem),regel
+spacex,0001628280-26-052535,2026-08-04,10-Q,line #544,debt,samma skuld för misslyckade sale-leaseback som kodas ur noten om närstående (rad #784),agent
+spacex,0001628280-26-052535,2026-08-04,10-Q,line #557,debt,tabell över bokfört och verkligt värde: inte nominellt belopp,agent
+spacex,0001628280-26-052535,2026-08-04,10-Q,line #558,debt,tabell över bokfört och verkligt värde: inte nominellt belopp,agent
+spacex,0001628280-26-052535,2026-08-04,10-Q,line #559,debt,tabell över bokfört och verkligt värde: inte nominellt belopp,agent
+spacex,0001628280-26-052535,2026-08-04,10-Q,line #560,debt,tabell över bokfört och verkligt värde: inte nominellt belopp,agent
+spacex,0001628280-26-052535,2026-08-04,10-Q,line #644,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+spacex,0001628280-26-052535,2026-08-04,10-Q,line #705,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+spacex,0001628280-26-052535,2026-08-04,10-Q,line #761,debt,remburser säkrade med spärrade medel: inte upplåning,agent
+spacex,0001628280-26-052535,2026-08-04,10-Q,line #1044,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+spacex,0001628280-26-052535,2026-08-04,10-Q,line #1045,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+spacex,0001628280-26-052535,2026-08-04,10-Q,line #1057,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+spacex,0001628280-26-052535,2026-08-04,10-Q,line #1216,debt,kassaflöde eller likviditet: inte skuld,agent
+spacex,0001628280-26-052535,2026-08-04,10-Q,line #1222,debt,MD&A: samma tal som kodas ur noten (Note 9),agent
+spacex,0001628280-26-052535,2026-08-04,10-Q,line #1224,debt,MD&A: samma tal som kodas ur noten (Note 9),agent
+spacex,0001628280-26-052535,2026-08-04,10-Q,line #1225,debt,MD&A: samma tal som kodas ur noten (Note 9),agent
+spacex,0001628280-26-052535,2026-08-04,10-Q,line #1226,debt,"villkor utanför kodningsreglerna (inlösen, återköp, kovenanter, säkringar, avgifter, utfallshändelser)",regel
+spacex,0001628280-26-052535,2026-08-04,10-Q,line #1227,debt,"villkor utanför kodningsreglerna (inlösen, återköp, kovenanter, säkringar, avgifter, utfallshändelser)",regel
+spacex,0001628280-26-052535,2026-08-04,10-Q,line #1229,debt,MD&A: samma tal som kodas ur noten (Note 9),agent
+spacex,0001628280-26-052535,2026-08-04,10-Q,line #1230,debt,marginal i ett spann efter kreditbetyg: inte ett enskilt värde,agent
+spacex,0001628280-26-052535,2026-08-04,10-Q,line #1234,debt,MD&A: samma tal som kodas ur noten (Note 9),agent
+spacex,0001628280-26-052535,2026-08-04,10-Q,line #1241,debt,"spektrumaffären: lån till en trust som ska efterges, redovisas som köpeskilling, inte bolagets upplåning",agent
+spacex,0001628280-26-052535,2026-08-04,10-Q,line #1256,debt,kassaflöde eller likviditet: inte skuld,agent
+spacex,0001628280-26-052535,2026-08-04,10-Q,line #1258,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+spacex,0001628280-26-052535,2026-08-04,10-Q,line #1265,debt,MD&A: samma tal som kodas ur noten (Note 9),agent
+spacex,0001628280-26-052535,2026-08-04,10-Q,line #1316,debt,bilageförteckning,regel
+spacex,0001628280-26-066880,2026-10-22,10-Q,line #100,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+spacex,0001628280-26-066880,2026-10-22,10-Q,line #110,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+spacex,0001628280-26-066880,2026-10-22,10-Q,line #289,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+spacex,0001628280-26-066880,2026-10-22,10-Q,line #391,debt,aktiverad ränta: inte ett instrument,agent
+spacex,0001628280-26-066880,2026-10-22,10-Q,line #417,debt,"spektrumaffären med EchoStar: betalningar till en trust som redovisas som förskott, inte bolagets upplåning",agent
+spacex,0001628280-26-066880,2026-10-22,10-Q,line #464,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+spacex,0001628280-26-066880,2026-10-22,10-Q,line #478,debt,"jämförelsekolumn per 2025-12-31, före den första 10-Q:n i korpusen",agent
+spacex,0001628280-26-066880,2026-10-22,10-Q,line #483,debt,"jämförelsekolumn per 2025-12-31, före den första 10-Q:n i korpusen",agent
+spacex,0001628280-26-066880,2026-10-22,10-Q,line #493,debt,upprepning i 10-Q för 2026-09-30: villkoren kodas ur den första 10-Q:n (2026-08-04),agent
+spacex,0001628280-26-066880,2026-10-22,10-Q,line #498,debt,"villkor utanför kodningsreglerna (inlösen, återköp, kovenanter, säkringar, avgifter, utfallshändelser)",regel
+spacex,0001628280-26-066880,2026-10-22,10-Q,line #499,debt,"villkor utanför kodningsreglerna (inlösen, återköp, kovenanter, säkringar, avgifter, utfallshändelser)",regel
+spacex,0001628280-26-066880,2026-10-22,10-Q,line #500,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+spacex,0001628280-26-066880,2026-10-22,10-Q,line #502,debt,upprepning i 10-Q för 2026-09-30: villkoren kodas ur den första 10-Q:n (2026-08-04),agent
+spacex,0001628280-26-066880,2026-10-22,10-Q,line #503,debt,användning av lånet (återbetalning av xAI:s och X:s lån): inte ett fält i kodningsreglerna,agent
+spacex,0001628280-26-066880,2026-10-22,10-Q,line #504,debt,marginal i ett spann efter kreditbetyg: inte ett enskilt värde,agent
+spacex,0001628280-26-066880,2026-10-22,10-Q,line #507,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+spacex,0001628280-26-066880,2026-10-22,10-Q,line #509,debt,upprepning i 10-Q för 2026-09-30: villkoren kodas ur den första 10-Q:n (2026-08-04),agent
+spacex,0001628280-26-066880,2026-10-22,10-Q,line #513,debt,upprepning i 10-Q för 2026-09-30: villkoren kodas ur den första 10-Q:n (2026-08-04),agent
+spacex,0001628280-26-066880,2026-10-22,10-Q,line #514,debt,marginal i ett spann efter kreditbetyg: inte ett enskilt värde,agent
+spacex,0001628280-26-066880,2026-10-22,10-Q,line #517,debt,"X:s obligationer från 2019 och 2022: kvar 27 MUSD i en rad i tabellen (kodad), så ränta och belopp per serie vägs inte",agent
+spacex,0001628280-26-066880,2026-10-22,10-Q,line #518,debt,"X:s obligationer från 2019 och 2022: kvar 27 MUSD i en rad i tabellen (kodad), så ränta och belopp per serie vägs inte",agent
+spacex,0001628280-26-066880,2026-10-22,10-Q,line #519,debt,"villkor utanför kodningsreglerna (inlösen, återköp, kovenanter, säkringar, avgifter, utfallshändelser)",regel
+spacex,0001628280-26-066880,2026-10-22,10-Q,line #522,debt,"X Corp:s lån från köpet av Twitter (2022 och 2025), återbetalda 2026-03-02: labbdelen kodar xAI:s och SpaceX:s egen finansiering",agent
+spacex,0001628280-26-066880,2026-10-22,10-Q,line #523,debt,"X Corp:s lån från köpet av Twitter (2022 och 2025), återbetalda 2026-03-02: labbdelen kodar xAI:s och SpaceX:s egen finansiering",agent
+spacex,0001628280-26-066880,2026-10-22,10-Q,line #526,debt,"X Corp:s lån från köpet av Twitter (2022 och 2025), återbetalda 2026-03-02: labbdelen kodar xAI:s och SpaceX:s egen finansiering",agent
+spacex,0001628280-26-066880,2026-10-22,10-Q,line #527,debt,"X Corp:s lån från köpet av Twitter (2022 och 2025), återbetalda 2026-03-02: labbdelen kodar xAI:s och SpaceX:s egen finansiering",agent
+spacex,0001628280-26-066880,2026-10-22,10-Q,line #528,debt,"villkor utanför kodningsreglerna (inlösen, återköp, kovenanter, säkringar, avgifter, utfallshändelser)",regel
+spacex,0001628280-26-066880,2026-10-22,10-Q,line #531,debt,upprepning i 10-Q för 2026-09-30: villkoren kodas ur den första 10-Q:n (2026-08-04),agent
+spacex,0001628280-26-066880,2026-10-22,10-Q,line #532,debt,upprepning i 10-Q för 2026-09-30: villkoren kodas ur den första 10-Q:n (2026-08-04),agent
+spacex,0001628280-26-066880,2026-10-22,10-Q,line #533,debt,"villkor utanför kodningsreglerna (inlösen, återköp, kovenanter, säkringar, avgifter, utfallshändelser)",regel
+spacex,0001628280-26-066880,2026-10-22,10-Q,line #535,debt,rubrik,agent
+spacex,0001628280-26-066880,2026-10-22,10-Q,line #536,debt,upprepning i 10-Q för 2026-09-30: villkoren kodas ur den första 10-Q:n (2026-08-04),agent
+spacex,0001628280-26-066880,2026-10-22,10-Q,line #537,debt,upprepning i 10-Q för 2026-09-30: villkoren kodas ur den första 10-Q:n (2026-08-04),agent
+spacex,0001628280-26-066880,2026-10-22,10-Q,line #538,debt,"villkor utanför kodningsreglerna (inlösen, återköp, kovenanter, säkringar, avgifter, utfallshändelser)",regel
+spacex,0001628280-26-066880,2026-10-22,10-Q,line #539,debt,garanti eller säkerhet: fälten guarantor och collateral kodades inte för raden (ingen serie och ingen rapportrad använder dem),regel
+spacex,0001628280-26-066880,2026-10-22,10-Q,line #549,debt,samma skuld för misslyckade sale-leaseback som kodas ur noten om närstående (rad #805),agent
+spacex,0001628280-26-066880,2026-10-22,10-Q,line #562,debt,tabell över bokfört och verkligt värde: inte nominellt belopp,agent
+spacex,0001628280-26-066880,2026-10-22,10-Q,line #563,debt,tabell över bokfört och verkligt värde: inte nominellt belopp,agent
+spacex,0001628280-26-066880,2026-10-22,10-Q,line #564,debt,tabell över bokfört och verkligt värde: inte nominellt belopp,agent
+spacex,0001628280-26-066880,2026-10-22,10-Q,line #565,debt,tabell över bokfört och verkligt värde: inte nominellt belopp,agent
+spacex,0001628280-26-066880,2026-10-22,10-Q,line #651,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+spacex,0001628280-26-066880,2026-10-22,10-Q,line #711,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+spacex,0001628280-26-066880,2026-10-22,10-Q,line #749,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+spacex,0001628280-26-066880,2026-10-22,10-Q,line #759,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+spacex,0001628280-26-066880,2026-10-22,10-Q,line #781,debt,remburser säkrade med spärrade medel: inte upplåning,agent
+spacex,0001628280-26-066880,2026-10-22,10-Q,line #800,debt,rättstvist: inte ett instrument,agent
+spacex,0001628280-26-066880,2026-10-22,10-Q,line #808,debt,Valors utrustningslån per 2025-12-31 (jämförelse): ingår i övrig finansiering,agent
+spacex,0001628280-26-066880,2026-10-22,10-Q,line #918,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+spacex,0001628280-26-066880,2026-10-22,10-Q,line #979,debt,"aktier, preferensaktier, SAFE, optioner eller konvertering till aktier: inte skuld",regel
+spacex,0001628280-26-066880,2026-10-22,10-Q,line #1125,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+spacex,0001628280-26-066880,2026-10-22,10-Q,line #1126,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+spacex,0001628280-26-066880,2026-10-22,10-Q,line #1137,debt,"verkligt värde, kostnader, kassaflöde eller resultatposter: inte ett instrument",regel
+spacex,0001628280-26-066880,2026-10-22,10-Q,line #1311,debt,kassaflöde eller likviditet: inte skuld,agent
+spacex,0001628280-26-066880,2026-10-22,10-Q,line #1314,debt,MD&A: samma tal som kodas ur noten (Note 9),agent
+spacex,0001628280-26-066880,2026-10-22,10-Q,line #1316,debt,MD&A: samma tal som kodas ur noten (Note 9),agent
+spacex,0001628280-26-066880,2026-10-22,10-Q,line #1317,debt,MD&A: samma tal som kodas ur noten (Note 9),agent
+spacex,0001628280-26-066880,2026-10-22,10-Q,line #1318,debt,"villkor utanför kodningsreglerna (inlösen, återköp, kovenanter, säkringar, avgifter, utfallshändelser)",regel
+spacex,0001628280-26-066880,2026-10-22,10-Q,line #1321,debt,"villkor utanför kodningsreglerna (inlösen, återköp, kovenanter, säkringar, avgifter, utfallshändelser)",regel
+spacex,0001628280-26-066880,2026-10-22,10-Q,line #1322,debt,"villkor utanför kodningsreglerna (inlösen, återköp, kovenanter, säkringar, avgifter, utfallshändelser)",regel
+spacex,0001628280-26-066880,2026-10-22,10-Q,line #1324,debt,MD&A: samma tal som kodas ur noten (Note 9),agent
+spacex,0001628280-26-066880,2026-10-22,10-Q,line #1325,debt,marginal i ett spann efter kreditbetyg: inte ett enskilt värde,agent
+spacex,0001628280-26-066880,2026-10-22,10-Q,line #1327,debt,MD&A: samma tal som kodas ur noten (Note 9),agent
+spacex,0001628280-26-066880,2026-10-22,10-Q,line #1337,debt,"spektrumaffären: lån till en trust som ska efterges, redovisas som köpeskilling, inte bolagets upplåning",agent
+spacex,0001628280-26-066880,2026-10-22,10-Q,line #1350,debt,kassaflöde eller likviditet: inte skuld,agent
+spacex,0001628280-26-066880,2026-10-22,10-Q,line #1354,debt,kassaflöde eller likviditet: inte skuld,agent
+spacex,0001628280-26-066880,2026-10-22,10-Q,line #1363,debt,MD&A: samma tal som kodas ur noten (Note 9),agent
