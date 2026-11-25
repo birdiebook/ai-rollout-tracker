@@ -13,7 +13,7 @@ interface V {
   n_revised_periods: number;
   last_known: string;
 }
-const index = JSON.parse(readFileSync('static/data/series/index.json', 'utf-8')) as { series: { key: string; freq: string; n_versions: number }[] };
+const index = JSON.parse(readFileSync('static/data/series/index.json', 'utf-8')) as { series: { key: string; freq: string; n_versions: number; latest_period: string | null }[] };
 const load = (k: string) => JSON.parse(readFileSync(`static/data/series/${k}.json`, 'utf-8')) as { key: string; label: string; versions: V; license: { attribution: string } };
 // the most revised series in the bundle
 const revisedKey = index.series
@@ -89,7 +89,8 @@ test('CSV download carries source, licence and attribution', async ({ page }) =>
 test('series pages are prerendered with SVG (no JS needed for the charts)', async ({ browser }) => {
   const ctx = await browser.newContext({ javaScriptEnabled: false });
   const page = await ctx.newPage();
-  for (const s of index.series.slice(0, 6)) {
+  // Only series with values have a chart; a catalogue series not yet fetched (e.g. a cold CI cache) renders without one.
+  for (const s of index.series.filter((x) => x.latest_period).slice(0, 6)) {
     await page.goto(`serie/${s.key}/`);
     await expect(page.locator('h1')).toBeVisible();
     expect(await page.locator('figure svg[role="img"]').count()).toBeGreaterThanOrEqual(1);
