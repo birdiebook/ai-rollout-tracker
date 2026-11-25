@@ -57,7 +57,7 @@ YIELD_TOL = 0.01  # percent: yield = benchmark yield + spread within 1 bp (self-
 MANUAL: dict[tuple[str, str, str], dict] = {
     ("orcl", "2021-03-22", "3.950% Notes due 2051"): {
         "principal": 3250.0,
-        "note": "FWP states $3,250,000,0000 (one zero too many); the final 424B2 (0001193125-21-090195, filed "
+        "note": "FWP states $3,250,000,0000 (one zero too many); the final 424B2 (0001193125-21-091259, filed "
                 "2021-03-23) states $3,250,000,000 and the offering total $15,000,000,000",
     },
 }
@@ -314,24 +314,27 @@ def fiscal_calendar_quarter(company: str, day: str) -> str:
 
 
 def coverage(df: pd.DataFrame, debt_issued: dict[str, pd.DataFrame]) -> pd.DataFrame:
-    """Per company and calendar year: USD principal by settlement quarter (fiscal mapping) and XBRL debt_issued.
+    """Per company and calendar year: USD principal by settlement quarter (the company's fiscal quarter, midpoint rule)
+    against XBRL debt_issued (latest vintage) over the quarters XBRL has.
 
-    debt_issued: company -> latest-vintage frame (period, value). Returns company, year, term_sheets, xbrl, share."""
+    debt_issued: company -> frame (period, value). Columns: company, year, term_sheets (USD principal in the quarters
+    XBRL has), xbrl, xbrl_quarters, share = term_sheets / xbrl, later = USD principal in quarters XBRL does not have
+    yet (not in the share)."""
     out = []
     usd = df[df["currency"] == "USD"]
     for co, xb in debt_issued.items():
         own = usd[usd["company"] == co]
-        q = own.apply(lambda r: fiscal_calendar_quarter(co, r["settlement_date"] or r["pricing_date"]), axis=1) \
-            if len(own) else pd.Series(dtype=str)
+        q = [fiscal_calendar_quarter(co, s or p) for s, p in zip(own["settlement_date"], own["pricing_date"])]
         ts = own.assign(q=q).groupby("q")["principal"].sum() if len(own) else pd.Series(dtype=float)
         x = xb.set_index("period")["value"] if len(xb) else pd.Series(dtype=float)
         years = sorted({p[:4] for p in ts.index} | {p[:4] for p in x.index if p[:4] >= "2020"})
         for y in years:
-            t = float(ts[[p for p in ts.index if p.startswith(y)]].sum())
-            v = float(x[[p for p in x.index if p.startswith(y)]].sum()) if len(x) else float("nan")
-            nq = len([p for p in x.index if p.startswith(y)])
-            out.append((co, y, t, v, nq, t / v if v else float("nan")))
-    return pd.DataFrame(out, columns=["company", "year", "term_sheets", "xbrl", "xbrl_quarters", "share"])
+            xq = [p for p in x.index if p.startswith(y)]
+            t = float(sum(v for p, v in ts.items() if p.startswith(y) and p in xq))
+            later = float(sum(v for p, v in ts.items() if p.startswith(y) and p not in xq))
+            v = float(x[xq].sum()) if xq else float("nan")
+            out.append((co, y, t, v, len(xq), t / v if v else float("nan"), later))
+    return pd.DataFrame(out, columns=["company", "year", "term_sheets", "xbrl", "xbrl_quarters", "share", "later"])
 
 
 def _xbrl_latest(key: str) -> pd.DataFrame:

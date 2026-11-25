@@ -287,6 +287,9 @@ def test_oracle_fiscal_quarters_and_coverage():
     cov = ci.coverage(df, {"orcl": xb})
     row = cov[cov["year"] == "2025"].iloc[0]
     assert row["term_sheets"] == 18000 and row["xbrl"] == 17900 and row["share"] == pytest.approx(18000 / 17900)
+    assert row["later"] == 0
+    late = ci.coverage(df, {"orcl": xb[xb["period"] == "2025Q3"]})
+    assert late.iloc[0]["term_sheets"] == 0 and late.iloc[0]["later"] == 18000
 
 
 # ------------------------------------------------------------------ self-check
@@ -334,3 +337,12 @@ def test_number_patterns():
     assert any(__import__("re").search(p, "€750,000,000") for p in chk.amount_patterns("EUR", 750))
     assert not any(__import__("re").search(p, "$7,500,000,000") for p in chk.amount_patterns("USD", 750))
     assert any(__import__("re").search(p, "0.450% (+45 basis points)") for p in chk.spread_patterns(45))
+
+
+def test_cover_cross_check():
+    cover = cc.lines("<P>PROSPECTUS SUPPLEMENT</P><P>$17,500,000,000</P><P>$500,000,000 Floating Notes due 2028</P>"
+                     "<P>$1,000,000,000 3.875% Notes due 2028</P><P>€750,000,000 2.500% Senior Notes due 2029</P>")
+    assert chk.cover_tranches(cover) == {("USD", 500.0, "F", "2028"), ("USD", 1000.0, "3.8750", "2028"),
+                                         ("EUR", 750.0, "2.5000", "2029")}
+    rows = frame([tranche(currency="USD", principal=1000, coupon_pct=3.875, maturity="2028-11-15")])
+    assert chk.row_tranches(rows) == {("USD", 1000.0, "3.8750", "2028")}

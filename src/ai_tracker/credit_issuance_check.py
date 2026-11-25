@@ -11,7 +11,11 @@ For each sampled row of curated/credit_issuance.csv (all rows by default: the do
 - yield = benchmark yield + spread within YIELD_TOL (1 bp) when all three are stated.
 A manual row's stated exception (the note) is reported as "manual" with the numbers that are not in the block.
 
-    python -m ai_tracker.credit_issuance_check [--frac 1.0] [--seed 20261125]
+With --covers, every offering is also compared with the cover of its final prospectus supplement (the 424B2/424B5 of
+the same company filed 0-7 days after the FWP): the set of (currency, principal, coupon or floating, maturity year)
+must be the same. The final supplement is an independent document, so this checks the term sheet itself.
+
+    python -m ai_tracker.credit_issuance_check [--frac 1.0] [--seed 20261125] [--covers]
 
 This confirms location, hash, numbers and dates, not the semantics (which document is the source, the benchmark,
 currency and rate type): that is for the independent review. Nothing is written except raw copies (data/raw).
@@ -160,11 +164,68 @@ def run(frac: float = 1.0, seed: int = 20261125) -> pd.DataFrame:
     return pd.DataFrame(res, columns=["id", "method", "status", "details", "dates"])
 
 
+COVER_RE = re.compile(r"^(US\$|C\$|\$|€|£|¥)\s?([\d,]+)\s+(?:aggregate principal amount of\s+)?"
+                      r"(Floating(?: Rate)?|\d+\.\d+\s?%)\s+(?:Senior\s+)?Notes\s+due\s+(\d{4})", re.I)
+
+
+def cover_tranches(doc_lines: list[str]) -> set[tuple]:
+    """(currency, principal in millions, coupon or 'F', maturity year) from the cover of a final prospectus supplement."""
+    out = set()
+    for line in doc_lines[:150]:
+        m = COVER_RE.match(line)
+        if m:
+            kind = "F" if m.group(3).lower().startswith("floating") else f"{float(m.group(3).rstrip('% ')):.4f}"
+            out.add((ct.CURRENCY[m.group(1)], float(m.group(2).replace(",", "")) / 1e6, kind, m.group(4)))
+    return out
+
+
+def row_tranches(rows: pd.DataFrame) -> set[tuple]:
+    return {(r.currency, float(r.principal), "F" if r.rate_type == "floating" else f"{r.coupon_pct:.4f}",
+             r.maturity[:4]) for r in rows.itertuples()}
+
+
+def covers(fetch=None) -> pd.DataFrame:
+    """Each offering (source document) against the best-matching final 424B2/424B5 filed 0-7 days later."""
+    fetch = fetch or fetch_lines
+    df = ci.load()
+    out = []
+    for co, g in df.groupby("company"):
+        subs = cc.submissions(co, SOURCE)
+        finals = [f for f in subs if f["form"] in ("424B2", "424B5")]
+        for url, rows in g.groupby("source_url"):
+            filed = pd.Timestamp(rows["filed"].iloc[0])
+            mine, best = row_tranches(rows), None
+            for f in finals:
+                if 0 <= (pd.Timestamp(f["filed"]) - filed).days <= 7:
+                    u = cc.ARCHIVE.format(cik=cc.CIKS[co], folder=f["accession"].replace("-", ""), doc=f["primary"])
+                    lines = fetch(u)
+                    time.sleep(cc.BULK_SLEEP)
+                    if cc.kind(lines) != "final":
+                        continue
+                    c = cover_tranches(lines)
+                    if c and (best is None or len(c & mine) > len(best[1] & mine)):
+                        best = (f["accession"], c)
+            if best is None:
+                out.append((co, rows["filed"].iloc[0], url, "", "no_final_supplement", ""))
+                continue
+            acc, c = best
+            diff = sorted(mine ^ c)
+            out.append((co, rows["filed"].iloc[0], url, acc, "ok" if not diff else "differs", str(diff)))
+    return pd.DataFrame(out, columns=["company", "filed", "source_url", "final_accession", "status", "diff"])
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--frac", type=float, default=1.0)
     ap.add_argument("--seed", type=int, default=20261125)
+    ap.add_argument("--covers", action="store_true")
     a = ap.parse_args()
+    if a.covers:
+        cov = covers()
+        for r in cov.itertuples(index=False):
+            print(f"{r.company:6s} {r.filed} {r.final_accession:22s} {r.status:20s} {r.diff}")
+        print(f"{len(cov)} offerings, {int((cov['status'] == 'ok').sum())} equal to the final supplement")
+        return
     res = run(a.frac, a.seed)
     for r in res.itertuples(index=False):
         if r.status not in OK or r.dates != "ok":
