@@ -344,13 +344,22 @@ export function seriesOn(doc: SeriesDoc, date: string, rec?: RecordInfo | null):
 /** Fields that carry a day something became known. Every one of them in a time-travel object must be <= the day. */
 const KNOWN_KEYS = new Set(['dates', 'known_from', 'first_known', 'last_known', 'known', 'collapsed_before']);
 const DAY_RE = /^\d{4}-\d{2}-\d{2}/;
+/** A value that IS a day, a timestamp or a dated period ("a/b"), in any field (R-W1: a later day under a field name
+ *  that is not in KNOWN_KEYS, e.g. rows.backfill_last_known, must not slip through). Text that only contains a day
+ *  (a licence text quoting when it was read) is not a day value. A dated period counts from its first day. */
+const DAY_VALUE_RE = /^(\d{4}-\d{2}-\d{2})(?:T[\d:.]+(?:Z|[+-]\d{2}:?\d{2})?|\/\d{4}-\d{2}-\d{2})?$/;
 
-/** Every known-day field (any depth) that is later than `day`. Empty = no later knowledge in the object. */
+/** Every known-day field (any depth) that is later than `day`, and every day value in any other field that is later
+ *  than `day`. Empty = no later knowledge in the object. */
 export function leaks(obj: unknown, day: string, path = '$'): string[] {
   const out: string[] = [];
   const visit = (x: unknown, p: string, knownField: boolean) => {
     if (typeof x === 'string') {
       if (knownField && DAY_RE.test(x) && x.slice(0, 10) > day) out.push(`${p} = ${x}`);
+      else if (!knownField) {
+        const m = DAY_VALUE_RE.exec(x);
+        if (m && m[1] > day) out.push(`${p} = ${x}`);
+      }
     } else if (Array.isArray(x)) x.forEach((y, i) => visit(y, `${p}[${i}]`, knownField));
     else if (x && typeof x === 'object') for (const [k, y] of Object.entries(x)) visit(y, `${p}.${k}`, knownField || KNOWN_KEYS.has(k));
   };

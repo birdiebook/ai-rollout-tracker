@@ -11,13 +11,15 @@
   import { dateLabel } from '$lib/design';
   import TimeBar from './TimeBar.svelte';
   import { tt } from './store.svelte';
+  import { PREPAINT_SCRIPT } from './prepaint';
   import { carryHref, readAsOf } from './url';
 
   let { children }: { children: Snippet } = $props();
 
   // before first paint: a URL with as_of hides today's content until the time-travel view replaces it, so later
   // knowledge never flashes under a past date (without JS nothing runs and the prerendered page shows as usual)
-  const pre = `<script>try{if(/(^#|&)as_of=\\d{4}-\\d{2}-\\d{2}/.test(location.hash))document.documentElement.setAttribute('data-tt','')}catch(e){}<\/script>`;
+  // (R-W1: the same parser as readAsOf, prepaint.ts; the old regex missed e.g. "#as%5Fof=" and hid invalid days)
+  const pre = PREPAINT_SCRIPT;
 
   type ViewKind = 'start' | 'branch' | 'series';
   const ROUTES: Record<string, ViewKind> = { '/': 'start', '/gren/[id]': 'branch', '/serie/[key]': 'series' };

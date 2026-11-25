@@ -6,6 +6,8 @@
   import { resolve } from '$app/paths';
   import ThemeToggle from '$lib/components/ThemeToggle.svelte';
   import TimeTravel from '$lib/timetravel/TimeTravel.svelte';
+  import { tt } from '$lib/timetravel/store.svelte';
+  import { dateLabel } from '$lib/design';
 
   let { data, children } = $props();
   const css = `<style>${tokensCss()}</style>`;
@@ -47,12 +49,17 @@
 <footer class="wrap">
   <p>
     Byggd från site_bundle (schema {data.site.schemaVersion}){#if data.site.build.sha}, commit
-      <code>{data.site.build.sha.slice(0, 7)}</code>{/if}. Underlag: {data.site.record.label}.
+      <code>{data.site.build.sha.slice(0, 7)}</code>{/if}. Underlag:
+    <!-- R-W1: under time travel the footer must not name today's record (hidden before paint, replaced after) -->
+    {#if tt.active}<span data-tt="footer">tidsresa, posten som var känd den {dateLabel(tt.effective)}</span>{:else}<span class="tt-hide">{data.site.record.label}</span>{/if}.
     Ny sida under uppbyggnad; den nuvarande finns kvar tills paritet är kontrollerad.
   </p>
 </footer>
 
 <style>
+  :global(html[data-tt]) .tt-hide {
+    visibility: hidden;
+  }
   .skip {
     position: absolute;
     left: -9999px;

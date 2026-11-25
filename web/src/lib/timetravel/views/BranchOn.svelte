@@ -45,7 +45,9 @@
       : []
   );
   const measured = $derived(series.filter((x) => x.now));
-  const notMeasured = $derived(series.filter((x) => !x.now));
+  // R-W1: only core series that had a version on the day; a series counted only today (a later selection) or not yet
+  // published would name later knowledge
+  const notMeasured = $derived(series.filter((x) => !x.now && !x.s.empty && x.s.meta.core));
   const spark = (s: (typeof series)[number]['s']) => {
     const h = s.history;
     if (!h) return { d: '', dots: [] as { x: number; y: number; dir: number | null }[], zero: 0 };
