@@ -64,7 +64,8 @@ def fetch(code: str, file: str = "NipaDataQ.txt") -> pd.Series:
 # The newest release is also read from apps.bea.gov/national/Release/XLS/Survey/ in case the archive lags.
 # A missing file is answered with HTTP 200 and an HTML page ("BEA: Data Tools"), so content is checked first.
 # Archived releases do not change, so a small extract per release is cached under <RAW_DIR>/bea/vintages/ and
-# each 4-6 MB workbook pair is downloaded once.
+# each 4-6 MB workbook pair is downloaded once. When a code is added, only the section workbooks that hold a code the
+# extract lacks are downloaded again; codes already in the extract must come back with the same values.
 
 ARCHIVE_API = "https://apps.bea.gov/histdata/core/data/Fea_DisplayChildrenC/"
 ARCHIVE_FILES = "https://apps.bea.gov/HistData/Files/Releases/"
@@ -76,6 +77,9 @@ MAX_DIR_GAP_DAYS = 14  # published vs directory date: up to 4 days in 2017-2026,
 # and stable across vintages; line numbers and table names (4.2.5 -> 4.2.5A/B) are not.
 ARCHIVE_CODES = {
     "A191RL": (1, "T10502"),  # real GDP, percent change at annual rate (table 1.5.2, line 1)
+    # contribution to real GDP growth: final sales of computers, net of imports (table 1.2.2, line 17; register
+    # 2026-11-25, owner decision after R12 R-3)
+    "BB01RY": (1, "T10202"),
     "Y034RY": (1, "T10502"),  # contribution to real GDP growth: information processing equipment (line 31)
     "B935RY": (1, "T10502"),  # ... computers and peripheral equipment (line 32)
     "B985RY": (1, "T10502"),  # ... software (line 38)
@@ -192,9 +196,11 @@ def _section_codes() -> dict[int, dict[str, str]]:
 
 
 def read_release(urls: dict[int, str]) -> tuple[pd.Timestamp, dict[str, pd.Series]]:
-    """Download the section workbooks of one release -> (published date, {code: Series})."""
+    """Download the section workbooks of one release (the sections in `urls`) -> (published date, {code: Series})."""
     dates, data = [], {}
     for section, wanted in _section_codes().items():
+        if section not in urls:
+            continue
         r = http.get(urls[section], SOURCE, save=False, timeout=300)
         published, series = parse_workbook(r.content, wanted)
         if published is None:
@@ -209,15 +215,36 @@ def _cache_path(rel: Release) -> Path:
 
 
 def _read_cache(rel: Release) -> tuple[pd.Timestamp, dict[str, pd.Series]] | None:
+    """The cached extract of a release (it may lack codes added after it was written: see `missing_sections`)."""
     p = _cache_path(rel)
     if not p.exists():
         return None
     df = pd.read_csv(p, dtype={"code": str, "period": str})
-    if set(ARCHIVE_CODES) - set(df["code"]):
-        return None  # extract from an older code list: download again
     data = {c: pd.Series(g["value"].to_numpy(float), index=pd.PeriodIndex(g["period"], freq="Q-DEC")).sort_index()
             for c, g in df.groupby("code")}
     return pd.Timestamp(df["published"].iloc[0]), data
+
+
+def missing_sections(data: dict[str, pd.Series] | None) -> list[int]:
+    """Section workbooks that hold a code of ARCHIVE_CODES that `data` (a cached extract) lacks; all when None."""
+    sections = _section_codes()
+    if data is None:
+        return sorted(sections)
+    return sorted(s for s, wanted in sections.items() if set(wanted) - set(data))
+
+
+def merge_extract(rel: Release, cached: tuple[pd.Timestamp, dict[str, pd.Series]],
+                  fresh: tuple[pd.Timestamp, dict[str, pd.Series]]) -> tuple[pd.Timestamp, dict[str, pd.Series]]:
+    """The cached extract plus the codes read again from some of its section workbooks. An archived release does not
+    change: the same published date, and the same values for every code in both, or an error."""
+    (pub_c, old), (pub_f, new) = cached, fresh
+    if pub_c != pub_f:
+        raise ValueError(f"BEA archive {rel.path}: published {pub_f.date()} now, {pub_c.date()} in the cached extract")
+    for code in set(old) & set(new):
+        a, b = old[code], new[code]
+        if not a.index.equals(b.index) or not np.allclose(a.to_numpy(), b.to_numpy(), rtol=0, atol=1e-9):
+            raise ValueError(f"BEA archive {rel.path}: {code} differs from the cached extract")
+    return pub_c, {**old, **{c: s for c, s in new.items() if c not in old}}
 
 
 def _write_cache(rel: Release, published: pd.Timestamp, data: dict[str, pd.Series]) -> None:
@@ -247,10 +274,11 @@ def archive_vintages(since: pd.Timestamp = FIRST_XLSX) -> dict[pd.Timestamp, dic
         if rel.dir_date < since:
             continue
         cached = _read_cache(rel)
-        if cached is None:
-            urls = {s: f"{ARCHIVE_FILES}{rel.path}/Section{s}all_xls.xlsx" for s in _section_codes()}
-            cached = read_release(urls)
-            check_release_date(rel, cached[0])
+        todo = missing_sections(None if cached is None else cached[1])
+        if todo:
+            fresh = read_release({s: f"{ARCHIVE_FILES}{rel.path}/Section{s}all_xls.xlsx" for s in todo})
+            check_release_date(rel, fresh[0])
+            cached = fresh if cached is None else merge_extract(rel, cached, fresh)
             _write_cache(rel, *cached)
         published, data = cached
         if published in out:

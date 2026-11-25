@@ -57,7 +57,9 @@ def _workbook(sheets: dict[str, tuple[str, list[str], list[tuple[str, list]]]]) 
 JUNE29 = "Data published June 29, 2023"
 S1_2023Q1_THIRD = {"T10502-Q": (JUNE29, ["2022Q4", "2023Q1"],
                                 [("A191RL", [2.6, 2.0]), ("Y034RY", [0.01, -0.03]), ("B935RY", [0.02, -0.01]),
-                                 ("B985RY", [0.04, 0.02])])}
+                                 ("B985RY", [0.04, 0.02])]),
+                   # table 1.2.2, read since the register entry 2026-11-25 (BB01RY); values are placeholders
+                   "T10202-Q": (JUNE29, ["2022Q4", "2023Q1"], [("BB01RY", [0.0, 0.0])])}
 # The split table 4.2.5A (1967-1998) is not updated in every release and keeps an older "Data published" line.
 S4_2023Q1_THIRD = {"T40202-Q": (JUNE29, ["2023Q1"], [("B852RZ", [-0.5])]),
                    "T40205A-Q": ("Data published September 30, 2022", ["1998Q4"], [("B852RC", [100.0])]),
