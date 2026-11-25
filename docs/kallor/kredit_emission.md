@@ -314,17 +314,17 @@ likviddagen ligger. Andel med tre decimaler. Räknat 2026-11-25 med `coverage` o
 |---|---|---|---|---|---|---|
 | Microsoft | 2026Q4 | – | – | – | 25 000 | inte i XBRL än |
 | Alphabet | 2020Q3 | 10 000 | 9 863 | 1,014 | – | |
-| Alphabet | 2025Q2 | 5 000 | 26 846 | 0,186 | – | EUR 6 750 samma kvartal och annan upplåning |
-| Alphabet | 2025Q4 | 17 500 | 26 562 | 0,659 | – | EUR 6 500 samma kvartal och annan upplåning |
-| Alphabet | 2026Q1 | 20 000 | 31 379 | 0,637 | – | GBP 5 500 samma kvartal och annan upplåning |
-| Alphabet | 2026Q3 | 25 000 | 28 996 | 0,862 | – | annan upplåning |
+| Alphabet | 2025Q2 | 5 000 | 26 846 | 0,186 | – | EUR 6 750 samma kvartal, resten inte utrett |
+| Alphabet | 2025Q4 | 17 500 | 26 562 | 0,659 | – | EUR 6 500 samma kvartal, resten inte utrett |
+| Alphabet | 2026Q1 | 20 000 | 31 379 | 0,637 | – | GBP 5 500 samma kvartal, resten inte utrett |
+| Alphabet | 2026Q3 | 25 000 | 28 996 | 0,862 | – | annan upplåning (ej verifierat) |
 | Amazon | 2020Q2 | 10 000 | 9 918 | 1,008 | – | |
 | Amazon | 2021Q2 | 18 500 | 18 516 | 0,999 | – | |
 | Amazon | 2022Q2 | 12 750 | 12 824 | 0,994 | – | |
 | Amazon | 2022Q4 | 8 250 | 8 235 | 1,002 | – | |
 | Amazon | 2025Q4 | 15 000 | 14 927 | 1,005 | – | |
-| Amazon | 2026Q1 | 37 000 | 53 441 | 0,692 | – | EUR 14 500 samma kvartal |
-| Amazon | 2026Q3 | 25 000 | 48 102 | 0,520 | – | GBP 4 250 samma kvartal och annan upplåning |
+| Amazon | 2026Q1 | 37 000 | 53 441 | 0,692 | – | EUR 14 500 samma kvartal (inte omräknat) |
+| Amazon | 2026Q3 | 25 000 | 48 102 | 0,520 | – | GBP 4 250 samma kvartal, resten inte utrett |
 | Meta | 2023Q2 | 8 500 | 8 455 | 1,005 | – | |
 | Meta | 2024Q3 | 10 500 | 10 432 | 1,007 | – | |
 | Meta | 2025Q4 | 30 000 | 29 906 | 1,003 | – | |
@@ -332,7 +332,7 @@ likviddagen ligger. Andel med tre decimaler. Räknat 2026-11-25 med `coverage` o
 | Meta | 2026Q4 | – | – | – | 15 000 | inte i XBRL än |
 | Oracle | 2020Q2 | 20 000 | 19 888 | 1,006 | – | |
 | Oracle | 2021Q2 | 15 000 | 14 934 | 1,004 | – | |
-| Oracle | 2022Q4 | 7 000 | 8 234 | 0,850 | – | annan upplåning |
+| Oracle | 2022Q4 | 7 000 | 8 234 | 0,850 | – | annan upplåning (ej verifierat) |
 | Oracle | 2023Q1 | 5 250 | 5 214 | 1,007 | – | |
 | Oracle | 2024Q4 | 6 250 | 6 210 | 1,006 | – | |
 | Oracle | 2025Q1 | 7 750 | 7 711 | 1,005 | – | |
@@ -342,7 +342,8 @@ likviddagen ligger. Andel med tre decimaler. Räknat 2026-11-25 med `coverage` o
 
 I 15 av de 24 kvartalen som XBRL har ligger andelen på 0,99–1,01. Det är en starkare kontroll än årstabellen,
 eftersom annan upplåning i andra kvartal inte späder ut den. Alphabet 2020Q3 ligger på 1,014 (137 MUSD, inte utrett).
-I de åtta andra finns obligationer i annan valuta eller annan upplåning i samma kvartal.
+I de åtta andra finns obligationer i annan valuta eller annan upplåning i samma kvartal. Det är inte avstämt post
+för post, och valutorna är inte omräknade.
 
 ### Det som inte syns
 
