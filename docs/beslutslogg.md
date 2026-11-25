@@ -915,6 +915,22 @@ Johannes svarade "kör på dina rekommendationer" på tre rekommendationer samma
   håller bara för sitt frö, och filen med tillstånd per månad som fanns före posten ska nämnas. Övrigt är noter. G6:s
   revideringar kommer från G.17:s årsrevision 2026-11-24, en dag före V (verifierat hos Fed).
 
+## 2026-11-25 – CN1: Kina via SEC, Alibaba och Baidu som katalogserier
+
+- **Byggt:** 14 katalogserier ur 6-K (`docs/kallor/kina_sec.md`): Alibabas molnsegment i fyra definitioner
+  (`rev_baba_cloud_v1`–`v4`, skarvas aldrig), Alibabas capex i två (`capex_baba_v1`, `v2`), Baidus capex (`capex_bidu`,
+  `capex_bidu_core`), US$-vyer för de öppna tabellserierna och två textserier för Baidu (`publish=False`). Inga
+  kärnserier ändras, och inget index eller tillstånd påverkas.
+- **Gränserna** sätts av bolagens egen text om omklassning, inte av en procentgräns. Omräkningarna vid gränserna är
+  under 1 %. En odeklarerad omräkning stoppar hämtningen.
+- **Datering:** `known_from` = 6-K:ns inlämningsdatum. Fem av Baidus pressmeddelanden 2020–2021 kom 2–6 dagar före
+  inlämningen. Registret ändrades före analysen: de används med inlämningsdatumet (konservativt, inget läckage).
+- **Valuta:** H.10 hämtas från federalreserve.gov och inte från FRED, eftersom FRED:s villkor ger klassen `okänd`.
+- **Kontroll:** molnsegmentet stämmer exakt mot 20-F:ns XBRL på samma definition, Baidus capex exakt mot companyfacts.
+  Alla 26 textrader klarar kontrollen mot EDGAR.
+- **Rekommendation till Johannes:** låt extraktionsgranskningen pröva Baidus textserier innan de publiceras. Ingen
+  serie föreslås som kärnserie nu. `capex_baba_v2` är den bästa kandidaten för G5.
+
 ## 2026-11-25 – S3: order och orderstock ur resultatpressmeddelanden
 
 - Kodningsreglerna låstes och committades före kodningen (471c67b). 575 värden och 42 stopp för Vertiv, GE Vernova,
@@ -1062,6 +1078,34 @@ Johannes svarade "kör på dina rekommendationer" på tre rekommendationer samma
 - **Rekommendation:** `publish=True` kan prövas för de 52 serierna utan fynd. GE Vernovas order i GW och Digital Realtys
   åtta serier med `dlr_share` väntar på R-1 och R-4. Som kärnkandidat i G7 är gasturbinernas orderstock och
   reservationer i GW bättre än ordren i GW.
+
+## 2026-11-25 – R21: granskning av CN1 (Kina via SEC)
+
+- **Dom: godkänd med anmärkningar** som katalogserier (`docs/granskning/r21-kina-sec.md`). En omräkning ur råkopiorna
+  ger samma 301 rader. 22 pressmeddelanden hämtades på nytt från sec.gov och är byte för byte lika med CN1:s kopior. 54
+  tal stämmer, också fyra omräknade jämförelsetal. Molnet stämmer exakt mot 20-F, Baidus capex mot companyfacts.
+  Inget läckage och inga fel värden.
+- **R21-2 (ska rättas):** att omräkningarna vid gränserna är under 1 % gäller DingTalk och T-Head, inte omorganisationen
+  2023 (+30 till +36 %) eller capex 2018 (−28 till −54 %). Det rättar CN1-posten ovan.
+- **R21-3:** den registrerade kontrollen mot companyfacts körs inte för Alibabas capex. R21 körde den: exakt för
+  FY2015–FY2020. **R21-4:** `capex_baba_v1` innehåller licensierade upphovsrätter till videoinnehåll. **R21-1:**
+  etiketten för `rev_baba_cloud_v4` säger 2025Q2, men serien börjar 2026Q2.
+- **Rekommendation till Johannes:** R21 har läst alla 26 textrader, och mått och kvartal stämmer. Baidus två textserier
+  kan få `publish=True` med en daterad ändring. Ingen serie blir kärnserie nu.
+
+## 2026-11-25 – X18: rättning av CN1 efter R21
+
+- **R21-2:** CN1-posten ovan säger att omräkningarna vid gränserna är under 1 %. Det gäller DingTalk och T-Head
+  (−0,2 till +0,9 %). Vid omorganisationen 2023 är de +30 till +36 % och för capex 2018 −28 till −54 %.
+  `docs/kallor/kina_sec.md` har nu en tabell per gräns. Inget värde ändras, men nivåer över en gräns går inte att
+  jämföra.
+- **R21-3:** korskontrollen av Alibabas capex körs nu som registrerad, efter en daterad registerändring. `capex_baba_v1`
+  stämmer exakt FY2015–FY2018 och `capex_baba_v2` FY2019–FY2020. För FY2021–FY2026 finns ingen rad på samma
+  definition, och där redovisas bara kvoten mot den bredare raden (79–98 %). Molnet prövas nu också för FY2016, och det
+  stämmer exakt.
+- **R21-4 och R21-1:** etiketten och noten för `capex_baba_v1` säger att serien innehåller licensierade upphovsrätter
+  till videoinnehåll. Etiketten för `rev_baba_cloud_v4` har inget startkvartal.
+- En omräkning ger samma 301 rader som CN1. Inga serier blir kärnserier.
 
 ## 2026-11-25 – X16: rättning av S3 efter R19 (order och orderstock)
 

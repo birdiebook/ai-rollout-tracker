@@ -1988,6 +1988,142 @@ submissions och indexsidorna för resultat-8-K:na (bilagornas nummer och namn). 
 - **Publicering:** `publish=False` tills den oberoende granskningen av extraktionen är godkänd. Stickprov med
   `python -m ai_tracker.orders_check`.
 
+### 2026-11-25 – CN1: Kina via SEC (Alibaba och Baidu), katalogserier
+
+Spår CN1 i körning 14 (förslag 7 i `docs/riktning.md`). Posten låser serier, källrader, datering, brottregler och
+kontroller innan någon serie räknas. Serierna är katalogserier: inga mått räknas, och de ingår inte i grenarnas index
+eller i tillståndsreglerna. Att göra någon av dem till kärnserie kräver en egen registerpost och en granskning.
+Molnintäkter i G4, capex i G5. Tencent lämnar inget till SEC och ingår inte.
+
+**Vad som var sett före posten.** EDGAR:s inlämningslistor för Alibaba (CIK 1577552) och Baidu (CIK 1329099), index
+och exhibits för 6-K med kvartalsrapporter (Alibaba 47 pressmeddelanden 2015–2026, Baidu 74 pressmeddelanden
+2007–2026), och Fed:s H.10-sida för renminbi. Jag läste titlar, tabellhuvuden, radetiketter och fotnoter om
+segmentens innehåll, för att kunna skriva tolkningen. Siffrorna i raderna syntes i den läsningen. Ingen serie är
+räknad, och ingen nivå, takt eller jämförelse mellan kvartal är gjord. Råkopiorna hämtades delvis av ett tidigare,
+avbrutet försök av samma spår samma dag.
+
+**Källa och datering.** Bolagens pressmeddelanden om kvartalsresultat, som lämnas som exhibit (oftast 99.1) till en
+6-K. `known_from` = 6-K:ns inlämningsdatum i EDGAR (`filingDate`). Siffrorna blir offentliga senast då. Kontroll:
+datumet i pressmeddelandets dateline (eller underskrift) ska ligga på inlämningsdagen eller dagen före. Fördelningen
+redovisas i `docs/kallor/kina_sec.md`. Ligger dateline tidigare än dagen före används inte pressmeddelandet, och det
+redovisas. Jämförelsetal för tidigare kvartal i senare pressmeddelanden är nya vintages när de skiljer sig mer än
+0,5 MRMB (tabellerna avrundar till hela miljoner). Enhet: miljoner RMB som rapporterat (MRMB). Capex lagras som
+positivt belopp.
+
+**Kalender.** Alibabas räkenskapsår slutar 31 mars, men kvartalen slutar på kalenderkvartalens slut. Kvartalet som
+slutar 30 juni är alltså kalenderkvartal 2 (räkenskapsårets Q1). Baidu har kalenderår.
+
+**Serier ur tabeller** (deterministisk tolkning, `publish=True` om licenskontrollen håller):
+
+| Nyckel | Gren | Rad i pressmeddelandet | Pressmeddelanden (inlämnade) |
+|---|---|---|---|
+| `rev_baba_cloud_v1` | G4 | segmentet "Cloud computing", före DingTalk | 2016-08-11 – 2021-05-13 (avslutad) |
+| `rev_baba_cloud_v2` | G4 | "Cloud computing", från 2022-02 "Cloud", med DingTalk (omklassat från 2021-04-01) | 2021-08-03 – 2023-05-18 (avslutad) |
+| `rev_baba_cloud_v3` | G4 | "Cloud Intelligence Group" utan DingTalk (omklassat från kvartalet till 2023-09-30), före koncernelimineringar | 2023-11-16 – 2026-05-13 (avslutad) |
+| `rev_baba_cloud_v4` | G4 | "AI Cloud and Compute Services" (Cloud Intelligence Group och T-Head sammanslagna) | från 2026-08-20 |
+| `capex_baba_v1` | G5 | "Less: Purchase of property and equipment and intangible assets (excluding land use rights and construction in progress)" i avstämningen mot fritt kassaflöde | 2015-01-29 – 2018-05-04 (avslutad) |
+| `capex_baba_v2` | G5 | "Less: Purchase of property and equipment (excluding land use rights and construction in progress relating to office campus(es))" i samma avstämning | från 2018-11-02 |
+| `capex_bidu` | G5 | "Less: Capital expenditures", kolumnen Baidu, Inc., tre månader i RMB | från 2020-03-04 |
+| `capex_bidu_core` | G5 | samma rad, kolumnen "Baidu excl. iQIYI" (Baidu, Inc. minus iQIYI:s konsoliderade kassaflöden) | från 2020-03-04 |
+
+- **Alibabas molnrad:** första tabellen efter "breakdown of (our) revenue by segment" med huvudet "Three months ended
+  <månad> <dag>, <år−1> <år>". Efter etiketten tas procenttal och fotnotsmarkeringar bort. Exakt tre belopp ska stå
+  kvar: samma kvartal året innan (RMB), kvartalet (RMB) och kvartalet (US$). Annars används inte raden.
+- **Alibabas capex** är bolagets egen rad i avstämningen mot fritt kassaflöde, alltså kontant betalt för
+  anläggningstillgångar, utan mark och pågående bygge av kontorscampus. Det är inte hela raden i
+  kassaflödesanalysen, som inte finns i pressmeddelandet. Raden ska ha 3 eller 6 belopp. De två första är samma
+  kvartal året innan och kvartalet (RMB).
+- **Baidus capex:** kassaflödestabellen med kolumngrupper "Three months ended <datum> (RMB|US$)" (fyra grupper:
+  samma kvartal året innan, föregående kvartal, kvartalet och kvartalet i US$), var och en med tre kolumner (Baidu
+  excl. iQIYI, iQIYI, Baidu, Inc.). Raden ska ha exakt 12 belopp. I varje grupp ska Baidu, Inc. vara Baidu excl.
+  iQIYI plus iQIYI med högst 1 MRMB i avvikelse, annars används inte tabellen. Bara RMB-grupperna sparas. Tabellen
+  för tolv månader i fjärde kvartalets pressmeddelande läses inte. Före 2020-03 har pressmeddelandena ingen
+  kassaflödestabell, och då finns ingen kvartalsserie.
+- **Ej serie:** en definition som bara finns i ett pressmeddelande blir ingen serie. Det gäller Cloud Intelligence
+  Group med DingTalk (bara 2023-08-10) och capex-raden med licensierade upphovsrätter (bara 2018-08-23). De
+  redovisas i dokumentet. Alibabas intäktsuppdelning före segmentredovisningen ("Cloud computing and Internet
+  infrastructure", 2015-01 – 2016-05) är en intäktskategori och inte ett segment. Den läses inte.
+
+**Brott.** En ny definition är en egen serie och skarvas aldrig. Gränserna ovan sätts av bolagets egen text om
+omklassning ("Comparative figures were reclassified", eller en ny segmentstruktur). Kontroll i koden: om ett senare
+pressmeddelande inom samma definition ändrar ett tidigare publicerat värde med mer än 0,5 MRMB, och inlämningsdagen
+inte är deklarerad, stoppas hämtningen med fel. Ett sådant fall utreds mot pressmeddelandets text. Säger texten att
+segmentet har omklassats blir det en ny gräns (daterad ändring här). Annars blir det en vanlig revision, som
+deklareras och redovisas.
+
+**Serier ur text** (kurerad extraktion, `publish=False` tills extraktionsgranskningen är godkänd):
+
+| Nyckel | Gren | Mening | Pressmeddelanden |
+|---|---|---|---|
+| `rev_bidu_ai_cloud_infra` | G4 | "revenue from AI Cloud Infra (was\|reached) RMB X billion" för rapportkvartalet | från 2025-11-18 |
+| `rev_bidu_core_nonads` | G4 | Baidu Cores "non-online marketing revenue" (2020-11 – 2021-05 "non-marketing revenue") "was/reached RMB X billion" för rapportkvartalet | 2020-11-17 – 2025-11-18 (avslutad: från 2026-02 heter Baidu Core "Baidu General Business" med en annan uppdelning) |
+
+Baidu anger inte AI Cloud som belopp i pressmeddelandena före 2025Q3, bara som tillväxt i procent. Därför finns
+ingen längre AI Cloud-serie. Non-online marketing revenue är bredare än AI Cloud (även Apollo, enheter med mera), och
+dokumentet säger det.
+
+**Kodningsregler för texten** (låsta före kodningen, regex, ingen LLM):
+1. Korpus: exhibit 99.1 i varje Baidu-6-K vars titel är "Baidu Announces <First|Second|Third|Fourth> Quarter ...
+   Results", inlämnad från 2020-01-01. Text = `tsmc_sec.to_text`, meningar = `guidance_capex.sentences`, lokator
+   "sentence #k" räknat från 0.
+2. Kandidatmening: innehåller "AI Cloud Infra" eller "non-(online )?marketing revenue", och "billion".
+3. Ett värde kodas bara när meningen säger "was" eller "reached" direkt före beloppet ("RMB" är valfritt, ett
+   pressmeddelande 2020-11 saknar det). Belopp med "approximately", "about", "roughly", "around", "over", "more than"
+   eller "exceeded" kodas inte. Beloppet är i miljarder RMB och lagras ×1000 som MRMB. Precisionen är då ±50 MRMB.
+4. Kvartalet är pressmeddelandets rapportkvartal. En mening som nämner ett annat kvartal eller ett helår ("full
+   year", "fiscal year") kodas inte. I fjärde kvartalets pressmeddelande kodas bara meningar före rubriken "Fiscal
+   Year <år> Results".
+5. Högst ett värde per serie och pressmeddelande. Två olika belopp i samma pressmeddelande för samma serie är ett
+   fel som stoppar kodningen.
+6. Varje rad i `curated/china_text.csv` har nummer, enhet, period, inlämningsdatum, acceptanstid, URL, accession,
+   lokator och SHA-256 av meningen. Själva meningen sparas bara under `data/raw/` (gitignorerat).
+7. Kandidatmeningar som inte kodas räknas och läses, och skälet redovisas i dokumentet.
+8. Kontrollmodulen hämtar varje dokument på nytt (utan cache) och kontrollerar hash vid lokatorn, att talet står i
+   meningen och att inlämningsdatumet stämmer med EDGAR. Alla rader kontrolleras, inte ett urval, eftersom de är få.
+
+**US$-vy** (egna serier med suffix `_usd`, bara för de öppna serierna `rev_baba_cloud_v4`, `capex_baba_v2`,
+`capex_bidu` och `capex_bidu_core`): MUSD = MRMB / kvartalets medelkurs. Medelkursen är medelvärdet av de dagliga
+noon buying rates för CNY per USD i Fed:s H.10 under kalenderkvartalet. Det är samma data som FRED:s DEXCHUS, men den
+hämtas från Fed:s egen historiksida (`federalreserve.gov/releases/h10/hist/dat00_ch.htm`, public domain), eftersom
+FRED:s villkor förbjuder användning med maskininlärning (`ai_tracker.licenses`, regeln alfred). Ett kvartal med
+färre än 55 noterade dagar får ingen kurs. `known_from` = max(RMB-radens `known_from`, kvartalets slut + 10 dagar).
+H.10 kommer varje måndag med förra veckans kurser, så 10 dagar är en marginal. Sidan har bara aktuell vintage.
+Antagandet att kurserna inte revideras kontrolleras inte mot arkiverade releaser. Varje RMB-vintage ger en US$-rad.
+
+**Korskontroll mot 20-F.** För varje räkenskapsår med en 20-F med XBRL jämförs summan av fyra kvartal med årets
+värde: (a) Alibabas molnsegment mot den dimensionella posten i 20-F:ns XBRL-instans (segmentaxeln), på samma
+definition. Förväntad avvikelse högst 4 MRMB (avrundning). (b) Capex mot companyfacts
+`PaymentsToAcquirePropertyPlantAndEquipment` (och immateriella tillgångar där det finns). Här väntas en skillnad,
+eftersom bolagens egna rader har undantag. Kvoten redovisas och används inte för att justera något. Utfallet
+redovisas i dokumentet, även när det inte stämmer.
+
+**Handkontroll:** minst 6 kvartal per bolag läses i pressmeddelandet och jämförs med serien, med accession.
+
+**Tester** (syntetiska 6-K-fixturer, inget nät): tolkningen av varje layout, att en rad med fel antal belopp ger
+None, brottkontrollen (odeklarerad omräkning ger fel), vintages för jämförelsetal, Baidus kontroll att totalen är
+summan, kodningsreglerna 3–5, kontrollmodulen och medelkursen (färre än 55 dagar ger ingen kurs, `known_from`).
+
+**Beslutsregler:** inga. Serierna analyseras inte i det här spåret. Om en serie föreslås bli kärnserie står skälet i
+`for_owner`, och det kräver en ny post.
+
+#### 2026-11-25 – Ändring av CN1: dateringsregeln (efter dateringskontrollen, före analys)
+
+Motivering: kontrollen av dateline mot 6-K visar att 5 av Baidus 28 pressmeddelanden har en dateline 2–6 dagar före
+inlämningen: 2020-03-04 (6 dagar), 2020-05-20 (2), 2020-08-17 (4), 2021-02-22 (5) och 2021-05-20 (2). Siffrorna var
+alltså offentliga tidigare än `known_from`. Det ger inget läckage, bara en `known_from` som är senare än nödvändigt.
+Regeln ovan ("används inte") hade tagit bort Baidus capex för 2019Q4 helt, utan att något läckage undviks. Ändringen
+gäller bara dateringen. Den görs innan någon serie analyseras, och inga mått räknas i spåret.
+- **Ny regel:** pressmeddelandet används. `known_from` är fortfarande 6-K:ns inlämningsdatum. Avvikelsen redovisas
+  per pressmeddelande i `docs/kallor/kina_sec.md`.
+- `known_from` sätts inte till datumet i dateline. Datum ur löptext är mindre säkra än EDGAR:s, och regeln ska vara
+  konservativ.
+- Alibaba: 47 av 48 pressmeddelanden har dateline samma dag som inlämningen och 1 dagen före (2016-01-29). Inget
+  ändras där.
+
+Rättelse av koden, inte av regeln: i den första kodningskörningen matchade mönstret för rubriken "Fiscal Year <år>
+Results" titeln ("Fourth Quarter and Fiscal Year <år> Results"). Då kodades inga meningar i fjärde kvartalets
+pressmeddelanden. Koden följer nu regel 4 som den är skriven, och utfallet är redovisat i dokumentet.
+
 ### 2026-11-25 – S3, tillägg efter kodningen: tolkningar (inga regler ändrade)
 
 Skrivet efter kodningen. Reglerna i posten ovan står kvar. Tolkningarna finns i
@@ -2249,6 +2385,47 @@ inlämningen, inte "upp till 578". Och i punkt 3: radens namn "Purchases of prop
 2010–2014. I 10-Q 2016-11-04 och 2017–2018 heter samma rad "Purchases of other property, plant and equipment".
 Effekterna per serie står i `docs/kallor/sec_stack_kraft.md` ("Rättning efter R18") och för `dep_msft` i
 `docs/kallor/sec_avskrivningar.md`.
+
+### 2026-11-25 – CN1: korskontrollen av Alibabas capex körs som registrerad (rättning efter R21, granskningen av CN1)
+
+Rättningsspår X18 efter granskning R21 (`docs/granskning/r21-kina-sec.md`, R21-3). Registerposten "2026-11-25 – CN1"
+säger att capex ska jämföras med companyfacts `PaymentsToAcquirePropertyPlantAndEquipment` och immateriella
+tillgångar där det finns. Koden jämförde i stället Alibaba med en bredare rad i 20-F-instanserna
+(`PaymentsToAcquireLandUseRightsPropertyAndEquipment`, med mark och kontorscampus), läste 20-F först från 2019 och
+prövade aldrig `capex_baba_v1`. Det är ett fel i koden, inte i regeln. Här skrivs regeln ut med Alibabas begrepp, så
+att koden kan följa den. Inga serier, värden eller datum ändras. Korskontrollen skriver ingenting.
+
+**Vad som var sett före posten.** R21:s granskning, som redovisar utfallet av den registrerade kontrollen (exakt för
+`capex_baba_v1` FY2015–FY2018 och `capex_baba_v2` FY2019–FY2020). Alibabas companyfacts: listan över poster för
+`PaymentsToAcquireOtherPropertyPlantAndEquipment` och `PaymentsToAcquireIntangibleAssets` (år, 20-F och värden).
+Namnen på kassaflödesbegreppen och segmentmedlemmarna i 20-F-instanserna FY2016–FY2018, utan värden. Ingen summa av
+kvartal är räknad av spåret före posten.
+
+**Regel (b) för Alibaba, utskriven.** Summan av fyra räkenskapskvartal (april–mars) jämförs med:
+- `capex_baba_v1` (anläggningstillgångar och immateriella tillgångar i en rad): companyfacts
+  `PaymentsToAcquireOtherPropertyPlantAndEquipment` plus `PaymentsToAcquireIntangibleAssets`, båda ur samma 20-F
+  (den senaste som har båda för året). Dessutom bolagets egen rad i 20-F-instanserna, som är ett tilläggsbegrepp och
+  inte finns i companyfacts: `PaymentsToAcquireOtherPropertyPlantAndEquipmentIntangibleAssets` (20-F FY2016),
+  `PaymentsToAcquireOtherPropertyEquipmentIntangibleAssetsAndLicensedCopyrightsOfVideoContent` (20-F FY2017) och
+  `PaymentsToAcquireOtherPropertyEquipmentIntangibleAssetsAndLicensedCopyrights` (20-F FY2018).
+- `capex_baba_v2` (anläggningstillgångar utan immateriella): companyfacts
+  `PaymentsToAcquireOtherPropertyPlantAndEquipment` (den senaste 20-F:n för året).
+- Samma definition: förväntad avvikelse högst 4 MRMB (avrundning), som för molnet. Utfallet redovisas även om det
+  inte stämmer.
+- Kvoten mot `PaymentsToAcquireLandUseRightsPropertyAndEquipment` (20-F-instansen) redovisas bara för serie och år där
+  ingen av raderna ovan finns. Den används inte för att justera något.
+- 20-F läses från 2016-01-01, för både molnet och capex. Då prövas också FY2016 för `rev_baba_cloud_v1`.
+
+Baidus kontroll ändras inte.
+
+**Förtydliganden utan regeländring.**
+- `capex_baba_v1` innehåller licensierade upphovsrätter till videoinnehåll, åtminstone från FY2017 (begreppsnamnet i
+  20-F FY2017 ovan). I pressmeddelandet 2018-11-02 delas 2017Q3 upp i 5 322 MRMB anläggningstillgångar och 2 680 MRMB
+  upphovsrätter och immateriella tillgångar, sammanlagt `v1`:s 8 002 (R21-4). Raden är fortfarande bolagets egen rad.
+  Noten och etiketten säger nu vad den innehåller.
+- Gränsen för DingTalk (`v2` → `v3`) står i pressmeddelandet 2023-11-16 självt, inte bara i 2024-08-15 som posten och
+  dokumentet citerade (R21 N-5). Gränsen är densamma.
+- Posten säger 47 pressmeddelanden från Alibaba. Koden läser 48, ett per kvartal 2014Q4–2026Q3, utan lucka (R21 N-1).
 
 ### 2026-11-25 – S3: GE Vernovas order i GW delas och konverteringar kodas (rättning efter granskning R19)
 
