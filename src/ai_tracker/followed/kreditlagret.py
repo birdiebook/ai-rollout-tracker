@@ -6,6 +6,8 @@ The report runs along the chain price -> dependence -> willingness/ability, oute
 measure: level, pace, change in pace and surprise, computed by the state engine's per-series measures
 (state.measures.measure_path: shares and rates in percentage points over four quarters, amounts as log x100 a year,
 change in pace against two quarters earlier, surprise against the naive baseline B1), with series keys and known_from.
+The generic parts (loading as of a day, measures, next filings, tables) live in followed/common.py (register F0); the
+registered KL1 reading below is KL1's own and is not the symmetric F0 template (register F0: KL1 is unchanged).
 Then the registered reading, applied mechanically (`reading`), the lab and venture tables from the extraction, what to
 watch next (filing dates estimated from each company's last eight filings) and the caveats.
 
@@ -18,12 +20,10 @@ from __future__ import annotations
 import math
 from datetime import date
 
-import numpy as np
 import pandas as pd
 
-from ai_tracker import catalog, observations
+from ai_tracker.followed import common as C
 from ai_tracker.series import kreditlagret as S
-from ai_tracker.state import measures as M
 
 QUESTION = ("Ändras finansieringens pris och tillgång i de yttre lagren, och följer investeringstakten där med?")
 # registered limits (register entry, (c))
@@ -55,38 +55,10 @@ LABEL = {"kl_leases_msft_cond": "Microsoft (inkl. villkorade, från 2026Q2)",
 # ------------------------------------------------------------------ measures
 
 
-def _num(x) -> float | None:
-    if x is None:
-        return None
-    try:
-        x = float(x)
-    except (TypeError, ValueError):
-        return None
-    return x if math.isfinite(x) else None
-
-
-def measure(key: str, when, ctx: M.Context) -> dict:
-    """Level, pace, change in pace and surprise of one series as of `when`, with its history (path)."""
-    if key not in ctx.specs or ctx.rows(key).empty:
-        return {"series": key, "available": False}
-    out, path = M.measure_path(key, when, ctx)
-    res = {"series": key, "available": path is not None, "period": out.get("latest_period"),
-           "known_from": out.get("known_from"), "level": _num(out.get("level")), "pace": _num(out.get("pace")),
-           "change": _num(out.get("change_in_pace")), "surprise": _num(out.get("surprise")),
-           "surprise_basis": out.get("surprise_basis", ""), "pace_unit": out.get("pace_unit", ""),
-           "unit": ctx.specs[key].unit, "method": out.get("method")}
-    res["path"] = {} if path is None else {p: {c: _num(v) for c, v in r.items()} for p, r in path.iterrows()}
-    return res
-
-
-def _at(m: dict, period: str | None, col: str) -> float | None:
-    if not m.get("available") or period is None:
-        return None
-    return (m.get("path") or {}).get(period, {}).get(col)
-
-
-def _minus(period: str | None, k: int) -> str | None:
-    return None if period is None else str(pd.Period(period, freq="Q-DEC") - k)
+_num = C.num
+measure = C.measure  # level, pace, change in pace and surprise of one series, with its path
+_at = C.at
+_minus = C.minus
 
 
 # ------------------------------------------------------------------ the registered reading
@@ -186,13 +158,7 @@ def apply_reading(entity: str, ms: dict[str, dict]) -> dict:
 # ------------------------------------------------------------------ context blocks
 
 
-def _asof(table: pd.DataFrame, key: str, when) -> pd.DataFrame:
-    """period, value, known_from of the latest vintage per period known on `when`."""
-    t = table[(table["series"] == key) & (table["known_from"] <= pd.Timestamp(when))]
-    if t.empty:
-        return pd.DataFrame(columns=["period", "value", "known_from"])
-    return (t.sort_values("known_from").groupby("period")[["value", "known_from"]].last().reset_index()
-            .sort_values("period", ignore_index=True))
+_asof = C.asof_rows
 
 
 def spreads(table: pd.DataFrame, when) -> list[dict]:
@@ -277,36 +243,7 @@ def revisions(table: pd.DataFrame, when) -> list[dict]:
 
 def next_filings(table: pd.DataFrame, when, n: int = 8) -> list[dict]:
     """Next filing per company: the next calendar quarter's end + the median lag of its last `n` first filings."""
-    when = pd.Timestamp(when)
-    out = []
-    for c, key in FILERS.items():
-        t = table[(table["series"] == key) & (table["known_from"] <= when)]
-        if t.empty:
-            continue
-        first = t.groupby("period")["known_from"].min().sort_index()
-        first.index = pd.PeriodIndex(first.index, freq="Q-DEC")
-        lags_all = [(kf - p.end_time.normalize()).days for p, kf in first.items()]
-        # a period first seen as a comparative in a later filing (lag > MAX_LAG) is not its own filing
-        own = [(p, kf, lag) for (p, kf), lag in zip(first.items(), lags_all) if lag <= MAX_LAG]
-        if not own:
-            continue
-        last = own[-n:]
-        lags = [lag for _, _, lag in last]
-        lag = int(np.median(lags))
-        nxt = first.index[-1] + 1
-        due = nxt.end_time.normalize() + pd.Timedelta(days=lag)
-        while due <= when - pd.Timedelta(days=30):  # more than a month overdue: the next one after it
-            nxt += 1
-            due = nxt.end_time.normalize() + pd.Timedelta(days=lag)
-        row = {"company": c, "series": key, "last_period": str(first.index[-1]),
-               "last_filed": str(first.iloc[-1].date()), "next_period": str(nxt), "estimated": str(due.date()),
-               "lag_days_median": lag, "lag_days_range": [int(min(lags)), int(max(lags))], "n": len(last),
-               "overdue": bool(due <= when), "then_period": None, "then_estimated": None}
-        if row["overdue"]:  # the filing after the one that is due now
-            row["then_period"] = str(nxt + 1)
-            row["then_estimated"] = str(((nxt + 1).end_time.normalize() + pd.Timedelta(days=lag)).date())
-        out.append(row)
-    return sorted(out, key=lambda r: r["estimated"])
+    return C.next_filings(table, when, FILERS, n=n, max_lag=MAX_LAG)
 
 
 def extraction(when, csv: pd.DataFrame | None = None) -> dict:
@@ -368,10 +305,7 @@ def keys() -> dict[str, list[str]]:
 
 def compute(as_of, table: pd.DataFrame | None = None, csv: pd.DataFrame | None = None) -> dict:
     when = pd.Timestamp(as_of)
-    table = observations.load() if table is None else table
-    table = table.copy()
-    table["known_from"] = pd.to_datetime(table["known_from"])
-    ctx = M.Context(table=table)
+    table, ctx = C.prepare(table)
     groups = keys()
     ms = {k: measure(k, when, ctx) for g in groups.values() for k in g}
     readings = {e: apply_reading(e, ms) for e in ("outer", *S.OUTER)}
@@ -399,17 +333,8 @@ def compute(as_of, table: pd.DataFrame | None = None, csv: pd.DataFrame | None =
 # ------------------------------------------------------------------ render
 
 
-def _f(x, nd: int = 1, sign: bool = False) -> str:
-    x = _num(x)
-    if x is None:
-        return "–"
-    s = f"{x:+,.{nd}f}" if sign else f"{x:,.{nd}f}"
-    return s.replace(",", " ").replace(".", ",")
-
-
-def _bn(x) -> str:
-    x = _num(x)
-    return "–" if x is None else _f(x / 1000, 1) + " mdr"
+_f = C.fmt
+_bn = C.fmt_bn
 
 
 def _who(key: str) -> str:
@@ -422,20 +347,10 @@ def _who(key: str) -> str:
 
 
 def _table(ms: dict, keys: list[str], level_fmt) -> list[str]:
-    lines = ["| Vem | Nivå | Takt | Förändring i takt | Överraskning (B1) | Senaste kvartal | known_from | Serie |",
-             "|---|---|---|---|---|---|---|---|"]
-    for k in keys:
-        m = ms[k]
-        if not m.get("available"):
-            lines.append(f"| {_who(k)} | – | – | – | – | – | – | `{k}` |")
-            continue
-        lines.append(f"| {_who(k)} | {level_fmt(m['level'])} | {_f(m['pace'], 1, True)} | {_f(m['change'], 1, True)} "
-                     f"| {_f(m['surprise'], 1, True)} | {m['period']} | {m['known_from']} | `{k}` |")
-    return lines
+    return C.measure_table(ms, keys, level_fmt, _who)
 
 
-def _pct(x) -> str:
-    return "–" if _num(x) is None else _f(x, 1) + " %"
+_pct = C.fmt_pct
 
 
 def render(r: dict) -> str:

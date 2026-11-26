@@ -27,12 +27,14 @@ registered reading come from ai_tracker.followed.
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass
 
-import numpy as np
 import pandas as pd
 
 from ai_tracker.catalog import Spec
+# the generic aggregate (terms, formulas, release-dated derivation) is shared by the followed questions (F0)
+from ai_tracker.followed.aggregate import Formula, Term, derive  # noqa: F401  (re-exported)
+from ai_tracker.followed.aggregate import sum4 as _sum4
+from ai_tracker.followed.aggregate import versions as _versions  # noqa: F401
 from ai_tracker.series import sec as _sec
 
 OUTER = ("orcl", "crwv", "nbis", "iren")
@@ -63,29 +65,6 @@ NOT_AN_INSTRUMENT = re.compile(r"_total_debt$|_valor(?:_current|_noncurrent)?$")
 RATE_NOT_FOR_LINE = re.compile(r"^spacex_other_financings$")
 # convertibles by the coding: the name, or Anthropic's note purchase agreements (convertible promissory notes)
 CONVERTIBLE = re.compile(r"convertible|_npa(?:_|$)")
-
-
-@dataclass(frozen=True)
-class Term:
-    series: str
-    offset: int = 0  # p - offset
-    weight: float = 1.0
-
-
-@dataclass(frozen=True)
-class Formula:
-    key: str
-    num: tuple[Term, ...]
-    den: tuple[Term, ...] = ()  # empty: the value is the numerator
-    scale: float = 1.0
-
-    @property
-    def components(self) -> tuple[str, ...]:
-        return tuple(dict.fromkeys(t.series for t in (*self.num, *self.den)))
-
-
-def _sum4(series: str, weight: float = 1.0) -> tuple[Term, ...]:
-    return tuple(Term(series, k, weight) for k in range(4))
 
 
 def _lease_key(c: str) -> str:
@@ -124,62 +103,6 @@ def formula(measure: str, who: str) -> Formula:
     companies = MEMBERS[measure][who] if who in ("outer", "inner") else (who,)
     num, den, scale = terms(measure, companies)
     return Formula(f"kl_{measure}_{who}", num, den, scale)
-
-
-def _versions(rows: pd.DataFrame) -> dict[tuple[str, str], tuple[np.ndarray, np.ndarray, np.ndarray]]:
-    out = {}
-    r = rows.sort_values("known_from", kind="stable")
-    for (s, p), g in r.groupby(["series", "period"], sort=False):
-        out[(s, str(p))] = (g["known_from"].to_numpy(dtype="datetime64[ns]"), g["value"].to_numpy(dtype=float),
-                            (g["source"] == "backfill").to_numpy())
-    return out
-
-
-def derive(f: Formula, rows: pd.DataFrame) -> pd.DataFrame:
-    """Release-dated rows (period, value, known_from, source) of a formula from component rows in observation-table
-    form. Pure: no I/O. A version per date on which an input gets a vintage, only when every input has one."""
-    rows = rows[rows["series"].isin(f.components)].copy()
-    if rows.empty:
-        return pd.DataFrame(columns=["period", "value", "known_from", "source"])
-    rows["known_from"] = pd.to_datetime(rows["known_from"])
-    vers = _versions(rows)
-    anchor = f.num[0].series
-    periods = sorted({p for (s, p) in vers if s == anchor})
-    out = []
-    for p in periods:
-        per = pd.Period(p, freq="Q-DEC")
-        num = [((t.series, str(per - t.offset)), t.weight) for t in f.num]
-        den = [((t.series, str(per - t.offset)), t.weight) for t in f.den]
-        need = list(dict.fromkeys(k for k, _ in num + den))
-        if any(k not in vers for k in need):
-            continue
-        prev = None
-        for d in np.unique(np.concatenate([vers[k][0] for k in need])):
-            vals, backfill, ok = {}, False, True
-            for k in need:
-                kf, v, bf = vers[k]
-                i = int(np.searchsorted(kf, d, side="right")) - 1
-                if i < 0:
-                    ok = False
-                    break
-                vals[k], backfill = v[i], backfill or bool(bf[i])
-            if not ok:
-                continue
-            n = sum(w * vals[k] for k, w in num)
-            if den:
-                m = sum(w * vals[k] for k, w in den)
-                if not np.isfinite(m) or m == 0:
-                    continue
-                value = f.scale * n / m
-            else:
-                value = f.scale * n
-            if not np.isfinite(value):
-                continue
-            if prev is None or not np.isclose(value, prev, rtol=1e-12, atol=0):
-                out.append((p, float(value), pd.Timestamp(d), "backfill" if backfill else "derived"))
-                prev = value
-    df = pd.DataFrame(out, columns=["period", "value", "known_from", "source"])
-    return df.sort_values(["known_from", "period"], ignore_index=True)
 
 
 def _fetch(f: Formula):
