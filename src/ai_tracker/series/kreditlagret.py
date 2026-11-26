@@ -58,7 +58,9 @@ LICENSE = _sec.LICENSE
 MAX_AGE = 183  # as the longest component (CoreWeave: 10-K up to 61 days after the quarter, + 92 + 30)
 MIN_QUARTERS = 4  # a coupon series needs at least four quarters with a value (register entry, (b))
 # a total or a coded part of another line is not an instrument of its own in the weighted rate (register X23, point 3)
-NOT_AN_INSTRUMENT = re.compile(r"_total_debt$|_valor_(?:current|noncurrent)$")
+NOT_AN_INSTRUMENT = re.compile(r"_total_debt$|_valor(?:_current|_noncurrent)?$")
+# a stated rate that the text gives for part of the line only: the line counts as without rate (register X24, point 3)
+RATE_NOT_FOR_LINE = re.compile(r"^spacex_other_financings$")
 # convertibles by the coding: the name, or Anthropic's note purchase agreements (convertible promissory notes)
 CONVERTIBLE = re.compile(r"convertible|_npa(?:_|$)")
 
@@ -250,12 +252,14 @@ def coupon_out(df: pd.DataFrame, company: str, convertibles: bool = True) -> pd.
     """Outstanding-weighted mean of rate_pct per balance date (calendar quarter); known_from = max(day after the
     quarter, latest filed of the rows used). Rows: period, value, known_from, coverage (share of outstanding with a
     rate). Totals and coded parts of another line are left out; convertibles=False leaves out convertibles too (a
-    description in the report, register X23, point 4)."""
+    description in the report, register X23, point 4). A rate the text gives for part of a line only (RATE_NOT_FOR_LINE)
+    is not used: the line counts as without rate (register X24, point 3)."""
     d = df[(df["company"] == company) & ~df["instrument"].str.contains(NOT_AN_INSTRUMENT)]
     if not convertibles:
         d = d[~d["instrument"].str.contains(CONVERTIBLE)]
     out = d[d["field"] == "outstanding"][["instrument", "period", "value", "filed"]].rename(columns={"value": "out"})
-    rate = d[d["field"] == "rate_pct"][["instrument", "period", "value", "filed"]].rename(columns={"value": "rate"})
+    rate = d[(d["field"] == "rate_pct") & ~d["instrument"].str.contains(RATE_NOT_FOR_LINE)]
+    rate = rate[["instrument", "period", "value", "filed"]].rename(columns={"value": "rate"})
     m = out.merge(rate, on=["instrument", "period"], how="left", suffixes=("", "_rate"))
     m["out"] = m["out"].astype(float)
     m["rate"] = pd.to_numeric(m["rate"], errors="coerce")

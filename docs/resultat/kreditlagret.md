@@ -11,7 +11,8 @@ byggs med
 Den använder bara rader som var kända på dagen. Nedan står rapporten per 2026-11-25 och per 2025-11-25, så att
 ändringen över ett år syns. Rapporterna är genererade av kommandot och inte redigerade. Rättade efter granskningen R26
 (spår X23, registret 2026-11-25 X23): dateringen av fem rader från Anthropic, CoreWeaves obligation 2031, SpaceX (xAI)
-i labbdelen, listan över okodade kandidater och förbehållen nedan.
+i labbdelen, listan över okodade kandidater och förbehållen nedan. Rättade efter granskningen R27 (spår X24, registret
+2026-11-25 X24): räntan för SpaceX:s övriga finansiering visas med förbehåll och med räntekostnaden för Valor-skulden.
 
 **Läsningarna är gjorda på sedda data.** Alla kvartal i båda läsningarna var kända före registerposten 2026-11-25, och
 flera av dem var sedda före posten (posten, avsnitt (e)). Utslagen är därför inga utfall på osedda data. Den första
@@ -40,8 +41,10 @@ läsningen på osedda kvartal kommer med inlämningar efter 2026-11-25, för Ora
   från 46,0 till 68,4 mdr).
 - **SpaceX (xAI)** ingår nu som tabellrader: 38,0 mdr i total skuld per 2026-09-30 för hela koncernen. Av det är
   25,0 mdr obligationer från 2026-06 med 6,07 % effektiv ränta, och 12,9 mdr misslyckade sale-leaseback av AI-hårdvara
-  med Valor, som är närstående. xAI:s egna lån före köpet hade 12,5 % ränta. Anthropic har åtaganden på upp till
-  120,5 mdr till SpaceXAI.
+  med Valor, som är närstående. Räntekostnaden för Valor-skulden var 351 MUSD under 2026Q3, cirka 10,7 % per år.
+  Bolagets 6,3 % gäller enligt texten övriga finansieringsavtal med maskiner och utrustning som säkerhet, och det
+  framgår inte om Valor-skulden ingår. xAI:s egna lån före köpet hade 12,5 % ränta. Anthropic har åtaganden på upp
+  till 120,5 mdr till SpaceXAI.
 - Varje mönster kan vara slump. Med 8–12 kvartal per mått och klumpig RPO är detta en beskrivning.
 
 ## Kreditlagret per 2026-11-25
@@ -217,7 +220,8 @@ Alla kvartal i den här läsningen var kända före registerposten 2026-11-25, o
   - åtaganden för beräkningskraft per motpart (avtalsmånad): Microsoft minst 47,2 mdr (2025-11), Google minst 121,3 mdr (2026-03), Amazon minst 110,0 mdr (2026-04), SpaceXAI (SpaceX) upp till 120,5 mdr (2026-05), Nscale upp till 44,6 mdr (2026-08), Lambda cirka 41,3 mdr (2026-05); known_from senast 2026-11-10
 - OpenAI: ingen registreringsansökan på EDGAR (sökning på namnet 2026-11-25: bara fonder och SPV med Form D).
 - **SpaceX** (äger xAI sedan 2026-02-02; 10-Q). Skulden gäller hela koncernen: uppskjutning, Starlink och xAI. Läge 2026-09-30:
-  - total skuld 38,0 mdr; SpaceX Notes 25,0 mdr (effektiv ränta 6,07 %, vägd kupong 5,855 %, emitterade 2026-06); övrig finansiering 13,0 mdr (vägd fast ränta 6,3 %), varav misslyckade sale-leaseback av AI-hårdvara med Valor (närstående) 12,9 mdr; known_from 2026-10-22
+  - total skuld 38,0 mdr; SpaceX Notes 25,0 mdr (effektiv ränta 6,07 %, vägd kupong 5,855 %, emitterade 2026-06); övrig finansiering 13,0 mdr, varav misslyckade sale-leaseback av AI-hårdvara med Valor (närstående) 12,9 mdr; known_from 2026-10-22
+  - ränta på övrig finansiering: räntekostnaden för Valor-avtalen var 351 MUSD under 2026Q3, cirka 10,7 % per år av Valor-skulden i snitt (2026-06-30 och 2026-09-30). Bolaget anger 6,3 % i vägd fast ränta för sina övriga finansieringsavtal, som oftast har maskiner och utrustning som säkerhet. Om Valor-skulden ingår i den räntan framgår inte (known_from 2026-10-22)
   - kreditfacilitet upp till 5,0 mdr (2026-05, utan säkerhet; known_from 2026-08-04)
   - xAI:s egna lån före köpet (2025-06): säkerställda obligationer 3,0 mdr med 12,5 %, terminslån 1,0 mdr med 12,50 % och 1,0 mdr med SOFR + 725 bp; inte kvar i tabellen per 2026-09-30
 - **Meta, datacenterbolag** (Louisiana, med fonder förvaltade av Blue Owl; Texas från 2026-07). Per balansdag:

@@ -10,7 +10,7 @@ numbers and hashes are kept here, never filing text.
 - Properties that hold: the five September rows and CoreWeave's 9.750 % notes as fixed in X23, SpaceX's debt table adds
   up, no row is known before its balance date, SpaceX stays outside every series, layer and reading, the report says
   the debt is group-wide, the command gives docs/resultat for both days, and the seed-27 sample is reproducible.
-- Finding R27-1 is a strict xfail that turns green when the report qualifies SpaceX's rate on other financings.
+- Finding R27-1 was a strict xfail; X24 qualified SpaceX's rate on other financings, so it is a plain test now.
 """
 
 from __future__ import annotations
@@ -96,8 +96,9 @@ def test_the_64_reviewed_rows_are_unchanged(csv):
 
 
 def test_rows_per_company_as_documented(csv):
-    assert len(csv) == 458 and csv["instrument"].nunique() == 81
-    assert csv["company"].value_counts().to_dict() == {"crwv": 286, "anthropic": 108, "spacex": 44, "meta": 20}
+    # X24 (R27-1) added two rows: Valor's interest expense per quarter (instrument spacex_valor, interest_expense_q)
+    assert len(csv) == 460 and csv["instrument"].nunique() == 82
+    assert csv["company"].value_counts().to_dict() == {"crwv": 286, "anthropic": 108, "spacex": 46, "meta": 20}
 
 
 # ------------------------------------------------------------------ properties that hold
@@ -197,11 +198,9 @@ def test_without_spacex_rows_only_the_lab_lines_change(table, csv):
     assert diff and all("SpaceX" in x or "xAI" in x or x.startswith(("+  - ", "-- Utanför")) for x in diff), diff
 
 
-# ------------------------------------------------------------------ finding (strict xfail until fixed)
+# ------------------------------------------------------------------ finding (strict xfail until fixed in X24)
 
 
-@pytest.mark.xfail(strict=True, reason="R27-1: SpaceX's 6.3 % is shown as the rate of other financings without the "
-                                       "Valor interest expense in the same 10-Q (351 MUSD in 2026Q3)")
 def test_r27_1_spacex_other_financings_rate_is_qualified(csv):
     spacex = _lab(csv)
     line = next(x for x in spacex if "övrig finansiering" in x)

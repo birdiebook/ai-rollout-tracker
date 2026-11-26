@@ -321,6 +321,11 @@ SPACEX = [
          note="failed sale-leaseback of AI infrastructure hardware with Valor (related party), current; in other financings"),
     Code(SQ3, "line #805", "spacex_valor_noncurrent", "outstanding", "10716", M, "2026-09-30",
          note="the same, non-current"),
+    # interest expense on the Valor agreements for the quarter of each 10-Q (register X24, point 1; R27-1)
+    Code(SQ2, "line #784", "spacex_valor", "interest_expense_q", "327", M, "2026-06-30",
+         note="interest expense on the equipment lease agreements with Valor, three months to the period"),
+    Code(SQ3, "line #805", "spacex_valor", "interest_expense_q", "351", M, "2026-09-30",
+         note="interest expense on the equipment lease agreements with Valor, three months to the period"),
     # terms, from the first 10-Q that states them
     Code(SQ2, "line #488", "spacex_notes", "principal", "25000", M, "2026-06", note="five tranches, 2031 to 2056"),
     Code(SQ2, "line #488", "spacex_notes", "issue_date", "2026-06", D),

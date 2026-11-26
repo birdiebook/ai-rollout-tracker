@@ -76,6 +76,8 @@ FIELDS = {
     # data-centre ventures (Meta) and SPV arrangements: amounts as stated
     "contribution": "MUSD", "distribution": "MUSD", "lease_commitment": "MUSD", "funding_commitment": "MUSD",
     "rvg_max": "MUSD", "exposure_max": "MUSD", "equity_carrying": "MUSD", "dev_cost": "MUSD",
+    # interest expense for the three months ending on the period (SpaceX's Valor agreements only, register X24)
+    "interest_expense_q": "MUSD",
 }
 DUE_FIELD = re.compile(r"due_(?:\d{4}|total|thereafter|\d{4}_\d{4})$")
 QUALIFIERS = ("", "approx", "up_to", "at_least")

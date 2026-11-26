@@ -640,12 +640,33 @@ def _lab_lines(rows: list[dict]) -> list[str]:
             parts.append(f"SpaceX Notes {_bn(num(notes))} (effektiv ränta {_f(num(nr), 2)} %, vägd kupong "
                          f"{_f(num(cp), 3)} %, emitterade 2026-06)" if nr and cp else f"SpaceX Notes {_bn(num(notes))}")
         if other:
-            o = f"övrig finansiering {_bn(num(other))}" + (f" (vägd fast ränta {_f(num(orate), 1)} %)" if orate else "")
+            o = f"övrig finansiering {_bn(num(other))}"
             if all(valor):
                 o += (f", varav misslyckade sale-leaseback av AI-hårdvara med Valor (närstående) "
                       f"{_bn(sum(num(v) for v in valor))}")
             parts.append(o)
         out.append(f"  - {'; '.join(parts)}; known_from {kf}")
+        if other:  # the rate on other financings, qualified, next to Valor's interest expense (register X24, point 2)
+            q = pd.Period(pd.Timestamp(last), freq="Q-DEC")
+            prev = str((q - 1).end_time.date())
+            ie = val("spacex_valor", "interest_expense_q", last)
+            before = [val(f"spacex_valor_{k}", "outstanding", prev) for k in ("current", "noncurrent")]
+            said, used = [], [x for x in (ie, orate) if x]
+            if ie:
+                s = f"räntekostnaden för Valor-avtalen var {_f(num(ie), 0)} MUSD under {q}"
+                if all(valor) and all(before):
+                    mean = (sum(num(v) for v in valor) + sum(num(v) for v in before)) / 2
+                    s += f", cirka {_f(400 * num(ie) / mean, 1)} % per år av Valor-skulden i snitt ({prev} och {last})"
+                    used += before
+                said.append(s)
+            else:
+                said.append("räntekostnaden för Valor-avtalen är inte kodad för kvartalet")
+            if orate:
+                said.append(f"Bolaget anger {_f(num(orate), 1)} % i vägd fast ränta för sina övriga finansieringsavtal, "
+                            f"som oftast har maskiner och utrustning som säkerhet. Om Valor-skulden ingår i den räntan "
+                            f"framgår inte")
+            kf_r = max(x["filed"] for x in used) if used else kf
+            out.append(f"  - ränta på övrig finansiering: {'. '.join(said)} (known_from {kf_r})")
         cf = sorted([x for x in sx if x["instrument"] == "spacex_credit_facility" and x["field"] == "commitment"],
                     key=lambda x: x["period"])
         if cf:
