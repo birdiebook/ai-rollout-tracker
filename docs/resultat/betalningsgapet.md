@@ -18,6 +18,11 @@ Utslagen är därför inga utfall på osedda data. Den första läsningen på os
 omkring 2026-12-11 (Oracles bolagsrader). Molnfyrans huvudläsning med 2026Q4 kommer när alla fyra har lämnat in,
 uppskattat omkring 2027-01-31.
 
+**Kontroller.** `compute(d, tabell)` ger samma rapport som på tabellen kapad vid *d* per 2025-11-26, 2026-10-26 och
+2026-11-26 (riktiga data). `capex4` per bolag är lika med KL1:s `kl_capex4_<bolag>` genom `state.measures` (nivå,
+takt, förändring i takt och `known_from` per 2026-11-26, alla fem bolag), så `path_measures` och versionsregeln ger
+samma tal som katalogvägen. De syntetiska testerna står i `tests/test_followed_betalningsgapet.py`.
+
 ## Vad som skiljer de två dagarna (beskrivning, inget test)
 
 - **Gapet mot molnintäkterna öppnas båda åren, men långsammare nu.** Gapets takt för molnfyran (*r* = 0,10) var
