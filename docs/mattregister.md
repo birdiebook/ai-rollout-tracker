@@ -3123,3 +3123,10 @@ framgår inte av texten.
    först och verkligt värde före aktier. Skälet för annan text i 10-Q och 10-K gäller bara CoreWeave, så SpaceX:s rader
    har agentens skäl. Det påverkar bara etiketten och inte vilka rader som kodas. Ordningen i koden gäller, och
    `docs/kallor/kreditlagret.md` beskriver den.
+
+### 2026-11-25 – X24: rättelse av fakta i punkt 4 ovan (reglerna ändras inte)
+
+Punkt 4 säger att koden prövar skuldtabellen först. Det stämmer inte helt. Koden prövar i den här ordningen: agentens
+eget skäl för raden, bilageförteckning, rader i CoreWeaves skuldtabell, verkligt värde och resultatposter, aktier och
+konvertering till aktier, villkor utanför kodningsreglerna, garanti och säkerhet, och sist annan text i CoreWeaves 10-Q
+och 10-K. Det är den ordningen som gäller. Den har använts sedan X23 och påverkar bara etiketten.
