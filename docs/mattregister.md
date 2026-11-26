@@ -3203,3 +3203,150 @@ R27. För att kunna visa att rapporten blir byte för byte densamma genererade a
 2025-11-25 med koden före ändringen. De rapporterna innehåller KL1:s registrerade utslag, som redan står i
 `docs/resultat/kreditlagret.md`. Inga mått för LT1, BG1 eller EL1 har räknats, och inga serier har lästs för värden
 utöver KL1:s rapport.
+
+### 2026-11-26 – BG1: följd fråga om betalningsgapet (intäktskrav mot intäkterna som ska bära det)
+
+Spår BG1, körning 16. Posten låses och committas ensam innan något mått, någon kvot eller något utslag för BG1 räknas.
+Den gäller en **följd fråga** (som KL1) och använder F0:s motor och symmetriska läsregel (posten "2026-11-26 – F0").
+Inga nya källor, ingen ny extraktion och inga nya katalogserier: alla storheter är summor och kvoter av serier som redan
+finns i katalogen, och de härleds i rapporten med F0:s `aggregate.derive` (samma versionsregel som A5 och KL1). Grenindex,
+kärnserier, tillstånd och publiceringsflaggor berörs inte.
+
+**Frågan, neutral och åt båda hållen:** "Växer de intäkter som ska bära investeringarna (molnintäkter, AI-nyckeltal, RPO
+och frontlabbens intäkter) i takt med intäktskravet från avskrivningar och kapitalkostnad, eller öppnas eller sluts
+gapet?"
+
+**Mekanismen, åt båda hållen.** Växer intäktskravet snabbare än intäkterna och de kontrakterade intäkterna (RPO) under
+flera kvartal, pressas investeringstakten framåt. Växer intäkterna snabbare, stöder det fortsatt takt.
+
+**(a) Bolagen och varför.** Bolag med både en redovisad molnintäkt och avskrivningar och anläggningstillgångar i katalogen.
+- **Molnfyran (huvudaggregatet):** Microsoft (`rev_msft_cloud`, Microsoft Cloud), Alphabet (`rev_google_cloud`), Amazon
+  (`rev_aws`) och Oracle (`rev_orcl_cloud`, IaaS + SaaS). Samma fyra bolag som `rpo_hyp4`.
+- **CoreWeave** (`rev_crwv`, hela intäkten är moln) bara som bolagsrad: `ppe_net_crwv` finns från 2024Q4, och i aggregatet
+  skulle den korta serien kapa hela historiken.
+- **Meta** ingår inte: bolaget har ingen molnintäkt och ingen RPO. Meta finns i P2b:s kvoter mot totala intäkter, som
+  visas som sammanhang.
+- **Nebius och IREN** ingår inte: katalogen har inga avskrivningar eller anläggningstillgångar för dem.
+- Bolagen är valda efter vilka komponenter katalogen har, inte efter vad måtten visar.
+
+**(b) Måtten.** Kvartalsserier i kalenderkvartal (bolagens egen mappning, mittpunktsregeln; Oracles kvartal slutar en
+månad före). Fyra kvartal = kvartalet och de tre föregående. *M* är en mängd bolag (molnfyran, molnfyran utan Oracle,
+eller ett bolag). Summor över *M* är summor av komponenterna, inte medel av kvoter.
+- **Intäktskrav** `krav(M, r)` = Σ avskrivningar `dep_<c>` över fyra kvartal + *r* × Σ `ppe_net_<c>` vid kvartalets
+  slut (MUSD per år). Samma definition som P2b:s `x_capcost_rev_r08`/`_r12` (avskrivningar enligt kassaflödesanalysen,
+  `dep_<c>`, inte `dep_ppe_<c>`, av samma skäl som P2b: täckningen). Bara kapitalet: drift, el, personal och skatt ingår
+  inte. Avskrivningar och netto gäller hela bolaget, inte bara molnet.
+- **Avkastningskravet *r*.** Huvudläsningen använder *r* = 0,10, mittpunkten i P2b:s registrerade intervall 0,08–0,12
+  (kvoten är linjär i *r*, så mittpunkten är en interpolation och ingen ny skattning). Känslighet: *r* = 0 (bara
+  avskrivningar, inget antagande om avkastning), 0,08 och 0,12. Varje *r* är en egen rad med eget utslag.
+- **Bärande intäkter, moln** `moln(M)` = Σ molnintäkten över fyra kvartal (nycklarna i (a)).
+- **Kontrakterade intäkter** `rpo(M)` = Σ `rpo_<c>` vid kvartalets slut (balans, summeras inte över tid).
+- **Gapet mot molnintäkterna** `gap_moln(M, r)` = 100 × `krav(M, r)` / `moln(M)`, procent av molnintäkterna.
+- **Gapet mot RPO** `gap_rpo(M, r)` = 100 × `krav(M, r)` / `rpo(M)`: ett års intäktskrav i procent av orderstocken.
+- **Investeringstakten** `capex4(M)` = Σ `capex_<c>` över fyra kvartal (MUSD). För ett enskilt bolag är det samma tal som
+  KL1:s `kl_capex4_<c>`.
+- **Per mått:** nivå, takt, förändring i takt och överraskning med F0:s `path_measures` (samma formler som
+  `state.measures`): takt = årsförändring i log × 100, förändring i takt mot två kvartal tidigare, överraskning mot B1.
+  Gapets takt är alltså intäktskravets takt minus de bärande intäkternas takt: positiv takt betyder att gapet öppnas,
+  negativ att det sluts.
+- **Versioner och datering:** som A5 och KL1. En version per datum då någon komponent får en ny version, bara när alla
+  komponenter (alla bolag i *M*, alla fyra kvartal) har en version, och `known_from` = den senaste komponenten. Saknas
+  ett bolag för ett kvartal finns inget aggregat för kvartalet, och rapporten säger vilka komponenter som saknas. Bara
+  rader med `known_from` ≤ läsdagen används, och läsdagens vintage gäller för hela historiken.
+
+**(c) Läsregeln.** F0:s symmetriska regel (`common.read_rule` via mått ur `path_measures`), en rad per X, ingen
+sammanslagning. För alla rader:
+- *Y* = förändring i takt för `capex4(M)` med samma *M* som X. *t* = *Y*:s senaste kvartal på läsdagen.
+- *g* = 5 (log × 100 per år) för X:s takt, *h* = 5 (log × 100) för *Y*, *k* = 2 kvartal, tecken *s* = −1.
+- Gränserna är KL1:s gräns för capex (5 log × 100) och samma tal för gapet. Fönstret på två kvartal motsvarar KL1:s
+  *t* − 2. Gränserna är valda före beräkningen och ändras inte efter att värdena setts.
+
+Raderna:
+1. **Huvudläsning:** X = takten i `gap_moln(molnfyran, 0,10)`.
+2. X = takten i `gap_rpo(molnfyran, 0,10)`.
+3. Känslighet för *r*: X = takten i `gap_moln(molnfyran, r)` för *r* = 0, 0,08 och 0,12 (tre rader).
+4. Känslighet för RPO:s klumpighet: X = takten i `gap_rpo(molnfyran utan Oracle, 0,10)`, med *Y* = `capex4` för
+   Microsoft, Alphabet och Amazon.
+5. Bolagsrader (bisak, samma gränser): för Microsoft, Alphabet, Amazon, Oracle och CoreWeave var för sig X = takten i
+   `gap_moln(bolaget, 0,10)` och X = takten i `gap_rpo(bolaget, 0,10)`, med *Y* = bolagets egen `capex4`.
+
+Vad utslagen betyder (*s* = −1):
+- X ≥ +5: intäktskravet växte minst 5 log-enheter per år snabbare än de bärande intäkterna, gapet öppnas. Faller
+  capex-takten med minst 5 (förändring i takt ≤ −5) i något av de två följande kvartalen, och först: **talar för
+  mekanismen**. Stiger den med minst 5 först: **talar emot**.
+- X ≤ −5: intäkterna växte minst 5 snabbare än kravet, gapet sluts. Stiger capex-takten med minst 5 först: **talar för**.
+  Faller den med minst 5 först: **talar emot**.
+- |X| < 5: ingen impuls, **inget av mönstren**. Håller *Y* sig inom ±5 i båda kvartalen: **inget av mönstren**. Saknas
+  X eller *Y*, eller är fönstret inte slut: **kan inte avgöras**, med skäl.
+- Att investeringstakten "håller" (|*Y*| < 5) när gapet sluts blir inget av mönstren, inte talar för. Den symmetriska
+  regeln kan alltså inte skilja "stöder fortsatt takt" från "ingen effekt". Det är mallens begränsning.
+- Rapporten anger för varje rad hur ofta regeln kunde prövas: ursprung med X, impulser uppåt och nedåt och utfallen per
+  riktning (F0, (b)).
+
+**(d) Baslinje och sammanhang (beskrivning, ingår inte i regeln).**
+- Överraskningen mot B1 för varje mått (F0, (d)). Bolagens guidance för molnintäkter finns inte i katalogen, så B1 är
+  enda baslinjen för intäkterna. Det står i rapporten.
+- P2b:s avstämningar mot totala intäkter (`x_dep_rev`, `x_capcost_rev_r08`, `x_capcost_rev_r12`, `x_dep_rev_aws`) och
+  `x_rpo_cover`, med nivå, takt, förändring i takt och överraskning ur katalogen.
+- RPO:s delar på kort sikt (`rpo_msft_12m`, `rpo_orcl_12m`, `rpo_googl_24m`, `rpo_crwv_24m`) och Oracles andel av
+  molnfyrans RPO vid *t* (klumpigheten).
+- AI-nyckeltal som tabellrader, senaste och föregående värde med `known_from`: `kpi_msft_azure_growth_v2`,
+  `kpi_msft_azure_growth_v3`, `kpi_msft_azure_growth_cc_v3`, `kpi_msft_ai_business_runrate`, `kpi_amzn_aws_ai_runrate`
+  och `kpi_googl_cloud_backlog`. De är oregelbundna, har definitionsbrott (Azure v1–v3) och ingår inte i regeln.
+- Labbens intäkter som tabellrader: `lab_rev_anthropic_company_run_rate`, `lab_rev_anthropic_company_run_rate_s1` och
+  `lab_rev_anthropic_claude_code_run_rate`. Run-rate är bolagets egen årstakt och inte redovisad intäkt, och den blandas
+  inte med GAAP-tal. **BLOCKED:** Anthropics redovisade (GAAP) intäkter ur S-1 finns inte i katalogen, och den här
+  körningen gör ingen ny extraktion. OpenAI har ingen registreringsansökan på EDGAR och openai.com nekas av proxyn.
+- Nyttjandeperioder (P2a) som regimmarkörer: för servrar (`useful_life_servers_<c>_hi`/`_lo` för msft, googl, amzn och
+  orcl, `useful_life_computer_equipment_crwv_hi`/`_lo` för CoreWeave) listas varje kvartal där ett angivet värde skiljer
+  sig från det föregående i samma serie, med `known_from`. En rad i läsregeln märks när en ändring av det högsta värdet
+  (`_hi`, som serienoten säger att man jämför med) ligger inom X:s fönster vid det avgörande ursprunget *q*, alltså i
+  *q* − 7, …, *q*. Märkningen ändrar inget utslag.
+- Nästa inlämning per bolag (F0:s `next_filings` på capex-serierna).
+
+**Vad som inte kan sägas.**
+- Om investeringarna betalar sig. Gapets nivå är ingen marginal och ingen avkastning: täljaren är hela bolagets kapital,
+  nämnaren bara molnet (eller orderstocken), och drift, el och skatt saknas. Nivån beskrivs, men regeln läser takten.
+- Orsak. Ett utslag som talar för mekanismen kan vara slump och visar inte orsaken. Med cirka 7 ursprung med X i
+  molnfyrans historik (takten finns från 2024Q4, eftersom Alphabets definition av avskrivningar börjar 2023) är detta en
+  beskrivning och inget test. Inget p-värde räknas.
+- **Mekanisk koppling mellan X och *Y*.** Intäktskravet innehåller capex: nettot av anläggningstillgångar växer med
+  investeringarna, och avskrivningarna följer med en fördröjning. En uthållig acceleration i capex höjer därför både X och
+  *Y*, och det läses som talar emot när *s* = −1. Ett utslag som talar emot är därför ett svagare belägg mot mekanismen
+  än ett som talar för är belägg för den. Raden med *r* = 0 (bara avskrivningar) är minst direkt kopplad. Det står i
+  rapporten.
+- Regimbrott: ändrade nyttjandeperioder flyttar avskrivningarna utan att kapaciteten ändras (märkningen ovan). Microsofts
+  avskrivningsrad ligger på den gamla basen till och med 2024Q2 (P2b, R14): X:s takt till och med 2026Q1 jämför
+  fönster med kvartal på olika bas för Microsoft och molnfyran. Rapporten säger det vid de ursprungen.
+- RPO är klumpig: enstaka mycket stora avtal (till exempel OpenAI hos Oracle) flyttar ett kvartal. RPO är en balans och
+  intäktskravet ett flöde per år. Raden utan Oracle och Oracles andel visar hur mycket ett bolag betyder.
+- Definitionerna skiljer sig: Microsoft Cloud innehåller kommersiell Office 365, LinkedIn och Dynamics, Oracles moln
+  innehåller SaaS och Google Cloud innehåller Workspace. Oracles `dep_orcl` innehåller amortering på immateriella
+  tillgångar, Amazons och Microsofts rader innehåller mer än avskrivningar på anläggningstillgångar (P2b).
+
+**(e) Vad som var sett före posten.** Agenten har läst F0:s och KL1:s kod, registerposterna för F0, KL1, X23, X24 och
+P2b (A5 intäktskrav), granskningarna R26 och R27 (sammanfattning, ordning, härledda mått och fynd), resultatdokumentet
+`docs/resultat/intaktskrav.md` och delar av `docs/kallor/labbintakter.md`. Det betyder att agenten har sett:
+- P2b:s kvoter mot totala intäkter för hyp4 (MSFT, GOOGL, AMZN, META) per kvartal 2023Q4–2026Q3, deras takt,
+  förändring i takt och överraskning per 2026-11-24, och komponenternas takt 2026Q3 (avskrivningar, totala intäkter,
+  nettot av anläggningstillgångar och capex), samt känsligheten med `dep_ppe_hyp4`;
+- KL1:s antenn per 2026-11-25 och 2026-10-25 ur F0:s beskrivning, med inre lagrets förändring i capex-takt (Microsoft,
+  Alphabet, Amazon och Meta) 2026Q2 och 2026Q3, och KL1:s bolagsutslag;
+- KL1-postens tittar (e): kvartalstillskotten till `rpo_hyp4` och `rpo_orcl` de fyra senaste kvartalen;
+- Anthropics run-rate enligt S-1/A per 2026-10-31 (i `docs/kallor/labbintakter.md`);
+- seriernas noter i katalogen (definitioner och kända brott).
+
+Agenten har dessutom kontrollerat täckningen, utan värden: vilka serier som finns, antal perioder, första och sista
+period, första `known_from` och datum för revideringar. Molnfyrans komponenter: `dep_googl` 2023Q1–2026Q3 (bindande),
+`dep_msft`, `dep_amzn`, `dep_orcl`, `ppe_net_*`, `capex_*` och `rpo_*` (msft 2017Q3, googl 2019Q4, amzn 2018Q1, orcl
+2018Q3) till 2026Q3, `rev_msft_cloud` 2020Q3–, `rev_google_cloud` 2020Q1–, `rev_aws` 2014Q1–, `rev_orcl_cloud` 2021Q3–.
+CoreWeave: `dep_crwv`, `rev_crwv` och `capex_crwv` 2024Q1–, `ppe_net_crwv` 2024Q4–, `rpo_crwv` 2025Q1–, sista
+`known_from` 2026-11-12. Nyttjandeperioderna: perioder och `known_from` per serie, inte värdena. AI-nyckeltalen och
+labbserierna: antal värden och spann. Inga kvoter, takter eller nivåer för BG1:s storheter (`krav`, `moln`, `gap_*`,
+`capex4` för molnfyran) har räknats eller setts.
+
+Valet av storheter gjordes efter att P2b:s kvoter och KL1:s inre capex-takt setts. Läsningarna per 2026-11-26 och
+2025-11-26 görs därför på sedda kvartal och är inget utfall på osedda data. **Första osedda läsningen:** Oracles kvartal
+sep–nov 2026 (2026Q4, inlämning omkring 2026-12-11) ger Oracles bolagsrader. Molnfyrans huvudläsning med 2026Q4 kommer
+när alla fyra har lämnat in, omkring början av februari 2027 (rapporten uppskattar dagen). CoreWeaves 2026Q4 kommer
+med 10-K:n omkring mars 2027.
