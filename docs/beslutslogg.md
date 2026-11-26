@@ -1332,3 +1332,23 @@ Johannes svarade "kör på dina rekommendationer" på tre rekommendationer samma
 - **Också i loggen 2026-11-25:** `g3_npm_openai_w` och `g3_npm_anthropic_sdk_w` fick 429 från api.npmjs.org. I
   körningen 2026-11-26 gick båda igenom. Om 429 kommer tillbaka behöver npm-hämtningen glesas ut.
 
+## 2026-11-26 – F0: gemensam motor för följda frågor (körning 16)
+
+- **Varför.** LT1, BG1 och EL1 ska byggas billigt och lika. Det generella i KL1 bröts ut till
+  `ai_tracker.followed.common` (inläsning per dag, kvartal, mått via `state.measures`, nästa inlämning, tabeller) och
+  `ai_tracker.followed.aggregate` (lageraggregat, version först när alla medlemmar lämnat in, `missing` säger vilka
+  som saknas). `series/kreditlagret.py` importerar aggregatet därifrån.
+- **Symmetrisk läsregel.** Registerposten "2026-11-26 – F0" låstes före koden. `common.read_rule` läser uppgång och
+  nedgång lika, med parametrarna X, Y, g, h, k och tecken, och redovisar hur många ursprung regeln kunde prövas i, per
+  riktning. Varje ny fråga låser sina parametrar i en egen post.
+- **KL1 oförändrad.** KL1:s regel är låst och läser fortfarande bara uppgång. Rapporten per 2026-11-25 och 2025-11-25
+  är byte för byte densamma före och efter (sha256 a1ecd3ad… och 3a2750fb…), och de 1 863 härledda kl_-raderna är
+  desamma. Tre golden-filer på den syntetiska världen, renderade med koden före F0, ligger i `tests/golden/`.
+- **Upptäckande CLI.** `ai_tracker.followed.questions()` hittar varje modul med `compute` och `render`, så att nya
+  spår inte behöver ändra `__main__.py`. `antenner` ger en rad per fråga mot dagen en kalendermånad tidigare.
+- **Förkastat.** Att göra KL1:s regel symmetrisk i samma spår, eftersom regeln är låst. Att slå ihop flera ledande
+  storheter med "eller" i mallen, eftersom riktningen då blir tvetydig.
+- **Öppet för Johannes:** om KL1 ska få en symmetrisk läsning bredvid den låsta, via en ny daterad post, före Oracles
+  inlämning omkring 2026-12-11. Rekommendation: ja, en post med mallens regel per pris- och beroendemått mot yttre
+  lagrets capex-takt (tecken −1), redovisad bredvid den låsta läsningen.
+
