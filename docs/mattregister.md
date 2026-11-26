@@ -3087,3 +3087,39 @@ villkor A har gällt för Oracle (R26 och agentens egen räkning på samma serie
    2026Q3. Anthropics åtaganden till SpaceXAI, Nscale och Lambda kodas som de till Microsoft, Google och Amazon. DDTL
    3.0:s ram och marginalen för DDTL 2.0:s nya tranch kodas ur sina 8-K. Filtret mot konvertibler i `coupon_new` går på
    kodningen och inte bara på instrumentets namn. Posten säger företagssökning "(JSON)", men sökningen görs i Atom-flödet.
+
+### 2026-11-25 – X24: SpaceX ränta på övrig finansiering och räntekostnaden för Valor-skulden (rättning efter granskningen R27)
+
+Rättningsspår X24, körning 15, efter granskningen R27 (`docs/granskning/r27_kreditlagret.md`). Tillägg till posterna
+"2026-11-25 – KL1", dess tillägg och "2026-11-25 – X23", som inte skrivs om. Skrivet innan koden ändras. Inget mått,
+ingen läsregel, ingen gräns och ingen datering ändras. SpaceX står kvar som tabellrader utanför lagren och läsregeln.
+Serierna är fortfarande katalogserier med `publish=False`. Grenindex, kärnserier och tillstånd berörs inte.
+
+**Vad som var känt före tillägget.** Hela R27. X24 läste själv R27:s platser i de cachade 10-Q:erna från SpaceX. R27
+har visat att de är byte för byte lika med nyhämtade kopior. I 10-Q 2026Q3 (`0001628280-26-066880`) gäller 6,3 % per
+2026-09-30 bolagets övriga finansieringsavtal, som oftast har maskiner och utrustning som säkerhet (rad #548). De
+misslyckade sale-leaseback-affärerna beskrivs i stycket efter. Räntekostnaden för Valor-avtalen var 351 MUSD under
+2026Q3 och 864 MUSD under årets nio första månader (rad #805). I 10-Q 2026Q2 (`0001628280-26-052535`) gäller 5,9 % per
+2026-06-30 på samma sätt (rad #543), och räntekostnaden för Valor-avtalen var 327 MUSD under 2026Q2 och 513 MUSD under
+första halvåret (rad #784). R27 räknade 351 MUSD till cirka 10,7 % per år. Om Valor-skulden ingår i bolagets 6,3 %
+framgår inte av texten.
+
+1. **Nytt fält `interest_expense_q`** (MUSD): räntekostnaden för de tre månader som slutar på `period`, en kvartalsdag,
+   som den står. Fältet kodas bara för Valor-avtalen, instrumentet `spacex_valor`. Det kodas ur den 10-Q eller 10-K i
+   SpaceX:s korpus som anger kvartalets räntekostnad som innevarande period. Belopp för sex eller nio månader kodas
+   inte, och inget kvartal räknas fram som skillnaden mellan två perioder. Raden stoppas om talet inte står i citatet,
+   som i posten.
+2. **Rapportens rad om SpaceX** (avsnitt 5). Räntan för övrig finansiering visas med förbehåll på en egen rad. Raden
+   visar räntekostnaden för Valor-avtalen under kvartalet. När Valor-skulden (kort och lång del) är kodad vid både
+   kvartalets början och dess slut visas också en ränta per år: räntekostnaden × 4 delad med medelvärdet av
+   Valor-skulden vid de två balansdagarna. Annars visas bara beloppet. Raden säger att bolaget anger 6,3 % för sina
+   övriga finansieringsavtal med maskiner och utrustning som säkerhet, och att det inte framgår om Valor-skulden ingår.
+   Det är en beskrivning, inte ett mått och ingen serie.
+3. **Kupongserierna.** `rate_pct` för `spacex_other_financings` gäller enligt texten avtal med maskiner och utrustning
+   som säkerhet, inte bevisligen hela posten. Den räknas därför inte i `coupon_out`, och posten räknas som utan ränta i
+   täckningen. En framtida `kl_coupon_out_spacex_q` (fyra kvartal med värde, X23 punkt 3) väger bara instrument med en
+   egen angiven ränta. Att ta med övrig finansiering kräver en ny daterad post.
+4. **Ordningen för regelskälen** för okodade kandidater (R27, anmärkning B). Sedan X23 prövar koden skuldtabellen
+   först och verkligt värde före aktier. Skälet för annan text i 10-Q och 10-K gäller bara CoreWeave, så SpaceX:s rader
+   har agentens skäl. Det påverkar bara etiketten och inte vilka rader som kodas. Ordningen i koden gäller, och
+   `docs/kallor/kreditlagret.md` beskriver den.
