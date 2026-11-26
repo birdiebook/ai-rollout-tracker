@@ -1412,3 +1412,29 @@ Johannes svarade "kör på dina rekommendationer" på tre rekommendationer samma
 - **Öppet för Johannes:** (1) om X för orderstockarna ska läsas som förändring i takt i en ny post, så att riktningen
   nedåt kan prövas. Rekommendation: ja, som en extra rad bredvid den låsta, före läsningen 2027-01-31. (2) Om F0:s mall
   ska räkna ett ursprung som prövat bara när Y finns i fönstret. Rekommendation: ja, en rättning av F0 i integrationen.
+
+## 2026-11-26 – Körning 16 integrerad (antenner)
+
+- **Vad.** `auto16/integration16` (F0:s motor) med LT1, BG1 och EL1 mergade i den ordningen (no-ff). Konflikterna låg
+  bara i `docs/mattregister.md`, `docs/beslutslogg.md`, `docs/agentkalibrering.md` och de syntetiska fixturerna
+  (registrets sha256 i `web-data-fixtures/method.json` och `manifest.json`). Dokumenten löstes genom att alla poster
+  behölls, i datumordning och med samma datum i mergeordning (F0, LT1, BG1, EL1). Fixturerna genererades om med `python
+  -m ai_tracker.site_bundle fixtures` efter varje merge (bara sha256 ändrades). Inga kodkonflikter: frågorna hittas av
+  `followed.questions()`, så ingen gemensam lista behövde ändras.
+- **Kontroll.** `catalog.validate()` utan fel. `python -m ai_tracker.followed antenner --as-of 2026-11-26` ger en rad
+  per fråga (betalningsgapet, elflaskhalsen, kreditlagret, ledtid), utdata i `docs/resultat/antenner.md`. Varje frågas
+  rapport per 2026-11-26 är byte för byte densamma (Markdown och JSON) i integrationen som i spårets egen gren, och
+  rapporterna per 2025-11-26 körs utan fel. Full testsvit: första körningen gav ett fel, färskheten för `lt1_*`
+  (katalogserier utan rader i basen, eftersom LT1 bara körde riktade tester). Serierna byggdes med `python -m
+  ai_tracker.observations lt1_rpo_power lt1_rpo_net lt1_dlr_bookings4` i integrationens `data/` (härledda, ingen
+  hämtning), och rapporterna blev oförändrade. Orkestreraren ska köra `python -m ai_tracker.datamerge
+  /home/user/wt/integration16/data` efter merge till main.
+- **Inte gjort i integrationen.** EL1 rekommenderade att F0:s mall rättas så att ett ursprung räknas som prövat bara när
+  Y finns i fönstret. Det är en ändring av en låst regel och kräver en registerpost, så den ligger kvar som beslut.
+- **Öppet för Johannes:** (1) F0-rättningen ovan. Rekommendation: ja, som en egen post och ett eget spår med golden före
+  och efter för alla fyra frågor. (2) LT1: granskning, särskilt förvärvsmärket i "efter" och ledtid per händelse.
+  Rekommendation: ja, före Dells inlämning omkring 2026-12-09. (3) EL1: X för orderstockarna som förändring i takt i en
+  extra rad, eftersom orderstocken haft impuls uppåt i alla 20 ursprung och riktningen nedåt annars inte kan prövas.
+  Rekommendation: ja, före läsningen 2027-01-31. (4) BG1: granskning före Oracles inlämning omkring 2026-12-11, som är
+  första osedda läsningen för både BG1 och KL1. Utslagen per 2026-11-26 är alla på sedda kvartal, och frågorna läser
+  delvis samma capex-takt, så de är inte oberoende belägg.
