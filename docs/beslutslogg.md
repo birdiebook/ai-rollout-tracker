@@ -1393,3 +1393,22 @@ Johannes svarade "kör på dina rekommendationer" på tre rekommendationer samma
   registreringsansökan).
 - **Förkastat.** Att slå ihop molnintäkter och RPO till ett X med "eller" (mallen kräver en rad per X). Att räkna
   kravet mot totala intäkter som huvudläsning (P2b har redan de kvoterna, och de visas som sammanhang).
+
+## 2026-11-26 – EL1: följd fråga om elen som begränsning (körning 16)
+
+- **Frågan.** "Blir el den bindande begränsningen för utbyggnaden?" Registerposten "2026-11-26 – EL1" (`f8f0046`)
+  committades ensam innan något räknades. F0:s symmetriska regel: fyra X på elsidan (elpris PPI, last i fem
+  EIA-930-områden, orderstock för elnät Quanta + Eaton i MUSD, GE Vernovas gasturbiner i GW, takt) mot två Y (capex i
+  det inre lagret, Digital Realtys tecknade MW, förändring i takt), tecken −1, *k* = 2, en rad per par. Huvudläsningen är
+  orderstock för elnät mot capex.
+- **Valt.** Månadsserier blir kvartal som tolvmånadersmedel (ingen säsong). De härledda storheterna räknas i rapporten
+  med `aggregate.derive` och `path_measures` och blir inga katalogserier, eftersom de bara behövs här. Takt och inte
+  förändring i takt för X, så att en ihållande åtstramning räknas.
+- **Utfall (sedda data).** Per 2026-11-26 "talar emot, uppåt": orderstocken växte +45 log-punkter och capex-takten ökade
+  +9,6. Posten förutsade det, eftersom Y var sett. Orderstocken har haft impuls uppåt i alla 20 ursprung, så utslaget
+  avgörs i praktiken av Y (9 för, 9 emot, 2 inget i historiken). Första osedda läsningen omkring 2027-01-31.
+- **Förkastat.** Hela RPO för GE Vernova i elnätsaggregatet (tjänster och förvärv skulle dominera). PJM:s
+  kapacitetspriser (klass `nej`). Nya källor (anslutningsköer), som står som förslag med licensfråga.
+- **Öppet för Johannes:** (1) om X för orderstockarna ska läsas som förändring i takt i en ny post, så att riktningen
+  nedåt kan prövas. Rekommendation: ja, som en extra rad bredvid den låsta, före läsningen 2027-01-31. (2) Om F0:s mall
+  ska räkna ett ursprung som prövat bara när Y finns i fönstret. Rekommendation: ja, en rättning av F0 i integrationen.
