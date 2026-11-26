@@ -1438,3 +1438,20 @@ Johannes svarade "kör på dina rekommendationer" på tre rekommendationer samma
   Rekommendation: ja, före läsningen 2027-01-31. (4) BG1: granskning före Oracles inlämning omkring 2026-12-11, som är
   första osedda läsningen för både BG1 och KL1. Utslagen per 2026-11-26 är alla på sedda kvartal, och frågorna läser
   delvis samma capex-takt, så de är inte oberoende belägg.
+
+## 2026-11-26 – R28 granskning av körning 16 (antenner)
+
+- **Vad.** Oberoende adversariell granskning av F0, LT1, BG1 och EL1 på `auto16/integration16` (`ff072b8`):
+  `docs/granskning/r28_antenner.md`, tester i `tests/test_r28_antenner.py`. Ingen produktionskod ändrad.
+- **Dom: GODKÄND MED ANMÄRKNINGAR.** Registerposterna är committade ensamma före kod och rapport och oförändrade sedan
+  dess. KL1:s rapport är byte för byte densamma som på main per 2026-11-25 och 2025-11-25. Ingen läcka (samma rapport på
+  hel och kapad tabell). Regeln är exakt symmetrisk i koden. Egen omräkning ger samma värden och utslag. 15 av 15
+  `ob_*`-rader stämmer mot 8-K på sec.gov.
+- **Fynd.** Inget must_fix. Should_fix: förbehållet om sedda data slås av för tidigt (R28-1), överlappande förvärv i LT1
+  och fel riktning i resultatdokumentet (R28-2), en skenbar ändring i BG1:s antenn (R28-3), LT1 och EL1 läser samma par
+  med motsatt tecken (R28-4), "kunde prövas" räknar ursprung utan Y och regeln har i praktiken bara läst uppgång i EL1
+  och BG1 (R28-5).
+- **Öppet för Johannes:** (1) Rätta R28-1 och R28-2 före Dells inlämning omkring 2026-12-09. Rekommendation: ja, ett litet
+  spår, inga utslag ändras. (2) En mening i antennerna om R28-4. Rekommendation: ja. (3) R28-5 som daterad post före
+  läsningen omkring 2027-01-31. Rekommendation: ja, med de nuvarande raderna kvar som huvudläsning. (4) Läs Quantas 10-Q
+  för förvärv (R28-7). Rekommendation: ja, som fakta i källdokumenten.
