@@ -3657,3 +3657,43 @@ förändring i takt är fakta som jämförs mot förra månaden. Nästa osedda l
 villkoren för återpublicering ska läsas), ERCOT:s kö för stora laster (PARTIAL, siffror bara i diagram, villkoren tillåter
 rådata i analyser), PJM:s kapacitetsauktioner (i katalogen, klass `nej`, kräver tillstånd från PJM) och EIA-860M
 (planerade kraftverk per månad, public domain). Var och en kräver ett eget spår och en egen post.
+
+### 2026-11-26 – X25: rättning av F0, LT1, BG1 och EL1 efter granskningen R28 (antenner)
+
+Rättningsspår X25, körning 16, efter granskningen R28 (`docs/granskning/r28_antenner.md`). Tillägg till posterna
+"2026-11-26 – F0", "– LT1", "– BG1" och "– EL1", som inte skrivs om. Skrivet och committat innan koden ändras. Inget mått,
+ingen läsregel, ingen gräns, inget fönster, inget tecken och ingen huvudläsning ändras, och utslagen per 2026-11-26 och
+2025-11-26 ska bli desamma. Det som ändras är hur rapporterna beskriver läsningarna. Grenindex, kärnserier, tillstånd och
+publiceringsflaggor berörs inte.
+
+**Vad som var känt före tillägget.** Hela R28. Rapporterna per 2026-11-26 och 2025-11-26 för LT1, BG1, EL1 och antennerna
+i `docs/resultat/`, alltså alla kvartal till och med 2026Q3. Inget nytt kvartal är hämtat sedan dess.
+
+1. **Sedda data per läsning (R28-1).** Förbehållet "inget utfall på osedda data" avgörs per läsning och inte av läsdagen
+   eller för hela rapporten. En läsning är gjord på sedda data när varje värde som utfallet vilar på är detsamma i
+   läsningen per registerdagen (2026-11-26, bara rader kända den dagen) som på läsdagen. Utfallet vilar på:
+   - för talar för och talar emot: X vid det valda ursprunget *o* och Y i *o* + 1 … det kvartal som avgjorde det;
+   - annars (inget av mönstren eller kan inte avgöras): X vid *t* − *k* … *t* − 1 och Y vid *t* − *k* + 1 … *t*.
+
+   Ett värde som saknas på båda dagarna räknas som detsamma. Ett nytt kvartal, ett värde som tillkommit och en revidering
+   som ändrar värdet gör läsningen osedd. En ny version med samma värde (till exempel en PPI-månad som blir slutlig utan
+   ändring) gör det inte. Läsdagar till och med registerdagen är alltid sedda. Rapporten säger för huvudläsningen och
+   för varje annan läsning om den är sedd eller osedd, och antennen visar det som en fakta.
+2. **Förvärv (R28-2, R28-8).** Märkningen listar alla belagda förvärv som träffar ett kvartal, inte bara det första, med
+   förvärvets förskjutning och den riktning det flyttar förändringen i takt: *a* och *a* + 1 uppåt, *a* + 4 och *a* + 5
+   nedåt. Märkningen ändrar inget utfall, som förut. I "efter" (X = köparen) märks det kvartal där leverantören (Y)
+   avgjorde läsningen, eftersom det är där leverantörens förändring i takt läses. Det är en avvikelse från
+   ordalydelsen i LT1 (c) ("ursprung i de kvartalen") som loggas här. Kvartal i fönstret som lästes utan att avgöra märks
+   inte. Resultatdokumentet anger, som beskrivning, hur stort Boyd Thermals tillskott till Eatons orderstock från 2026Q1
+   skulle behöva vara för att huvudläsningens X vid 2026Q2 skulle hamna under gränsen 10. Tillskottet är inte belagt.
+3. **Antennerna (R28-3, R28-4).** BG1:s fakta per rad har alltid radens kvartal *t*, så en rad som inte ändrats visas inte
+   som ändrad. Varje antenn anger huvudläsningens X och Y som de katalogserier de summerar. Antennernas rapport säger när
+   två frågors huvudläsningar bygger på samma serier, och att de då tillsammans inte är mer än en observation. Det gäller
+   i dag LT1 (L1 före K-inre, förändring i takt, tecken +) och EL1 (orderstock elnät mot capex i inre lagret, takt, tecken
+   −): samma `rpo_pwr` + `rpo_etn` mot samma `capex_*` för de fyra inre bolagen.
+4. **Hur ofta regeln kunde prövas (R28-5).** F0 (b):s räkning står kvar oförändrad. Bredvid den visas två beskrivande
+   tal: antalet ursprung där Y har ett värde i alla *k* kvartal i fönstret, och antalet impulser som kunde avgöras mot Y
+   (talar för, talar emot eller inget av mönstren efter att Y lästs). Har X bara haft impulser åt ett håll säger
+   rapporten att den andra riktningen inte har prövats. Två saker ändras inte här, eftersom de ändrar låsta poster och är
+   beslut för Johannes: att byta F0:s räkning mot den nya, och EL1:s förslag om en extra rad med förändring i takt för
+   orderstockarna.
