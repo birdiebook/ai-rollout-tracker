@@ -1352,3 +1352,25 @@ Johannes svarade "kör på dina rekommendationer" på tre rekommendationer samma
   inlämning omkring 2026-12-11. Rekommendation: ja, en post med mallens regel per pris- och beroendemått mot yttre
   lagrets capex-takt (tecken −1), redovisad bredvid den låsta läsningen.
 
+## 2026-11-26 – BG1: betalningsgapet som följd fråga (körning 16)
+
+- **Vad.** Intäktskravet (avskrivningar + *r* × anläggningstillgångar netto, som P2b) mot de bärande intäkterna:
+  molnintäkterna och RPO för molnfyran (Microsoft, Alphabet, Amazon, Oracle), med CoreWeave som bolagsrad. Läsregeln är
+  F0:s symmetriska mall med X = gapets takt och *Y* = förändring i capex-takt för samma bolag (*g* = *h* = 5, *k* = 2,
+  tecken −1). Registerposten "2026-11-26 – BG1" committades ensam (`12d9581`) innan något mått räknades.
+- **Val.** *r* = 0,10 (mittpunkten i P2b:s intervall) i huvudläsningen, med 0, 0,08 och 0,12 som egna rader. Meta
+  utanför (ingen molnintäkt, ingen RPO). CoreWeave bara som bolagsrad, eftersom nettot börjar 2024Q4 och annars kapar
+  aggregatets historik. RPO utan Oracle som känslighet för klumpigheten.
+- **Inga nya katalogserier.** Storheterna härleds i rapporten med `aggregate.derive` och samma versionsregel som A5 och
+  KL1. Skälet: inget nytt hämtas, rapporten fungerar direkt efter merge utan att serier byggs, och `compute(d, tabell)`
+  är lika med beräkningen på tabellen kapad vid *d* (prövat på riktiga data vid tre dagar). Nackdelen är att lagrets
+  datatester inte täcker storheterna. JSON-rapporten innehåller hela banan för en oberoende omräkning.
+- **Utslag (på sedda data).** Per 2026-11-26: huvudläsningen "talar emot" (gapet mot molnintäkterna öppnades och
+  capex-takten steg), raden mot RPO "talar för" (gapet mot orderstocken slöts och capex-takten steg), *r* = 0 "inget av
+  mönstren". Den mekaniska kopplingen (kravet innehåller capex) gör "talar emot" till ett svagt belägg. Första osedda
+  läsningen: Oracle omkring 2026-12-11, molnfyran omkring 2027-01-31.
+- **BLOCKED.** Anthropics GAAP-intäkter (inte i katalogen, ingen ny extraktion i körningen) och OpenAI (ingen
+  registreringsansökan).
+- **Förkastat.** Att slå ihop molnintäkter och RPO till ett X med "eller" (mallen kräver en rad per X). Att räkna
+  kravet mot totala intäkter som huvudläsning (P2b har redan de kvoterna, och de visas som sammanhang).
+
