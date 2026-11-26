@@ -1352,3 +1352,22 @@ Johannes svarade "kör på dina rekommendationer" på tre rekommendationer samma
   inlämning omkring 2026-12-11. Rekommendation: ja, en post med mallens regel per pris- och beroendemått mot yttre
   lagrets capex-takt (tecken −1), redovisad bredvid den låsta läsningen.
 
+## 2026-11-26 – LT1: ledtid mellan leverantörernas orderstock och köparnas capex-takt (körning 16)
+
+- **Varför.** Leverantörernas orderstock kan vara en antenn för köparnas capex-takt, men bara om den vänder först.
+  Frågan läses åt båda hållen med F0:s symmetriska regel. Registerposten "2026-11-26 – LT1" committades ensam
+  (6fb0ccd) innan något mått räknades.
+- **Val.** Huvudläsning L1 kraft och elnät (`lt1_rpo_power` = Eatons orderstock + Quantas RPO) före inre lagrets capex
+  över fyra kvartal, *k* = 2. Fyra rader till mot inre lagret (L2 nät och servrar, L3 Equinix, O1 Eatons order, O2
+  Digital Realtys nya avtal) och L1 mot yttre lagret. Gränser per storhet: 5 för köparnas capex, 10 för leverantörerna
+  (klumpigare). *k* = 2 och 4. Inget test, så ingen Holm. Eatons order är en procentserie och räknas om till log-takt.
+- **Förkastat.** GE Vernova och Arista i aggregaten (serierna börjar 2024 och 2022, och aggregatet hade krympt till
+  några kvartal). HPE (förutbetalda intäkter, annan definition). Ett sammanlagt leverantörsaggregat (Dells och Ciscos
+  tjänstedelar hade dominerat). Guidance i läsregeln (kalenderår mot förändring i takt per kvartal kräver en egen
+  post).
+- **Utfall per 2026-11-26 (sedda data).** Huvudläsningen talar för, men L1 efter K-inre talar också för: leverantörer och
+  köpare accelererar samtidigt, och ordningen kan inte avgöras. I historiken ser L1 snarare ut att följa capex
+  (2023–2025), men det är två händelser. Per 2025-11-26: inget av mönstren.
+- **Öppet för Johannes:** (1) granskning av LT1, särskilt tolkningen av förvärvsmärket i "efter" och om ledtiden ska
+  räknas per händelse (första ursprunget i en följd) i en ny post. Rekommendation: ja, en kort post före Dells
+  inlämning omkring 2026-12-09. (2) O1 och O2 väntar på granskningen av S3:s extraktion.

@@ -404,7 +404,9 @@ def render(r: dict) -> str:
     out += ["", "## 2. Ledtiden (beskrivning)", "",
             f"I läsningarna med k = {LEAD_WINDOW}: kvartal från ursprunget till kvartalet som avgjorde ett \"talar för\". "
             "Senaste ledtiden mot medianen av de tidigare i samma rad. Ingen gräns för \"ändrad\"; med få ursprung kan en "
-            "skillnad vara slump.", ""]
+            "skillnad vara slump. Ursprung i följd med impuls åt samma håll avgörs ofta av samma kvartal för Y, så "
+            "ledtiderna räknar ned (4, 3, 2, 1). En sådan följd är en händelse och inte flera, och medianen väger den "
+            "ändå flera gånger.", ""]
     for key, lt in r["lead"].items():
         row, buyer, direction = key.split("|")
         label = f"{SUPPLIERS[row][1]} {DIRECTIONS[direction]} {BUYER_SHORT[buyer]}"
@@ -463,7 +465,7 @@ def render(r: dict) -> str:
             "2021Q4–2024Q1 (S3, tolkning 9).",
             "- Vertiv är BLOCKED (inget RPO i XBRL, och S3:s orderserier slutar 2025Q4). GE Vernovas RPO och order är för "
             "korta för läsregeln och visas som sammanhang. Yttre lagrets förändring i capex-takt finns först när "
-            "serien har sex kvartal.",
+            "serien har sju kvartal (från 2026Q4).",
             "- Historiken räknas på läsdagens vintage, så revideringar kan ändra äldre utfall (F0).", ""]
     return "\n".join(out)
 
