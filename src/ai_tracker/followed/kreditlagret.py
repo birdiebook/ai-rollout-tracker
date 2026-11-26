@@ -634,3 +634,46 @@ def _lab_lines(rows: list[dict]) -> list[str]:
             + (f" ({MARGIN_NOTE[x['instrument']]})" if x["instrument"] in MARGIN_NOTE else "")
             for x in sorted(margins, key=lambda x: x["filed"])))
     return out
+
+
+# ------------------------------------------------------------------ antenna (register F0, (c))
+
+SHORT = {"stoder": "talar för mekanismen", "emot_1": "talar emot (1)", "emot_2": "talar emot (2)", "blandat": "blandat",
+         "inget": "inget av mönstren", "kan_inte_avgoras": "kan inte avgöras"}
+
+
+def next_unseen(r: dict) -> tuple[str, str | None]:
+    """The next reading on a quarter not known at the register entry: the earliest estimated filing after REGISTERED
+    from an outer company (its reading against the inner layer); the outer layer's main reading needs all members."""
+    outer = [x for x in r["next_filings"] if x["company"] in S.OUTER]
+    cands = []
+    for x in outer:
+        if x["estimated"] > REGISTERED:
+            cands.append((x["estimated"], x["company"], x["next_period"], x["overdue"]))
+        elif x["overdue"] and x["then_estimated"] and x["then_estimated"] > REGISTERED:
+            cands.append((x["then_estimated"], x["company"], x["then_period"], False))
+    if not cands:
+        return f"med inlämningar efter {REGISTERED} (inga uppskattade ännu)", None
+    day, c, period, overdue = min(cands)
+    text = f"{FILER_NAMES[c]} {period} omkring {day}{' (väntas nu)' if overdue else ''}, mot inre lagret"
+    if {x["company"] for x in outer} == set(S.OUTER):
+        text += f"; yttre lagret när alla fyra har lämnat in (senast uppskattat {max(x['estimated'] for x in outer)})"
+    return text, day
+
+
+def antenna(r: dict) -> dict:
+    """KL1's row in `antenner`: the main reading (outer layer against inner, the locked KL1 rule) and per-company
+    outcomes, A and the capex changes as facts."""
+    x = r["readings"]["outer"]
+    facts = {}
+    for e, y in r["readings"].items():
+        if e == "outer":  # the main reading is the row's own reading
+            continue
+        facts[f"{S.NAMES[e]} mot inre lagret, utslag"] = f"{SHORT[y['outcome']]} ({y['t'] or '–'})"
+    facts["Yttre lagret, A"] = {True: "ja", False: "nej", None: "okänt"}[x["a"]]
+    facts["Förändring i capex-takt, yttre"] = _f(x["capex_change_outer"], 1, True)
+    facts["Förändring i capex-takt, inre"] = f"{_f(x['capex_change_inner'], 1, True)} ({x['inner_period'] or '–'})"
+    h = x.get("a_history") or {}
+    facts["A har gällt (yttre)"] = f"{h.get('held', 0)} av {h.get('of', 0)} kvartal"
+    text, day = next_unseen(r)
+    return C.antenna_row(QUESTION, x["outcome"], SHORT[x["outcome"]], x["t"], facts, text, day)
