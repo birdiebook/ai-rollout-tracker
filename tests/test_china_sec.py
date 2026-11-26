@@ -191,6 +191,100 @@ def test_candidate_docs_order():
     assert cs.candidate_docs(f, index) == ["x_ex99-1.htm", "x_ex99-2.htm"]
 
 
+# EDGAR's filing index page (-index.htm), cut down: the document table and the data-file table, an iXBRL link, the
+# complete submission text file with an empty Type cell.
+INDEX_HTM = """
+<table class="tableFile" summary="Document Format Files">
+<tr><th scope="col">Seq</th><th scope="col">Description</th><th scope="col">Document</th><th scope="col">Type</th>
+<th scope="col">Size</th></tr>
+<tr><td scope="row">1</td><td scope="row">6-K</td>
+<td scope="row"><a href="/Archives/edgar/data/1329099/000119312521014247/x_6k.htm">x_6k.htm</a></td>
+<td scope="row">6-K</td><td scope="row">9295</td></tr>
+<tr class="evenRow"><td scope="row">2</td><td scope="row">EX-99.1</td>
+<td scope="row"><a href="/ix?doc=/Archives/edgar/data/1329099/000119312521014247/x_ex99-1.htm">x_ex99-1.htm</a>
+ &nbsp;&nbsp;<span class="label">iXBRL</span></td>
+<td scope="row">EX-99.1</td><td scope="row">597628</td></tr>
+<tr><td scope="row">3</td><td scope="row">EX-99.2</td>
+<td scope="row"><a href="/Archives/edgar/data/1329099/000119312521014247/x_ex99-2.htm">x_ex99-2.htm</a></td>
+<td scope="row">EX-99.2</td><td scope="row">947457</td></tr>
+<tr><td scope="row">&nbsp;</td><td scope="row">Complete submission text file</td>
+<td scope="row"><a href="/Archives/edgar/data/1329099/000119312521014247/0001193125-21-014247.txt">0001193125-21-014247.txt</a></td>
+<td scope="row">&nbsp;</td><td scope="row">1600000</td></tr>
+</table>
+<table class="tableFile" summary="Data Files">
+<tr><td scope="row">4</td><td scope="row">XBRL SCHEMA FILE</td>
+<td scope="row"><a href="/Archives/edgar/data/1329099/000119312521014247/x-20210131.xsd">x-20210131.xsd</a></td>
+<td scope="row">EX-101.SCH</td><td scope="row">3100</td></tr>
+</table>
+"""
+
+
+def test_index_htm_items():
+    assert cs.index_htm_items(INDEX_HTM) == [
+        {"name": "x_6k.htm", "size": "9295"}, {"name": "x_ex99-1.htm", "size": "597628"},
+        {"name": "x_ex99-2.htm", "size": "947457"}, {"name": "0001193125-21-014247.txt", "size": "1600000"},
+        {"name": "x-20210131.xsd", "size": "3100"}]
+
+
+def _http_error(status):
+    import requests
+    r = requests.Response()
+    r.status_code = status
+    return requests.HTTPError(f"{status} error", response=r)
+
+
+def _fake_get(index_status=None, htm=INDEX_HTM):
+    calls = []
+
+    def get(url, retries=2):
+        calls.append(url.rsplit("/", 1)[-1])
+        if url.endswith("index.json"):
+            if index_status:
+                raise _http_error(index_status)
+            return b'{"directory": {"item": [{"name": "x_ex99-1.htm", "size": "597628"}]}}'
+        if url.endswith("-index.htm"):
+            return htm.encode()
+        raise AssertionError(url)
+    return get, calls
+
+
+def test_filing_index_reads_index_json_first(monkeypatch):
+    get, calls = _fake_get()
+    monkeypatch.setattr(cs, "cached_get", get)
+    f = cs.Filing(1329099, "0001193125-21-014247", "2021-01-29", "", "6-K", "x_6k.htm")
+    assert cs.filing_index(f)["directory"]["item"] == [{"name": "x_ex99-1.htm", "size": "597628"}]
+    assert calls == ["index.json"]
+
+
+@pytest.mark.parametrize("status", [500, 502, 503, 504])
+def test_filing_index_falls_back_to_index_htm_on_5xx(monkeypatch, status):
+    get, calls = _fake_get(index_status=status)
+    monkeypatch.setattr(cs, "cached_get", get)
+    f = cs.Filing(1329099, "0001193125-21-014247", "2021-01-29", "", "6-K", "x_6k.htm")
+    index = cs.filing_index(f)
+    assert calls == ["index.json", "0001193125-21-014247-index.htm"]
+    assert cs.candidate_docs(f, index) == ["x_ex99-1.htm", "x_ex99-2.htm"]  # the same documents as index.json lists
+
+
+@pytest.mark.parametrize("status", [403, 404, 429])
+def test_filing_index_raises_4xx(monkeypatch, status):
+    get, calls = _fake_get(index_status=status)
+    monkeypatch.setattr(cs, "cached_get", get)
+    f = cs.Filing(1329099, "0001193125-21-014247", "2021-01-29", "", "6-K", "x_6k.htm")
+    with pytest.raises(Exception) as e:
+        cs.filing_index(f)
+    assert e.value.response.status_code == status
+    assert calls == ["index.json"]
+
+
+def test_filing_index_fallback_without_documents_raises(monkeypatch):
+    get, _ = _fake_get(index_status=502, htm="<html>maintenance</html>")
+    monkeypatch.setattr(cs, "cached_get", get)
+    f = cs.Filing(1329099, "0001193125-21-014247", "2021-01-29", "", "6-K", "x_6k.htm")
+    with pytest.raises(RuntimeError, match="lists no documents"):
+        cs.filing_index(f)
+
+
 # ------------------------------------------------------------------ Baidu text coding
 
 

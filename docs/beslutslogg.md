@@ -1315,3 +1315,20 @@ Johannes svarade "kör på dina rekommendationer" på tre rekommendationer samma
 - **Självkontroll.** SpaceX:s 46 rader, med de två nya, mot nyhämtade dokument: 46 av 46 ok. Tre anrop till SEC, ett
   i taget, inget 429. Med R27:s 458 av 458 täcker självkontrollen alla rader.
 - **Öppet:** Johannes beslut om läsregeln ska läsa åt båda hållen, före Oracles inlämning omkring 2026-12-11.
+
+## 2026-11-26 – CN1: reservväg när EDGAR:s index.json svarar 5xx
+
+- **Problem.** Veckohämtningen 2026-11-25 (manuell körning) var röd. `index.json` för Baidus 6-K
+  0001193125-21-014247 svarade 502 i fyra anrop i rad, vart och ett efter `http.get`:s tre nya försök. Därför fick
+  `capex_bidu`, `capex_bidu_core` och deras US$-vyer ingen data i Actions-cachen, och aktualitetskontrollen fällde
+  jobbet. Övriga serier och datatesterna var gröna, och cachen sparades.
+- **Val.** `china_sec.filing_index` läser dokumentlistan ur filingens `-index.htm` när `index.json` svarar 5xx.
+  Sidan listar samma dokument med storlek i byte, så `candidate_docs` väljer samma pressmeddelande. Ett 4xx stoppar
+  som förut (403 och 429: fair access). Ingen gräns och inget mått ändras, så ingen registerpost behövs. Att hoppa
+  över filingen förkastades, eftersom det tyst kan tappa ett pressmeddelande och flytta en årgång.
+- **Inte verifierat lokalt.** Sessionen når inte sec.gov. Om 502-felet var tillfälligt eller hör till just den
+  filingen visar nästa veckohämtning.
+- **Också i loggen:** `g3_npm_openai_w` och `g3_npm_anthropic_sdk_w` fick 429 från api.npmjs.org. De är inte för
+  gamla än (gränsen är 7 + 30 dagar efter senaste vecka). Om 429 kommer igen nästa vecka behöver npm-hämtningen
+  glesas ut.
+

@@ -1,8 +1,16 @@
 # Status steg 2
 
-Uppdateras av orkestreraren vid varje milstolpe. Senast: 2026-11-25 (KL1 med granskningen R27 och rättningen X24, körning 15).
+Uppdateras av orkestreraren vid varje milstolpe. Senast: 2026-11-26 (reservväg för EDGAR:s index.json i CN1, efter en
+röd veckohämtning).
 
 ## Läge
+
+### Drift 2026-11-26: röd veckohämtning
+
+- Veckohämtningen 2026-11-25 fallerade bara på aktualitet: Baidus fyra tabellserier (CN1) fick ingen data i
+  Actions-cachen, eftersom EDGAR:s `index.json` för en 6-K från 2021 svarade 502. Hämtaren läser nu filingens
+  `-index.htm` vid 5xx (beslutsloggen 2026-11-26). Om felet är borta visar nästa veckohämtning.
+- npm gav 429 för två serier. De är inte för gamla än. Behöver åtgärdas om det upprepas.
 
 ### Körning 15: KL1 Kreditlagret, en följd fråga (2026-11-25)
 
@@ -105,10 +113,9 @@ Kvar för nya sessioner: `DATA_KEY` (punkt 2 nedan).
 
 ## Väntar på Johannes
 
-2. **`DATA_KEY`** (datasnapshoten är byggd):
-   - skapa en nyckel med `python -c "import secrets; print(secrets.token_urlsafe(32))"` och spara den i en lösenordshanterare;
-   - lägg in den som GitHub-secret `DATA_KEY` och som miljövariabel `DATA_KEY` i miljön ai-rollout-tracker;
-   - kör sedan "Weekly data fetch" en gång för hand.
+2. **`DATA_KEY`:** GitHub-secreten är satt. Veckohämtningen 2026-11-25 packade och laddade upp den krypterade
+   snapshoten. Kvar: samma värde som miljövariabel `DATA_KEY` i molnmiljön ai-rollout-tracker, så att en ny session
+   kan installera snapshoten.
 3. **Cloudflare Radar har licensen CC BY-NC 4.0.** Serierna visas på hemsidan eftersom sidan är icke-kommersiell. Ska
    sidan någon gång användas kommersiellt måste de dras tillbaka.
 
@@ -123,5 +130,5 @@ Kvar för nya sessioner: `DATA_KEY` (punkt 2 nedan).
 ## Viktiga datum
 
 - 2026-11-30: första skarpa ögonblicksbilden och månadsbrevet
-- 2026-12-05: första skarpa TSMC-prognosen (B2)
+- 2026-12-05: första skarpa TSMC-prognosen (B3, huvudmodell sedan 2026-11-24)
 - 2027-01-20: första skarpa capex-prognosen

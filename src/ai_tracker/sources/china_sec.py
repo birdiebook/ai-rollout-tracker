@@ -33,6 +33,9 @@ SUBMISSIONS = "https://data.sec.gov/submissions/CIK{cik:010d}.json"
 SUBMISSIONS_FILE = "https://data.sec.gov/submissions/{name}"
 ARCHIVE = "https://www.sec.gov/Archives/edgar/data/{cik}/{acc}/{doc}"
 XBRL_VIEWER = re.compile(r"(?i)R\d+\.htm")  # rendered XBRL pages of a filing, never a press release
+# A document row of a filing's -index.htm page: link to the document, then the Type and Size (bytes) cells.
+INDEX_ROW = re.compile(r'(?is)<td[^>]*>\s*<a href="([^"]+)"[^>]*>[^<]*</a>(?:(?!</td>).)*</td>\s*<td[^>]*>[^<]*</td>'
+                       r'\s*<td[^>]*>\s*(\d+)\s*</td>')
 DOC_PAUSE = 0.3  # seconds after each fetched document (several tracks share sec.gov; brief of run 14)
 MIN_DOC_BYTES = 20_000  # results releases are 90 kB - 1 MB; buyback notices and cover letters are 2-15 kB
 MAX_DOC_BYTES = 3_000_000
@@ -98,6 +101,36 @@ def cached_get(url: str, retries: int = 2) -> bytes:
     raise RuntimeError("unreachable")
 
 
+def index_htm_items(page: str) -> list[dict]:
+    """The documents of a filing's -index.htm page as index.json lists them: [{"name", "size"}], size in bytes."""
+    out = []
+    for href, size in INDEX_ROW.findall(page):
+        name = href.replace("/ix?doc=", "").rsplit("/", 1)[-1]
+        out.append({"name": name, "size": size})
+    return out
+
+
+def filing_index(f: Filing) -> dict:
+    """The filing's document list ({"directory": {"item": [...]}}): index.json, else the -index.htm page on a 5xx.
+
+    EDGAR's index.json can keep answering 5xx for one filing: in the weekly fetch of 2026-11-25, Baidu's
+    0001193125-21-014247 gave 502 in four calls in a row, each after http.get's own retries, and stopped all four
+    Baidu table series. The -index.htm page lists the same documents with their sizes, so candidate_docs picks the
+    same documents. A 4xx is raised as before (403 and 429: fair access).
+    """
+    try:
+        return json.loads(cached_get(f.url("index.json")))
+    except requests.HTTPError as e:
+        if e.response is None or e.response.status_code < 500:
+            raise
+        page = cached_get(f.url(f"{f.accession}-index.htm")).decode("utf-8", errors="replace")
+        items = index_htm_items(page)
+        if not items:
+            raise RuntimeError(f"{f.accession}: index.json gave {e.response.status_code} and the -index.htm page "
+                               f"lists no documents") from e
+        return {"directory": {"item": items}}
+
+
 def candidate_docs(f: Filing, index: dict) -> list[str]:
     """Documents of a filing that may hold a results release, in reading order: exhibits named ex99 (ex99-1 first),
     then any other .htm document of release size, then the primary document if it is that large (Alibaba's first
@@ -114,7 +147,7 @@ def candidate_docs(f: Filing, index: dict) -> list[str]:
 def release_of(company: str, f: Filing) -> tuple[str, china_parse.Release] | None:
     """(document name, parsed release) of the results release furnished in a 6-K, or None."""
     parse = china_parse.PARSERS[company]
-    index = json.loads(cached_get(f.url("index.json")))
+    index = filing_index(f)
     for doc in candidate_docs(f, index):
         text = to_text(cached_get(f.url(doc)).decode("utf-8", errors="replace"))
         rel = parse(text)

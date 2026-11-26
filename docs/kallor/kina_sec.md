@@ -251,7 +251,10 @@ kommersiell användning: `ja` för alla serier (regeln sec, de kurerade raderna 
 Tabellserierna uppdateras av veckohämtningen: nya 6-K hämtas och tolkas, och gamla dokument läses ur råkopiorna. Ett
 pressmeddelande som inte hör till någon deklarerad definition, eller som räknar om ett publicerat värde, stoppar
 hämtningen av serien med `DefinitionBreakError`. Då ska texten läsas och gränsen deklareras i `china_sec.ERAS`, med en
-daterad registerpost. Textserierna uppdateras inte av sig själva: efter ett nytt Baidu-pressmeddelande körs
+daterad registerpost. Om EDGAR:s `index.json` för en filing svarar 5xx (också efter `http.get`:s nya
+försök) läses dokumentlistan ur filingens `-index.htm` i stället. Sidan listar samma dokument med storlek, så samma
+pressmeddelande väljs. Ett 4xx stoppar som förut (403 och 429: fair access). Bakgrund: veckohämtningen 2026-11-25,
+där `index.json` för Baidus 0001193125-21-014247 gav 502 fyra gånger i rad. Textserierna uppdateras inte av sig själva: efter ett nytt Baidu-pressmeddelande körs
 `python -m ai_tracker.sources.china_text --write` och `python -m ai_tracker.china_text_check`, och CSV-filen committas.
 
 ## Öppna frågor och nästa steg
