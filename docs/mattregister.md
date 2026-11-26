@@ -3203,3 +3203,169 @@ R27. För att kunna visa att rapporten blir byte för byte densamma genererade a
 2025-11-25 med koden före ändringen. De rapporterna innehåller KL1:s registrerade utslag, som redan står i
 `docs/resultat/kreditlagret.md`. Inga mått för LT1, BG1 eller EL1 har räknats, och inga serier har lästs för värden
 utöver KL1:s rapport.
+
+### 2026-11-26 – EL1: följd fråga om elen som begränsning för utbyggnaden (förregistrering, före beräkning)
+
+Spår EL1, körning 16. Posten låses och committas ensam innan något aggregat, mått eller utslag räknas. Den gäller en
+**följd fråga**, som KL1: en fråga som Johannes läser varje månad. Den är ingen gren, och den ändrar inga kärnserier,
+inget grenindex, ingen tillståndsregel och inga publiceringsflaggor. Ingen ny källa hämtas och ingen ny extraktion görs.
+De härledda storheterna nedan (nycklar `el1_*`) räknas i rapporten ur befintliga katalogserier med F0:s
+`aggregate.derive` och `common.path_measures`. De blir inga katalogserier i den här posten.
+
+**Frågan:** "Blir el den bindande begränsningen för utbyggnaden?" Neutralt och åt båda hållen, som läsregeln läser den:
+"Stramas elsidan åt (pris, last och orderstock för elnät och gasturbiner) medan utbyggnadens takt bromsar, eller lättar
+den medan takten håller eller ökar?"
+
+**(a) Mekanismen.** Om el binder syns det först på elsidan: priset och lasten stiger, och orderstocken hos dem som bygger
+elnät och gasturbiner växer, eftersom order kommer in snabbare än de kan levereras. Utbyggnaden kan då inte följa med, så
+takten i datacentrens capex eller i tecknad datacenterleasing bromsar. Spegelbilden är samma mekanism åt andra hållet:
+när elsidan lättar hålls utbyggnaden inte tillbaka, och takten håller eller ökar. Båda riktningarna läses lika (F0, (b)).
+Mönstren som talar emot är att takten följer elsidan åt samma håll. En uppgång följd av högre takt pekar på en gemensam
+drivkraft (efterfrågan på AI driver både elen och capex) och på att el inte band. En nedgång följd av lägre takt pekar på
+att efterfrågan föll, inte på el.
+
+**(b) Måtten.** Kalenderkvartal (`Q-DEC`, bolagens egen mappning i källserierna). Nivå, takt, förändring i takt och
+överraskning mot B1 som i F0, (a): katalogserier med `common.measure` (`state.measures`), härledda storheter med
+`common.path_measures(method="log")`, samma formler. Takt = 100 × ln(värdet / värdet fyra kvartal tidigare), förändring
+i takt = takten minus takten två kvartal tidigare.
+
+Ledande storheter *X* (statistik: **takt**):
+- **X1 `el1_pris4`, elpris.** BLS PPI för el till kommersiella kunder (`us_ppi_elec_commercial_m`, index). Kvartalets
+  värde = medlet av de tolv månader som slutar med kvartalets sista månad.
+- **X2 `el1_last4`, last.** EIA-930 medellast per månad (MW), summerad över fem balansområden: PJM
+  (`eia930_avg_pjm_m`), ERCOT (`eia930_avg_erco_m`), Southern Company (`eia930_avg_soco_m`), Arizona Public Service
+  (`eia930_avg_azps_m`) och Salt River Project (`eia930_avg_srp_m`). Dominion (`eia930_avg_pjm_dom_m`) är en delregion
+  av PJM och läggs inte till. Den visas för sig som beskrivning, med samma tolvmånadersmedel. Kvartalets värde = medlet
+  av de tolv månaderna av summan.
+- **X3 `el1_ob_nat`, orderstock för elnät och elutrustning, MUSD (huvudläsningens X).** `rpo_pwr` (Quanta Services,
+  RPO) + `rpo_etn` (Eaton, total orderstock med fasta order) vid kvartalets slut.
+- **X4 `ob_gev_backlog_and_slot_reservations_gas_power_equipment_end_level_gw`, gasturbiner, GW.** GE Vernovas
+  orderstock och reservationer av leveransplatser för gasturbiner vid kvartalets slut. Katalogserien som den är.
+
+Följande storheter *Y* (statistik: **förändring i takt**, som i F0):
+- **Y1 `kl_capex4_inner`, capex över fyra kvartal för Microsoft, Alphabet, Amazon och Meta (huvudläsningens Y).** KL1:s
+  lageraggregat, oförändrat.
+- **Y2 `el1_dlr_mw4`, tecknad datacenterleasing.** Digital Realtys tecknade hyresavtal i MW, summan över kvartalet och de
+  tre före av `ob_dlr_leases_signed_total_dlr_share_q_level_mw`.
+
+Beskrivning utan läsregel (tabeller i rapporten): Dominions last, `rpo_pwr`, `rpo_etn` och `rpo_gev_equipment` var för
+sig, GE Vernovas orderstock och reservationer i GW var för sig och orderstocken för Electrification (MUSD),
+`kl_capex4_outer`, `lease_uncommenced_<bolag>` för Alphabet, Amazon, Meta och Oracle, leverantörernas egen capex
+(`capex_pwr`, `capex_etn`, `capex_gev`) och de senaste kraftplanerna (`plan_*` i MW med klass `ja`).
+
+**Aggregat och datering.**
+- **Tabellen kapas först.** Allt räknas på raderna med `known_from` ≤ läsdagen, och varje rad tas i sin senaste vintage
+  på dagen. Historiken räknas på läsdagens vintage (F0, (b)).
+- **Månad till kvartal (X1, X2).** `aggregate.derive` med månadsfrekvens: ett tolvmånadersmedel per månad av komponenten
+  (för X2 summan av de fem områdena), och bara kvartalets sista månad (mars, juni, september, december) används som
+  kvartalets värde. Ett värde finns först när alla tolv månader har ett värde känt på dagen, för X2 i alla fem områden.
+  Ingen interpolation: en saknad månad ger inget värde för de fyra kvartal vars tolv månader omfattar den. `known_from` =
+  den senaste raden som ingår. Säsongen tas bort av tolvmånadersmedlet, och takten jämför med samma tolv månader ett år
+  tidigare.
+- **Summor (X3, Y2).** `aggregate.derive`: en version först när alla komponenter finns (för X3 båda bolagen, för Y2 alla
+  fyra kvartal), `known_from` = den senaste komponenten. `aggregate.missing` säger vad nästa kvartal saknar på dagen.
+
+**(c) Läsregeln.** F0:s symmetriska regel (`common.read_rule` via `common.read_measures`), X:s takt mot Y:s förändring i
+takt. Gränserna är låsta här:
+
+| X | *g* (log × 100 per år) |
+|---|---|
+| X1 elpris | 5,0 |
+| X2 last | 2,0 |
+| X3 orderstock elnät, MUSD | 10,0 |
+| X4 orderstock gasturbiner, GW | 10,0 |
+
+| Y | *h* (log × 100) |
+|---|---|
+| Y1 capex, inre lagret | 5,0 |
+| Y2 tecknade MW, Digital Realty | 10,0 |
+
+*k* = 2 kvartal och tecken *s* = −1 för alla rader. Åtta rader, en per par (X, Y), utan "eller". **Huvudläsningen är X3
+mot Y1.** De sju andra är bisaker, med samma regel och samma redovisning.
+
+Vad varje utslag betyder (*e* = *s* × *d*, F0, (b)):
+- **Talar för, uppåt:** X ≥ +*g* vid ursprunget *q*, och det första av kvartalen *q* + 1, *q* + 2 som når gränsen har
+  Y ≤ −*h*. Elsidan stramades åt och takten bromsade.
+- **Talar för, nedåt:** X ≤ −*g*, och sedan Y ≥ +*h*. Elsidan lättade och takten ökade.
+- **Talar emot, uppåt:** X ≥ +*g*, och sedan Y ≥ +*h*. Takten ökade fast elsidan stramades åt: gemensam efterfrågan,
+  elen band inte.
+- **Talar emot, nedåt:** X ≤ −*g*, och sedan Y ≤ −*h*. Takten bromsade fast elsidan lättade: efterfrågan, inte el.
+- **Inget av mönstren:** |X| < *g* (ingen impuls), eller Y inom ±*h* i båda kvartalen.
+- **Kan inte avgöras:** X saknas, eller Y saknas innan gränsen nås (fönstret är öppet på läsdagen eller data saknas).
+  Rapporten säger vilket.
+Läsdagens utslag och redovisningen av hur ofta regeln kunde prövas, per riktning, följer F0, (b).
+
+**Varför de här gränserna (satta före data).** *g* = 5 för elpriset är ungefär dubbla den allmänna inflationen (cirka 2–3
+% per år), så att en impuls betyder att el blir klart dyrare eller billigare än annat. *g* = 2 för lasten: amerikansk
+elanvändning har historiskt växt med cirka 1 % per år, och ett tolvmånadersmedel som ändras med 2 % är klart snabbare än
+trenden. *g* = 10 för orderstockarna, som rör sig mer än pris och last. *h* = 5 för capex är KL1:s gräns för att takten
+föll. *h* = 10 för Digital Realtys MW, som är klumpiga (enstaka stora avtal). *k* = 2: en begränsning i el väntas synas i
+investeringarna inom ett halvår. F0:s fönster börjar kvartalet efter ursprunget, så "samtidigt" i frågan läses som "inom
+de två följande kvartalen". Samma kvartal läses inte.
+
+**Varför takt och inte förändring i takt för X.** Frågan gäller om elsidan stramas åt, alltså nivån mot ett år tidigare.
+Med takt räknas en ihållande åtstramning som en impuls i varje kvartal, och ett broms i capex under en sådan period blir
+"talar för". Följden, som R26-8 visade för KL1: i en lång utbyggnad kan orderstockarna ha en impuls uppåt i nästan varje
+kvartal. Då avgörs utslaget i praktiken av Y ensam, och riktningen nedåt prövas sällan eller aldrig. Rapporten anger
+antalet impulser per riktning under varje rad. Elpriset har dessutom en nominell drift uppåt (inflationen), så impulser
+uppåt väntas oftare än nedåt. En regel på förändring i takt, eller på realt elpris, kräver en ny daterad post.
+
+**Ärligt om osäkerheten.** Serierna är korta: X4 har takt först från 2026Q1, Y2 har förändring i takt från 2024Q1 och X3
+takt från 2021Q3. X1, X2 och Y1 är längre. Med åtta rader och utfall nära slantsingling väntas några rader ge "talar för"
+eller "talar emot" av en slump. Förändringen i takt vänder ofta av sig själv (takten över ett år minus takten två kvartal
+tidigare), så ett broms efter ett starkt kvartal är vanligt utan någon orsak. Inget p-värde räknas. Ett utslag som talar
+för mekanismen visar inte orsaken.
+
+**(d) Baslinje.** Överraskningen mot B1 står i tabellerna (F0, (d)). Ingen guidance används i läsregeln: capex-guidance
+visas i KL1, och leverantörernas guidance är inte kodad.
+
+**(e) Vad som inte kan sägas (förbehåll i rapporten).**
+- **El och gasturbiner drivs av mer än datacenter:** elbolagens nätförstärkning, förnybart, industri och export (GE Vernova
+  säljer globalt). Quantas RPO omfattar också förnybart, telekom och rörledningar. Eatons orderstock gäller hela bolaget,
+  också flyg och fordon. En växande orderstock är därför inte efterfrågan från datacenter ensam.
+- **Förvärv blåser upp orderstockens takt:** GE Vernovas orderstock innehåller Prolec GE från 2026Q1, och Eatons
+  Electrical Global köpte Boyd Thermal 2026-03-12 (R19). Det rättas inte.
+- **Elpriset** är reglerade tariffer för kommersiella kunder. De speglar bränslekostnader och nätens kostnader med
+  fördröjning, inte knapphetspriset på marginalen. PJM:s kapacitetspriser ligger närmare, men har klassen `nej` och
+  visas inte. PPI-serien är regeldaterad: preliminära månader får filens datum, så det senaste kvartalet släpar.
+- **Lasten** är medellast och inte topplast. Den påverkas av väder, och de fem områdena är stora datacenterområden men
+  inte hela USA. EIA-930 har inga daterade versioner före 2026-11-23: äldre värden är dagens (backfill, revideringar
+  läcker in), och när den justerade kolumnen först publicerades är inte belagt (`docs/kallor/el_datacenter.md`).
+  Läsningen per 2025-11-26 bygger på backfill.
+- **`ob_*` (X4 och Y2)** är en extraktion som R19 godkände med anmärkningar, med `publish=False`. Digital Realtys andel
+  före 2025 är inte belagd (R19, F-4). Fyrakvartalssummorna över 2024Q4–2025Q3 kan därför blanda baser.
+- **Y1 är hela capex,** där servrar och chip är största delen, inte bara byggen. En begränsning i el syns troligen
+  tidigare i byggen och leasing än i total capex.
+- **"Bindande" kan inte visas.** Regeln ser samvariation i riktning, inte ett skuggpris. X och Y har en gemensam
+  drivkraft, och inget utslag visar orsak.
+
+**(f) Vad som var sett före posten.** Agenten har läst CLAUDE.md, F0:s kod och post, KL1:s kod, poster och granskningarna
+R26 (sammanfattning och fynd) och delar av R19, och källdokumenten `el_datacenter.md` (EIA-930), `makro_bea_bls.md`,
+`order_orderstock.md` (regler, läsmängd) och rader ur `sec_stack_kraft.md`. Värden som därmed var sedda:
+- Y1: inre lagrets förändring i capex-takt +2,0 (2025Q3), +6,2 (2026Q2) och +9,6 (2026Q3), ur KL1:s resultatdokument
+  och F0:s sammanfattning i uppdraget. Y1:s två senaste värden ligger alltså över *h* = 5. *h* valdes som KL1:s gräns och
+  inte efter dem, men utslaget per 2026-11-26 för ursprunget 2026Q2 avgörs därmed av X:s riktning där.
+- Nivåer 2026Q3 ur `sec_stack_kraft.md`: `rpo_pwr` 41 750, `rpo_etn` 26 200, `rpo_gev` 196 721 och `rpo_gev_equipment`
+  104 054 MUSD. Ur R19: Eatons orderstock för Electrical Global växte 19, 73, 103 och 121 % mot året före (med Boyd).
+  Ur `makro_bea_bls.md`: KPI för el, september och oktober 2026 (ingår inte i regeln).
+- Allmän kunskap ur offentlig rapportering: GE Vernovas orderstock för gasturbiner har vuxit kraftigt 2025–2026, de
+  stora molnbolagens capex har ökat snabbt 2025–2026, och elpriserna och lasten i datacenterområden har stigit.
+  Agenten väntar sig därför impulser uppåt i orderstockarna. Med Y1 över +5 betyder det att huvudläsningen per
+  2026-11-26 sannolikt blir "talar emot". Det var känt före posten, och utslaget är inget utfall.
+- Täckning utan värden: serienycklar, frekvens, enhet, periodspann, antal perioder, luckor och `known_from` (min, max och
+  de fyra senaste) för de använda serierna, och uppskattade dagar för nästa inlämning.
+Inga mått, takter, aggregat eller mönster mellan serierna i EL1 har räknats eller lästs.
+
+**(g) Första osedda läsningen.** Huvudläsningen får ett Y-kvartal som inte var publicerat vid posten när
+`kl_capex4_inner` får 2026Q4, alltså när alla fyra inre bolagen har lämnat in för 2026Q4 (uppskattat omkring
+2027-01-31, rapporten räknar dagen ur de åtta senaste inlämningarna). Ursprungen är då 2026Q2 och 2026Q3. Y2 får 2026Q4
+med Digital Realtys resultat (uppskattat omkring 2027-01-24). Läsningarna per 2026-11-26 och 2025-11-26 görs på data som
+var publicerade före posten.
+
+**(h) Antennen.** Huvudläsningen (X3 mot Y1) är radens utslag. De sju andra radernas utslag, X3:s takt och Y1:s
+förändring i takt är fakta som jämförs mot förra månaden. Nästa osedda läsning är dagen ovan.
+
+**(i) Utanför ramen, förslag med licensfråga (hämtas inte nu).** Köer för nätanslutning (LBNL "Queued Up", årlig;
+villkoren för återpublicering ska läsas), ERCOT:s kö för stora laster (PARTIAL, siffror bara i diagram, villkoren tillåter
+rådata i analyser), PJM:s kapacitetsauktioner (i katalogen, klass `nej`, kräver tillstånd från PJM) och EIA-860M
+(planerade kraftverk per månad, public domain). Var och en kräver ett eget spår och en egen post.
