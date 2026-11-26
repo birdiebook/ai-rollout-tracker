@@ -3130,3 +3130,76 @@ Punkt 4 säger att koden prövar skuldtabellen först. Det stämmer inte helt. K
 eget skäl för raden, bilageförteckning, rader i CoreWeaves skuldtabell, verkligt värde och resultatposter, aktier och
 konvertering till aktier, villkor utanför kodningsreglerna, garanti och säkerhet, och sist annan text i CoreWeaves 10-Q
 och 10-K. Det är den ordningen som gäller. Den har använts sedan X23 och påverkar bara etiketten.
+
+### 2026-11-26 – F0: mall för symmetriska läsregler i följda frågor
+
+Spår F0, körning 16. Posten låses och committas innan motorns kod skrivs. Den definierar en **mall**: hur en följd fråga
+läser ett mönster mellan en ledande och en följande storhet, och hur frågorna sammanfattas i en översikt. Inga data
+analyseras, och inga nya serier, mått, gränser eller utslag skapas här. Varje ny följd fråga (LT1, BG1, EL1) låser sina
+egna storheter och parametrar i en egen daterad post innan dess data räknas. Grenindex, kärnserier, tillstånd och
+publiceringsflaggor berörs inte.
+
+**KL1 ändras inte.** KL1:s läsregel (posten "2026-11-25 – KL1", avsnitt (c)) är låst och läser fortfarande bara
+uppgång i pris och beroende (känt fynd, X23 punkt 4). Mallen ersätter den inte. En symmetrisk läsning av KL1 kräver en
+egen daterad post före läsningen. KL1:s rapport ska vara byte för byte densamma efter att koden brutits ut.
+
+**(a) Gemensamma mått, som i KL1.** Nivå, takt, förändring i takt och överraskning per serie, beräknade av
+`state.measures` som för grenarnas serier: andelar och räntor i procentenheter över fyra kvartal, belopp som
+årsförändring i log × 100, förändring i takt mot två kvartal tidigare, överraskning mot den naiva baslinjen B1. Kvartal
+är kalenderkvartal (`Q-DEC`, bolagens egen mappning). Bara rader kända på dagen (`known_from` ≤ läsdagen). Ett
+lageraggregat är summan av medlemmarnas komponenter, inte ett medel av kvoter. En version finns först när alla
+medlemmar har lämnat in för perioden, och `known_from` är den senaste komponenten (KL1, avsnitt (b), "Lageraggregat").
+Saknas en medlem för ett kvartal finns inget aggregat för kvartalet, och rapporten säger vilka medlemmar som saknas.
+
+**(b) Den symmetriska läsregeln.** Parametrarna låses per fråga i dess egen post:
+- *X*: den ledande storheten (en serie) och dess statistik, takt eller förändring i takt.
+- *Y*: den följande storheten (en serie). Statistiken är alltid förändring i takt.
+- *g* > 0: gränsen för en impuls i X, i X:s enhet.
+- *h* ≥ 0: gränsen för att Y ska räknas som att den följer eller går emot, i Y:s enhet.
+- *k* ≥ 1: fönstret i kvartal.
+- *s* = +1 eller −1: mekanismens tecken. +1 betyder att Y väntas röra sig åt samma håll som X, −1 åt motsatt håll.
+
+För varje ursprungskvartal *q* med ett värde X(*q*):
+1. Saknas X(*q*): **kan inte avgöras**.
+2. |X(*q*)| < *g*: ingen impuls, **inget av mönstren**.
+3. Annars är impulsens riktning *d* = +1 om X(*q*) ≥ *g* och −1 om X(*q*) ≤ −*g*. Den väntade riktningen för Y är
+   *e* = *s* × *d*. Kvartalen *q* + 1, …, *q* + *k* läses i tur och ordning. Det första kvartalet där Y har ett värde
+   med *e* × Y ≥ *h* och *e* × Y > 0 ger **talar för mekanismen**. Det första där *e* × Y ≤ −*h* och *e* × Y < 0 ger
+   **talar emot**. Kommer ett kvartal utan värde för Y (fönstret är inte slut på läsdagen, eller data saknas) innan
+   något av dem: **kan inte avgöras**, och rapporten säger om fönstret är öppet eller om data saknas. Är alla *k*
+   kvartal kända utan att något av dem nås: **inget av mönstren**.
+
+Uppgång och nedgång behandlas lika: samma *g*, *h* och *k* åt båda hållen, och ett fall i X som följs av ett fall i Y
+(när *s* = +1) talar för mekanismen lika mycket som en uppgång följd av en uppgång. Flera ledande storheter läses var
+för sig, en rad per X, och slås inte ihop med "eller" (som KL1:s villkor A gör), om inte frågans egen post säger det.
+
+**Läsdagens utslag.** Låt *t* vara Y:s senaste kvartal på läsdagen. Ursprungen är *t* − *k*, …, *t* − 1. Utslaget är
+utfallet för det senaste av dem som har en impuls. Har inget av dem en impuls blir utslaget inget av mönstren om X är
+känt för alla, och annars kan inte avgöras.
+
+**Hur ofta regeln kunde prövas.** Rapporten anger, över hela historiken som är känd på läsdagen: antalet ursprung med
+ett värde för X, antalet impulser uppåt och nedåt, utfallen per riktning (talar för, talar emot, inget av mönstren,
+kan inte avgöras) och antalet ursprung där regeln kunde prövas, alltså där utfallet inte är kan inte avgöras. Historiken
+räknas på läsdagens vintage och inte i realtid, så revideringar kan ändra äldre utfall. Ett äldre utfall var dessutom
+sett när frågans post skrevs, om inte posten säger annat.
+
+**Ärligt om osäkerheten.** Med 8–12 kvartal per mått är detta en beskrivning och inget test. Inget p-värde räknas.
+Ett utfall som talar för mekanismen visar inte orsaken och kan vara slump. Regeln läser riktning och inte storlek
+utöver gränserna, så ett utfall nära en gräns syns bara i talen, som står i rapporten.
+
+**(c) Antennerna.** `python -m ai_tracker.followed antenner --as-of D` ger en rad per följd fråga: frågan, senaste
+utslaget (frågans huvudläsning), vad som ändrats mot förra månaden (läsdagen minus en kalendermånad: utslaget,
+kvartalet *t* och de fakta frågan själv listar) och nästa osedda läsning (uppskattad dag för nästa inlämning som ger ett
+kvartal som inte var känt när frågans post skrevs). Raden är en beskrivning. Den har inga larmnivåer och väger inte
+ihop frågorna. För KL1 är huvudläsningen yttre lagret mot inre, med KL1:s låsta regel. Nästa osedda läsning är den
+tidigaste uppskattade inlämningen från ett bolag i yttre lagret med ett kvartal efter 2026-11-25, och yttre lagrets
+aggregat kommer först när alla dess medlemmar har lämnat in.
+
+**(d) Baslinje.** Överraskningen mot B1 är oförändrad (avsnitt 3 och KL1, (d)). Guidance används där frågans egen post
+säger det.
+
+**(e) Vad som var sett före posten.** Agenten har läst KL1:s kod, registerposter, rapport och granskningarna R26 och
+R27. För att kunna visa att rapporten blir byte för byte densamma genererade agenten KL1:s rapport per 2026-11-25 och
+2025-11-25 med koden före ändringen. De rapporterna innehåller KL1:s registrerade utslag, som redan står i
+`docs/resultat/kreditlagret.md`. Inga mått för LT1, BG1 eller EL1 har räknats, och inga serier har lästs för värden
+utöver KL1:s rapport.
