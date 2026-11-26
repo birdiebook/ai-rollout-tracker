@@ -182,6 +182,12 @@ def _cut(table: pd.DataFrame | None, when: pd.Timestamp) -> pd.DataFrame:
     return t[t["known_from"] <= when].reset_index(drop=True)
 
 
+def first_known(m: dict, col: str) -> str | None:
+    """The first quarter of a measure's path with a value in `col` (pace or change)."""
+    qs = [q for q, v in C.series_of(m, col).items() if v is not None]
+    return min(qs, key=lambda q: pd.Period(q, freq=A.QFREQ)) if qs else None
+
+
 def plans(table: pd.DataFrame, when) -> list[dict]:
     out = []
     for k in PLANS:
@@ -224,7 +230,8 @@ def compute(as_of, table: pd.DataFrame | None = None) -> dict:
     readings = {}
     for x, y in PAIRS:
         r = C.read_measures(ms[X[x]], ms[Y[y]], x_stat="pace", g=G[x], h=H[y], k=K, sign=SIGN)
-        readings[f"{x}|{y}"] = {**r, "x": x, "y": y}
+        readings[f"{x}|{y}"] = {**r, "x": x, "y": y, "y_first": first_known(ms[Y[y]], "change"),
+                                "x_first": first_known(ms[X[x]], "pace")}
     report = {
         "question": QUESTION, "as_of": str(when.date()), "generated": str(date.today()),
         "seen_before_register": str(when.date()) <= REGISTERED,
@@ -253,11 +260,12 @@ def _level(unit: str):
     return lambda x: _f(x, 1)
 
 
-def _table(ms: dict, keys: list[str]) -> list[str]:
+def _table(ms: dict, keys: list[str], musd: bool = False) -> list[str]:
     lines = list(C.TABLE_HEAD)
     for k in keys:
         unit = ms[k].get("unit") or ""
-        lines.append(C.measure_table(ms, [k], _level(unit), _who)[-1])
+        level = (lambda x: "–" if C.num(x) is None else f"{_f(x, 0)} MUSD") if musd else _level(unit)
+        lines.append(C.measure_table(ms, [k], level, _who)[-1])
     return lines
 
 
@@ -324,7 +332,7 @@ def render(r: dict) -> str:
     out += ["", "## 4. Leverantörernas egen capex (beskrivning)", "",
             "Kvartalets capex, takt mot samma kvartal året före. Om leverantörerna bygger ut sin egen kapacitet lättar "
             "flaskhalsen med tiden.", ""]
-    out += _table(ms, CONTEXT["suppliers"])
+    out += _table(ms, CONTEXT["suppliers"], musd=True)
     if r["plans"]:
         out += ["", "**Kraftplaner** (senaste uttalande per serie, MW):", ""]
         for x in r["plans"]:
@@ -354,6 +362,11 @@ def render(r: dict) -> str:
             label = f"{XNAME[x]}{' (huvudläsning)' if (x, y) == MAIN else ''}"
             lines = C.reading_lines(rr, label)
             lines[0] = lines[0].replace(f"**{label}:** {rr['text']}", f"**{label}:** {short(rr)}", 1)
+            if rr.get("y_first") and rr.get("x_first") and pd.Period(rr["x_first"], freq=A.QFREQ) < pd.Period(
+                    C.minus(rr["y_first"], 1), freq=A.QFREQ):
+                lines.append(f"  X har takt från {rr['x_first']} och Y förändring i takt från {rr['y_first']}. Ett "
+                             f"ursprung före {C.minus(rr['y_first'], 1)} kan bara bli inget av mönstren (utan impuls) "
+                             "eller kan inte avgöras (Y saknas).")
             out += lines
         out.append("")
 
@@ -365,8 +378,10 @@ def render(r: dict) -> str:
                    f"(median {x['lag_days_median']} dagar, senast {x['last_filed']}, `{x['series']}`)")
     out += [f"- Månadsserierna (PPI, EIA-930) fyller kvartalet efter hand. Första osedda läsningen: {r['next_unseen']}.",
             "", "## 7. Förbehåll", "",
-            "- Med 3–30 kvartal per rad och åtta rader är detta en beskrivning och inget test. Några rader väntas ge "
-            "\"talar för\" eller \"talar emot\" av en slump, och förändringen i takt vänder ofta av sig själv.",
+            "- Y har kort historik (förändring i takt från 2019Q4 för capex och från 2024Q1 för Digital Realty, se "
+            "under varje rad), och gasturbinerna har takt först från 2026Q1. Med åtta rader är detta en beskrivning och "
+            "inget test. Några rader väntas ge \"talar för\" eller \"talar emot\" av en slump, och förändringen i "
+            "takt vänder ofta av sig själv.",
             "- Elnät och gasturbiner drivs också av annat än datacenter: elbolagens nät, förnybart, industri och export. "
             "Quantas RPO omfattar förnybart, telekom och rörledningar, och Eatons orderstock gäller hela bolaget.",
             "- Förvärv blåser upp orderstockens takt: Prolec GE i GE Vernovas orderstock från 2026Q1, Boyd Thermal i "
@@ -395,7 +410,7 @@ def antenna(r: dict) -> dict:
     facts = {}
     for x, y in PAIRS[1:]:
         rr = r["readings"][f"{x}|{y}"]
-        facts[f"{XNAME[x]} mot {YNAME[y]}"] = f"{short(rr)} ({rr['t'] or '–'})"
+        facts[f"{XNAME[x]} mot {YNAME[y]}"] = short(rr)  # the quarter is the row's t: only a changed outcome shows
     nat, cap = r["measures"]["el1_ob_nat"], r["measures"][CAPEX_INNER]
     facts["Orderstock elnät, takt"] = f"{_f(nat.get('pace'), 1, True)} ({nat.get('period') or '–'})"
     facts["Capex inre lagret, förändring i takt"] = f"{_f(cap.get('change'), 1, True)} ({cap.get('period') or '–'})"

@@ -255,3 +255,35 @@ def test_render_has_every_row_and_the_seen_data_note():
     assert "(huvudläsning):** talar för mekanismen, uppåt" in text
     assert "inget utfall på" in text and "osedda data" in text
     assert "Regeln kunde prövas i" in text
+
+
+# ------------------------------------------------------------------ the real table (shared base + track view)
+
+RESULTS = config.REPO / "docs" / "resultat" / "elflaskhalsen.md"
+
+
+def _demote(text: str) -> str:
+    return "\n".join(("#" + x) if x.startswith("#") else x for x in text.split("\n"))
+
+
+@pytest.fixture(scope="module")
+def real():
+    from ai_tracker import observations
+
+    t = observations.load()
+    if t.empty or E.CAPEX_INNER not in set(t["series"]) or "rpo_pwr" not in set(t["series"]):
+        pytest.skip("no real observation table with the EL1 series")
+    return t
+
+
+@pytest.mark.real_data
+@pytest.mark.parametrize("day,main", [("2026-11-26", C.AGAINST), ("2025-11-26", C.UNDECIDED)])
+def test_results_document_is_the_command_output(real, day, main):
+    r = E.compute(day, table=real)
+    assert _main(r)["outcome"] == main
+    assert _demote(E.render(r)).strip("\n") in RESULTS.read_text(encoding="utf-8")
+
+
+def test_results_say_the_readings_are_on_seen_data():
+    res = RESULTS.read_text(encoding="utf-8")
+    assert "Läsningarna är gjorda på sedda data" in res and "Vad som skiljer de två dagarna" in res
