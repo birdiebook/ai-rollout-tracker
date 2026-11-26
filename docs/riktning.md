@@ -237,6 +237,11 @@ delat med kostnaden i agentspår och de mänskliga flaskhalsarna (nycklar, licen
 5. **Test av själva tillståndsregeln** (förregistrerat). **Klart i körning 14:** T1 ([resultat/t1_tillstandsregeln.md](resultat/t1_tillstandsregeln.md)). Inget positivt resultat (Holm-p 0,37), och regeln ändras inte.
 6. **G8 v2** (förslag 5, efter L1). Den har lägre prioritet för syftet.
 7. **Korea via ECOS**, när nyckeln finns.
+8. **Följda frågor (antenner), körning 16.** Utöver KL1 finns nu följda frågor för ledtid i stacken (LT1,
+   [resultat/ledtid.md](resultat/ledtid.md)), betalningsgapet (BG1, [resultat/betalningsgapet.md](resultat/betalningsgapet.md))
+   och elen som begränsning (EL1, [resultat/elflaskhalsen.md](resultat/elflaskhalsen.md)), på en gemensam motor med
+   symmetrisk läsregel (F0). En rad per fråga i [resultat/antenner.md](resultat/antenner.md), granskad i
+   [granskning/r28_antenner.md](granskning/r28_antenner.md). Utslagen per 2026-11-26 är på sedda kvartal.
 
 **Kalender som inte går att snabba på:** 2026-11-30 första ögonblicksbilden, 2026-12-05 första TSMC-prognosen med B3,
 2027-01-20 första capex-prognosen, och Anthropics första periodiska rapport till SEC, som ger de första reviderade

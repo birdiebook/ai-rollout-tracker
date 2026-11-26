@@ -89,6 +89,11 @@ Se `docs/plan.md`, avsnitt 8. Uppdatera här när en fas är klar.
 - **KL1 Kreditlagret** ✅ (följd fråga, `docs/resultat/kreditlagret.md`): skuld och investeringstakt i de yttre lagren
   mot de inre. Rapport `python -m ai_tracker.followed kreditlagret --as-of D`, 53 `kl_*` med `publish=False`. Första
   läsningen på osedda data kommer med Oracle omkring 2026-12-11
+- **Körning 16 Antenner** ✅ (`docs/resultat/antenner.md`): gemensam motor för följda frågor med symmetrisk läsregel
+  (F0), ledtid mellan leverantörernas orderstock och köparnas capex-takt (LT1, 3 `lt1_*` med `publish=False`),
+  betalningsgapet (BG1) och elen som begränsning (EL1). Granskning R28 (inget must_fix), rättning X25. En rad per följd
+  fråga: `python -m ai_tracker.followed antenner --as-of D`. Alla utslag per 2026-11-26 är på sedda kvartal, och LT1 och
+  EL1 har samma huvudpar (en observation). Första osedda läsningarna: Dell omkring 2026-12-09, Oracle omkring 2026-12-11
 - Drift: `docs/drift.md` (veckohämtning, skarpa prognoser N2 dag 5 och N1 kvartal + 20 dagar, ögonblicksbild vid månadsslut)
 
 ## Tekniska konventioner

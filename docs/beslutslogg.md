@@ -1475,3 +1475,16 @@ Johannes svarade "kör på dina rekommendationer" på tre rekommendationer samma
   egen post före läsningen omkring 2027-01-31. (2) EL1:s extra rad med förändring i takt för orderstockarna, så att
   riktningen nedåt kan prövas. Rekommendation: ja, i samma post. (3) Quantas förvärv (R28-7) är fortfarande okontrollerade
   och kräver en läsning av Quantas 10-Q, utanför den här körningen (ingen ny källa). Rekommendation: ja, före 2027-01-31.
+
+## 2026-11-26 – Körning 16 slutintegrerad och till main (antenner)
+
+- **Vad.** `auto16/integration16` med F0, LT1, BG1, EL1, granskningen R28 och rättningen X25 pushad till `main`.
+  R28 har inget must_fix, och X25 rättade R28-1 till R28-4 och R28-5 delvis. Faslistan i `CLAUDE.md`,
+  `docs/steg2/STATUS.md`, `docs/riktning.md` (avsnitt 8, punkt 8) och `docs/drift.md` (avsnittet "Följda frågor")
+  uppdaterade.
+- **Drift.** Frågornas rapporter och antennraden körs månadsvis med ögonblicksbilden, manuellt tills vidare. De läggs
+  inte i `snapshot.yml` i den här körningen, eftersom antennerna inte är ett register och ett automatiskt steg vore ett
+  nytt beslut om vad som publiceras.
+- **Öppet för Johannes:** om antennraden ska in i det publika månadsbrevet trots `publish=False`-serier.
+  Rekommendation: inte än, och i så fall bara utslagen utan värden, efter den första osedda läsningen. Övriga öppna
+  punkter står i X25:s post och i `docs/steg2/STATUS.md`, punkt 7.

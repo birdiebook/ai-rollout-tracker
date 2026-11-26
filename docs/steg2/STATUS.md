@@ -1,7 +1,7 @@
 # Status steg 2
 
-Uppdateras av orkestreraren vid varje milstolpe. Senast: 2026-11-26 (reservväg för EDGAR:s index.json i CN1, efter en
-röd veckohämtning).
+Uppdateras av orkestreraren vid varje milstolpe. Senast: 2026-11-26 (körning 16, antenner, integrerad efter R28 och
+X25).
 
 ## Läge
 
@@ -12,6 +12,23 @@ röd veckohämtning).
   `-index.htm` vid 5xx (beslutsloggen 2026-11-26). En manuell veckohämtning 2026-11-26 var grön, med alla
   fyra serierna (32 rader var) och aktualiteten ok.
 - npm gav 429 för två serier 2026-11-25, men de gick igenom 2026-11-26.
+
+### Körning 16: antenner, tre nya följda frågor (2026-11-26)
+
+- **Status:** F0 (gemensam motor och symmetrisk läsregel), LT1 (ledtid), BG1 (betalningsgapet) och EL1 (elen som
+  begränsning) är byggda, granskade (R28, GODKÄND MED ANMÄRKNINGAR, inget must_fix) och rättade (X25: R28-1 till R28-4,
+  R28-5 delvis), och integrerade på grenen `auto16/integration16` med main. Tre nya katalogserier `lt1_*` med
+  `publish=False`. BG1 och EL1 härleder sina storheter i rapporten. Ingen kärnserie och inget grentillstånd ändras, och
+  KL1:s rapport är byte för byte densamma.
+- **Läs:** [resultat/antenner.md](../resultat/antenner.md), en rad per följd fråga. Varje månad:
+  `python -m ai_tracker.followed antenner --as-of <dag>` och `python -m ai_tracker.followed <fråga> --as-of <dag>`.
+  Frågornas rapporter: [ledtid](../resultat/ledtid.md), [betalningsgapet](../resultat/betalningsgapet.md),
+  [elflaskhalsen](../resultat/elflaskhalsen.md). Granskning: [granskning/r28_antenner.md](../granskning/r28_antenner.md).
+- **Förbehåll:** alla utslag per 2026-11-26 är på kvartal som var sedda när registerposterna skrevs, och frågorna läser
+  delvis samma capex-takt. LT1 och EL1 har samma huvudpar och är tillsammans en observation. I EL1 och BG1 har
+  huvudläsningen hittills bara haft impulser uppåt, så riktningen nedåt är inte prövad. Första osedda läsningarna: Dell
+  omkring 2026-12-09 (LT1), Oracle omkring 2026-12-11 (BG1 och KL1), inre lagret omkring 2027-01-31.
+- **Väntar på ägarbeslut:** se punkt 7 under "Väntar på Johannes".
 
 ### Körning 15: KL1 Kreditlagret, en följd fråga (2026-11-25)
 
@@ -127,6 +144,18 @@ Kvar för nya sessioner: `DATA_KEY` (punkt 2 nedan).
    - `/next/` försvinner från Pages efter pushen tills webbens vitest är grön, eftersom `pages.yml` bara tar med
      `/next/` när `pages-next.yml` lyckas. Den gamla sidan publiceras som förut. Alternativet är att webbrättningen
      landar först.
+
+7. **Körning 16 (antenner):**
+   - ska antennraden in i det publika månadsbrevet, fast LT1:s serier och KL1:s `kl_*` har `publish=False`?
+     Rekommendation: inte än. Brevet visar i dag aldrig värden för `publish=False`-serier. Antennerna kan få en rad med
+     bara utslagen (inga värden) efter den första osedda läsningen, i en egen post;
+   - byta F0:s "kunde prövas" mot antalet ursprung där Y finns i fönstret (R28-5). Rekommendation: ja, en daterad post
+     före läsningen omkring 2027-01-31;
+   - EL1: en extra rad med förändring i takt för orderstockarna, så att riktningen nedåt kan prövas. Rekommendation:
+     ja, i samma post;
+   - KL1: en symmetrisk läsning bredvid den låsta, före Oracle omkring 2026-12-11. Rekommendation: ja;
+   - läsa Quantas 10-Q för förvärv (R28-7), utanför körning 16 eftersom det är en ny läsning. Rekommendation: ja, före
+     2027-01-31.
 
 ## Viktiga datum
 

@@ -95,6 +95,21 @@ Brevet är inte ett register som ögonblicksbilden. Det kan genereras om, och `p
 det är nytt eller ändrat. Om brevsteget fallerar committas ögonblicksbilden ändå (steget har
 `continue-on-error`), och brevet körs för hand. Hemsidan visar breven under Månadsbrev.
 
+## Följda frågor (antenner)
+
+De följda frågornas rapporter (KL1 kreditlagret, LT1 ledtid, BG1 betalningsgapet, EL1 elflaskhalsen) och antennraden
+körs **månadsvis i samband med ögonblicksbilden, manuellt tills vidare**. De ingår inte i `snapshot.yml`, och de är
+inte ett register: de kan genereras om, och inget skrivs i `snapshots/` eller `forecasts/`.
+
+```
+python -m ai_tracker.followed antenner --as-of <dag>      # en rad per fråga mot dagen en månad tidigare
+python -m ai_tracker.followed <fråga> --as-of <dag>       # frågans egen rapport (kreditlagret, ledtid, ...)
+```
+
+Dagen är ögonblicksbildens datum. Bara rader med `known_from` ≤ dagen används. Resultatet läggs in för hand i
+`docs/resultat/<fråga>.md` och `docs/resultat/antenner.md`. Serierna `lt1_*` och `kl_*` har `publish=False`, och
+antennerna ingår inte i det publika månadsbrevet förrän ägaren har beslutat det (`docs/steg2/STATUS.md`).
+
 ## Kvartalsrapport
 
 Efter ögonblicksbilden för kvartalets sista månad (mars, juni, september, december) skriver `snapshot.yml` också
