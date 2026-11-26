@@ -9,8 +9,9 @@ röd veckohämtning).
 
 - Veckohämtningen 2026-11-25 fallerade bara på aktualitet: Baidus fyra tabellserier (CN1) fick ingen data i
   Actions-cachen, eftersom EDGAR:s `index.json` för en 6-K från 2021 svarade 502. Hämtaren läser nu filingens
-  `-index.htm` vid 5xx (beslutsloggen 2026-11-26). Om felet är borta visar nästa veckohämtning.
-- npm gav 429 för två serier. De är inte för gamla än. Behöver åtgärdas om det upprepas.
+  `-index.htm` vid 5xx (beslutsloggen 2026-11-26). En manuell veckohämtning 2026-11-26 var grön, med alla
+  fyra serierna (32 rader var) och aktualiteten ok.
+- npm gav 429 för två serier 2026-11-25, men de gick igenom 2026-11-26.
 
 ### Körning 15: KL1 Kreditlagret, en följd fråga (2026-11-25)
 

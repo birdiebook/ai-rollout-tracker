@@ -1326,9 +1326,9 @@ Johannes svarade "kör på dina rekommendationer" på tre rekommendationer samma
   Sidan listar samma dokument med storlek i byte, så `candidate_docs` väljer samma pressmeddelande. Ett 4xx stoppar
   som förut (403 och 429: fair access). Ingen gräns och inget mått ändras, så ingen registerpost behövs. Att hoppa
   över filingen förkastades, eftersom det tyst kan tappa ett pressmeddelande och flytta en årgång.
-- **Inte verifierat lokalt.** Sessionen når inte sec.gov. Om 502-felet var tillfälligt eller hör till just den
-  filingen visar nästa veckohämtning.
-- **Också i loggen:** `g3_npm_openai_w` och `g3_npm_anthropic_sdk_w` fick 429 från api.npmjs.org. De är inte för
-  gamla än (gränsen är 7 + 30 dagar efter senaste vecka). Om 429 kommer igen nästa vecka behöver npm-hämtningen
-  glesas ut.
+- **Verifierat i CI.** En manuell veckohämtning på main (e137574, 2026-11-26) var grön. De fyra Baidu-serierna fick 32
+  rader var, aktualitetskontrollen var ok och snapshoten har 854 serier. Loggen visar inte om reservvägen användes
+  eller om 502-felet hade gått över. Sessionen nådde inte sec.gov, så det gick inte att pröva lokalt.
+- **Också i loggen 2026-11-25:** `g3_npm_openai_w` och `g3_npm_anthropic_sdk_w` fick 429 från api.npmjs.org. I
+  körningen 2026-11-26 gick båda igenom. Om 429 kommer tillbaka behöver npm-hämtningen glesas ut.
 
