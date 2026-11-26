@@ -1455,3 +1455,23 @@ Johannes svarade "kör på dina rekommendationer" på tre rekommendationer samma
   spår, inga utslag ändras. (2) En mening i antennerna om R28-4. Rekommendation: ja. (3) R28-5 som daterad post före
   läsningen omkring 2027-01-31. Rekommendation: ja, med de nuvarande raderna kvar som huvudläsning. (4) Läs Quantas 10-Q
   för förvärv (R28-7). Rekommendation: ja, som fakta i källdokumenten.
+
+## 2026-11-26 – X25 rättning efter R28 (antenner)
+
+- **Vad.** Rättning av R28-1 till R28-5 i `auto16/integration16`, efter registerposten "2026-11-26 – X25" (committad
+  ensam före koden). Inget mått, ingen läsregel och inget utslag ändrat: utslagen för LT1, BG1 och EL1 per 2025-11-26,
+  2026-11-26 och 2026-12-31 är identiska före och efter (jämfört i en separat worktree på koden före rättningen).
+- **Sedda data per läsning (R28-1).** En läsning är sedd när de värden utfallet vilar på är desamma som i läsningen per
+  registerdagen. Valt framför `known_from` per kvartal, eftersom PPI-månader får en ny version när de blir slutliga utan
+  att värdet ändras. Kostnad: en extra beräkning per fråga efter registerdagen (1–4 s).
+- **Förvärv (R28-2).** Alla förvärv per kvartal, med riktning. Som beskrivning: Boyd Thermal måste ha lagt till mer än
+  cirka 3,6 mdr USD till Eatons orderstock för att huvudläsningens X vid 2026Q2 ska hamna under 10. Eatons hela ökning
+  2026Q1 var 3,0 mdr. Avvikelsen i "efter" (R28-8) är loggad i posten.
+- **Antenner (R28-3, R28-4).** BG1:s fakta har alltid radens kvartal. Antennerna anger huvudläsningens serier och säger
+  att LT1 och EL1 har samma huvudpar och är en observation.
+- **R28-5 delvis.** F0:s räkning står kvar. Bredvid den: Y känt i hela fönstret, impulser lästa mot Y och riktningen som
+  inte prövats (elpriset mot capex: Y känt i 27 av 267 ursprung).
+- **Öppet för Johannes:** (1) Byta F0:s "kunde prövas" mot antalet ursprung med Y i fönstret. Rekommendation: ja, som en
+  egen post före läsningen omkring 2027-01-31. (2) EL1:s extra rad med förändring i takt för orderstockarna, så att
+  riktningen nedåt kan prövas. Rekommendation: ja, i samma post. (3) Quantas förvärv (R28-7) är fortfarande okontrollerade
+  och kräver en läsning av Quantas 10-Q, utanför den här körningen (ingen ny källa). Rekommendation: ja, före 2027-01-31.

@@ -185,6 +185,8 @@ månader då de första osedda läsningarna börjar komma.
 *t*, om den inte avgjorts) blev känt efter registerdagen. *Tester:* tre strikta xfail (BG1 och EL1 per 2026-11-30 på
 syntetiska data som alla är kända före registerdagen; LT1 med en ny rad i en annan rad än huvudläsningen).
 
+**Rättat i X25** (registret 2026-11-26 X25, punkt 1): "sedd" avgörs per läsning genom att jämföra de värden utfallet vilar på med läsningen per registerdagen (en ny version med samma värde räknas inte som ny). De tre strikta xfail är vanliga tester, och `tests/test_x25_antenner.py` prövar att en läsning med ett nytt kvartal märks osedd.
+
 ### R28-2 (should_fix): överlappande förvärv i LT1, fel riktning i resultatdokumentet
 
 `ledtid.acquisition_quarters` bygger märkena med `setdefault`, så när två förvärv träffar samma kvartal visas bara det
@@ -199,6 +201,8 @@ data.
 *Rättning (förslag):* lista alla förvärv per kvartal, med riktning (*a*, *a* + 1 upp; *a* + 4, *a* + 5 ned), och rätta
 meningen i resultatdokumentet. *Test:* en strikt xfail.
 
+**Rättat i X25** (punkt 2): alla förvärv listas per kvartal med förskjutning och riktning, och meningen i `docs/resultat/ledtid.md` är rättad. Som beskrivning står där också att X vid 2026Q2 hamnar under gränsen 10 först om Boyd Thermal lade till mer än omkring 3,6 mdr USD (Eatons hela ökning 2026Q1 var 3,0 mdr). Den strikta xfail är ett vanligt test.
+
 ### R28-3 (should_fix): BG1:s antenn visar en ändring som inte är en
 
 BG1:s fakta för bolagsraderna har kvartalet med bara när det skiljer sig från huvudläsningens *t* (Oracle lämnar in
@@ -208,6 +212,8 @@ fast Oracles utslag och kvartal är desamma. Det står så i `docs/resultat/ante
 
 *Rättning (förslag):* skriv alltid ut radens kvartal i faktan, eller jämför utslag och kvartal var för sig. *Test:* en
 strikt xfail.
+
+**Rättat i X25** (punkt 3): faktan har alltid radens kvartal. Den strikta xfail är ett vanligt test.
 
 ### R28-4 (should_fix): LT1 och EL1 läser samma rörelse med motsatt tecken
 
@@ -219,6 +225,8 @@ belägg. `docs/resultat/antenner.md` säger att frågorna delar capex-takten, me
 
 *Rättning (förslag):* en mening i antennernas rapport (kod, inte register) om att LT1:s huvudläsning och EL1:s
 huvudläsning bygger på samma två serier, och att de tillsammans inte är mer än en observation. Inget test (text).
+
+**Rättat i X25** (punkt 3): varje antenn anger huvudläsningens X och Y som katalogserier, och antennernas rapport har avsnittet "Samma serier i flera frågor" som säger att LT1 och EL1 har samma huvudpar och tillsammans är en observation. LT1:s och EL1:s resultatdokument säger det också. Test i `tests/test_x25_antenner.py`.
 
 ### R28-5 (should_fix): "kunde prövas" räknar ursprung där Y inte finns, och regeln läser i praktiken bara uppgång
 
@@ -233,6 +241,8 @@ nedåt av 7. Rapporterna redovisar räkningarna, och EL1:s post säger det själ
 riktningen nedåt har inte prövats.
 
 *Rättning (förslag):* beslut för Johannes, eftersom det ändrar låsta poster (se nedan). Inget test.
+
+**Delvis rättat i X25** (punkt 4): F0:s räkning står kvar, och bredvid den visar varje rad i hur många ursprung Y var känt i hela fönstret (för elpriset mot capex 27 av 267) och hur många impulser som kunde läsas mot Y, och säger vilken riktning som inte har prövats. Att byta F0:s räkning och EL1:s extra rad med förändring i takt är kvar som beslut för Johannes.
 
 ### R28-6 (note): BG1:s regimmarkör missar Amazons förkortade nyttjandeperiod
 
@@ -254,7 +264,7 @@ huvudläsningen tolkas, och att resultatet förs in som ett belagt förvärv ell
 Posten säger att ursprung i kvartalen *a*, *a* + 1, *a* + 4 och *a* + 5 märks. I "efter" är ursprunget köparens kvartal,
 och koden märker i stället det kvartal där leverantören (Y) avgjorde läsningen. Det är mer meningsfullt, eftersom det är
 där leverantörens förändring i takt läses, men det är en avvikelse från posten. Den bör loggas med datum. Kvartal i
-fönstret som lästes utan att avgöra märks inte.
+fönstret som lästes utan att avgöra märks inte. **Loggat i X25** (registret 2026-11-26 X25, punkt 2).
 
 ### R28-9 (note): vad två av `ob_*`-talen innehåller
 

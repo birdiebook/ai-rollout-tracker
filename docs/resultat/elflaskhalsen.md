@@ -1,5 +1,7 @@
 # Elflaskhalsen: följd fråga (EL1)
 
+*Rättad efter granskningen R28 (rättningsspår X25, `docs/mattregister.md`, 2026-11-26 X25): förbehållet om sedda data avgörs nu per läsning och inte av läsdagen, och varje rad visar hur ofta Y var känt i hela fönstret och vilken riktning som inte har prövats (för elpriset mot capex var Y känt i 27 av 267 ursprung, inte 213). Inga utslag ändrades. Rapporterna nedan är genererade på nytt med kommandot.*
+
 **Frågan:** Blir el den bindande begränsningen för utbyggnaden?
 
 Följd fråga, inte en gren. Måtten, aggregaten, läsregeln och gränserna låstes i registret innan något räknades
@@ -16,6 +18,8 @@ Den använder bara rader som var kända på dagen. Nedan står rapporten per 202
 att huvudläsningen per 2026-11-26 därför sannolikt skulle bli "talar emot" (posten, avsnitt (f)). Det blev den.
 Utslagen är inga utfall på osedda data. Den första läsningen på osedda kvartal kommer när inre lagrets capex för 2026Q4
 är känd, omkring 2027-01-31, och för Digital Realty omkring 2027-01-24.
+
+**Samma par som LT1.** Huvudläsningens X (orderstock elnät = `rpo_pwr` + `rpo_etn`) är exakt LT1:s L1, och Y (`kl_capex4_inner`) är LT1:s K-inre. EL1 läser takten med tecken −, LT1 förändringen i takt med tecken +. Samma kvartal (ursprung 2026Q2, capex +9,6 vid 2026Q3) ger därför "talar emot" här och "talar för" i LT1. Det är två läsningar av samma rörelse och tillsammans inte mer än en observation (R28-4).
 
 ## Vad som skiljer de två dagarna (beskrivning, inget test)
 
@@ -126,33 +130,42 @@ F0:s symmetriska regel: X:s takt mot Y:s förändring i takt, tecken −1, föns
 
 Takten för X gör att en ihållande åtstramning räknas som en impuls varje kvartal. Har X impulser åt bara ett håll avgörs utslaget i praktiken av Y, och den andra riktningen prövas inte. Hur ofta det hänt står under varje rad.
 
-Alla kvartal i den här läsningen var publicerade före registerposten 2026-11-26, och Y:s senaste värden för capex var sedda före posten (posten, avsnitt (f)). Läsningen är därför inget utfall på osedda data. Den första osedda läsningen: inre lagrets capex för 2026Q4 när alla fyra har lämnat in, omkring 2027-01-31; Digital Realty 2026Q4 omkring 2027-01-24.
+Alla läsningar nedan vilar bara på värden som var publicerade före registerposten 2026-11-26, och Y:s senaste värden för capex var sedda före posten (posten, avsnitt (f)). Ingen av läsningarna är därför ett utfall på osedda data. Den första osedda läsningen: inre lagrets capex för 2026Q4 när alla fyra har lämnat in, omkring 2027-01-31; Digital Realty 2026Q4 omkring 2027-01-24. Sedda data avgörs per läsning (X25, punkt 1).
 
 **Mot capex inre lagret:**
 
 - **Elpris (PPI, kommersiella kunder):** inget av mönstren. t = 2026Q3 (ingen impuls i fönstret). X = el1_pris4 (takt), Y = kl_capex4_inner (förändring i takt); fönster 2 kvartal, tecken −.
   Regeln kunde prövas i 213 av 267 ursprung med X (1959Q4–2026Q2). Impulser uppåt 62 (för 7, emot 1, inget 0, kan inte avgöras 54), nedåt 0 (för 0, emot 0, inget 0, kan inte avgöras 0), utan impuls 205.
+  Y var känt i hela fönstret i 27 av 267 ursprung, och 8 av 62 impulser kunde läsas mot Y. Riktningen nedåt har inte prövats: X har inte haft någon impuls nedåt.
   X har takt från 1959Q4 och Y förändring i takt från 2019Q4. Ett ursprung före 2019Q3 kan bara bli inget av mönstren (utan impuls) eller kan inte avgöras (Y saknas).
 - **Last (fem balansområden):** talar emot, uppåt. t = 2026Q3; ursprung 2026Q2, X +2,9 (gräns ±2,0), uppgång, Y +9,6 vid 2026Q3 (gräns ±5,0). X = el1_last4 (takt), Y = kl_capex4_inner (förändring i takt); fönster 2 kvartal, tecken −.
   Regeln kunde prövas i 23 av 23 ursprung med X (2020Q4–2026Q2). Impulser uppåt 15 (för 6, emot 7, inget 2, kan inte avgöras 0), nedåt 1 (för 1, emot 0, inget 0, kan inte avgöras 0), utan impuls 7.
+  Y var känt i hela fönstret i 22 av 23 ursprung, och 16 av 16 impulser kunde läsas mot Y.
 - **Orderstock elnät (Quanta + Eaton, MUSD) (huvudläsning):** talar emot, uppåt. t = 2026Q3; ursprung 2026Q2, X +45,3 (gräns ±10,0), uppgång, Y +9,6 vid 2026Q3 (gräns ±5,0). X = el1_ob_nat (takt), Y = kl_capex4_inner (förändring i takt); fönster 2 kvartal, tecken −.
   Regeln kunde prövas i 20 av 20 ursprung med X (2021Q3–2026Q2). Impulser uppåt 20 (för 9, emot 9, inget 2, kan inte avgöras 0), nedåt 0 (för 0, emot 0, inget 0, kan inte avgöras 0), utan impuls 0.
+  Y var känt i hela fönstret i 19 av 20 ursprung, och 20 av 20 impulser kunde läsas mot Y. Riktningen nedåt har inte prövats: X har inte haft någon impuls nedåt.
+  Läsningen vilar bara på värden som var kända före registerposten 2026-11-26, och den är därför inget utfall på osedda data.
 - **Orderstock gasturbiner (GE Vernova, GW):** talar emot, uppåt. t = 2026Q3; ursprung 2026Q2, X +74,6 (gräns ±10,0), uppgång, Y +9,6 vid 2026Q3 (gräns ±5,0). X = ob_gev_backlog_and_slot_reservations_gas_power_equipment_end_level_gw (takt), Y = kl_capex4_inner (förändring i takt); fönster 2 kvartal, tecken −.
   Regeln kunde prövas i 2 av 2 ursprung med X (2026Q1–2026Q2). Impulser uppåt 2 (för 0, emot 2, inget 0, kan inte avgöras 0), nedåt 0 (för 0, emot 0, inget 0, kan inte avgöras 0), utan impuls 0.
+  Y var känt i hela fönstret i 1 av 2 ursprung, och 2 av 2 impulser kunde läsas mot Y. Riktningen nedåt har inte prövats: X har inte haft någon impuls nedåt.
 
 **Mot tecknade MW (Digital Realty):**
 
 - **Elpris (PPI, kommersiella kunder):** inget av mönstren. t = 2026Q3 (ingen impuls i fönstret). X = el1_pris4 (takt), Y = el1_dlr_mw4 (förändring i takt); fönster 2 kvartal, tecken −.
   Regeln kunde prövas i 206 av 267 ursprung med X (1959Q4–2026Q2). Impulser uppåt 62 (för 0, emot 1, inget 0, kan inte avgöras 61), nedåt 0 (för 0, emot 0, inget 0, kan inte avgöras 0), utan impuls 205.
+  Y var känt i hela fönstret i 10 av 267 ursprung, och 1 av 62 impulser kunde läsas mot Y. Riktningen nedåt har inte prövats: X har inte haft någon impuls nedåt.
   X har takt från 1959Q4 och Y förändring i takt från 2024Q1. Ett ursprung före 2023Q4 kan bara bli inget av mönstren (utan impuls) eller kan inte avgöras (Y saknas).
 - **Last (fem balansområden):** talar emot, uppåt. t = 2026Q3; ursprung 2026Q2, X +2,9 (gräns ±2,0), uppgång, Y +100,4 vid 2026Q3 (gräns ±10,0). X = el1_last4 (takt), Y = el1_dlr_mw4 (förändring i takt); fönster 2 kvartal, tecken −.
   Regeln kunde prövas i 16 av 23 ursprung med X (2020Q4–2026Q2). Impulser uppåt 15 (för 4, emot 5, inget 0, kan inte avgöras 6), nedåt 1 (för 0, emot 0, inget 0, kan inte avgöras 1), utan impuls 7.
+  Y var känt i hela fönstret i 10 av 23 ursprung, och 9 av 16 impulser kunde läsas mot Y.
   X har takt från 2020Q4 och Y förändring i takt från 2024Q1. Ett ursprung före 2023Q4 kan bara bli inget av mönstren (utan impuls) eller kan inte avgöras (Y saknas).
 - **Orderstock elnät (Quanta + Eaton, MUSD):** talar emot, uppåt. t = 2026Q3; ursprung 2026Q2, X +45,3 (gräns ±10,0), uppgång, Y +100,4 vid 2026Q3 (gräns ±10,0). X = el1_ob_nat (takt), Y = el1_dlr_mw4 (förändring i takt); fönster 2 kvartal, tecken −.
   Regeln kunde prövas i 11 av 20 ursprung med X (2021Q3–2026Q2). Impulser uppåt 20 (för 4, emot 7, inget 0, kan inte avgöras 9), nedåt 0 (för 0, emot 0, inget 0, kan inte avgöras 0), utan impuls 0.
+  Y var känt i hela fönstret i 10 av 20 ursprung, och 11 av 20 impulser kunde läsas mot Y. Riktningen nedåt har inte prövats: X har inte haft någon impuls nedåt.
   X har takt från 2021Q3 och Y förändring i takt från 2024Q1. Ett ursprung före 2023Q4 kan bara bli inget av mönstren (utan impuls) eller kan inte avgöras (Y saknas).
 - **Orderstock gasturbiner (GE Vernova, GW):** talar emot, uppåt. t = 2026Q3; ursprung 2026Q2, X +74,6 (gräns ±10,0), uppgång, Y +100,4 vid 2026Q3 (gräns ±10,0). X = ob_gev_backlog_and_slot_reservations_gas_power_equipment_end_level_gw (takt), Y = el1_dlr_mw4 (förändring i takt); fönster 2 kvartal, tecken −.
   Regeln kunde prövas i 2 av 2 ursprung med X (2026Q1–2026Q2). Impulser uppåt 2 (för 0, emot 2, inget 0, kan inte avgöras 0), nedåt 0 (för 0, emot 0, inget 0, kan inte avgöras 0), utan impuls 0.
+  Y var känt i hela fönstret i 1 av 2 ursprung, och 2 av 2 impulser kunde läsas mot Y. Riktningen nedåt har inte prövats: X har inte haft någon impuls nedåt.
 
 ### 6. Att bevaka
 
@@ -258,17 +271,21 @@ F0:s symmetriska regel: X:s takt mot Y:s förändring i takt, tecken −1, föns
 
 Takten för X gör att en ihållande åtstramning räknas som en impuls varje kvartal. Har X impulser åt bara ett håll avgörs utslaget i praktiken av Y, och den andra riktningen prövas inte. Hur ofta det hänt står under varje rad.
 
-Alla kvartal i den här läsningen var publicerade före registerposten 2026-11-26, och Y:s senaste värden för capex var sedda före posten (posten, avsnitt (f)). Läsningen är därför inget utfall på osedda data. Den första osedda läsningen: inre lagrets capex för 2026Q4 när alla fyra har lämnat in, omkring 2027-02-01; Digital Realty 2026Q4 omkring 2027-01-24.
+Alla läsningar nedan vilar bara på värden som var publicerade före registerposten 2026-11-26, och Y:s senaste värden för capex var sedda före posten (posten, avsnitt (f)). Ingen av läsningarna är därför ett utfall på osedda data. Den första osedda läsningen: inre lagrets capex för 2026Q4 när alla fyra har lämnat in, omkring 2027-02-01; Digital Realty 2026Q4 omkring 2027-01-24. Sedda data avgörs per läsning (X25, punkt 1).
 
 **Mot capex inre lagret:**
 
 - **Elpris (PPI, kommersiella kunder):** kan inte avgöras. t = 2025Q3 (X saknas vid 2025Q2). X = el1_pris4 (takt), Y = kl_capex4_inner (förändring i takt); fönster 2 kvartal, tecken −.
   Regeln kunde prövas i 208 av 262 ursprung med X (1959Q4–2025Q1). Impulser uppåt 62 (för 7, emot 1, inget 0, kan inte avgöras 54), nedåt 0 (för 0, emot 0, inget 0, kan inte avgöras 0), utan impuls 200.
+  Y var känt i hela fönstret i 23 av 262 ursprung, och 8 av 62 impulser kunde läsas mot Y. Riktningen nedåt har inte prövats: X har inte haft någon impuls nedåt.
   X har takt från 1959Q4 och Y förändring i takt från 2019Q4. Ett ursprung före 2019Q3 kan bara bli inget av mönstren (utan impuls) eller kan inte avgöras (Y saknas).
 - **Last (fem balansområden):** kan inte avgöras. t = 2025Q3; ursprung 2025Q2, X +2,9 (gräns ±2,0), uppgång (fönstret öppet till 2025Q4). X = el1_last4 (takt), Y = kl_capex4_inner (förändring i takt); fönster 2 kvartal, tecken −.
   Regeln kunde prövas i 18 av 19 ursprung med X (2020Q4–2025Q2). Impulser uppåt 11 (för 6, emot 4, inget 0, kan inte avgöras 1), nedåt 1 (för 1, emot 0, inget 0, kan inte avgöras 0), utan impuls 7.
+  Y var känt i hela fönstret i 18 av 19 ursprung, och 11 av 12 impulser kunde läsas mot Y.
 - **Orderstock elnät (Quanta + Eaton, MUSD) (huvudläsning):** kan inte avgöras. t = 2025Q3; ursprung 2025Q2, X +21,5 (gräns ±10,0), uppgång (fönstret öppet till 2025Q4). X = el1_ob_nat (takt), Y = kl_capex4_inner (förändring i takt); fönster 2 kvartal, tecken −.
   Regeln kunde prövas i 15 av 16 ursprung med X (2021Q3–2025Q2). Impulser uppåt 16 (för 9, emot 6, inget 0, kan inte avgöras 1), nedåt 0 (för 0, emot 0, inget 0, kan inte avgöras 0), utan impuls 0.
+  Y var känt i hela fönstret i 15 av 16 ursprung, och 15 av 16 impulser kunde läsas mot Y. Riktningen nedåt har inte prövats: X har inte haft någon impuls nedåt.
+  Läsningen vilar bara på värden som var kända före registerposten 2026-11-26, och den är därför inget utfall på osedda data.
 - **Orderstock gasturbiner (GE Vernova, GW):** kan inte avgöras. t = 2025Q3 (X saknas vid 2025Q1; X saknas vid 2025Q2). X = ob_gev_backlog_and_slot_reservations_gas_power_equipment_end_level_gw (takt), Y = kl_capex4_inner (förändring i takt); fönster 2 kvartal, tecken −.
   Regeln kunde inte prövas: X saknas i hela historiken.
 
@@ -276,12 +293,15 @@ Alla kvartal i den här läsningen var publicerade före registerposten 2026-11-
 
 - **Elpris (PPI, kommersiella kunder):** kan inte avgöras. t = 2025Q3 (X saknas vid 2025Q2). X = el1_pris4 (takt), Y = el1_dlr_mw4 (förändring i takt); fönster 2 kvartal, tecken −.
   Regeln kunde prövas i 201 av 262 ursprung med X (1959Q4–2025Q1). Impulser uppåt 62 (för 0, emot 1, inget 0, kan inte avgöras 61), nedåt 0 (för 0, emot 0, inget 0, kan inte avgöras 0), utan impuls 200.
+  Y var känt i hela fönstret i 6 av 262 ursprung, och 1 av 62 impulser kunde läsas mot Y. Riktningen nedåt har inte prövats: X har inte haft någon impuls nedåt.
   X har takt från 1959Q4 och Y förändring i takt från 2024Q1. Ett ursprung före 2023Q4 kan bara bli inget av mönstren (utan impuls) eller kan inte avgöras (Y saknas).
 - **Last (fem balansområden):** talar för mekanismen, uppåt. t = 2025Q3; ursprung 2025Q2, X +2,9 (gräns ±2,0), uppgång, Y -100,8 vid 2025Q3 (gräns ±10,0). X = el1_last4 (takt), Y = el1_dlr_mw4 (förändring i takt); fönster 2 kvartal, tecken −.
   Regeln kunde prövas i 12 av 19 ursprung med X (2020Q4–2025Q2). Impulser uppåt 11 (för 3, emot 2, inget 0, kan inte avgöras 6), nedåt 1 (för 0, emot 0, inget 0, kan inte avgöras 1), utan impuls 7.
+  Y var känt i hela fönstret i 6 av 19 ursprung, och 5 av 12 impulser kunde läsas mot Y.
   X har takt från 2020Q4 och Y förändring i takt från 2024Q1. Ett ursprung före 2023Q4 kan bara bli inget av mönstren (utan impuls) eller kan inte avgöras (Y saknas).
 - **Orderstock elnät (Quanta + Eaton, MUSD):** talar för mekanismen, uppåt. t = 2025Q3; ursprung 2025Q2, X +21,5 (gräns ±10,0), uppgång, Y -100,8 vid 2025Q3 (gräns ±10,0). X = el1_ob_nat (takt), Y = el1_dlr_mw4 (förändring i takt); fönster 2 kvartal, tecken −.
   Regeln kunde prövas i 7 av 16 ursprung med X (2021Q3–2025Q2). Impulser uppåt 16 (för 3, emot 4, inget 0, kan inte avgöras 9), nedåt 0 (för 0, emot 0, inget 0, kan inte avgöras 0), utan impuls 0.
+  Y var känt i hela fönstret i 6 av 16 ursprung, och 7 av 16 impulser kunde läsas mot Y. Riktningen nedåt har inte prövats: X har inte haft någon impuls nedåt.
   X har takt från 2021Q3 och Y förändring i takt från 2024Q1. Ett ursprung före 2023Q4 kan bara bli inget av mönstren (utan impuls) eller kan inte avgöras (Y saknas).
 - **Orderstock gasturbiner (GE Vernova, GW):** kan inte avgöras. t = 2025Q3 (X saknas vid 2025Q1; X saknas vid 2025Q2). X = ob_gev_backlog_and_slot_reservations_gas_power_equipment_end_level_gw (takt), Y = el1_dlr_mw4 (förändring i takt); fönster 2 kvartal, tecken −.
   Regeln kunde inte prövas: X saknas i hela historiken.
