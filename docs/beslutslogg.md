@@ -1297,3 +1297,21 @@ Johannes svarade "kör på dina rekommendationer" på tre rekommendationer samma
 - **Öppet:** en oberoende granskning av X23:s 58 nya och 6 rättade rader, självkontrollen mot nyhämtade SEC-dokument
   (stoppad av HTTP 429) och Johannes beslut om läsregeln ska läsa åt båda hållen. Granskningen och beslutet bör vara
   klara före Oracles inlämning omkring 2026-12-11.
+
+## 2026-11-25 – X24: granskningen R27 integrerad och R27-1 rättad (körning 15)
+
+- `auto15/r27-kreditlagret` (granskningen R27, cc53679) är mergad på `auto15/integration15`. Bara en rad i
+  kalibreringen kom till, och den hamnade efter X23:s rad. R27:s dom: godkänd med anmärkningar, inget must_fix och
+  ett should_fix.
+- **R27-1 bekräftat.** I de två 10-Q:erna från SpaceX gäller 5,9 % och 6,3 % bolagets övriga finansieringsavtal, som
+  oftast har maskiner och utrustning som säkerhet. Valor-skulden är 99 % av posten. Dess räntekostnad var 351 MUSD
+  under 2026Q3, cirka 10,7 % per år av skulden i snitt.
+- **Rättning.** Registret fick tillägget X24 före koden. Räntekostnaden för Valor-avtalen kodas per kvartal (två nya
+  rader, 460 totalt). Rapporten visar den bredvid bolagets ränta och säger att det inte framgår om Valor-skulden ingår
+  i 6,3 %. Bolagets ränta räknas inte i en framtida kupongserie för SpaceX. De 53 serierna, måtten, läsningarna och
+  rapporten per 2025-11-25 är oförändrade.
+- **Anmärkningarna.** B (regelordningen) är beskriven i registret och i källdokumentet, och koden gäller. A, C och D
+  ändras inte: A ger inget läckage, och C och D stämmer med källdokumentet.
+- **Självkontroll.** SpaceX:s 46 rader, med de två nya, mot nyhämtade dokument: 46 av 46 ok. Tre anrop till SEC, ett
+  i taget, inget 429. Med R27:s 458 av 458 täcker självkontrollen alla rader.
+- **Öppet:** Johannes beslut om läsregeln ska läsa åt båda hållen, före Oracles inlämning omkring 2026-12-11.

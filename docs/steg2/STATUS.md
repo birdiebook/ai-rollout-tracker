@@ -1,24 +1,27 @@
 # Status steg 2
 
-Uppdateras av orkestreraren vid varje milstolpe. Senast: 2026-11-25 (integrationen av KL1, körning 15).
+Uppdateras av orkestreraren vid varje milstolpe. Senast: 2026-11-25 (KL1 med granskningen R27 och rättningen X24, körning 15).
 
 ## Läge
 
 ### Körning 15: KL1 Kreditlagret, en följd fråga (2026-11-25)
 
-- **Status:** KL1 är byggd, granskad (R26) och rättad (X23), och integrerad på grenen `auto15/integration15` med
-  main. 53 katalogserier `kl_*` med `publish=False` och klassen `ja`. Ingen kärnserie, och inget grentillstånd ändras.
-  Data är inlagd i den delade basen ur X23:s arbetskopia.
+- **Status:** KL1 är byggd, granskad (R26 och R27) och rättad (X23 och X24), och integrerad på grenen
+  `auto15/integration15` med main. 53 katalogserier `kl_*` med `publish=False` och klassen `ja`. Ingen kärnserie,
+  och inget grentillstånd ändras. Data är inlagd i den delade basen ur X23:s arbetskopia. X24 ändrade ingen serie.
 - **Frågan:** ändras finansieringens pris och tillgång i de yttre lagren (Oracle, CoreWeave, Nebius, IREN), och följer
   investeringstakten med? Det inre lagret (Microsoft, Alphabet, Amazon, Meta) är jämförelsen. Registret har posten
-  "KL1" och två tillägg (KL1 och X23).
+  "KL1" och tilläggen KL1, X23 och X24.
 - **Läs:** [resultat/kreditlagret.md](../resultat/kreditlagret.md). Varje månad:
   `python -m ai_tracker.followed kreditlagret --as-of <dag>`. Källor: [kallor/kreditlagret.md](../kallor/kreditlagret.md).
-  Granskning: [granskning/r26_kreditlagret.md](../granskning/r26_kreditlagret.md).
+  Granskning: [granskning/r26_kreditlagret.md](../granskning/r26_kreditlagret.md) och
+  [granskning/r27_kreditlagret.md](../granskning/r27_kreditlagret.md).
 - **Förbehåll:** läsningarna per 2026-11-25 gäller kvartal som var sedda före registerposten. Den första läsningen på
-  osedda data kommer med Oracle omkring 2026-12-11. Yttre lagret kan avgöras först med 2026Q4 (februari 2027). X23:s
-  58 nya och 6 rättade rader var inte oberoende granskade vid integrationen. Självkontrollen mot nyhämtade
-  SEC-dokument stoppades av HTTP 429 (mot cachen 458 av 458).
+  osedda data kommer med Oracle omkring 2026-12-11. Yttre lagret kan avgöras först med 2026Q4 (februari 2027).
+  Självkontrollen mot nyhämtade dokument täcker alla 460 rader (R27 458 av 458, X24 SpaceX:s 46 av 46). R26 och R27
+  har läst de 458 äldre raderna. X24:s två nya rader är de tal som R27 citerade från samma platser, men de har inte
+  granskats separat. SpaceX:s ränta på övrig finansiering visas med räntekostnaden för Valor-skulden (cirka 10,7 % per
+  år för 2026Q3), inte bara med bolagets 6,3 %.
 - **Väntar på ägarbeslut:** ska läsregeln läsa åt båda hållen? Rekommendation: låt regeln vara till den första
   läsningen på osedda data. Ett byte kräver en ny daterad registerpost före den läsningen.
 

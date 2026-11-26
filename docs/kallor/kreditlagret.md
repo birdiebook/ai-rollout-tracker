@@ -2,7 +2,8 @@
 
 Följd fråga: "Ändras finansieringens pris och tillgång i de yttre lagren, och följer investeringstakten där med?"
 Måtten, läsregeln och kodningsreglerna står i `docs/mattregister.md`, posten "2026-11-25 – KL1", dess tillägg och
-rättningen "2026-11-25 – X23" efter granskningen R26 (`docs/granskning/r26_kreditlagret.md`).
+rättningen "2026-11-25 – X23" efter granskningen R26 (`docs/granskning/r26_kreditlagret.md`) och rättningen
+"2026-11-25 – X24" efter granskningen R27 (`docs/granskning/r27_kreditlagret.md`).
 Rapporten står i `docs/resultat/kreditlagret.md`.
 
 ## Två slags underlag
@@ -10,7 +11,7 @@ Rapporten står i `docs/resultat/kreditlagret.md`.
 1. **Härledda serier ur katalogen** (`src/ai_tracker/series/kreditlagret.py`). De bygger på befintliga XBRL-serier:
    `capex_*`, `ocf_*`, `interest_exp_*`, `lt_debt_*`, `debt_issued_*`, `debt_repaid_*`, `lease_uncommenced_*` och
    `rpo_*`. Inga nya hämtningar. Versionerna dateras som A5: `known_from` = den senaste komponenten som används.
-2. **Extraktion ur EDGAR-text** (`curated/kreditlagret.csv`, 458 rader, 81 instrument). Lån, ramar och åtaganden som
+2. **Extraktion ur EDGAR-text** (`curated/kreditlagret.csv`, 460 rader, 82 instrument). Lån, ramar och åtaganden som
    inte finns i XBRL: Anthropics registreringsansökan, SpaceX:s 10-Q (xAI), CoreWeaves 8-K och skuldtabeller och Metas
    datacenterbolag. Okodade kandidatrader står med skäl i `curated/kreditlagret_skipped.csv` (753 rader).
 
@@ -22,7 +23,7 @@ sec.gov/privacy). Ingen är kärnserie, och inget grenindex ändras.
 | Bolag | Dokument | Antal | Kodat |
 |---|---|---|---|
 | Anthropic, PBC (CIK 2130357) | S-1 2026-10-26, S-1/A 2026-11-02, 2026-11-10 och 2026-11-17, 424B4 2026-11-19 | 5 | 108 rader ur 424B4, daterade till det tidigaste dokumentet med samma rad och samma balansdag |
-| SpaceX (CIK 1181412, äger xAI) | 10-Q 2026-08-04 och 2026-10-22 (efter noteringen 2026-06-12) | 2 | 44 rader (X23) |
+| SpaceX (CIK 1181412, äger xAI) | 10-Q 2026-08-04 och 2026-10-22 (efter noteringen 2026-06-12) | 2 | 46 rader (44 i X23, 2 i X24) |
 | OpenAI | ingen registreringsansökan (se nedan) | 0 | – |
 | CoreWeave (CIK 1769628) | 10-Q och 10-K 2025-05-15–2026-11-12, och 8-K med post 1.01 eller 2.03 | 7 + 17 | 225 rader ur skuldtabellerna (tolkningen), 61 rader ur 8-K |
 | Meta (CIK 1326801) | 10-Q och 10-K 2025-01-30–2026-10-22 | 8 | 20 rader (Louisiana och Texas) |
@@ -70,7 +71,14 @@ i `lease_uncommenced_orcl`. Inget har kodats.
 - X23 körde självkontrollen igen 2026-11-25. SEC svarade HTTP 429 på CoreWeaves submissions-anrop, och körningen
   stoppades enligt regeln utan nya försök. Kontrollen mot de cachade kopiorna (samma kod, datum mot korpuslistorna ur
   submissions-API:t) gav **458 av 458 rader ok**. De 58 nya och de 6 ändrade raderna lästes för hand mot citatet av
-  agenten. De har ingen oberoende granskning ännu.
+  agenten.
+- R27 hämtade alla dokument igen och körde självkontrollen på de nyhämtade kopiorna 2026-11-25: **458 av 458 ok, 0
+  flyttade**. R27 läste också de 64 rader som X23 lade till eller ändrade: 64 rätt. Alla rader har nu en oberoende
+  granskning (R26 de 394 äldre, R27 de 64 från X23).
+- X24 lade till två rader (räntekostnaden för Valor-avtalen) och körde självkontrollen på SpaceX:s 46 rader mot
+  nyhämtade dokument 2026-11-26: **46 av 46 ok**, också datumen. Tre anrop, ett i taget med 1,5 sekunder emellan, inget
+  403 eller 429. De nyhämtade kopiorna skiljer sig från cachen bara i en skripttagg som SEC:s webbserver lägger sist i
+  svaret. Radlistan är densamma.
 - SEC: den generiska klientidentiteten ur `.env`, en begäran i taget, 0,3 sekunder mellan dokument, stopp vid 403
   eller 429.
 
@@ -105,6 +113,11 @@ Skrivna här och inte i reglerna, som KR1.
    (`spacex_valor_current`, `spacex_valor_noncurrent`) och räknas inte en gång till i den vägda räntan. xAI:s egna lån
    från 2025-06 (12,5 % obligationer på 3 000 MUSD och två terminslån på 1 000 MUSD) kodas, fast de återbetalades
    2026-03. X Corp:s lån från köpet av Twitter kodas inte. SpaceX Notes har fem trancher, så förfallodagen kodas inte.
+   Bolagets vägda fasta ränta för övrig finansiering (5,9 % per 2026-06-30, 6,3 % per 2026-09-30) gäller enligt texten
+   avtal som oftast har maskiner och utrustning som säkerhet. Om Valor-skulden ingår framgår inte. Räntekostnaden för
+   Valor-avtalen (327 MUSD under 2026Q2 och 351 MUSD under 2026Q3) kodas som `interest_expense_q` för `spacex_valor`
+   (X24, R27-1). Rapporten visar den bredvid bolagets ränta, och för 2026Q3 också cirka 10,7 % per år av Valor-skulden
+   i snitt. Bolagets ränta räknas inte i `coupon_out` (X24, punkt 3).
 10. **Anthropics åtaganden per motpart.** SpaceXAI (upp till 120,5 mdr), Nscale (upp till cirka 44,6 mdr) och Lambda
    (cirka 41,3 mdr) kodas som Microsoft, Google och Amazon (X23). Googles TPU-kapacitet utan fast belopp (cirka
    125–150 mdr) kodas som uppskattning. Den kan överlappa spannet 150–175 mdr för avtal utan fast belopp.
@@ -135,7 +148,10 @@ CoreWeave 502, SpaceX 118, Meta 9 och Oracle 3). Kolumnerna är `company`, `acce
 `sources/kreditlagret_coding.SKIP`). 622 skäl sätts av en regel i fasta kategorier (`regel`): bilageförteckning,
 verkligt värde och resultatposter, aktier och konvertering, villkor utanför kodningsreglerna, garanti och säkerhet,
 andra rader i CoreWeaves skuldtabell och annan text i CoreWeaves 10-Q och 10-K. En regelkategori är inte en läsning
-av raden. De flesta regelrader är CoreWeaves 10-Q och 10-K, där balanserna kodas ur skuldtabellen och villkoren ur 8-K.
+av raden. Koden prövar i en annan ordning än X23 punkt 2: agentens eget skäl, bilageförteckning, rader i CoreWeaves
+skuldtabell, verkligt värde och resultatposter, aktier, villkor, garanti och säkerhet, och sist annan text i CoreWeaves
+10-Q och 10-K. Det sista skälet gäller bara CoreWeave, så SpaceX:s rader har agentens skäl. Det påverkar bara
+etiketten, och ordningen i koden gäller (X24, punkt 4 och rättelsen; R27, anmärkning B). De flesta regelrader är CoreWeaves 10-Q och 10-K, där balanserna kodas ur skuldtabellen och villkoren ur 8-K.
 
 ## Kända luckor
 
@@ -158,3 +174,5 @@ av raden. De flesta regelrader är CoreWeaves 10-Q och 10-K, där balanserna kod
 Ordningen i git: registerposten (4bcb077), tillägget före kodningen (60af26f), extraktionen (cdf7811), serierna,
 rapporten och testerna (3694573), därefter dokumenten. Granskningen R26 (32e912f). Rättningen X23: tillägget i
 registret (599b24e) före koden och före hämtningen av SpaceX:s dokument, därefter koden, raderna och dokumenten.
+Granskningen R27 (cc53679). Rättningen X24: tillägget i registret (b5c987e) före koden, därefter koden, de två nya
+raderna, testerna och dokumenten.

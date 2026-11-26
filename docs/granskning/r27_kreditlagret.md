@@ -145,3 +145,17 @@ Hela sviten en gång (9:32 min): 2 341 passerade, 2 fel, 3 överhoppade och 3 xf
 kommer inte från KL1, X23 eller R27. `test_data_quality` gäller körning 14:s serier i den delade basen (`ob_*`,
 `rev_csco_*`, `inv_smci`), och ingen `kl_`-serie finns bland felen. `test_committed_fixtures_are_the_current_synthetic_bundle`
 gäller registrets SHA-256 i fixturen, som ändrades av KL1:s post och X23:s tillägg.
+
+## Rättat i auto15/integration15 (X24)
+
+Rättningsspår X24, 2026-11-25. Registerposten "2026-11-25 – X24" committades före koden (`b5c987e`). Fyndet
+verifierades i de cachade 10-Q:erna och mot nyhämtade kopior.
+
+| Fynd | Rättning |
+|---|---|
+| R27-1 | Räntekostnaden för Valor-avtalen kodas som `interest_expense_q` för `spacex_valor` (327 MUSD för 2026Q2, 351 MUSD för 2026Q3). Rapporten visar den på en egen rad bredvid bolagets 6,3 %, för 2026Q3 med cirka 10,7 % per år av Valor-skulden i snitt. Raden säger att 6,3 % gäller avtal med maskiner och utrustning som säkerhet och att det inte framgår om Valor-skulden ingår. Bolagets ränta räknas inte i `coupon_out`. Testet `test_r27_1_spacex_other_financings_rate_is_qualified` är ett vanligt test |
+| B | Ordningen i koden beskrivs i registret (X24, punkt 4 och rättelsen) och i `docs/kallor/kreditlagret.md`. Koden är oförändrad, så ingen etikett ändras |
+| A, C, D | Inte ändrade. A ger inget läckage. C och D är beskrivningar som redan stämmer med källdokumentet |
+
+De 53 serierna är oförändrade. Självkontrollen mot nyhämtade dokument för SpaceX:s 46 rader, med de två nya: 46 av 46
+ok. Testet för antalet rader säger nu 460 rader, 82 instrument och 46 för SpaceX.
