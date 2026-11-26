@@ -474,6 +474,8 @@ SOURCE_GROUPS: list[tuple[str, str, str]] = [
     # followed question KL1 (run 15; groups added in its integration, as for KR1 and CN1 above)
     ("Kurerad extraktion: kreditlagret", r"curated/kreditlagret\.csv", "kallor/kreditlagret.md"),
     ("KL1: kreditlagret (härledda)", r"^Härledd \(KL1\)", "kallor/kreditlagret.md"),
+    # followed question LT1 (run 16)
+    ("LT1: ledtid i stacken (härledda)", r"^Härledd \(LT1\)", "kallor/ledtid.md"),
     ("Anthropics nyhetsrum", r"anthropic\.com/news", "kallor/labbintakter.md"),
     ("BEA NIPA, releasearkivet", r"^BEA NIPA release archive", "kallor/makro_bea_bls.md"),
     ("BEA NIPA", r"^BEA NIPA", "kallor/census_eu.md"),

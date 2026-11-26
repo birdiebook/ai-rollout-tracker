@@ -3203,3 +3203,144 @@ R27. För att kunna visa att rapporten blir byte för byte densamma genererade a
 2025-11-25 med koden före ändringen. De rapporterna innehåller KL1:s registrerade utslag, som redan står i
 `docs/resultat/kreditlagret.md`. Inga mått för LT1, BG1 eller EL1 har räknats, och inga serier har lästs för värden
 utöver KL1:s rapport.
+
+### 2026-11-26 – LT1: ledtid mellan leverantörernas orderstock och köparnas capex-takt (följd fråga)
+
+Spår LT1, körning 16. Posten låses och committas ensam, innan något mått, utslag eller mönster för LT1 räknas. Den gäller
+en **följd fråga** med F0:s mall (posten "2026-11-26 – F0", avsnitt (a)–(c)). Den ändrar inga kärnserier, inget
+grenindex, ingen tillståndsregel och inga publiceringsflaggor. De nya serierna är katalogserier med `publish=False`.
+
+**Frågan, neutral och åt båda hållen:** "Rör sig order och orderstock hos leverantörerna (kraft, kylning, elnät, nät,
+servrar, datacenterleasing) före eller efter capex-takten hos hyperskalarna och de yttre lagren, och ändras ledtiden?"
+
+**Mekanismen, åt båda hållen.** Köparnas capex blir order hos leverantörerna. Orderstocken växer när order kommer in
+snabbare än leveranserna och krymper när leveranserna går fortare än orderingången. Vänder leverantörernas orderstock
+(upp eller ned) *före* köparnas capex-takt, är den en antenn för takten framåt. Vänder den *efter*, följer den capex och
+säger inget nytt om takten. Båda ordningarna läses, och ingen av dem är vald i förväg.
+
+**(a) Storheterna.** Alla är kvartalsserier i kalenderkvartal (bolagens egen mappning i källserierna). Bara serier som
+redan finns i katalogen. Ingen ny källa och ingen ny extraktion.
+
+*Köparna* (Y i läsningen "före", X i läsningen "efter"):
+- **K-inre:** capex över fyra kvartal för Microsoft, Alphabet, Amazon och Meta, KL1:s `kl_capex4_inner`. Huvudköparen.
+- **K-yttre:** samma för Oracle, CoreWeave, Nebius och IREN, KL1:s `kl_capex4_outer`. Läses bara mot L1 (nedan),
+  eftersom serien börjar 2025Q2 och dess förändring i takt saknas i dag.
+- Båda räknas i rapporten ur `capex_*` med KL1:s formel (`series.kreditlagret.formula("capex4", ...)`), alltså samma
+  värden och samma datering som de lagrade serierna.
+
+*Leverantörerna* (X i "före", Y i "efter"). Medlemmarna är valda efter definition och seriens start, inte efter värden:
+- **L1 Kraft och elnät, `lt1_rpo_power`** = `rpo_etn` + `rpo_pwr`. Eatons orderstock av fasta order (taggad som RPO) och
+  Quantas RPO. Båda har kalenderår och balansdag på kalenderkvartalets sista dag. **Huvudläsningen** (nedan). GE Vernova
+  (`rpo_gev`, från 2024Q1) ingår inte i aggregatet: med den skulle förändringen i takt börja först 2025Q3. Vertiv är
+  BLOCKED: inget RPO i XBRL (S2), och S3:s orderserier är avslutade 2025Q4.
+- **L2 Nät och servrar, `lt1_rpo_net`** = `rpo_csco` + `rpo_dell` + `rpo_smci`. Arista (`rpo_anet`, från 2022Q4) och HPE
+  (`rpo_hpe`, från 2024Q2, bara förutbetalda intäkter enligt bolagets text) ingår inte. Ciscos och Dells RPO har stora
+  tjänstedelar (S1). Ciscos och Dells balanser har räkenskapskvartalets kalenderkvartal, alltså upp till en månad efter
+  kalenderkvartalets slut (S1, "Kalender och datering").
+- **L3 Datacenter, `rpo_eqix`**: Equinix RPO, ett bolag, ingen ny serie. Digital Realty har inget RPO i katalogen.
+- **O1 Eatons order, `ob_etn_orders_electrical_americas_ttm_yoy_pct_organic_pct`**: organisk ordertillväxt för
+  Electrical Americas, rullande tolv månader mot året före, i procent (S3). En procentserie (förändring mot året före),
+  inte en nivå. Den räknas därför om: takt = 100 × ln(1 + v/100), alltså log × 100 över ett år av tolvmånadersorder, som
+  takten för `kl_capex4`. Förändring i takt = takten nu minus takten två kvartal tidigare. Nivån är v. Överraskning mot B1
+  är inte definierad för en tillväxttakt i registret och visas som saknad. Electrical Global har en lucka 2025Q1 (ett
+  stopp) och läses inte.
+- **O2 Digital Realtys tecknade avtal, `lt1_dlr_bookings4`** = summan över fyra kvartal av
+  `ob_dlr_leases_signed_total_dlr_share_q_level_musd` (hyra per år för nya avtal, Digital Realtys andel, S3). Belopp,
+  log × 100. S3:s tolkning 9 (andelen är obelagd 2021Q4–2024Q1) gäller.
+- O1 och O2 är S3:s extraktion ur pressmeddelanden. De har `publish=False` i väntan på granskningen av extraktionen, och
+  rapporten säger det vid varje rad där de används.
+
+*Sammanhang, ingår inte i läsregeln* (tabeller med nivå, takt, förändring i takt och överraskning): `rpo_gev`, `rpo_anet`,
+`rpo_hpe`, de sex medlemmarna i L1 och L2 var för sig, GE Vernovas order och orderstock i USD
+(`ob_gev_orders_total_q_level_musd`, `ob_gev_backlog_total_end_level_musd`), Dells AI-order och AI-orderstock
+(`ob_dell_orders_ai_servers_q_level_musd`, `ob_dell_backlog_ai_servers_end_level_musd`), leverantörernas intäkter
+(`rev_etn`, `rev_pwr`, `rev_gev`, `rev_vrt`, `rev_csco`, `rev_dell`, `rev_smci`, `rev_anet`, `rev_eqix`, `rev_dlr`) och
+capex över fyra kvartal per köpare (`kl_capex4_<bolag>`). Köparnas capex-guidance för kalenderåret visas med KL1:s block
+(mittpunkt och guidad takt mot föregående års utfall, där F1:s definition finns) som "förväntad capex". Guidance ingår
+inte i läsregeln, eftersom den gäller kalenderår och regeln läser förändring i takt per kvartal. Att ta in den kräver en
+ny daterad post.
+
+**(b) Måtten och aggregaten.** Som F0 (a): nivå, takt (log × 100 över fyra kvartal för belopp), förändring i takt (mot två
+kvartal tidigare) och överraskning mot B1, beräknade av `state.measures`. L1, L2 och O2 är summor av medlemmarnas
+komponenter med `followed.aggregate` (`Formula`, `derive`). En version finns först när alla medlemmar har lämnat in för
+perioden, och `known_from` är den senaste komponenten. Saknas en medlem för ett kvartal finns inget aggregat för
+kvartalet, och rapporten säger vilka medlemmar som saknas (`aggregate.missing`). Bara rader med `known_from` ≤ läsdagen
+används. Tabellen skärs vid läsdagen innan något härleds.
+
+**(c) Läsregeln.** F0:s symmetriska regel (`common.read_rule` och `read_measures`), med parametrarna låsta här:
+- **X:s statistik:** förändring i takt i alla rader, eftersom frågan gäller vändningar. **Y:s statistik:** förändring i
+  takt (F0).
+- **Gränser per storhet,** samma i båda rollerna (som X med *g*, som Y med *h*): köparnas capex över fyra kvartal *g* =
+  *h* = 5 log × 100 (KL1:s gräns för capex-takten). Leverantörernas orderstock och order *g* = *h* = 10 log × 100.
+  Leverantörernas gräns är dubbel, eftersom orderstock och order är klumpigare: enstaka stora avtal flyttar ett kvartal
+  (KL1 om RPO, S2 och S3). Gränsen är satt före data och inte prövad mot data.
+- **Fönster:** *k* = 2 kvartal (huvudfönstret) och *k* = 4 (ett år). Bara de två. Båda redovisas, och *k* = 4 ersätter
+  aldrig *k* = 2.
+- **Tecken:** *s* = +1 i alla rader. Y väntas vända åt samma håll som X.
+- **Riktningar:** "före" har X = leverantören och Y = köparen. "efter" har X = köparen och Y = leverantören. Varje
+  riktning är en egen rad, och raderna slås inte ihop.
+- **Raderna:** L1, L2, L3, O1 och O2 läses mot K-inre, i båda riktningarna och med båda fönstren (20 utslag). L1 läses
+  också mot K-yttre i båda riktningarna och med båda fönstren (4 utslag). En rad per X.
+- **Huvudläsning** (antennens rad): L1 före K-inre med *k* = 2. Vald före data, eftersom L1 består av fasta order och
+  RPO utan förskjutet räkenskapsår, och eftersom kraft och elnät är frågans fysiska flaskhals.
+- **Vad utslagen betyder.** "Före": *talar för mekanismen* = orderstocken vände med minst 10 och köparnas capex-takt
+  vände åt samma håll med minst 5 inom *k* kvartal. Det stämmer med att leverantörerna ligger före. *Talar emot* =
+  capex-takten vände åt andra hållet först. *Inget av mönstren* = ingen impuls, eller capex-takten nådde inte gränsen
+  inom fönstret. *Kan inte avgöras* = ett värde saknas eller fönstret är öppet på läsdagen. "Efter" läses på samma sätt
+  med rollerna bytta: talar för = capex-takten vände först och orderstocken följde.
+- **Före och efter är inte varandras motsats.** Två utjämnade serier som rör sig ihop kan ge "talar för" i båda
+  riktningarna. Då säger regeln inte vilken som kom först. Rapporten visar riktningarna bredvid varandra och drar ingen
+  slutsats om ordningen.
+- **Ledtiden (beskrivning, inget utslag).** I varje rad med *k* = 4 är ledtiden för ett ursprung *q* med utslaget talar
+  för *L* = kvartalet då det avgjordes minus *q* (1–4 kvartal). Rapporten listar *L* per ursprung och visar den senaste
+  ledtiden och medianen av de tidigare i samma rad. Om ledtiden ändras beskrivs bara så. Det finns ingen gräns för
+  "ändrad", och med få ursprung kan en skillnad vara slump.
+- **Förvärv.** Ett förvärv ger ett nivåskifte i en orderstock. Det påverkar förändringen i takt vid kvartalen *a*,
+  *a* + 1, *a* + 4 och *a* + 5, där *a* är förvärvets kvartal. Ursprung i de kvartalen märks "förvärv i fönstret" i
+  rapporten. Utslaget står kvar. Förvärv som är belagda i källdokumenten: Cisco–Splunk 2024Q1 (2024-03, S1), Eaton–
+  Fibrebond 2025Q2 (2025-04-01) och Eaton–Boyd Thermal 2026Q1 (2026-03-12, S2 och S3). Förvärv hos Quanta, Dell, Super
+  Micro och Equinix är inte kontrollerade, och rapporten säger det.
+- **Inget test.** Inget p-värde räknas (F0). De två fönstren och de 24 utslagen är beskrivningar, så ingen korrektion
+  för flera prövningar görs. Ett test av om leverantörerna ligger före kräver en egen post med Holms korrektion över
+  fönstren och raderna.
+
+**Ärligt om osäkerheten.** L1 har förändring i takt från omkring 2022Q1 (Eatons RPO börjar 2020Q3), L2 och L3 från
+omkring 2020, O1 från 2022Q2 och O2 från omkring 2024Q1. Det är 10–27 ursprung per rad, och färre med impuls. Detta är
+en beskrivning och inget test. Ett utfall som talar för mekanismen visar inte orsaken och kan vara slump. RPO och
+orderstock är balanser, och förändringen är order minus leveranser plus valuta och förvärv (S2). Leverantörerna säljer
+också till andra än AI-köparna: Quanta och Eaton till elbolag och industri, Cisco och Dell till företag. Ett utslag
+säger inget om hur stor del som gäller AI.
+
+**(d) Baslinje.** Överraskningen mot B1 visas för varje mått i tabellerna (F0 (d)). Köparnas guidance visas som
+sammanhang, ovan.
+
+**(e) Vad som var sett före posten.** Agenten har läst F0:s och KL1:s kod och registerposter, KL1:s rapport och
+granskningarna R26 och R27, och källdokumenten `docs/kallor/order_orderstock.md`, `sec_stack_kraft.md`,
+`sec_stack_nat.md` och `rpo.md`. De innehåller enstaka värden, som därmed var sedda:
+- F0:s sammanfattning av KL1 per 2026-11-25 och 2026-10-25: förändringen i takt för `kl_capex4_inner` är +6,2 vid
+  2026Q2 och +9,6 vid 2026Q3, och yttre lagrets förändring i capex-takt saknas. Båda värdena för det inre lagret ligger
+  över gränsen 5 ovan. Gränsen är KL1:s, satt 2026-11-25.
+- S3: Vertivs senaste tal 2025Q4 (organiska order +252 %, book-to-bill 2,9, orderstock 15,0 mdr USD), GE Vernovas
+  orderingång i GW 2025Q2–2026Q3 (5, 8, 11, 8, 12 och 16 GW), och att Eaton bara anger tillväxt.
+- S2: enstaka orderstocksbelopp för Vertiv och Eaton ur texten kring RPO.
+- S1: RPO för Cisco 2026Q3 (46 169 MUSD), Dell 2026Q2 (132 000), Arista 2025Q1 (3 700) och 2026Q3 (8 600) och Super
+  Micro 2026Q3 (5 665,7) i kontrolltabellen.
+- `rpo.md`: kontrolltabellen för köparnas RPO (används inte i LT1).
+
+Agenten kontrollerade dessutom täckningen i observationstabellen, utan värden: serienycklar, frekvens, första och sista
+period, antal perioder och rader, luckor och avståndet från kvartalets slut till första `known_from` för `rpo_etn`,
+`rpo_pwr`, `rpo_gev`, `rpo_csco`, `rpo_dell`, `rpo_smci`, `rpo_anet`, `rpo_hpe`, `rpo_eqix`, de tre orderserierna för
+Eaton, Digital Realtys tecknade avtal och köparnas `capex_*`. Inga takter, förändringar i takt eller jämförelser mellan
+serier har räknats för LT1. Valet av storheter, gränser och fönster gjordes efter läsningen ovan, men utan att något
+mönster mellan leverantörer och köpare var sett.
+
+**(f) Första osedda läsningen.** Alla kvartal till och med 2026Q3 var kända när posten skrevs. Läsningarna per
+2026-11-26 är därför gjorda på kvartal som var kända före posten, och de är inget utfall på osedda data. Den första
+osedda läsningen över huvud taget kommer med Dells 10-Q för 2026Q3 (räkenskapskvartalet aug–okt, väntas i början av december
+2026): då får L2 kvartalet 2026Q3, och raden "L2 efter K-inre" får ett nytt *t*. Huvudläsningen (L1 före K-inre) får
+ett nytt *t* när alla fyra i det inre lagret har lämnat in för 2026Q4, väntat i början av februari 2027. Rapporten
+uppskattar dagarna ur bolagens senaste inlämningar (`common.next_filings`).
+
+**(g) Luckor, utanför ramen.** Vertiv (BLOCKED, ovan), GE Vernovas RPO och order (för korta för läsregeln), Schneider
+Electric, Siemens Energy och ABB (inte på EDGAR), privata datacenterbyggare och kraftbolagens egna investeringar. Dells
+AI-orderstock och HPE finns bara som sammanhang.
