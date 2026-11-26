@@ -48,6 +48,38 @@ def changes(prev: dict | None, cur: dict) -> list[str]:
     return out
 
 
+def _sum(keys) -> str:
+    return " + ".join(f"`{k}`" for k in keys)
+
+
+def _sign(x) -> str:
+    return "+" if x == 1 else "−" if x == -1 else str(x or "–")
+
+
+def shared(rows: list[dict]) -> list[str]:
+    """Pairs of questions whose main readings rest on the same catalog series (register X25, point 3): the same X and
+    Y, the same Y, or an overlapping Y. Taken from each antenna's main_inputs; a question without them is not compared."""
+    have = [(x["key"], x["main_inputs"]) for x in rows if x.get("main_inputs") and not x.get("error")]
+    out = []
+    for i, (a, ma) in enumerate(have):
+        for b, mb in have[i + 1:]:
+            xa, xb, ya, yb = set(ma["x"]), set(mb["x"]), set(ma["y"]), set(mb["y"])
+            how = (f"{a}: X:s {ma.get('x_stat') or '–'}, tecken {_sign(ma.get('sign'))}; {b}: X:s "
+                   f"{mb.get('x_stat') or '–'}, tecken {_sign(mb.get('sign'))}")
+            if xa == xb and ya == yb:
+                out.append(f"- **{a} och {b}** har samma huvudpar: X = {_sum(ma['x'])} och Y = {_sum(ma['y'])} ({how}). "
+                           "Det är två läsningar av samma rörelse och tillsammans inte mer än en observation. Med olika "
+                           "statistik eller tecken kan samma kvartal ge olika utslag i de två frågorna.")
+            elif ya == yb:
+                out.append(f"- **{a} och {b}** läser samma Y ({_sum(ma['y'])}) med olika X. Utslagen är inte oberoende.")
+            elif ya & yb:
+                out.append(f"- **{a} och {b}** har delvis samma Y (gemensamt: {_sum(sorted(ya & yb))}). Utslagen är inte "
+                           "oberoende.")
+            elif xa & xb:
+                out.append(f"- **{a} och {b}** har delvis samma X (gemensamt: {_sum(sorted(xa & xb))}).")
+    return out
+
+
 def compute(as_of, table: pd.DataFrame | None = None, modules: dict | None = None) -> dict:
     from ai_tracker.followed import questions
 
@@ -90,6 +122,11 @@ def render(r: dict) -> str:
             reading = f"{x['reading']} ({x['t'] or '–'})"
             ch = "; ".join(x["changes"]) or "inget ändrat"
             out.append(f"| {_cell(q)} | {_cell(reading)} | {_cell(ch)} | {_cell(x['next_unseen'])} |")
+    sh = shared(r["rows"])
+    if sh:
+        out += ["", "## Samma serier i flera frågor", "",
+                "Huvudläsningarnas X och Y som de katalogserier de summerar (X25, punkt 3). Frågor som delar serier ger "
+                "inte oberoende belägg.", ""] + sh
     for x in r["rows"]:
         if x.get("facts"):
             out += ["", f"## {x['key']}", ""] + [f"- {k}: {v}" for k, v in x["facts"].items()]

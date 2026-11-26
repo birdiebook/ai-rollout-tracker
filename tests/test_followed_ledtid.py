@@ -98,7 +98,8 @@ def test_registered_parameters():
     assert L.limits("fore") == (10.0, 5.0) and L.limits("efter") == (5.0, 10.0)
     assert L.MAIN == ("L1", "inner", "fore", 2) and L.REGISTERED == "2026-11-26"
     assert len(L.ROWS) * len(L.DIRECTIONS) * len(L.WINDOWS) == 24
-    assert L.acquisition_quarters("L2") == {q: "Cisco–Splunk" for q in ("2024Q1", "2024Q2", "2025Q1", "2025Q2")}
+    assert L.acquisition_quarters("L2") == {"2024Q1": "Cisco–Splunk a, upp", "2024Q2": "Cisco–Splunk a + 1, upp",
+                                            "2025Q1": "Cisco–Splunk a + 4, ned", "2025Q2": "Cisco–Splunk a + 5, ned"}
 
 
 def _m(key: str, change: dict[str, float]) -> dict:
@@ -160,7 +161,7 @@ def test_lead_time_and_acquisition_marks():
     ms = {"lt1_rpo_net": _m("lt1_rpo_net", sup), "kl_capex4_inner": _m("kl_capex4_inner", buy)}
     r = L.reading("L2", "inner", "fore", 4, ms)
     assert [(x["origin"], x["lag"], x["direction"]) for x in r["lags"]] == [("2023Q1", 2, 1), ("2024Q1", 1, -1)]
-    assert r["lags"][1]["acquisition"] == "Cisco–Splunk" and r["lags"][0]["acquisition"] is None
+    assert r["lags"][1]["acquisition"] == "Cisco–Splunk a, upp" and r["lags"][0]["acquisition"] is None
     lt = L.lead_time(r)
     assert (lt["latest"], lt["median_before"], lt["n_before"]) == (1, 2.0, 1)
     # in "efter" the supplier is Y: the mark goes on the deciding quarter
@@ -168,7 +169,7 @@ def test_lead_time_and_acquisition_marks():
            "kl_capex4_inner": _m("kl_capex4_inner", {"2023Q3": 0, "2023Q4": 0, "2024Q1": 6, "2024Q2": 0,
                                                      "2024Q3": 0})}
     e = L.reading("L2", "inner", "efter", 2, ms2)
-    assert e["outcome"] == C.FOR and e["origin_acquisition"] == "Cisco–Splunk"
+    assert e["outcome"] == C.FOR and e["origin_acquisition"] == "Cisco–Splunk a + 1, upp"
     assert L.lead_time({"lags": []})["latest"] is None
 
 

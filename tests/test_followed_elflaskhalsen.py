@@ -239,7 +239,7 @@ def test_found_as_a_question_and_in_antenner():
 def test_antenna_and_next_unseen():
     r = E.compute(DAY, table=world(20.0, 0.0))
     row = E.antenna(r)
-    assert row["reading"] == "talar för mekanismen, uppåt" and len(row["facts"]) == 7 + 3
+    assert row["reading"] == "talar för mekanismen, uppåt" and len(row["facts"]) == 7 + 4
     assert row["next_unseen_date"] == "2027-01-30"  # 2026Q4 end + the longest median lag of the four (30 days)
     assert row["next_unseen"].startswith("inre lagrets capex för 2026Q4")
     old = E.compute("2025-11-26", table=world(20.0, 0.0))

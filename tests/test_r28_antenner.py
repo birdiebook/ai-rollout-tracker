@@ -8,8 +8,7 @@ numbers and dates are kept here, never filing text.
   source documents. A change to either must be reviewed again.
 - Properties that hold: F0's rule is symmetric (mirrored X and Y give the mirrored outcome and counts; flipping the
   sign of Y and of s gives the same outcome).
-- Findings R28-1, R28-2 and R28-3 are strict xfails: they turn into failures (XPASS) when fixed, and should then become
-  plain tests.
+- Findings R28-1, R28-2 and R28-3 were strict xfails; X25 fixed them and they are plain tests now.
 """
 
 from __future__ import annotations
@@ -116,22 +115,18 @@ def _no_f1(monkeypatch):
     monkeypatch.setattr(F1, "load_csv", lambda: None)
 
 
-@pytest.mark.xfail(strict=True, reason="R28-1: BG1 decides 'seen before the register' by the as-of date, not the data")
 def test_r28_1_bg1_keeps_the_seen_note_when_no_new_quarter_has_come():
     w = TB.world()  # every row known by 2026-01-30, long before the register day 2026-11-26
     r = B.compute("2026-11-30", w)  # month end, no row known after the register day
     assert SEEN_NOTE in B.render(r)
 
 
-@pytest.mark.xfail(strict=True, reason="R28-1: EL1 decides 'seen before the register' by the as-of date, not the data")
 def test_r28_1_el1_keeps_the_seen_note_when_no_new_quarter_has_come():
     w = TE.world()  # every row known by 2026-11-04
     r = E.compute("2026-11-30", w)
     assert SEEN_NOTE in E.render(r)
 
 
-@pytest.mark.xfail(strict=True, reason="R28-1: LT1's flag is report-wide; one new row elsewhere drops the main "
-                                       "reading's seen-data note")
 def test_r28_1_lt1_main_reading_keeps_the_seen_note_when_another_row_gets_a_new_quarter(_no_f1):
     w = TL._world(("2025Q1", 0.02, 0.06), ("2025Q3", 0.03, 0.08))  # L1 and the inner capex, known by 2026-11-04
     eq = TL._rows("rpo_eqix", {q: 100.0 for q in TL.QS})
@@ -147,7 +142,6 @@ def test_r28_1_lt1_main_reading_keeps_the_seen_note_when_another_row_gets_a_new_
 # ------------------------------------------------------------------ R28-2: overlapping acquisitions in LT1
 
 
-@pytest.mark.xfail(strict=True, reason="R28-2: setdefault keeps Fibrebond (a+4) and hides Boyd Thermal (a+1) at 2026Q2")
 def test_r28_2_both_acquisitions_are_marked_at_2026q2():
     marks = L.acquisition_quarters("L1")
     assert "Fibrebond" in marks["2026Q2"] and "Boyd" in marks["2026Q2"]
@@ -164,8 +158,6 @@ def _bg1_report(main_t: str) -> dict:
     return {"readings": rd, "quantities": q, "next_filings": []}
 
 
-@pytest.mark.xfail(strict=True, reason="R28-3: the Oracle rows' fact text depends on the main reading's quarter, so an "
-                                       "unchanged Oracle row is listed as changed")
 def test_r28_3_unchanged_oracle_rows_are_not_listed_as_changed():
     # a month ago the main reading was at 2026Q2 and Oracle (who files first) at 2026Q3; now both are at 2026Q3.
     # Oracle's outcome and quarter are the same both months.

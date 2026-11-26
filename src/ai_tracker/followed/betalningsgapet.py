@@ -234,8 +234,27 @@ def _components() -> set[str]:
 
 
 def compute(as_of, table: pd.DataFrame | None = None) -> dict:
+    """The report as of `as_of`. Each reading gets "seen" (register X25, point 1): True when every value its outcome
+    rests on is the same in the report as of the register day; always True up to the register day."""
     when = pd.Timestamp(as_of)
     table, ctx = C.prepare(table)
+    r = _compute(when, table, ctx)
+    reg = _compute(pd.Timestamp(REGISTERED), table, ctx) if when > pd.Timestamp(REGISTERED) else None
+    reg_by = {} if reg is None else {x["id"]: x for x in reg["readings"]}
+    for x in r["readings"]:
+        if reg is None:
+            x["seen"] = True
+            continue
+        now = (C.series_of(r["quantities"][x["x_series"]], "pace"), C.series_of(r["quantities"][x["y_series"]], "change"))
+        then = (C.series_of(reg["quantities"][x["x_series"]], "pace"),
+                C.series_of(reg["quantities"][x["y_series"]], "change"))
+        x["seen"] = x["id"] in reg_by and C.same_inputs(x, *now, *then)
+    r["seen_before_register"] = all(x["seen"] for x in r["readings"])
+    r["main_seen"] = next(x["seen"] for x in r["readings"] if x["id"] == "main")
+    return r
+
+
+def _compute(when: pd.Timestamp, table: pd.DataFrame, ctx) -> dict:
     rows = table[(table["known_from"] <= when) & table["series"].isin(_components())]
 
     q: dict[str, dict] = {}
@@ -269,7 +288,6 @@ def compute(as_of, table: pd.DataFrame | None = None) -> dict:
         share = 100.0 * C.at(rpo_o, rpo4["period"], "level") / rpo4["level"]
     return {
         "question": QUESTION, "as_of": str(when.date()), "generated": str(date.today()),
-        "seen_before_register": str(when.date()) <= REGISTERED,
         "params": {"g": G, "h": H, "k": K, "sign": SIGN, "r_main": R_MAIN, "r_sens": list(R_SENS)},
         "quantities": q, "readings": readings, "main_t": main_t,
         "context": C.measures((*P2B, *RPO_NEAR), when, ctx),
@@ -349,15 +367,24 @@ def render(r: dict) -> str:
             "uthållig acceleration i capex höjer därför både X och Y och läses som talar emot. Ett utslag som talar "
             "emot är ett svagare belägg mot mekanismen än ett som talar för är belägg för den. Raden med r = 0 är minst "
             "direkt kopplad.", ""]
-    if r.get("seen_before_register"):
-        out += [f"Alla kvartal i den här läsningen var kända före registerposten {REGISTERED}, och P2b:s kvoter och KL1:s "
-                "capex-takt för de inre bolagen var sedda före posten (posten, avsnitt (e)). Läsningen är därför inget "
-                f"utfall på osedda data. Den första osedda läsningen kommer med inlämningar efter {REGISTERED} "
-                f"(avsnitt 7).", ""]
+    unseen = [x for x in r["readings"] if x.get("seen") is False]
+    if not unseen:
+        out += [f"Alla läsningar nedan vilar bara på värden som var kända före registerposten {REGISTERED}, och P2b:s "
+                "kvoter och KL1:s capex-takt för de inre bolagen var sedda före posten (posten, avsnitt (e)). Ingen av "
+                f"läsningarna är därför ett utfall på osedda data. Den första osedda läsningen kommer med inlämningar "
+                f"efter {REGISTERED} (avsnitt 7). Sedda data avgörs per läsning (X25, punkt 1).", ""]
+    else:
+        out += [f"{len(unseen)} av {len(r['readings'])} läsningar vilar på värden som blev kända efter registerposten "
+                f"{REGISTERED} och är märkta **osedd** nedan. De övriga vilar bara på värden som var kända före posten. "
+                "Sedda data avgörs per läsning (X25, punkt 1).", ""]
     for x in r["readings"]:
         if x["id"] == "msft_moln":
             out += ["", "**Bolagsrader** (bisak, samma gränser, Y = bolagets egen capex-takt):", ""]
         out += C.reading_lines(x, x["label"])
+        if x["id"] == "main":
+            out.append("  " + C.seen_text(x.get("seen"), REGISTERED))
+        elif x.get("seen") is False:
+            out.append(f"  **Osedd:** läsningen vilar på värden som blev kända efter registerposten {REGISTERED}.")
         for fl in x["flags"]:
             out.append(f"  Märkning: {fl}.")
 
@@ -465,8 +492,8 @@ def antenna(r: dict) -> dict:
     main = by["main"]
     facts = {}
     for x in r["readings"]:
-        if x["id"] != "main":  # the quarter only where it differs from the main reading's (Oracle files first)
-            facts[x["label"]] = SHORT[x["outcome"]] + ("" if x["t"] == main["t"] else f" ({x['t'] or '–'})")
+        if x["id"] != "main":  # always the row's own quarter, so an unchanged row is not listed as changed (R28-3)
+            facts[x["label"]] = f"{SHORT[x['outcome']]} ({x['t'] or '–'})"
     gap = r["quantities"][_key("gap_moln", "moln4", R_MAIN)]
     cap = r["quantities"][_key("capex4", "moln4")]
     facts["Gapets takt mot molnintäkterna, molnfyran"] = (f"{_f(gap.get('pace'), 1, True)} ({gap.get('period') or '–'})"
@@ -475,5 +502,8 @@ def antenna(r: dict) -> dict:
                                                   if cap.get("available") else "–")
     h = main["history"]
     facts["Impulser i huvudläsningens historik"] = f"upp {h['impulses_up']}, ned {h['impulses_down']}, av {h['n_x']}"
+    facts["Huvudläsningen på osedda data"] = "nej" if main.get("seen", True) else "ja"
     text, day = next_unseen(r)
-    return C.antenna_row(QUESTION, main["outcome"], SHORT[main["outcome"]], main["t"], facts, text, day)
+    inputs = {"x": formula("gap_moln", "moln4", R_MAIN).components, "y": formula("capex4", "moln4").components,
+              "x_stat": "takt", "sign": SIGN}
+    return C.antenna_row(QUESTION, main["outcome"], SHORT[main["outcome"]], main["t"], facts, text, day, inputs)

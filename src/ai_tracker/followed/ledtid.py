@@ -56,10 +56,12 @@ SUPPLIERS = {  # row -> (series, name, from the S3 extraction)
 }
 ROWS = [(s, "inner") for s in SUPPLIERS] + [("L1", "outer")]
 DIRECTIONS = {"fore": "före", "efter": "efter"}
-# documented acquisitions per row: (name, quarter a); origins a, a+1, a+4 and a+5 are marked (entry, (c))
+# documented acquisitions per row: (name, quarter a); origins a, a+1, a+4 and a+5 are marked (entry, (c)); every
+# acquisition that touches a quarter is listed, with the way it moves the change in pace (register X25, point 2)
 ACQUISITIONS = {"L1": (("Eaton–Fibrebond", "2025Q2"), ("Eaton–Boyd Thermal", "2026Q1")),
                 "L2": (("Cisco–Splunk", "2024Q1"),)}
 ACQ_OFFSETS = (0, 1, 4, 5)
+ACQ_PUSH = {0: "upp", 1: "upp", 4: "ned", 5: "ned"}  # a level step raises pace at a..a+3: change up at a, a+1, down at a+4, a+5
 UNCHECKED_ACQ = "Förvärv hos Quanta, Dell, Super Micro och Equinix är inte kontrollerade."
 
 CONTEXT = {  # (title, keys): measures shown as context, not read
@@ -161,12 +163,14 @@ def limits(direction: str) -> tuple[float, float]:
 
 
 def acquisition_quarters(row: str) -> dict[str, str]:
-    """{origin quarter: acquisition} for the origins whose change in pace an acquisition touches."""
-    out = {}
+    """{quarter: text} for the quarters whose change in pace an acquisition touches. Every acquisition that touches a
+    quarter is listed (register X25, point 2), each with its offset and the way it moves the change in pace:
+    'Eaton–Fibrebond a + 4, ned; Eaton–Boyd Thermal a + 1, upp'."""
+    by: dict[str, list[str]] = {}
     for name, a in ACQUISITIONS.get(row, ()):
         for j in ACQ_OFFSETS:
-            out.setdefault(C.plus(a, j), name)
-    return out
+            by.setdefault(C.plus(a, j), []).append(f"{name} {'a' if j == 0 else f'a + {j}'}, {ACQ_PUSH[j]}")
+    return {q: "; ".join(v) for q, v in by.items()}
 
 
 def origins(x: dict, y: dict, t: str | None, *, g: float, h: float, k: int) -> list[dict]:
@@ -278,7 +282,26 @@ def missing_members(key: str, table: pd.DataFrame, m: dict, when) -> list[str]:
 
 
 def compute(as_of, table: pd.DataFrame | None = None) -> dict:
+    """The report as of `as_of`. Each reading gets "seen" (register X25, point 1): True when every value its outcome
+    rests on is the same in the report as of the register day; always True up to the register day."""
     when = pd.Timestamp(as_of)
+    table = observations.load() if table is None else table
+    r = _compute(when, table)
+    reg = _compute(pd.Timestamp(REGISTERED), table) if when > pd.Timestamp(REGISTERED) else None
+    for x in r["readings"]:
+        if reg is None:
+            x["seen"] = True
+            continue
+        xr = find(reg, x["row"], x["buyer"], x["direction"], x["k"])
+        now = [C.series_of(r["measures"][x[s]], "change") for s in ("x_series", "y_series")]
+        then = [C.series_of(reg["measures"][x[s]], "change") for s in ("x_series", "y_series")]
+        x["seen"] = C.same_inputs(x, *now, *then)
+    r["seen_before_register"] = all(x["seen"] for x in r["readings"])
+    r["main_seen"] = find(r, *r["main"])["seen"]
+    return r
+
+
+def _compute(when: pd.Timestamp, table: pd.DataFrame) -> dict:
     t = table_on(when, table)
     ctx = M.Context(table=t)
     keys = [v[0] for v in SUPPLIERS.values()] + list(BUYERS.values())
@@ -301,7 +324,7 @@ def compute(as_of, table: pd.DataFrame | None = None) -> dict:
     newest = max((m["known_from"] for m in used), default=None)
     return {
         "question": QUESTION, "as_of": str(when.date()), "generated": str(date.today()), "registered": REGISTERED,
-        "seen_before_register": newest is None or newest <= REGISTERED, "newest_known_from": newest,
+        "newest_known_from": newest,
         "params": {"g_buyer": G_BUYER, "g_supplier": G_SUPPLIER, "windows": list(WINDOWS), "sign": SIGN},
         "measures": ms, "readings": readings, "lead": lead, "main": list(MAIN),
         "missing": {k: missing_members(k, t, ms[k], when) for k in formulas() if k in ms},
@@ -356,6 +379,8 @@ def _cell(r: dict) -> str:
             s += f" ({o['reason']})"
     elif r.get("reason"):
         s += f" ({r['reason']})"
+    if r.get("seen") is False:
+        s += " · **osedd**"
     return s
 
 
@@ -364,9 +389,9 @@ def _tried(r: dict) -> str:
     if not h["n_x"]:
         return "X saknas"
     up, dn = h["by_direction"]["up"], h["by_direction"]["down"]
-    return (f"{h['n_tested']} av {h['n_x']} ({h['first']}–{h['last']}); upp {h['impulses_up']} "
-            f"({up[C.FOR]}/{up[C.AGAINST]}/{up[C.NEITHER]}/{up[C.UNDECIDED]}), ned {h['impulses_down']} "
-            f"({dn[C.FOR]}/{dn[C.AGAINST]}/{dn[C.NEITHER]}/{dn[C.UNDECIDED]})")
+    return (f"{h['n_tested']} av {h['n_x']} ({h['first']}–{h['last']}), Y i hela fönstret {h.get('n_y_window', 0)}; "
+            f"upp {h['impulses_up']} ({up[C.FOR]}/{up[C.AGAINST]}/{up[C.NEITHER]}/{up[C.UNDECIDED]}), ned "
+            f"{h['impulses_down']} ({dn[C.FOR]}/{dn[C.AGAINST]}/{dn[C.NEITHER]}/{dn[C.UNDECIDED]})")
 
 
 def render(r: dict) -> str:
@@ -390,11 +415,18 @@ def render(r: dict) -> str:
             "bland t − k … t − 1, där t är Y:s senaste kvartal. Det är en beskrivning, inget test.", "",
             "Före och efter är inte varandras motsats: två utjämnade serier som rör sig ihop kan ge \"talar för\" i "
             "båda riktningarna, och då säger regeln inte vilken som kom först.", ""]
-    if r.get("seen_before_register"):
-        out += [f"Alla kvartal i läsningen var kända före registerposten {r['registered']} (posten, avsnitt (e) och "
-                "(f)). Läsningen är därför inget utfall på osedda data.", ""]
     main = find(r, *r["main"])
-    out += C.reading_lines(main, "Huvudläsning, L1 före K-inre, k = 2") + [""]
+    out += C.reading_lines(main, "Huvudläsning, L1 före K-inre, k = 2")
+    out += ["  " + C.seen_text(main.get("seen"), r["registered"]), ""]
+    unseen = [x for x in r["readings"] if x.get("seen") is False]
+    if not unseen:
+        out += [f"Alla läsningar i tabellen vilar bara på värden som var kända före registerposten {r['registered']} "
+                "(posten, avsnitt (e) och (f)), och ingen av dem är ett utfall på osedda data. Sedda data avgörs per "
+                "läsning (X25, punkt 1).", ""]
+    else:
+        out += [f"{len(unseen)} av {len(r['readings'])} läsningar vilar på värden som blev kända efter registerposten "
+                f"{r['registered']} och är märkta **osedd** i tabellen. De övriga vilar bara på sedda värden. Sedda data "
+                "avgörs per läsning (X25, punkt 1).", ""]
     out += ["| Leverantör | Köpare | Riktning | k | t | Utslag (ursprung, X, Y) | Prövad / ursprung med X; impulser "
             "(för/emot/inget/kan inte avgöras) |", "|---|---|---|---|---|---|---|"]
     for x in r["readings"]:
@@ -460,7 +492,9 @@ def render(r: dict) -> str:
             "- Leverantörerna säljer också till andra än AI-köparna: Quanta och Eaton till elbolag och industri, Cisco och "
             "Dell till företag. Ett utslag säger inget om hur stor del som gäller AI.",
             "- Förvärv ger nivåskiften. Belagda förvärv märks i tabellen (Cisco–Splunk 2024Q1, Eaton–Fibrebond 2025Q2, "
-            f"Eaton–Boyd Thermal 2026Q1). {UNCHECKED_ACQ}",
+            "Eaton–Boyd Thermal 2026Q1) med förskjutning och riktning: vid a och a + 1 flyttas förändringen i takt "
+            "uppåt, vid a + 4 och a + 5 nedåt. Träffar två förvärv samma kvartal åt olika håll är nettoriktningen inte "
+            f"känd. {UNCHECKED_ACQ}",
             "- O1 och O2 är S3:s extraktion (publish=False i väntan på granskningen). Digital Realtys andel är obelagd "
             "2021Q4–2024Q1 (S3, tolkning 9).",
             "- Vertiv är BLOCKED (inget RPO i XBRL, och S3:s orderserier slutar 2025Q4). GE Vernovas RPO och order är för "
@@ -493,5 +527,8 @@ def antenna(r: dict) -> dict:
     for key in ("lt1_rpo_power", "kl_capex4_inner"):
         m = r["measures"][key]
         facts[f"Förändring i takt, {_who(key)}"] = f"{_f(m.get('change'), 1, True)} ({m.get('period') or '–'})"
+    facts["Huvudläsningen på osedda data"] = "nej" if main.get("seen", True) else "ja"
     text, day = next_unseen(r)
-    return C.antenna_row(QUESTION, main["outcome"], SHORT[main["outcome"]], main["t"], facts, text, day)
+    inputs = {"x": formulas()[SUPPLIERS[MAIN[0]][0]].components, "y": formulas()[BUYERS[MAIN[1]]].components,
+              "x_stat": "förändring i takt", "sign": SIGN}
+    return C.antenna_row(QUESTION, main["outcome"], SHORT[main["outcome"]], main["t"], facts, text, day, inputs)

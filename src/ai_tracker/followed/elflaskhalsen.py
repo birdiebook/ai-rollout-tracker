@@ -218,7 +218,26 @@ def next_unseen(r: dict) -> tuple[str, str | None]:
 
 
 def compute(as_of, table: pd.DataFrame | None = None) -> dict:
+    """The report as of `as_of`. Each reading gets "seen" (register X25, point 1): True when every value its outcome
+    rests on is the same in the report as of the register day; always True up to the register day."""
     when = pd.Timestamp(as_of)
+    table = observations.load() if table is None else table
+    r = _compute(when, table)
+    reg = _compute(pd.Timestamp(REGISTERED), table) if when > pd.Timestamp(REGISTERED) else None
+    for key, x in r["readings"].items():
+        if reg is None:
+            x["seen"] = True
+            continue
+        now = (C.series_of(r["measures"][x["x_series"]], "pace"), C.series_of(r["measures"][x["y_series"]], "change"))
+        then = (C.series_of(reg["measures"][x["x_series"]], "pace"),
+                C.series_of(reg["measures"][x["y_series"]], "change"))
+        x["seen"] = C.same_inputs(x, *now, *then)
+    r["seen_before_register"] = all(x["seen"] for x in r["readings"].values())
+    r["main_seen"] = r["readings"]["|".join(MAIN)]["seen"]
+    return r
+
+
+def _compute(when: pd.Timestamp, table: pd.DataFrame) -> dict:
     t = _cut(table, when)
     ctx = M.Context(table=t)
     ms: dict[str, dict] = {}
@@ -234,7 +253,6 @@ def compute(as_of, table: pd.DataFrame | None = None) -> dict:
                                 "x_first": first_known(ms[X[x]], "pace")}
     report = {
         "question": QUESTION, "as_of": str(when.date()), "generated": str(date.today()),
-        "seen_before_register": str(when.date()) <= REGISTERED,
         "params": {"g": G, "h": H, "k": K, "sign": SIGN, "main": "|".join(MAIN)},
         "measures": ms, "readings": readings, "plans": plans(t, when),
         "next_filings": C.next_filings(t, when, FILERS),
@@ -351,10 +369,16 @@ def render(r: dict) -> str:
             "Takten för X gör att en ihållande åtstramning räknas som en impuls varje kvartal. Har X impulser åt bara "
             "ett håll avgörs utslaget i praktiken av Y, och den andra riktningen prövas inte. Hur ofta det hänt står "
             "under varje rad.", ""]
-    if r.get("seen_before_register"):
-        out += [f"Alla kvartal i den här läsningen var publicerade före registerposten {REGISTERED}, och Y:s senaste "
-                "värden för capex var sedda före posten (posten, avsnitt (f)). Läsningen är därför inget utfall på "
-                f"osedda data. Den första osedda läsningen: {r['next_unseen']}.", ""]
+    unseen = [k for k, x in r["readings"].items() if x.get("seen") is False]
+    if not unseen:
+        out += [f"Alla läsningar nedan vilar bara på värden som var publicerade före registerposten {REGISTERED}, och "
+                "Y:s senaste värden för capex var sedda före posten (posten, avsnitt (f)). Ingen av läsningarna är "
+                f"därför ett utfall på osedda data. Den första osedda läsningen: {r['next_unseen']}. Sedda data avgörs "
+                "per läsning (X25, punkt 1).", ""]
+    else:
+        out += [f"{len(unseen)} av {len(r['readings'])} läsningar vilar på värden som blev kända efter registerposten "
+                f"{REGISTERED} och är märkta **osedd** nedan. De övriga vilar bara på värden som var kända före posten. "
+                "Sedda data avgörs per läsning (X25, punkt 1).", ""]
     for y in Y:
         out += [f"**Mot {YNAME[y]}:**", ""]
         for x in X:
@@ -367,6 +391,10 @@ def render(r: dict) -> str:
                 lines.append(f"  X har takt från {rr['x_first']} och Y förändring i takt från {rr['y_first']}. Ett "
                              f"ursprung före {C.minus(rr['y_first'], 1)} kan bara bli inget av mönstren (utan impuls) "
                              "eller kan inte avgöras (Y saknas).")
+            if (x, y) == MAIN:
+                lines.append("  " + C.seen_text(rr.get("seen"), REGISTERED))
+            elif rr.get("seen") is False:
+                lines.append(f"  **Osedd:** läsningen vilar på värden som blev kända efter registerposten {REGISTERED}.")
             out += lines
         out.append("")
 
@@ -416,5 +444,10 @@ def antenna(r: dict) -> dict:
     facts["Capex inre lagret, förändring i takt"] = f"{_f(cap.get('change'), 1, True)} ({cap.get('period') or '–'})"
     hh = main["history"]
     facts["Huvudläsningen, impulser upp/ned"] = f"{hh['impulses_up']}/{hh['impulses_down']} av {hh['n_x']} ursprung"
+    facts["Huvudläsningen på osedda data"] = "nej" if main.get("seen", True) else "ja"
+    from ai_tracker.series import kreditlagret as KS  # the inner layer's capex sum, as KL1 derives it
+
+    inputs = {"x": FORMULAS[X[MAIN[0]]].components, "y": KS.formula("capex4", "inner").components,
+              "x_stat": "takt", "sign": SIGN}
     return C.antenna_row(QUESTION, main["outcome"], short(main), main["t"], facts, r["next_unseen"],
-                         r["next_unseen_date"])
+                         r["next_unseen_date"], inputs)

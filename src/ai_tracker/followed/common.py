@@ -209,7 +209,8 @@ def read_rule(x: Mapping[str, float | None], y: Mapping[str, float | None], *, g
     Returns {"outcome", "text", "origin", "t", "origins" (the reading's origins t-k..t-1), "history", "params"}.
     history counts every origin before t with X known: n_x, n_missing_x, impulses_up, impulses_down,
     by_direction {"up"|"down": {outcome: n}}, no_impulse, n_tested (outcome other than kan_inte_avgoras),
-    first, last."""
+    first, last; and as a description beside F0's count (register X25, point 4): n_y_window (origins with Y known in
+    all k quarters of the window) and n_impulse_read (impulses whose outcome was read against Y)."""
     if not g > 0 or k < 1 or h < 0 or sign not in (1, -1):
         raise ValueError("need g > 0, k >= 1, h >= 0 and sign = +1 or -1")
     params = {"g": g, "h": h, "k": k, "sign": sign}
@@ -223,6 +224,8 @@ def read_rule(x: Mapping[str, float | None], y: Mapping[str, float | None], *, g
     current = [origin_outcome(minus(t, j), x, y, t, **kw) for j in range(k, 0, -1)]  # t-k .. t-1
     hist_q = sorted({p for p in x if pd.Period(p, freq=QFREQ) < tp}, key=lambda p: pd.Period(p, freq=QFREQ))
     hist = [origin_outcome(q, x, y, t, **kw) for q in hist_q]
+    for r in hist:  # Y known in the whole window (X25, point 4: a description beside F0's count)
+        r["y_window"] = all(_val(y, plus(r["origin"], j)) is not None for j in range(1, k + 1))
     impulses = [r for r in current if r["direction"] != 0]
     if impulses:
         pick = impulses[-1]
@@ -247,6 +250,8 @@ def _history(rows: list[dict]) -> dict:
             "impulses_down": sum(r["direction"] < 0 for r in known),
             "no_impulse": sum(r["direction"] == 0 for r in known), "by_direction": by,
             "n_tested": sum(r["outcome"] != UNDECIDED for r in known),
+            "n_y_window": sum(bool(r.get("y_window")) for r in known),
+            "n_impulse_read": sum(r["direction"] != 0 and r["outcome"] != UNDECIDED for r in known),
             "first": known[0]["origin"] if known else None, "last": known[-1]["origin"] if known else None}
 
 
@@ -287,9 +292,80 @@ def reading_lines(r: dict, label: str, nd: int = 1) -> list[str]:
                      f"{up[NEITHER]}, kan inte avgöras {up[UNDECIDED]}), nedåt {hh['impulses_down']} (för {dn[FOR]}, "
                      f"emot {dn[AGAINST]}, inget {dn[NEITHER]}, kan inte avgöras {dn[UNDECIDED]}), utan impuls "
                      f"{hh['no_impulse']}.")
+        lines.append("  " + tried_note(hh))
     else:
         lines.append("  Regeln kunde inte prövas: X saknas i hela historiken.")
     return lines
+
+
+def one_sided(h: dict) -> str | None:
+    """'nedåt' or 'uppåt' when X has had impulses only the other way (that direction is untested), else None."""
+    if h["impulses_up"] and not h["impulses_down"]:
+        return "nedåt"
+    if h["impulses_down"] and not h["impulses_up"]:
+        return "uppåt"
+    return None
+
+
+def tried_note(h: dict) -> str:
+    """The description beside F0's count (register X25, point 4): Y known in the whole window, impulses read against
+    Y, and the untested direction when X has moved only one way."""
+    s = (f"Y var känt i hela fönstret i {h.get('n_y_window', 0)} av {h['n_x']} ursprung, och "
+         f"{h.get('n_impulse_read', 0)} av {h['impulses_up'] + h['impulses_down']} impulser kunde läsas mot Y.")
+    side = one_sided(h)
+    if side:
+        s += f" Riktningen {side} har inte prövats: X har inte haft någon impuls {side}."
+    elif not (h["impulses_up"] or h["impulses_down"]):
+        s += " Ingen riktning har prövats: X har inte haft någon impuls."
+    return s
+
+
+# ------------------------------------------------------------------ seen data per reading (register X25, point 1)
+
+
+def _q_range(a: str | None, b: str | None) -> list[str]:
+    if a is None or b is None or pd.Period(a, freq=QFREQ) > pd.Period(b, freq=QFREQ):
+        return []
+    return [str(q) for q in pd.period_range(a, b, freq=QFREQ)]
+
+
+def resting_on(r: dict) -> tuple[list[str], list[str]]:
+    """The quarters of X and of Y that a read_rule result's outcome rests on (register X25, point 1): for talar för
+    and talar emot, X at the picked origin o and Y in o + 1 ... the deciding quarter; otherwise X at t - k ... t - 1
+    and Y at t - k + 1 ... t."""
+    t, k = r.get("t"), r["params"]["k"]
+    o = next((x for x in r.get("origins", []) if x["origin"] == r.get("origin")), None)
+    if o is not None and r["outcome"] in (FOR, AGAINST) and o.get("decided_at"):
+        return [o["origin"]], _q_range(plus(o["origin"], 1), o["decided_at"])
+    if t is None:
+        return [], []
+    return _q_range(minus(t, k), minus(t, 1)), _q_range(minus(t, k - 1), t)
+
+
+def _same(a, b) -> bool:
+    a, b = num(a), num(b)
+    if a is None or b is None:
+        return a is None and b is None
+    return abs(a - b) <= 1e-9 * max(1.0, abs(a), abs(b))
+
+
+def same_inputs(r: dict, x_now: Mapping, y_now: Mapping, x_reg: Mapping, y_reg: Mapping) -> bool:
+    """True when every value the reading's outcome rests on (resting_on) is the same on the register day as on the
+    reading day: the reading is then on seen data. A value missing on both days counts as the same."""
+    xq, yq = resting_on(r)
+    return (all(_same(x_now.get(q), x_reg.get(q)) for q in xq)
+            and all(_same(y_now.get(q), y_reg.get(q)) for q in yq))
+
+
+SEEN_NOTE = "inget utfall på osedda data"
+
+
+def seen_text(seen: bool | None, registered: str) -> str:
+    """The per-reading note: on seen data (every value it rests on was known on the register day) or not."""
+    if seen is None or seen:
+        return (f"Läsningen vilar bara på värden som var kända före registerposten {registered}, och den är därför "
+                f"{SEEN_NOTE}.")
+    return f"Läsningen vilar på värden som blev kända efter registerposten {registered}: ett utfall på osedda data."
 
 
 # ------------------------------------------------------------------ next filings
@@ -375,13 +451,19 @@ def measure_table(ms: Mapping[str, dict], keys, level_fmt: Callable, who: Callab
 
 # ------------------------------------------------------------------ antenna rows
 
-ANTENNA_KEYS = ("question", "outcome", "reading", "t", "facts", "next_unseen", "next_unseen_date")
+ANTENNA_KEYS = ("question", "outcome", "reading", "t", "facts", "next_unseen", "next_unseen_date", "main_inputs")
 
 
 def antenna_row(question: str, outcome: str, reading: str, t: str | None, facts: Mapping[str, str],
-                next_unseen: str, next_unseen_date: str | None = None) -> dict:
+                next_unseen: str, next_unseen_date: str | None = None, main_inputs: Mapping | None = None) -> dict:
     """The row a question's antenna(report) returns: the question, its main reading (outcome code and text, quarter
-    t), facts {label: text} compared month to month, and the next unseen reading (text and estimated day)."""
+    t), facts {label: text} compared month to month, the next unseen reading (text and estimated day) and the main
+    reading's inputs (register X25, point 3): {"x": catalog series X sums, "y": the same for Y, "x_stat", "sign"}, or
+    None. antenner says when two questions' main readings rest on the same series."""
+    mi = None
+    if main_inputs is not None:
+        mi = {"x": sorted(set(main_inputs["x"])), "y": sorted(set(main_inputs["y"])),
+              "x_stat": main_inputs.get("x_stat"), "sign": main_inputs.get("sign")}
     return {"question": question, "outcome": outcome, "reading": reading, "t": t,
             "facts": {str(k): str(v) for k, v in facts.items()}, "next_unseen": next_unseen,
-            "next_unseen_date": next_unseen_date}
+            "next_unseen_date": next_unseen_date, "main_inputs": mi}
