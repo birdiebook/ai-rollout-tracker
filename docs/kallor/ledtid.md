@@ -166,6 +166,86 @@ på tre kvartal:
 - Det går alltså inte att säga hur stor del av ökningen som är förvärvad. Det Quanta skriver talar för att den är en
   mindre del, men det är bolagets bedömning och inget belopp.
 
+## Förvärv i L2 och L3 (DA1)
+
+Spår DA1, körning 18, registret 2026-11-27 DA1 (committat ensamt innan inlämningarna lästes). Dells, Super Micros och
+Equinix förvärv är data i LT1:s förvärvsmärke för L2 och L3, med QA1:s mekanism och märkesregel. Ingen regel och inget
+utslag ändras.
+
+**Vilka bolag.** Bara bolag vars RPO ingår i L2 eller L3 (`series.ledtid.NET`, L3 i `followed.ledtid`): Dell, Super Micro
+och Equinix. HPE och Arista ingår inte i L2 (`rpo_hpe` och `rpo_anet` är sammanhang i rapporten och läses inte) och är
+inte kodade. HPE:s förvärv av Juniper Networks (2025) ligger alltså i `rpo_hpe` utan märke, men den serien läses inte.
+Cisco ingår i L2, men bara Cisco–Splunk är belagt (LT1 (c)). Ciscos övriga förvärv är inte kodade.
+
+**Underlaget.** Alla 10-K och 10-Q med rapportdag från 2022-12-31: 15 för Dell (CIK 1571996, räkenskapsår 2023–2027),
+16 för Super Micro (CIK 1375365) och 17 för Equinix (CIK 1101239, med 10-K/A för 2022). Agenten läste förvärvsnoten,
+goodwilltabellen, kassaflödets investeringsdel och MD&A i varje dokument och förde in 47 rader i
+`curated/acquisitions.csv`: 8 för förvärv eller köpeskilling och 39 för kvartal utan förvärv. Ett kvartal utan förvärv
+bygger på att kassaflödet saknar en rad för förvärv (eller visar "—") i dokumentet för perioden till och med kvartalet,
+och att noterna inte nämner något förvärv. Raden pekar på kassaflödets mening. Självkontrollen hämtade alla dokument på
+nytt från EDGAR 2026-11-27: alla 102 rader i tabellen (Quantas 55 och de nya 47) har meningen på platsen, sina siffror och
+datum i meningen och rätt inlämningsdag. Råkopiorna och meningarna ligger i spårets `data/raw` (gitignorerad), inte i
+huvudutcheckningens. Spårets `.env.local` pekade den delade råcachen mot huvudutcheckningens `data/raw` (X26:s
+anteckning), och den pekades om till spårets egen innan något hämtades.
+
+**Kvartalet *a*** (DA1, punkt 3). Super Micro och Equinix har kalenderkvartal, som Quanta. Dells serie har
+räkenskapskvartalets kalenderkvartal (räkenskapsåret slutar omkring 31 januari), så ett förvärv i räkenskapskvartalet
+augusti–oktober har *a* = kvartal 3. `acquisitions.quarter_of` flyttar dagen en månad bakåt för Dell. En slutdag inom
+några dagar från en räkenskapsgräns får kontrolleras mot inlämningen (ingen av Dells rader har en slutdag).
+
+| Bolag | *a* | Förvärv | Slutdag | Köpeskilling, MUSD | Första dokument |
+|---|---|---|---|---|---|
+| Dell | 2023Q3 | Moogsoft | i räkenskapskvartalet till 2023-11-03 | ej angiven (goodwill 82, senare 77) | 10-Q 0001571996-23-000046 (2023-12-08) |
+| Dell | 2025Q4 | ej namngivet | i räkenskapskvartalet till 2026-01-30 | ej angiven (goodwill 61, kassaflöde 84) | 10-K 0001571996-26-000008 (2026-03-16) |
+| Super Micro | 2023Q2 | Gemini Open Cloud Computing | 2023-04-17 | 2,5 (varav 0,3 innehållet ett år) | 10-K 0001375365-23-000036 (2023-08-28) |
+| Equinix | 2025Q2 | TIM NextGen DC, tre datacenter i Filippinerna | 2025-06-02 | 183 | 10-Q 0001101239-25-000029 (2025-07-30) |
+| Equinix | 2025Q4 | ej namngivet | – | ej angiven (kassaflöde cirka 69) | 10-K 0001101239-26-000032 (2026-02-11) |
+
+Alla andra kvartal 2023Q1–2026Q3 (Dell till och med 2026Q2) har en rad "inget". Tolkningar och luckor:
+- **Dell 2025Q4.** 10-K för räkenskapsåret 2026 har "goodwill acquired" 61 MUSD i ISG och 84 MUSD i kassaflödet för förvärv
+  av verksamheter och tillgångar. 10-Q för nio månader har inget av dem, så förvärvet ligger i räkenskapskvartal 4
+  (2025Q4 i `rpo_dell`). Dell namnger det inte och anger ingen köpeskilling. Etiketten säger "ej namngivet förvärv".
+- **Dell, Moogsoft.** Dell anger att goodwillen kommer från förvärvet av Moogsoft i räkenskapskvartalet till 2023-11-03,
+  men ingen slutdag och ingen köpeskilling. Kassaflödet för förvärv av verksamheter och tillgångar var 127 MUSD för nio
+  månader och 126 för året, så inget nytt kom 2023Q4.
+- **Equinix 2025Q4.** Kassaflödet för förvärv av verksamheter var 182 MUSD för nio månader 2025 (TIM) och 251 för året,
+  och MD&A skriver att ökningen omfattar TIM ("including the TIM Acquisition"). Noten nämner bara TIM. Skillnaden, cirka
+  69 MUSD, kan vara ett annat förvärv eller en senare betalning för TIM. Raden märker det som ett ej namngivet förvärv,
+  eftersom märket inte ändrar något utfall och ett förvärv inte kan uteslutas.
+- **Inte förvärv** (DA1, punkt 3): Dells försäljning av Secureworks 2025-02-03 (en avyttring, märks inte, fast den
+  sänker en nivå), Super Micros köp av fastighet i San Jose 2024 (80 MUSD) och dess andel på 11 % i Ampera 2025,
+  Leadteks andel på 30 % som närstående bolag köpte 2023, Equinix samriskbolag (xScale, och atNorth som ett samriskbolag
+  köpte 2026-09-02), dess fastighetsköp ("real estate acquisitions") och immateriella tillgångar ur "other asset
+  acquisitions" 2023 (8,5 MUSD), där inget bolag eller datacenter anges.
+- **Super Micro 2024Q2.** 0,3 MUSD för förvärv i räkenskapsåret 2024 är lika med det innehållna beloppet för Gemini, som
+  förföll ett år efter slutdagen. Noten nämner inget annat förvärv.
+- **Före 2023** kodas inget. Dell köpte för 70 MUSD verksamheter och tillgångar i räkenskapsåret 2023 (goodwill 48), och
+  Equinix köpte Entel Chile och MainOne 2022Q2 och Entel Peru 2022Q3. De har *a* + 4 och *a* + 5 i L2:s och L3:s historik
+  (2023Q2–2023Q4 för Equinix) och saknar märke där.
+
+**Hur mycket av RPO-rörelsen vid huvudursprungen som kan vara förvärvad** (beskrivning, med förbehåll; registret DA1,
+punkt 5). Ingen av bolagen anger tillförd RPO. Köpeskilling räknas inte om till RPO. Beräkningen drar ett belopp *A*
+från nivån från kvartal *a* och framåt och räknar om takten (log × 100 över fyra kvartal) och förändringen i takt (mot
+två kvartal tidigare), som i X25 och QA1.
+- **L2 före K-inre, huvudursprunget 2026Q2** (X +25,9, talar för, *k* = 2 och *k* = 4): inget förvärvsmärke. Dells förvärv
+  2025Q4 har *a* + 4 först 2026Q4. Bara Ciscos okodade förvärv och förvärv före 2023 kan ligga i fönstret.
+- **L2 vid 2025Q4 och 2026Q1** (förändring i takt +35,7 och +24,4, Dells ej namngivna förvärv *a* och *a* + 1, uppåt).
+  2025Q4 avgör läsningen "L2 efter K-inre", *k* = 4 (talar för), och båda är ursprung med ledtid i "L2 före K-inre".
+  Förändringen i takt hamnar under gränsen 10 först om förvärvet lade till mer än omkring 28,7 mdr USD (2025Q4) eller
+  19,1 mdr (2026Q1) till L2, alltså 35 % och 20 % av Dells RPO vid de kvartalen. Dells goodwill från förvärvet var 61
+  MUSD och kassaflödet 84 MUSD. Dells RPO-ökning från 51 till 82 mdr vid 2025Q4 kan därför knappast vara förvärvad, men
+  tillförd RPO är inte belagd.
+- **L2, Moogsoft och Gemini** (*a* = 2023Q3 och 2023Q2) träffar kvartal utan impuls (förändring i takt mellan −4,6 och
+  +6,8 vid 2023Q2–2024Q4). Super Micros RPO var 304 MUSD vid 2023Q2, under 0,5 % av L2.
+- **L3** har ingen impuls i de märkta kvartalen. Vid TIM:s *a* och *a* + 1 (2025Q2 och 2025Q3) var förändringen i takt
+  +7,4 och +1,2. En impuls nedåt utan TIM skulle kräva mer än omkring 1,4–2,0 mdr USD tillförd RPO. Vid *a* + 4 och
+  *a* + 5 (2026Q2 och 2026Q3, −0,6 och −0,4) skulle en impuls uppåt utan TIM kräva mer än omkring 1,1 mdr, cirka 9 % av
+  Equinix RPO vid 2025Q2 och sex gånger köpeskillingen. Det ej namngivna förvärvet 2025Q4 (+5,3 och +9,4 vid 2025Q4 och
+  2026Q1) skulle kräva mer än omkring 1,9 mdr för en impuls nedåt.
+- Märket säger alltså att ett nivåskifte kan finnas i fönstret, inte att det är stort. För L2 och L3 skulle förvärven
+  behöva ha tillfört RPO som är många gånger köpeskillingen eller kassaflödet för att ändra ett utslag. Det är en
+  beskrivning, ingen regel.
+
 ## Datering och kalender
 
 - `known_from` är inlämningsdagen för 10-Q och 10-K (RPO, capex) och för resultat-8-K:et (S3). Aggregatens
@@ -195,9 +275,10 @@ oberoende granskningen av extraktionen. Rapporten säger det vid varje rad där 
 - **Leverantörerna säljer till fler än AI-köparna.** Quanta och Eaton till elbolag och industri, Cisco och Dell till
   företag. Datacenterandelen går inte att skilja ut i XBRL (S2).
 - **Förvärv.** Belagda: Cisco–Splunk (2024-03), Eaton–Fibrebond (2025-04-01), Eaton–Boyd Thermal (2026-03-12) och
-  Quantas förvärv från 2023 (avsnittet "Quantas förvärv" ovan, QA1). Quantas förvärv före 2023 (till exempel Blattner
-  2021-10-13) är inte kodade. Förvärv hos Dell, Super Micro och Equinix är inte kontrollerade. O1 är organisk och
-  påverkas inte.
+  Quantas förvärv från 2023 (avsnittet "Quantas förvärv" ovan, QA1) och Dells, Super Micros och Equinix förvärv från
+  2023 (avsnittet "Förvärv i L2 och L3" ovan, DA1). Förvärv före 2023 (till exempel Quantas Blattner 2021-10-13) är inte
+  kodade, Ciscos förvärv utom Splunk är inte kontrollerade, och HPE:s och Aristas förvärv är inte kodade (de ingår inte
+  i L2). Avyttringar märks inte. O1 är organisk och påverkas inte.
 - **Digital Realtys andel** är obelagd 2021Q4–2024Q1 (S3, tolkning 9). Nya avtal är klumpiga: förändringen i takt för
   summan över fyra kvartal kan bli nära ±100 log × 100 när ett stort kvartal går in i eller ut ur fönstret.
 - **BLOCKED och utanför ramen.** Vertiv: inget RPO i XBRL, och S3:s orderserier slutar 2025Q4. GE Vernova: RPO från

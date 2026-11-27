@@ -1,5 +1,7 @@
 # Antenner: de följda frågorna i en tabell
 
+*Spår DA1 (`docs/mattregister.md`, 2026-11-27 DA1): avsnittet nedan är genererat på nytt per 2026-11-27 efter att Dells, Super Micros och Equinix förvärv lagts in i LT1:s förvärvsmärke för L2 och L3. Det är oförändrat: märket ändrar inget utslag, och antennen visar inte L2:s och L3:s märken.*
+
 *Slutintegrationen av körning 17 (efter R29 och X26): avsnittet nedan är genererat på nytt per 2026-11-27 på den slutliga koden och är oförändrat mot X26.*
 
 *Efter granskningen R29 (rättningsspår X26, `docs/mattregister.md`, 2026-11-27 X26): prisvolym har en ny fakta med utslagen för de geometriska raderna H-G, a-G och b-G bredvid de låsta (samma utslag i dag). Inga rader och inga utslag ändrades.*
