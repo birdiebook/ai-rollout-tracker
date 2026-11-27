@@ -9,7 +9,10 @@ change in pace against two quarters earlier, surprise against the naive baseline
 The generic parts (loading as of a day, measures, next filings, tables) live in followed/common.py (register F0); the
 registered KL1 reading below is KL1's own and is not the symmetric F0 template (register F0: KL1 is unchanged).
 Then the registered reading, applied mechanically (`reading`), the lab and venture tables from the extraction, what to
-watch next (filing dates estimated from each company's last eight filings) and the caveats.
+watch next (filing dates estimated from each company's last eight filings) and the caveats. After them, as an addition
+beside the locked reading (register 2026-11-27 "S1", point 1, "KL1-S"): F0's symmetric rule per price and dependence
+measure against the same entity's change in capex pace, sign -1. The locked part of the report (sections 1-7,
+`render_locked`) is byte for byte what it was before S1; `render` appends section 8.
 
 Only rows known on the as-of date are used: the observation table through observations.as_of semantics (known_from <=
 as-of) and the curated rows with filed <= as-of. compute(d, table) equals compute(d, table truncated at d).
@@ -153,6 +156,48 @@ def apply_reading(entity: str, ms: dict[str, dict]) -> dict:
             "capex_change_outer": d_out, "capex_change_inner": d_in, "inner_period": inner.get("period"),
             "outcome": out, "text": OUTCOME[out], "missing": missing if out == "kan_inte_avgoras" else [],
             "a_history": a_history(entity, ms)}
+
+
+# ------------------------------------------------------------------ KL1-S: the symmetric rows (register S1, point 1)
+
+S1_REGISTERED = C.S1_REGISTERED
+S1_ENTITIES = ("outer", "inner", *S.OUTER)
+S1_H = -CAPEX_FALL  # KL1's limit for a fall in capex pace, now both ways (log x100)
+S1_K = 2
+S1_SIGN = -1
+MEASURE_NAME = {"rate_eff": "Effektiv ränta", "fcfgap": "(capex − OCF) / capex",
+                "netdebt": "(emitterad − amorterad skuld) / capex", "leases": "Leasingavtal som inte börjat / capex"}
+MEASURE_SHORT = {"rate_eff": "ränta", "fcfgap": "capex − OCF", "netdebt": "nettoemission", "leases": "leasing"}
+
+
+def s1_rows(ms: dict[str, dict]) -> list[dict]:
+    """One read_rule result per entity and registered price or dependence measure: X = the measure's pace (g = KL1's
+    limit), Y = the entity's own change in capex pace (h = 5), k = 2, sign -1."""
+    out = []
+    for e in S1_ENTITIES:
+        for m in measures_of(e):
+            r = C.read_measures(ms[f"kl_{m}_{e}"], ms[f"kl_capex4_{e}"], x_stat="pace", g=LIMIT[m], k=S1_K, h=S1_H,
+                                sign=S1_SIGN)
+            ych = [q for q, v in C.series_of(ms[f"kl_capex4_{e}"], "change").items() if v is not None]
+            out.append({**r, "entity": e, "measure": m, "y_first": min(ych) if ych else None})
+    return out
+
+
+def s1_seen(rows: list[dict], when, ctx) -> None:
+    """Mark each KL1-S row seen (register S1, point 4): every value its outcome rests on is the same as in the
+    reading on the register day 2026-11-27. Always seen up to that day."""
+    if pd.Timestamp(when) <= pd.Timestamp(S1_REGISTERED):
+        for x in rows:
+            x["seen"] = True
+        return
+    reg: dict[str, dict] = {}
+    for x in rows:
+        for k in (x["x_series"], x["y_series"]):
+            if k not in reg:
+                reg[k] = measure(k, pd.Timestamp(S1_REGISTERED), ctx)
+    for x in rows:
+        x["seen"] = C.same_inputs(x, C.series_of(x["_mx"], "pace"), C.series_of(x["_my"], "change"),
+                                  C.series_of(reg[x["x_series"]], "pace"), C.series_of(reg[x["y_series"]], "change"))
 
 
 # ------------------------------------------------------------------ context blocks
@@ -309,6 +354,12 @@ def compute(as_of, table: pd.DataFrame | None = None, csv: pd.DataFrame | None =
     groups = keys()
     ms = {k: measure(k, when, ctx) for g in groups.values() for k in g}
     readings = {e: apply_reading(e, ms) for e in ("outer", *S.OUTER)}
+    s1 = s1_rows(ms)
+    for x in s1:
+        x["_mx"], x["_my"] = ms[x["x_series"]], ms[x["y_series"]]
+    s1_seen(s1, when, ctx)
+    for x in s1:
+        del x["_mx"], x["_my"]
     cur = coupon_rows(csv, when)
     crwv_cov = None
     if cur is not None and not cur.empty:
@@ -327,6 +378,7 @@ def compute(as_of, table: pd.DataFrame | None = None, csv: pd.DataFrame | None =
         "spreads": spreads(table, when), "guidance": guidance(table, when), "directions": directions(table, when),
         "revisions": revisions(table, when), "next_filings": next_filings(table, when),
         "extraction": extraction(when, cur), "coupon_out_crwv": crwv_cov,
+        "s1": {"registered": S1_REGISTERED, "h": S1_H, "k": S1_K, "sign": S1_SIGN, "rows": s1},
     }
 
 
@@ -354,6 +406,70 @@ _pct = C.fmt_pct
 
 
 def render(r: dict) -> str:
+    """The report: the locked part (sections 1-7, unchanged by S1) and, when computed, KL1-S as section 8."""
+    text = render_locked(r)
+    if r.get("s1"):
+        text += "\n".join(render_s1(r)) + "\n"
+    return text
+
+
+def render_s1(r: dict) -> list[str]:
+    """Section 8: KL1-S beside the locked reading (register 2026-11-27 S1, point 1)."""
+    s1 = r["s1"]
+    rows = s1["rows"]
+    out = ["## 8. Tillägg S1: symmetrisk läsning bredvid den låsta", "",
+           f"Registret: `docs/mattregister.md`, {s1['registered']} S1, punkt 1. F0:s symmetriska regel per pris- och "
+           "beroendemått: X = måttets takt (gräns ±" + _f(RATE_RISE, 2) + " procentenheter för räntan och ±"
+           + _f(DEP_RISE, 0) + " för beroendemåtten, KL1:s gränser), Y = förändringen i capex-takt för samma enhet "
+           f"(gräns ±{_f(s1['h'], 0)}), fönster {s1['k']} kvartal efter ursprunget, tecken −. En rad per mått, ingen "
+           "sammanslagning med \"eller\". Avsnitt 1–7 ovan är den låsta läsningen och är oförändrade, och huvudläsningen "
+           "är fortfarande den låsta (avsnitt 4). Det här avsnittet är ett tillägg.", "",
+           "- **Talar för, uppåt:** pris eller beroende steg (X ≥ +g) och capex-takten föll sedan (Y ≤ −5). **Talar för, "
+           "nedåt:** pris eller beroende föll (X ≤ −g) och capex-takten steg sedan (Y ≥ +5).",
+           "- **Talar emot:** capex-takten följde X åt samma håll.",
+           "- En negativ förändring i takt betyder att tillväxten avtar, inte att capex minskar. Utslaget är en "
+           "beskrivning, inget test.", "",
+           "Beroendemåtten har capex över samma fyra kvartal i sig. (capex − OCF) / capex stiger när capex växer "
+           "snabbare än kassaflödet, så en acceleration i capex ger lätt \"talar emot, uppåt\". Nettoemission och leasing "
+           "har capex i nämnaren och faller när capex accelererar, så samma acceleration ger lätt \"talar för, nedåt\". "
+           "Utslagen för beroendemåtten är därför svaga belägg åt båda hållen. Räntan har ingen sådan koppling men kort "
+           "historik.", ""]
+    down = [x for x in rows if x["history"]["impulses_down"]]
+    tried = [x for x in rows if x["history"]["n_x"]]
+    out += [f"Impulser nedåt i historiken: i {len(down)} av {len(rows)} rader ({len(tried)} rader har X i "
+            "historiken). Antalet per rad och riktning står under varje rad.", ""]
+    unseen = [x for x in rows if x.get("seen") is False]
+    if unseen:
+        out += [f"{len(unseen)} av {len(rows)} rader vilar på värden som blev kända efter registerposten "
+                f"{s1['registered']} och är märkta **osedd**. De övriga vilar bara på värden som var kända före posten "
+                "(S1, punkt 4).", ""]
+    else:
+        out += [f"Alla rader vilar bara på värden som var kända före registerposten {s1['registered']}, och KL1:s "
+                "takter vid t − 2 var sedda före posten (S1, punkt 6). Ingen av raderna är därför ett utfall på osedda "
+                "data (S1, punkt 4).", ""]
+    for e in S1_ENTITIES:
+        er = [x for x in rows if x["entity"] == e]
+        if not er:
+            continue
+        who = S.NAMES[e]
+        out += [f"**{who[0].upper() + who[1:]}** (Y = `kl_capex4_{e}`):", ""]
+        for x in er:
+            label = MEASURE_NAME[x["measure"]]
+            lines = C.reading_lines(x, label)
+            lines[0] = lines[0].replace(f"**{label}:** {x['text']}", f"**{label}:** {C.short(x)}", 1)
+            if x.get("y_first") is None:
+                lines.append(f"  `{x['y_series']}` har ingen förändring i takt på dagen (serien är för kort), så Y saknas "
+                             "i varje fönster.")
+            if x.get("seen") is False:
+                lines.append(f"  **Osedd:** raden vilar på värden som blev kända efter registerposten "
+                             f"{s1['registered']}.")
+            out += lines
+        out.append("")
+    return out
+
+
+def render_locked(r: dict) -> str:
+    """Sections 1-7: the report as before S1 (register S1, point 1: byte for byte the same)."""
     ms, g = r["measures"], r["groups"]
     out = [f"# Kreditlagret per {r['as_of']}", "", f"**Frågan:** {r['question']}", "",
            "Yttre lagret: Oracle, CoreWeave, Nebius och IREN, och labben som tabellrader. Inre lagret: Microsoft, "
@@ -675,5 +791,11 @@ def antenna(r: dict) -> dict:
     facts["Förändring i capex-takt, inre"] = f"{_f(x['capex_change_inner'], 1, True)} ({x['inner_period'] or '–'})"
     h = x.get("a_history") or {}
     facts["A har gällt (yttre)"] = f"{h.get('held', 0)} av {h.get('of', 0)} kvartal"
+    for e in S1_ENTITIES:  # KL1-S beside the main reading (register S1, point 1): one fact per entity
+        er = [y for y in (r.get("s1") or {}).get("rows", []) if y["entity"] == e]
+        if er:
+            t = er[0]["t"] or "–"
+            facts[f"S1 symmetrisk, {S.NAMES[e]}"] = "; ".join(
+                f"{MEASURE_SHORT[y['measure']]}: {C.short(y)}" for y in er) + f" ({t})"
     text, day = next_unseen(r)
     return C.antenna_row(QUESTION, x["outcome"], SHORT[x["outcome"]], x["t"], facts, text, day)

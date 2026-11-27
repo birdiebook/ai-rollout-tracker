@@ -389,7 +389,8 @@ def _tried(r: dict) -> str:
     if not h["n_x"]:
         return "X saknas"
     up, dn = h["by_direction"]["up"], h["by_direction"]["down"]
-    return (f"{h['n_tested']} av {h['n_x']} ({h['first']}–{h['last']}), Y i hela fönstret {h.get('n_y_window', 0)}; "
+    return (f"{h['n_tried']} av {h['n_x']} ({h['first']}–{h['last']}; före S1 {h['n_tested']}), Y i hela fönstret "
+            f"{h.get('n_y_window', 0)}; "
             f"upp {h['impulses_up']} ({up[C.FOR]}/{up[C.AGAINST]}/{up[C.NEITHER]}/{up[C.UNDECIDED]}), ned "
             f"{h['impulses_down']} ({dn[C.FOR]}/{dn[C.AGAINST]}/{dn[C.NEITHER]}/{dn[C.UNDECIDED]})")
 
@@ -432,6 +433,9 @@ def render(r: dict) -> str:
     for x in r["readings"]:
         out.append(f"| {SUPPLIERS[x['row']][1]}{' (S3)' if SUPPLIERS[x['row']][2] else ''} | {BUYER_SHORT[x['buyer']]} "
                    f"| {DIRECTIONS[x['direction']]} | {x['k']} | {x['t'] or '–'} | {_cell(x)} | {_tried(x)} |")
+    out += ["", "Övergång (registret 2026-11-27 S1, punkt 3): \"prövad\" räknar nu ett ursprung bara när Y finns i "
+            "fönstret (med impuls: utfallet är inte kan inte avgöras; utan impuls: Y är känt i alla k kvartal). \"Före "
+            "S1\" är F0:s räkning före ändringen. Utfallen ändras inte."]
 
     out += ["", "## 2. Ledtiden (beskrivning)", "",
             f"I läsningarna med k = {LEAD_WINDOW}: kvartal från ursprunget till kvartalet som avgjorde ett \"talar för\". "

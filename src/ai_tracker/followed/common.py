@@ -14,7 +14,8 @@ and is found by the CLI (followed/__main__.py) without registration. This module
   two quarters earlier, surprise against B1): `measure`, `measures`, `at`; the same formulas on a bare quarterly
   series for values outside the catalog: `path_measures`
 - aggregates over companies with the missing-member rule: ai_tracker.followed.aggregate (re-exported here)
-- the symmetric reading rule (register F0, (b)): `read_rule`, `read_measures`, `reading_lines`
+- the symmetric reading rule (register F0, (b)): `read_rule`, `read_measures`, `reading_lines`, `short`; how often
+  it could be tried is counted as register 2026-11-27 "S1", point 3 says (`n_tried`, with F0's earlier count beside it)
 - the next filing per company: `next_filings`
 - Markdown: `fmt`, `fmt_bn`, `fmt_pct`, `measure_table`
 
@@ -208,9 +209,11 @@ def read_rule(x: Mapping[str, float | None], y: Mapping[str, float | None], *, g
 
     Returns {"outcome", "text", "origin", "t", "origins" (the reading's origins t-k..t-1), "history", "params"}.
     history counts every origin before t with X known: n_x, n_missing_x, impulses_up, impulses_down,
-    by_direction {"up"|"down": {outcome: n}}, no_impulse, n_tested (outcome other than kan_inte_avgoras),
-    first, last; and as a description beside F0's count (register X25, point 4): n_y_window (origins with Y known in
-    all k quarters of the window) and n_impulse_read (impulses whose outcome was read against Y)."""
+    by_direction {"up"|"down": {outcome: n}}, no_impulse, n_tried (register S1, point 3: tried only when Y is in the
+    window: an impulse whose outcome is not kan_inte_avgoras, or no impulse with Y known in all k quarters), n_tested
+    (F0 (b)'s count before S1: outcome other than kan_inte_avgoras, shown in the transition note), first, last; and as a
+    description (register X25, point 4): n_y_window (origins with Y known in all k quarters of the window) and
+    n_impulse_read (impulses whose outcome was read against Y)."""
     if not g > 0 or k < 1 or h < 0 or sign not in (1, -1):
         raise ValueError("need g > 0, k >= 1, h >= 0 and sign = +1 or -1")
     params = {"g": g, "h": h, "k": k, "sign": sign}
@@ -249,6 +252,7 @@ def _history(rows: list[dict]) -> dict:
             "impulses_up": sum(r["direction"] > 0 for r in known),
             "impulses_down": sum(r["direction"] < 0 for r in known),
             "no_impulse": sum(r["direction"] == 0 for r in known), "by_direction": by,
+            "n_tried": sum((r["outcome"] != UNDECIDED) if r["direction"] else bool(r.get("y_window")) for r in known),
             "n_tested": sum(r["outcome"] != UNDECIDED for r in known),
             "n_y_window": sum(bool(r.get("y_window")) for r in known),
             "n_impulse_read": sum(r["direction"] != 0 and r["outcome"] != UNDECIDED for r in known),
@@ -287,15 +291,35 @@ def reading_lines(r: dict, label: str, nd: int = 1) -> list[str]:
     hh = r["history"]
     if hh["n_x"]:
         up, dn = hh["by_direction"]["up"], hh["by_direction"]["down"]
-        lines.append(f"  Regeln kunde prövas i {hh['n_tested']} av {hh['n_x']} ursprung med X ({hh['first']}–"
+        lines.append(f"  Regeln kunde prövas i {hh['n_tried']} av {hh['n_x']} ursprung med X ({hh['first']}–"
                      f"{hh['last']}). Impulser uppåt {hh['impulses_up']} (för {up[FOR]}, emot {up[AGAINST]}, inget "
                      f"{up[NEITHER]}, kan inte avgöras {up[UNDECIDED]}), nedåt {hh['impulses_down']} (för {dn[FOR]}, "
                      f"emot {dn[AGAINST]}, inget {dn[NEITHER]}, kan inte avgöras {dn[UNDECIDED]}), utan impuls "
                      f"{hh['no_impulse']}.")
         lines.append("  " + tried_note(hh))
+        lines.append("  " + transition_note(hh))
     else:
         lines.append("  Regeln kunde inte prövas: X saknas i hela historiken.")
     return lines
+
+
+S1_REGISTERED = "2026-11-27"  # register "S1: symmetriska rader bredvid låsta regler"
+
+
+def transition_note(h: dict) -> str:
+    """The transition note of register S1, point 3: the new count of tried origins next to F0 (b)'s count before S1."""
+    return (f"Övergång (registret {S1_REGISTERED} S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i "
+            f"fönstret. Med F0:s räkning före S1: {h['n_tested']} av {h['n_x']}; med den nya: {h['n_tried']} av "
+            f"{h['n_x']}.")
+
+
+def short(r: dict) -> str:
+    """A read_rule result's outcome text with the impulse's direction for talar för and talar emot."""
+    o = next((x for x in r["origins"] if x["origin"] == r["origin"]), None)
+    text = OUTCOME_TEXT[r["outcome"]]
+    if o is not None and r["outcome"] in (FOR, AGAINST):
+        text += ", uppåt" if o["direction"] > 0 else ", nedåt"
+    return text
 
 
 def one_sided(h: dict) -> str | None:

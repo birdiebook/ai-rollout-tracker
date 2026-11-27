@@ -275,12 +275,17 @@ def _csv():
 
 @pytest.mark.parametrize("day", ["2025-06-30", "2025-12-20", "2026-11-25"])
 def test_kl1_report_is_byte_identical_to_the_golden_from_before_f0(world, day, monkeypatch):
-    """tests/golden/kreditlagret_synth_<day>.md was rendered with the code before F0 (register F0: KL1 unchanged)."""
+    """tests/golden/kreditlagret_synth_<day>.md was rendered with the code before F0 (register F0: KL1 unchanged).
+    Since S1 (register 2026-11-27, point 1) the report appends KL1-S as section 8: the locked part is still the golden,
+    byte for byte, and the full report starts with it."""
     from ai_tracker.series import guidance_revisions as F1
 
     monkeypatch.setattr(F1, "load_csv", lambda: None)
-    text = F.render(F.compute(day, table=world, csv=_csv()))
-    assert text == (GOLDEN / f"kreditlagret_synth_{day}.md").read_text(encoding="utf-8")
+    r = F.compute(day, table=world, csv=_csv())
+    golden = (GOLDEN / f"kreditlagret_synth_{day}.md").read_text(encoding="utf-8")
+    assert F.render_locked(r) == golden
+    text = F.render(r)
+    assert text.startswith(golden) and text[len(golden):].startswith("## 8. Tillägg S1")
 
 
 def test_kl1_antenna(world, monkeypatch):
