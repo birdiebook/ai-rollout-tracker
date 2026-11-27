@@ -304,15 +304,14 @@ def reading_lines(r: dict, label: str, nd: int = 1) -> list[str]:
 
 
 S1_REGISTERED = "2026-11-27"  # register "S1: symmetriska rader bredvid låsta regler"
-# register X26, point 1 (R29-1): S1 changed F0's count on a recommendation; no owner decision is logged yet
-PENDING_OWNER = "Bytet väntar på ägarens bekräftelse (R29-1, registret 2026-11-27 X26, punkt 1)."
+# register B18, point 1 (R29-1 closed): the owner confirmed S1's count, so X26's "waits for the owner" is gone
 
 
 def transition_note(h: dict) -> str:
     """The transition note of register S1, point 3: the new count of tried origins next to F0 (b)'s count before S1."""
     return (f"Övergång (registret {S1_REGISTERED} S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i "
             f"fönstret. Med F0:s räkning före S1: {h['n_tested']} av {h['n_x']}; med den nya: {h['n_tried']} av "
-            f"{h['n_x']}. {PENDING_OWNER}")
+            f"{h['n_x']}.")
 
 
 def short(r: dict) -> str:
@@ -368,7 +367,8 @@ def resting_on(r: dict) -> tuple[list[str], list[str]]:
     return _q_range(minus(t, k), minus(t, 1)), _q_range(minus(t, k - 1), t)
 
 
-def _same(a, b) -> bool:
+def same_value(a, b) -> bool:
+    """Two values are the same for seen data (register X25, point 1): equal to rounding, or missing on both days."""
     a, b = num(a), num(b)
     if a is None or b is None:
         return a is None and b is None
@@ -379,8 +379,8 @@ def same_inputs(r: dict, x_now: Mapping, y_now: Mapping, x_reg: Mapping, y_reg: 
     """True when every value the reading's outcome rests on (resting_on) is the same on the register day as on the
     reading day: the reading is then on seen data. A value missing on both days counts as the same."""
     xq, yq = resting_on(r)
-    return (all(_same(x_now.get(q), x_reg.get(q)) for q in xq)
-            and all(_same(y_now.get(q), y_reg.get(q)) for q in yq))
+    return (all(same_value(x_now.get(q), x_reg.get(q)) for q in xq)
+            and all(same_value(y_now.get(q), y_reg.get(q)) for q in yq))
 
 
 SEEN_NOTE = "inget utfall på osedda data"

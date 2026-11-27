@@ -1,5 +1,8 @@
 # Antenner: de följda frågorna i en tabell
 
+*Ägarbeslut 2026-11-27 (spår B18, `docs/mattregister.md`, 2026-11-27 B18): prisvolyms rad följer huvudläsningen H-G (geometriskt kvartalsmedel), med bisakerna a-G och b-G och de låsta raderna H, a och b som fakta (punkt 2). Utslaget är detsamma som för H, och `main_inputs` är samma katalogserier. Kreditlagret har en ny fakta, om huvudläsningen är på osedda data, avgjort per läsning (punkt 3; nej per 2026-11-27). Inga utslag ändrades. Avsnittet nedan är genererat på nytt per 2026-11-27.*
+
+
 *Slutintegrationen av körning 17 (efter R29 och X26): avsnittet nedan är genererat på nytt per 2026-11-27 på den slutliga koden och är oförändrat mot X26.*
 
 *Efter granskningen R29 (rättningsspår X26, `docs/mattregister.md`, 2026-11-27 X26): prisvolym har en ny fakta med utslagen för de geometriska raderna H-G, a-G och b-G bredvid de låsta (samma utslag i dag). Inga rader och inga utslag ändrades.*
@@ -90,6 +93,7 @@ Huvudläsningarnas X och Y som de katalogserier de summerar (X25, punkt 3). Frå
 - Förändring i capex-takt, yttre: –
 - Förändring i capex-takt, inre: +9,6 (2026Q3)
 - A har gällt (yttre): 4 av 4 kvartal
+- Huvudläsningen på osedda data: nej
 - S1 symmetrisk, yttre lagret: ränta: kan inte avgöras; capex − OCF: kan inte avgöras; nettoemission: kan inte avgöras; leasing: kan inte avgöras (2026Q3)
 - S1 symmetrisk, inre lagret: ränta: kan inte avgöras; capex − OCF: talar emot, uppåt; nettoemission: talar emot, uppåt; leasing: talar emot, uppåt (2026Q3)
 - S1 symmetrisk, Oracle: ränta: inget av mönstren; capex − OCF: talar för mekanismen, uppåt; nettoemission: talar för mekanismen, uppåt; leasing: talar för mekanismen, uppåt (2026Q3)
@@ -118,10 +122,10 @@ Huvudläsningarnas X och Y som de katalogserier de summerar (X25, punkt 3). Frå
 
 ### prisvolym
 
-- Bisak a (Arena-pris mot SDK): inget av mönstren
-- Bisak b (GPQA-pris mot SDK relativt kontroll): kan inte avgöras
-- GPQA-pris, förändring i takt: – (2026Q3)
-- SDK-nedladdningar, förändring i takt: +60,5 (2026Q3)
+- Bisak a-G (Arena-pris mot SDK, geometriskt medel): inget av mönstren
+- Bisak b-G (GPQA-pris mot SDK relativt kontroll, geometriskt medel): kan inte avgöras
+- GPQA-pris (geometriskt medel), förändring i takt: – (2026Q3)
+- SDK-nedladdningar (geometriskt medel), förändring i takt: +62,1 (2026Q3)
 - Huvudläsningen, impulser upp/ned: 0/0 av 0 ursprung
 - Huvudläsningen på osedda data: nej
-- Geometriskt medel H-G / a-G / b-G (X26): kan inte avgöras / inget av mönstren / kan inte avgöras
+- Låsta rader H / a / b (aritmetiskt medel): kan inte avgöras / inget av mönstren / kan inte avgöras

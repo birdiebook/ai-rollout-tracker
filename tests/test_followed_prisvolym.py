@@ -92,7 +92,7 @@ def world(x_jump: float = 0.0, y_inc: float = 0.0, arena_jump: float | None = No
 
 
 def _main(r: dict) -> dict:
-    return r["readings"][P.MAIN]
+    return P.reading(r, P.MAIN)  # H-G since register B18, point 2
 
 
 # ------------------------------------------------------------------ register
@@ -111,7 +111,7 @@ def test_register_entry_is_locked_and_matches_the_module():
     assert P.G == 50.0 and P.H == 20.0 and P.K == 2 and P.SIGN == -1 and P.X_STAT == "change"
     assert P.READINGS == {"H": ("pv1_pris_gpqa_q", "pv1_sdk_q"), "a": ("pv1_pris_arena_q", "pv1_sdk_q"),
                           "b": ("pv1_pris_gpqa_q", "pv1_sdk_rel_q")}
-    assert P.MAIN == "H" and P.REGISTERED == "2026-11-27"
+    assert P.MAIN_LOCKED == "H" and P.REGISTERED == "2026-11-27"  # the main reading is H-G since B18, point 2
     assert P.SDK == ("g3_npm_openai_w", "g3_npm_anthropic_sdk_w")
     assert P.CONTROL == ("g3_npm_react_w", "g3_npm_express_w")
 
@@ -295,7 +295,7 @@ def test_antenna_declares_the_main_inputs():
     row = P.antenna(r)
     assert row["main_inputs"] == {"x": [P.PRICE_GPQA], "y": sorted(P.SDK), "x_stat": "förändring i takt",
                                   "sign": -1}
-    assert row["reading"] == "talar för mekanismen, nedåt" and len(row["facts"]) == 7  # + X26's geometric rows
+    assert row["reading"] == "talar för mekanismen, nedåt" and len(row["facts"]) == 7  # + the locked rows (B18)
     assert row["next_unseen_date"] == "2027-01-05" and row["next_unseen"].startswith("npm-kvartalet 2026Q4")
 
 
@@ -303,9 +303,9 @@ def test_render_has_every_reading_and_no_alarm_words():
     r = P.compute(DAY, table=world(-60.0, 30.0))
     text = P.render(r)
     assert text.startswith("# Pris mot volym per 2026-11-27")
-    for name in P.READINGS:
+    for name in (*P.READINGS_G, *P.READINGS):
         assert P.READING_NAME[name] in text
-    assert "(huvudläsning):** talar för mekanismen, nedåt" in text
+    assert "(H-G, huvudläsning):** talar för mekanismen, nedåt" in text
     assert "inget utfall på osedda data" in text and "Ändras sambandet?" in text
     low = text.lower()
     for word in ("larm", "varning", "bubbla", "kris"):

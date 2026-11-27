@@ -4175,3 +4175,79 @@ Dynamic Systems står (punkt 5). Inget nytt kvartal, ingen ny månad och ingen n
 **Ärligt om osäkerheten.** Inget av detta gör PV1 till ett test. De nya raderna är tre beskrivningar till, och med få
 ursprung kan ett utslag vara slump. Att de geometriska raderna ger samma utslag som de låsta i dag säger inget om hur
 ofta de skiljer sig på osedda data.
+
+### 2026-11-27 – B18: ägarbeslut efter R29
+
+Spår B18, körning 18. Johannes fattade tre ägarbeslut 2026-11-27 i chatten, enligt agentens rekommendationer i
+granskningen R29 (`docs/granskning/r29_korning17.md`, avsnitt 7) och i X26. Posten skriver ned dem och vad de ändrar.
+Den är ett tillägg till posterna "2026-11-25 – KL1", "2026-11-26 – F0", "– X25", "2026-11-27 – S1", "– PV1" och "– X26",
+som inte skrivs om. Den committas ensam, innan koden ändras och innan något utslag räknas på den nya koden. Ingen serie,
+ingen källa, inget mått i en låst rad, ingen gräns, inget fönster och inget tecken ändras. Grenindex, kärnserier,
+tillstånd och publiceringsflaggor berörs inte.
+
+**Vad som var känt före posten.** Hela R29 och X26, registerposterna F0, LT1, BG1, EL1, X25, S1, AN1, QA1, PV1 och X26,
+`followed/common.py`, `kreditlagret.py` och `prisvolym.py`, `docs/resultat/antenner.md` och början av
+`docs/resultat/prisvolym.md` och `kreditlagret.md`, alltså alla utslag per 2026-11-27 och 2025-11-27 som står där.
+Agenten genererade dessutom rapporterna för KL1, LT1, BG1, EL1 och PV1 per 2026-11-27 och 2025-11-27 och antennerna per
+2026-11-27 med koden på `3edc854`, som jämförelse för de byte-identiska delarna. Inget nytt kvartal, ingen ny månad och
+ingen ny vecka är hämtad.
+
+**1. F0:s räkning av prövade ursprung bekräftas (R29-1).** *Beslut:* S1:s ändring (posten "2026-11-27 – S1", punkt 3:
+ett ursprung räknas som prövat bara när Y finns i fönstret) gäller. *Motivering:* det nya talet är ärligare, eftersom
+ett ursprung utan impuls där Y saknas inte har prövat något, och F0:s gamla tal står kvar bredvid i övergångsnotisen.
+*Vad som ändras:* tillägget "Bytet väntar på ägarens bekräftelse" (X26, punkt 1) tas bort ur övergångsnotisen i varje
+rapport som läser med `common.read_rule` (LT1, BG1, EL1, KL1-S och PV1). R29-1 är stängt. *Vad som inte ändras:*
+övergångsnotisen står kvar med båda talen enligt S1, punkt 3 (åtminstone till och med läsningen omkring 2027-01-31),
+och inga utfall, utslag eller andra tal ändras.
+
+**2. PV1:s huvudläsning blir H-G (R29-2).** *Beslut:* huvudläsningen byts från H (kvartalet som aritmetiskt medel av
+månaderna och veckosummorna, PV1 (b) och (c)) till H-G (geometriskt medel, X26 punkt 2). Bisakerna redovisas på samma
+sätt som a-G och b-G. H, a och b står kvar som låsta rader bredvid och redovisas i varje rapport. *Motivering:* ingen
+läsning i PV1 har avgjorts på osedda data, så bytet görs innan regeln har läst något nytt (huvudläsningen kan avgöras
+tidigast omkring 2027-03-30, PV1 (g)). Med det aritmetiska medlet ger en speglad prisbana inte det speglade utslaget,
+och riktningen kan avgöra om en impuls uppstår (R29-2), vilket strider mot regel 1. Med det geometriska medlet är
+läsningen exakt symmetrisk. *Vad som ändras:*
+- PV1 (h): antennens utslag är H-G:s. Fakta är bisakerna a-G och b-G, förändringen i takt för X och Y i H-G:s form
+  (`pv1_pris_gpqa_gq`, `pv1_sdk_gq`), H-G:s impulser upp och ned, om H-G är på osedda data, och de låsta raderna H, a
+  och b i en fakta. `main_inputs` följer H-G. Katalogserierna är desamma som för H (`g2_price_at_capability_gpqa` mot
+  `g3_npm_openai_w` + `g3_npm_anthropic_sdk_w`), eftersom bara kvartalsvärdet skiljer.
+- Rapporten: avsnitt 1 och 2 visar först kvartalsvärdena i geometriskt medel och sedan de låsta i aritmetiskt medel.
+  Beskrivningsraderna (serier utan läsregel) står kvar i aritmetiskt medel enligt PV1 (b). Avsnitt 3 läser H-G, a-G och
+  b-G, och avsnitt 6 redovisar H, a och b bredvid, med en jämförelse per rad. Nästa osedda läsning räknas på H-G:s
+  storheter (samma kvartal som förut).
+- Sedda data avgörs per läsning som förut (X25, punkt 1, med registerdagen 2026-11-27) för alla sex raderna.
+
+*Vad som inte ändras:* PV1 (c):s tabell och regeln för H, a och b, X26:s regel för H-G, a-G och b-G (samma serier,
+statistik, *g* = 50, *h* = 20, *k* = 2, *s* = −1), kvartalsreglerna och `known_from`, förbehållen och vad som var sett
+(PV1 (f) och (g)). Per 2026-11-27 och 2025-11-27 är utslagen desamma för de låsta och de geometriska raderna, så inget
+utslag ändras.
+
+**3. KL1 avgör sedda data per läsning (R29-7).** *Beslut:* KL1:s låsta rapport avgör om en läsning är gjord på sedda
+data per läsning och inte av läsdagen, med X25:s mekanism (punkt 1) och KL1:s registerdag 2026-11-25. *Motivering:*
+efter Oracles inlämning omkring 2026-12-11 blir Oracles läsning osedd medan de andra fortfarande är sedda, och stycket
+kan i dag inte säga vilken som är vilken. Per 2026-11-27 saknas stycket helt, fast läsningen är på sedda data.
+*Vad som ändras:*
+- En läsning (yttre lagret, huvudläsning, och varje yttre bolag mot inre lagret, avsnitt 4) är sedd när varje värde som
+  utslaget vilar på är detsamma i läsningen på läsdagen som i läsningen per 2026-11-25 (bara rader kända den dagen).
+  Utslaget vilar på allt som KL1:s regel (c) läser: takten vid *t* − 2 för varje pris- och beroendemått som är
+  registrerat för enheten (villkor A), enhetens förändring i capex-takt vid *t* och det inre lagrets förändring i
+  capex-takt vid det kvartal som läsningen använder. Ett värde som saknas båda dagarna räknas som detsamma. Ett nytt
+  kvartal *t*, ett värde som tillkommit och en revidering som ändrar värdet gör läsningen osedd, en ny version med samma
+  värde gör det inte. Läsdagar till och med 2026-11-25 är alltid sedda.
+- Stycket om sedda data i avsnitt 4 (före läsningarna) följer läsningarna. Till och med 2026-11-25 står det ordagrant
+  som förut. Efter 2026-11-25 säger det att sedda data avgörs per läsning och, om alla är sedda, att ingen är ett utfall
+  på osedda data och när den första osedda läsningen kommer. Är någon osedd säger det vilka läsningar som är osedda och
+  vilka som är sedda.
+- Antennen får fakta "Huvudläsningen på osedda data" (ja eller nej), som de andra frågorna har (X25, punkt 1).
+
+*Vad som inte ändras:* KL1:s läsregel, mått, gränser, utslag och "A har gällt", resten av avsnitt 4 och avsnitt 1–3 och
+5–7, och KL1-S (avsnitt 8, med sedda data enligt S1, punkt 4, och registerdagen 2026-11-27). Rapporterna per 2025-11-27
+och 2026-11-25 är byte för byte desamma. Per 2026-11-27 är den enda skillnaden i avsnitt 1–7 stycket om sedda data,
+och utslagen är desamma.
+
+**Rapporterna.** `docs/resultat/kreditlagret.md`, `ledtid.md`, `betalningsgapet.md`, `elflaskhalsen.md`, `prisvolym.md`
+och `antenner.md` genereras om per 2026-11-27, och per 2025-11-27 där dokumentet har den dagen, eftersom
+övergångsnotisen (punkt 1) står i alla utom antennerna.
+
+**Ärligt om osäkerheten.** Inget av besluten gör en följd fråga till ett test. Att H-G och H ger samma utslag i dag
+säger inget om hur ofta de skiljer sig på osedda data.

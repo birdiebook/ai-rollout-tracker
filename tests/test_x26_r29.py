@@ -4,7 +4,7 @@
 - PV1: the geometric rows H-G, a-G and b-G beside the locked ones, exactly symmetric, the locked readings untouched,
   months and weeks <= 0 give no quarter, the backfill caveat and the antenna fact
 - QA1: a label states only what was filed on its day, the same-day check, the two new considerations
-- S1: the transition note says the change waits for the owner, EL1-S no longer says Quanta is unchecked
+- S1: the transition note no longer waits for the owner (closed by B18), EL1-S no longer says Quanta is unchecked
 """
 
 from __future__ import annotations
@@ -45,7 +45,7 @@ def test_register_entry_is_in_place_and_after_pv1():
     assert P.READINGS_G == {"H-G": ("pv1_pris_gpqa_gq", "pv1_sdk_gq"), "a-G": ("pv1_pris_arena_gq", "pv1_sdk_gq"),
                             "b-G": ("pv1_pris_gpqa_gq", "pv1_sdk_rel_gq")}
     assert {k: v for k, v in P.DERIVED_G.items()} == {k.replace("_q", "_gq"): v for k, v in P.DERIVED.items()}
-    assert P.MAIN == "H"  # H-G is beside H, not instead of it
+    assert P.MAIN_LOCKED == "H" and P.MAIN == "H-G"  # X26 put H-G beside H; the owner made it the main reading (B18)
 
 
 # ------------------------------------------------------------------ PV1: geometric rows
@@ -118,18 +118,20 @@ def test_locked_readings_are_the_same_with_the_geometric_rows():
         got = r["readings"][name]
         assert {k: got[k] for k in ("outcome", "origin", "t", "history")} == \
                {k: want[k] for k in ("outcome", "origin", "t", "history")}
-    md = P.render(r)
+    md = P.render(r)  # since B18, point 2: H-G, a-G and b-G in section 3, the locked rows in section 6
     head, tail = md.split("## 5. Förbehåll", 1)
-    assert "geometrisk" not in head.lower() and "## 6. Geometriskt kvartalsmedel" in tail
+    assert "(H-G, huvudläsning)" in head and "## 6. Aritmetiskt kvartalsmedel" in tail
+    for name in P.READINGS:
+        assert P.READING_NAME[name] in tail and P.READING_NAME[name] not in head
 
 
 def test_geometric_rows_have_seen_flags_and_an_antenna_fact():
     r = P.compute("2026-12-31", table=TP.world(-60.0, 30.0))
     assert all("seen" in x for x in r["readings_geo"].values())
     row = P.antenna(r)
-    fact = row["facts"]["Geometriskt medel H-G / a-G / b-G (X26)"]
-    assert fact.count(" / ") == 2 and fact.split(" / ")[0] == P.short(r["readings_geo"]["H-G"])
-    assert row["outcome"] == r["readings"]["H"]["outcome"]  # the row's outcome is still H
+    fact = row["facts"]["Låsta rader H / a / b (aritmetiskt medel)"]  # since B18, point 2: the locked rows are the fact
+    assert fact.count(" / ") == 2 and fact.split(" / ")[0] == P.short(r["readings"]["H"])
+    assert row["outcome"] == r["readings_geo"]["H-G"]["outcome"]  # the row's outcome is H-G's (B18, point 2)
 
 
 def test_classes_of_geometric_keys_follow_their_inputs():
@@ -204,11 +206,11 @@ def test_lt1_mark_per_2024_reading_days_has_no_hindsight():
 # ------------------------------------------------------------------ S1 texts
 
 
-def test_transition_note_says_the_change_waits_for_the_owner():
+def test_transition_note_no_longer_waits_for_the_owner():
+    """X26 made the note say the change waited for the owner; the owner confirmed it (register B18, point 1)."""
     h = {"n_tested": 4, "n_x": 4, "n_tried": 3}
-    assert C.transition_note(h).endswith(C.PENDING_OWNER)
-    assert "R29-1" in C.PENDING_OWNER and "X26" in C.PENDING_OWNER
-    assert "C.PENDING_OWNER" in inspect.getsource(L)
+    assert C.transition_note(h).endswith("med den nya: 3 av 4.")
+    assert not hasattr(C, "PENDING_OWNER") and "PENDING_OWNER" not in inspect.getsource(L)
 
 
 def test_el1s_text_points_to_qa1_and_lt1():
