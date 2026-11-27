@@ -27,6 +27,7 @@ from ai_tracker import observations
 from ai_tracker.followed import aggregate as A
 from ai_tracker.followed import common as C
 from ai_tracker.series import kreditlagret as KS
+from ai_tracker.sources import acquisitions as ACQ
 from ai_tracker.series import ledtid as LS
 from ai_tracker.state import measures as M
 
@@ -60,9 +61,15 @@ DIRECTIONS = {"fore": "före", "efter": "efter"}
 # acquisition that touches a quarter is listed, with the way it moves the change in pace (register X25, point 2)
 ACQUISITIONS = {"L1": (("Eaton–Fibrebond", "2025Q2"), ("Eaton–Boyd Thermal", "2026Q1")),
                 "L2": (("Cisco–Splunk", "2024Q1"),)}
+# Quanta's acquisitions are data in curated/acquisitions.csv (register 2026-11-27 QA1), marked from the day the first
+# filing that states them was filed; they follow the documented ones above in each mark
+ACQ_COMPANIES = {"L1": ("pwr",)}
 ACQ_OFFSETS = (0, 1, 4, 5)
 ACQ_PUSH = {0: "upp", 1: "upp", 4: "ned", 5: "ned"}  # a level step raises pace at a..a+3: change up at a, a+1, down at a+4, a+5
-UNCHECKED_ACQ = "Förvärv hos Quanta, Dell, Super Micro och Equinix är inte kontrollerade."
+UNCHECKED_ACQ = ("Quantas förvärv är kodade ur 10-K och 10-Q från 2023 (`curated/acquisitions.csv`, registret 2026-11-27 "
+                 "QA1). Quantas förvärv före 2023 är inte kodade, fast deras a + 4 och a + 5 kan ligga i L1:s historik "
+                 "(till exempel Blattner, slutfört 2021-10-13). Förvärv hos Dell, Super Micro och Equinix är inte "
+                 "kontrollerade.")
 
 CONTEXT = {  # (title, keys): measures shown as context, not read
     "members": ("Medlemmarna i L1 och L2, och leverantörer utanför aggregaten",
@@ -162,12 +169,20 @@ def limits(direction: str) -> tuple[float, float]:
     return (G_SUPPLIER, G_BUYER) if direction == "fore" else (G_BUYER, G_SUPPLIER)
 
 
-def acquisition_quarters(row: str) -> dict[str, str]:
+def acquisitions(row: str, when=None) -> list[tuple[str, str]]:
+    """(name, quarter a) of the row's acquisitions: the documented ones, then the coded ones known on `when` (every
+    coded one when None), in quarter order (register 2026-11-27 QA1, point 5)."""
+    coded = [(name, a) for c in ACQ_COMPANIES.get(row, ()) for name, a, _ in ACQ.marks(c, when)]
+    return [*ACQUISITIONS.get(row, ()), *coded]
+
+
+def acquisition_quarters(row: str, when=None) -> dict[str, str]:
     """{quarter: text} for the quarters whose change in pace an acquisition touches. Every acquisition that touches a
     quarter is listed (register X25, point 2), each with its offset and the way it moves the change in pace:
-    'Eaton–Fibrebond a + 4, ned; Eaton–Boyd Thermal a + 1, upp'."""
+    'Eaton–Fibrebond a + 4, ned; Eaton–Boyd Thermal a + 1, upp'. Coded acquisitions count from the day their first
+    filing was filed (register QA1, point 5)."""
     by: dict[str, list[str]] = {}
-    for name, a in ACQUISITIONS.get(row, ()):
+    for name, a in acquisitions(row, when):
         for j in ACQ_OFFSETS:
             by.setdefault(C.plus(a, j), []).append(f"{name} {'a' if j == 0 else f'a + {j}'}, {ACQ_PUSH[j]}")
     return {q: "; ".join(v) for q, v in by.items()}
@@ -190,12 +205,12 @@ def lag(o: dict) -> int | None:
     return int((pd.Period(o["decided_at"], freq=C.QFREQ) - pd.Period(o["origin"], freq=C.QFREQ)).n)
 
 
-def reading(row: str, buyer: str, direction: str, k: int, ms: dict[str, dict]) -> dict:
+def reading(row: str, buyer: str, direction: str, k: int, ms: dict[str, dict], when=None) -> dict:
     sup, buy = ms[SUPPLIERS[row][0]], ms[BUYERS[buyer]]
     mx, my = (sup, buy) if direction == "fore" else (buy, sup)
     g, h = limits(direction)
     r = C.read_measures(mx, my, x_stat="change", g=g, k=k, h=h, sign=SIGN)
-    acq = acquisition_quarters(row)
+    acq = acquisition_quarters(row, when)
     hist = origins(C.series_of(mx, "change"), C.series_of(my, "change"), r["t"], g=g, h=h, k=k)
     for o in hist + r["origins"]:
         # the mark goes where the supplier's change in pace is read: the origin in "före" (X = supplier), the
@@ -307,7 +322,7 @@ def _compute(when: pd.Timestamp, table: pd.DataFrame) -> dict:
     keys = [v[0] for v in SUPPLIERS.values()] + list(BUYERS.values())
     keys += [k for _, ks in CONTEXT.values() for k in ks if k not in keys]
     ms = {k: measure_of(k, t, when, ctx) for k in keys}
-    readings = [reading(row, buyer, d, k, ms) for row, buyer in ROWS for d in DIRECTIONS for k in WINDOWS]
+    readings = [reading(row, buyer, d, k, ms, when) for row, buyer in ROWS for d in DIRECTIONS for k in WINDOWS]
     lead = {f"{r['row']}|{r['buyer']}|{r['direction']}": lead_time(r) for r in readings if r["k"] == LEAD_WINDOW}
     filings = C.next_filings(t, when, FILERS)
     nx = {}
@@ -329,6 +344,7 @@ def _compute(when: pd.Timestamp, table: pd.DataFrame) -> dict:
         "measures": ms, "readings": readings, "lead": lead, "main": list(MAIN),
         "missing": {k: missing_members(k, t, ms[k], when) for k in formulas() if k in ms},
         "next_filings": filings, "next": nx, "guidance": guidance,
+        "acquisitions": {c: ACQ.marks(c, when) for cs in ACQ_COMPANIES.values() for c in cs},
     }
 
 
@@ -357,6 +373,21 @@ def _level(m_unit: str):
             return "–"
         return C.fmt_bn(x) if m_unit == "MUSD" else C.fmt(x, 1) + (" %" if m_unit == "%" else f" {m_unit}")
     return f
+
+
+def _acquisition_lines(r: dict) -> list[str]:
+    """Quanta's coded acquisitions known on the day, one line per quarter a (register QA1)."""
+    out = []
+    for c, ms in r.get("acquisitions", {}).items():
+        if not ms:
+            continue
+        who = ACQ.NAMES.get(c, c)
+        items = "; ".join(f"{a}: {name.removeprefix(who + ', ').removeprefix(who + '–')} (känt från {day})"
+                          for name, a, day in ms)
+        out.append(f"- {who}s förvärv per kvartal a, med köpeskillingen i MUSD som bolaget anger den (för en period: alla "
+                   f"förvärv i perioden hittills i året). Bolaget anger inte tillförd RPO, och den räknas inte om ur "
+                   f"köpeskillingen: {items}.")
+    return out
 
 
 def _table(ms: dict, keys: list[str]) -> list[str]:
@@ -492,9 +523,10 @@ def render(r: dict) -> str:
             "- Leverantörerna säljer också till andra än AI-köparna: Quanta och Eaton till elbolag och industri, Cisco och "
             "Dell till företag. Ett utslag säger inget om hur stor del som gäller AI.",
             "- Förvärv ger nivåskiften. Belagda förvärv märks i tabellen (Cisco–Splunk 2024Q1, Eaton–Fibrebond 2025Q2, "
-            "Eaton–Boyd Thermal 2026Q1) med förskjutning och riktning: vid a och a + 1 flyttas förändringen i takt "
-            "uppåt, vid a + 4 och a + 5 nedåt. Träffar två förvärv samma kvartal åt olika håll är nettoriktningen inte "
-            f"känd. {UNCHECKED_ACQ}",
+            "Eaton–Boyd Thermal 2026Q1 och Quantas förvärv nedan) med förskjutning och riktning: vid a och a + 1 flyttas "
+            "förändringen i takt uppåt, vid a + 4 och a + 5 nedåt. Träffar två förvärv samma kvartal åt olika håll är "
+            f"nettoriktningen inte känd. Märket ändrar inget utslag. {UNCHECKED_ACQ}",
+            *_acquisition_lines(r),
             "- O1 och O2 är S3:s extraktion (publish=False i väntan på granskningen). Digital Realtys andel är obelagd "
             "2021Q4–2024Q1 (S3, tolkning 9).",
             "- Vertiv är BLOCKED (inget RPO i XBRL, och S3:s orderserier slutar 2025Q4). GE Vernovas RPO och order är för "
