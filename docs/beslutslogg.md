@@ -1614,3 +1614,27 @@ Johannes svarade "kör på dina rekommendationer" på tre rekommendationer samma
 - **Öppet för Johannes:** (1) Bekräfta S1:s räkning. Rekommendation: ja, och logga det. (2) PV1:s kvartalsmedel som
   geometriskt medel genom ett daterat tillägg före 2027-01-05. Rekommendation: ja, som ersättning, eftersom ingen läsning
   har avgjorts på osedda data. (3) KL1:s sedda data per läsning före 2026-12-11. Rekommendation: ja, som S1 föreslår.
+
+## 2026-11-27 – X26 rättning efter R29 (körning 17)
+
+- **Vad.** Rättning av R29-1 till R29-5 i `auto17/integration17` efter registerposten "2026-11-27 – X26" (`07205d0`,
+  committad ensam före koden). Ingen låst regel och inget låst utslag ändrat: utslagen för LT1, BG1, EL1, KL1 och PV1:s
+  låsta rader per 2026-11-27 och 2025-11-27 är desamma, och KL1:s avsnitt 1–7 är oförändrade.
+- **R29-2, valt: rader bredvid i stället för ersättning.** PV1 får H-G, a-G och b-G med geometriskt kvartalsmedel bredvid
+  H, a och b. Geometriskt medel är exakt symmetriskt i log-skala och ger samma utslag i dag. Att ersätta H direkt hade
+  ändrat en låst post utan ägarbeslut, alltså samma avvikelse som R29-1. Förkastat: att bara byta aggregeringen i koden.
+- **R29-1.** Processavvikelsen är loggad, och övergångsnotisen säger att S1:s byte väntar på ägarens bekräftelse. Spåret
+  kan inte logga ett beslut som ägaren inte har fattat.
+- **R29-3, R29-5.** Förbehållet om backfill i PV1 (med hämtningsdatum och antal rader hämtade efter läsdagen) och EL1-S:s
+  text om Quantas förvärv (kodade från 2023, märket i LT1).
+- **R29-4.** Etiketten i `curated/acquisitions.csv` gäller per inlämningsdag, och samma händelse och dag måste ha samma
+  etikett. "Minst 1 förvärv" där dagens dokument inte avgör om två uppgifter är samma förvärv (2026Q3 per 2026-07-30,
+  2026Q4 per 2026-10-29); det ändrar texten för 2026Q4 i LT1:s märke per 2026-11-27. Två nya rader (Cupertino cirka
+  1,5 mdr, Dynamic Systems cirka 1,35 mdr), kontrollerade mot nyhämtade inlämningar tillsammans med de sex omdöpta raderna
+  (10 av 10). Kontrollen skrev råkopior av sju offentliga EDGAR-dokument till den delade `data/raw/acquisitions/`
+  (http-modulens cache, gitignorerad).
+- **Öppet för Johannes:** (1) Bekräfta S1:s räkning av prövade ursprung (R29-1). Rekommendation: ja, och ta då bort
+  tillägget i notisen. (2) Om H-G ska ersätta H som PV1:s huvudläsning, före 2027-01-05. Rekommendation: ja, eftersom
+  ingen läsning är avgjord på osedda data och den låsta formen kan välja riktning; annars står båda kvar. (3) R29-6
+  till R29-10 är anmärkningar och inte rättade här (R29-11, datumet i antennernas inledning, är rättat). R29-7 (KL1:s
+  sedda data per läsning) bör få en post före Oracles inlämning omkring 2026-12-11. Rekommendation: ja.

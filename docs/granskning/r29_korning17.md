@@ -25,6 +25,9 @@ fastlåsta registerposter och värden som R29 läst i källan, egenskaper som h�
 | 4. PV1 | **Regeln symmetrisk, aggregeringen inte.** Kvartalsmedlet av månadspriser är aritmetiskt, så en speglad prisbana ger inte den speglade förändringen i takt (R29-2). As-of-gränsen håller, frekvensaggregeringen stämmer med R29:s egen räkning, Cloudflare (`nej`) används inte och syns inte, gemensam orsak står som förbehåll, `main_inputs` stämmer och delas inte. Förbehållet om backfill saknas i rapporten (R29-3) |
 | 5. Omräkning | **Rätt.** Minst ett utslag per spår räknat om direkt ur `observations.parquet` med pandas och numpy, utan projektets moduler. Alla stämmer på avrundningen |
 
+*Rättning: X26 (`auto17/integration17`, registret 2026-11-27 X26) rättade R29-2 till R29-5 och R29-1 delvis (ägarbeslutet
+kvarstår). Se "Rättat i X26" under varje fynd.*
+
 **Slutdom: GODKÄND MED ANMÄRKNINGAR.** Inget must_fix. Fem should_fix (R29-1 till R29-5) och sex anmärkningar. Inget
 fynd ändrar ett utslag eller ett värde per 2026-11-27 eller 2025-11-27. R29-2 och R29-3 bör rättas före PV1:s första
 osedda läsning (npm-kvartalet 2026Q4, omkring 2027-01-05), R29-1 och R29-5 före Oracles inlämning omkring 2026-12-11.
@@ -173,6 +176,11 @@ liten. Men talet syns i alla fyra frågornas rapporter (elpriset i EL1: 213 → 
 ett spår på en rekommendation. **Rättning:** logga ägarbeslutet i beslutsloggen (eller, om körningens uppdrag var
 beslutet, säg det i S1:s post med ett daterat tillägg). Inte testbart.
 
+**Delvis rättat i X26** (punkt 1): processavvikelsen är loggad i registret och beslutsloggen, och övergångsnotisen i
+varje rapport säger att bytet väntar på ägarens bekräftelse. Ett ägarbeslut kan inte loggas av ett spår, och inget
+sådant finns i registret, beslutsloggen eller `docs/riktning.md`. Beslutet står kvar som öppet för Johannes
+(rekommendation: bekräfta).
+
 ### R29-2 (should_fix, PV1): kvartalsmedlet bryter symmetrin
 
 Se avsnitt 4. Måttet är log av ett aritmetiskt medel av månadspriser, så en prissänkning och en lika stor höjning i
@@ -183,11 +191,21 @@ ett daterat tillägg till PV1 före den första osedda läsningen (omkring 2027-
 medel (medel av log) som huvudmått, eller som en rad bredvid den låsta. Strikt xfail:
 `test_pv1_mirrored_price_gives_the_mirrored_change_in_pace`.
 
+**Rättat i X26** (registret 2026-11-27 X26, punkt 2, commit `07205d0` ensam före koden): tre rader H-G, a-G och b-G
+bredvid de låsta, med kvartalet som geometriskt medel av månaderna och veckosummorna, i rapportens avsnitt 6 och som en
+fakta i antennen. De låsta raderna och avsnitt 1–4 är oförändrade, och H är huvudläsning. Utslagen är desamma per
+2026-11-27 och 2025-11-27 (Arena A +433,7, +301,0, +0,1, −37,7, 0,0). Testet är ett vanligt test på de geometriska
+raderna, och den låsta formens asymmetri är fastlåst bredvid (+28,8 mot −69,3). Om H-G ska ersätta H är kvar som beslut
+för Johannes före 2027-01-05.
+
 ### R29-3 (should_fix, PV1): förbehållet om backfill saknas i rapporten
 
 Se avsnitt 4. Läsningen per 2025-11-27 bygger på npm-värden som hämtades ett år senare. Rapporten säger "Bara data kända
 på dagen" utan förbehåll. **Rättning:** ett förbehåll i avsnitt 5 som i EL1 ("Lasten är backfill"). Strikt xfail:
 `test_pv1_report_says_the_history_is_a_backfill`.
+
+**Rättat i X26** (punkt 3): förbehållet "Historiken är backfill" med hämtningsdatumen (2026-11-23–26) och antalet
+använda rader som hämtades efter läsdagen (per 2025-11-27 alla, per 2026-11-27 inga). Testet är ett vanligt test.
 
 ### R29-4 (should_fix, QA1): märkets text på historiska läsdagar
 
@@ -207,12 +225,22 @@ utslag. Det spelar roll för jämförelsen mot förra månaden och för rapporte
 per rad (eller räkna antalet ur de rader som var kända), och två nya konsiderationsrader. Strikta xfail:
 `test_qa1_label_states_only_what_was_filed_on_the_day`, `test_qa1_cupertino_has_its_first_stated_consideration`.
 
+**Rättat i X26** (punkt 4 och 5): etiketten gäller per rad och säger vad som var inlämnat på radens dag (2024Q1 "2
+förvärv" per 2024-02-25, 2024Q2 "1 förvärv" per 2024-05-02, "minst 1 förvärv" för 2026Q3 per 2026-07-30 och 2026Q4 per
+2026-10-29), och `acquisitions.load` kräver samma etikett för samma händelse och dag. Två nya rader: Cupertino cirka 1
+500 MUSD (10-Q 2024-08-01) och Dynamic Systems cirka 1 350 MUSD vid tillträdet (10-Q 2025-07-31), med accession, plats
+och hash; de två och de sex omdöpta raderna kontrollerades mot ett nytt anrop till EDGAR (10 av 10 rätt). Per 2026-11-27
+ändras bara texten för 2026Q4 i LT1:s märke. Testerna är vanliga tester.
+
 ### R29-5 (should_fix, S1 och integrationen): EL1-S säger att Quantas förvärv inte är kontrollerade
 
 EL1-S:s rad (koden i `elflaskhalsen.py` och `docs/resultat/elflaskhalsen.md`, båda dagarna) säger "Quantas förvärv är
 inte kontrollerade (R28-7)". QA1 kodade dem för 2023–2026 i samma körning, och integrationen behöll S1:s text. Raden
 har samma X som LT1:s huvudläsning, där märket nu finns. **Rättning:** samma text som i LT1 (kodade från 2023, inte före),
 gärna med en hänvisning till LT1:s märke. Strikt xfail: `test_el1s_text_does_not_say_quanta_is_unchecked`.
+
+**Rättat i X26** (punkt 6): EL1-S säger att Quantas förvärv är kodade från 2023 (QA1), inte före, och att märket står i
+LT1:s huvudläsning. Ingen märkning läggs till i EL1-S (S1, punkt 2). Testet är ett vanligt test.
 
 ### R29-6 (note, AN1 i BG1): texten om run-rate och tabellen
 
