@@ -4175,3 +4175,50 @@ Dynamic Systems står (punkt 5). Inget nytt kvartal, ingen ny månad och ingen n
 **Ärligt om osäkerheten.** Inget av detta gör PV1 till ett test. De nya raderna är tre beskrivningar till, och med få
 ursprung kan ett utslag vara slump. Att de geometriska raderna ger samma utslag som de låsta i dag säger inget om hur
 ofta de skiljer sig på osedda data.
+
+### 2026-11-27 – DA1: förvärv hos Dell, Super Micro och Equinix i LT1:s förvärvsmärke (L2 och L3, ingen regel ändras)
+
+Spår DA1, körning 18. Tillägg till posterna "2026-11-26 – LT1" (c), "Förvärv", "2026-11-26 – X25", punkt 2, "2026-11-27
+– QA1" och "2026-11-27 – X26", punkt 4, som inte skrivs om. Skrivet och committat ensamt innan bolagens inlämningar läses
+för förvärv och innan någon kod ändras. Inget mått, ingen läsregel, ingen gräns, inget fönster, inget tecken och ingen
+huvudläsning ändras. Märket ändrar inget utfall (LT1 (c)), så utslagen per 2026-11-27 och 2025-11-27 ska bli desamma.
+Det som tillkommer är fler belagda förvärv i listan som märket läser, för L2 och L3. Inget nytt utslag räknas.
+
+**Varför en post.** LT1 (c) räknar upp de belagda förvärven med namn och säger att förvärv hos Dell, Super Micro och
+Equinix inte är kontrollerade. Att lägga till dem ändrar vad posten säger, även om regeln för märket är densamma.
+
+**Vad som var känt före posten.** LT1:s rapporter och antennerna per 2026-11-27 och 2025-11-27 i `docs/resultat/`, alltså
+alla kvartal till och med 2026Q3 (Dell till och med 2026Q2), bland dem L2:s talar för vid 2026Q2 (X +25,9) och Dells RPO
+51, 82, 97 och 132 mdr USD 2025Q3–2026Q2. QA1:s kod, tabell och källdokument, R29 och X26. Agenten har allmän kunskap
+från träningen om bolagen, men har inte läst deras 10-K eller 10-Q för förvärv och vet inte vilka förvärv de anger, när
+de slöts eller vad de kostade.
+
+1. **Bolagen.** Bara bolag vars RPO ingår i L2:s eller L3:s serie i LT1 (`series.ledtid.NET` och L3 i
+   `followed.ledtid`): Dell, Super Micro och Equinix. HPE och Arista ingår inte (`rpo_hpe` och `rpo_anet` är sammanhang
+   i rapporten och läses inte) och kodas inte, och rapporten säger det. Cisco ingår i L2, men bara Cisco–Splunk är
+   belagt (LT1 (c)). Ciscos övriga förvärv kodas inte här, och rapporten säger det.
+2. **Underlaget och perioden.** Bolagens 10-Q och 10-K (med ändringar) på EDGAR med rapportdag från 2022-12-31. Förvärv
+   vars kvartal *a* (punkt 3) är 2023Q1 eller senare kodas, som QA1, punkt 1. Förvärv före det kodas inte, fast deras
+   *a* + 4 och *a* + 5 kan ligga i L2:s och L3:s historik (från omkring 2020). Rapporten säger det.
+3. **Samma märkesregel som QA1, punkt 2–5, och X26, punkt 4.** En rad per förvärv som bolaget anger som slutfört (ett
+   bolag, en verksamhet eller ett datacenter), med namn eller antal, slutdag, köpeskilling som den står (MUSD, med
+   kvalificerare) och tillförd RPO eller backlog där bolaget anger den. Andelar i intresseföretag och samriskbolag är
+   inte förvärv, som i QA1:s tolkning. Varje rad har accession, inlämningsdag, plats (meningens nummer i dokumentets
+   text) och meningens SHA-256, meningen sparas bara i `data/raw` och raderna kontrolleras mot nyhämtade dokument.
+   Etiketten säger vad som var inlämnat om förvärvet på radens dag (X26, punkt 4). Märket gäller från inlämningsdagen
+   för det första dokument som anger förvärvet (QA1, punkt 5), med den senaste köpeskilling som var känd på läsdagen.
+   **Kvartalet *a*** är kvartalet i bolagets serie som innehåller slutdagen. För Super Micro och Equinix är det
+   kalenderkvartalet, som i QA1. Dells serie har räkenskapskvartalets kalenderkvartal (S1: räkenskapsåret slutar
+   omkring 31 januari, så räkenskapskvartalet februari–april är kvartal 1), och *a* är då det kvartal i serien vars
+   räkenskapskvartal innehåller slutdagen. Det är samma kvartal som QA1:s för ett bolag med kalenderkvartal: det första
+   kvartal vars balans innehåller förvärvet. Ciscos Splunk (2024Q1) ligger redan i den mappningen.
+4. **Ingen väsentlighetsgräns** (QA1, punkt 4). Alla slutförda förvärv märks, och märkets text får köpeskillingen. Ett
+   kvartal utan förvärv kodas som "inget" där dokumentet säger det eller förvärv saknas i dokumentet, som i QA1.
+5. **Beskrivningen av hur mycket som kan vara förvärvat** (källdokumenten, ingen regel), som QA1, punkt 6: där bolaget
+   anger tillförd RPO står beloppet mot ökningen i medlemmens RPO och i L2 eller L3. Där det inte anges står
+   köpeskillingen och att tillförd RPO inte är belagd, och hur stor tillförd RPO skulle behöva vara för att läsningens
+   X (eller Y i "efter") vid huvudursprungen skulle hamna under gränsen 10. Köpeskilling räknas inte om till RPO.
+
+**Ärligt om osäkerheten.** Märket säger att ett nivåskifte kan finnas i fönstret, inte hur stort det är. Ett bolag som
+inte anger förvärvad RPO lämnar storleken okänd, och en kodning ur text kontrollerar plats och siffror, inte tolkningen,
+som är för en oberoende granskning.
