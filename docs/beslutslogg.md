@@ -1597,3 +1597,20 @@ Johannes svarade "kör på dina rekommendationer" på tre rekommendationer samma
   flyttas till basens `data/raw` med ett eget steg, så att självkontrollerna för AN1 och QA1 kan köras från main.
   Rekommendation: ja, före nästa granskning. (2) Granskning av körning 17 före Oracles inlämning omkring 2026-12-11,
   med fokus på AN1:s extraktion (kärnvärden för BG1) och S1:s ändrade räkning. Rekommendation: ja.
+
+## 2026-11-27 – R29 granskning av körning 17 (S1, AN1, QA1, PV1)
+
+- **Vad.** Oberoende adversariell granskning av `auto17/integration17` (`3c71e70`): `docs/granskning/r29_korning17.md`,
+  tester i `tests/test_r29_korning17.py`. Ingen produktionskod ändrad.
+- **Dom: GODKÄND MED ANMÄRKNINGAR.** Registerposterna är committade ensamma före kod och utslag och oförändrade genom
+  mergarna. KL1:s låsta del är byte för byte densamma som på main per 2026-11-25, 11-26, 11-27 och 2025-11-25. AN1:s
+  297 värden och 297 citat stämmer mot nyhämtade prospekt lästa med en egen tolkning, och `known_from` är
+  inlämningsdagen. QA1:s rader stämmer mot Quantas inlämningar, och märket hamnar i rätt kvartal och riktning. PV1 är
+  kapningsinvariant och omräkningen ger samma värden och utslag.
+- **Fynd.** Inget must_fix. Should_fix: S1 bytte F0:s räkning, som X25 kallade ett ägarbeslut, utan loggat beslut
+  (R29-1); PV1:s aritmetiska kvartalsmedel är inte symmetriskt i log-skala, Arena A +346 mot −232 speglat (R29-2);
+  PV1:s rapport saknar förbehållet om backfill (R29-3); QA1:s etiketter är skrivna i efterhand och två köpeskillingar
+  saknas (R29-4); EL1-S säger att Quantas förvärv inte är kontrollerade (R29-5).
+- **Öppet för Johannes:** (1) Bekräfta S1:s räkning. Rekommendation: ja, och logga det. (2) PV1:s kvartalsmedel som
+  geometriskt medel genom ett daterat tillägg före 2027-01-05. Rekommendation: ja, som ersättning, eftersom ingen läsning
+  har avgjorts på osedda data. (3) KL1:s sedda data per läsning före 2026-12-11. Rekommendation: ja, som S1 föreslår.
