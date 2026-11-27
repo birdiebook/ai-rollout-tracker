@@ -1,8 +1,8 @@
-"""Business acquisitions read from 10-Qs and 10-Ks: agent-extracted facts for LT1's acquisition mark (register QA1).
+"""Business acquisitions read from 10-Qs and 10-Ks: agent-extracted facts for LT1's acquisition mark (QA1, DA1).
 
 LT1 marks the origins whose change in pace an acquisition touches (register 2026-11-26 LT1 (c), X25 point 2). Eaton's
-and Cisco's acquisitions were documented in the source documents before LT1; Quanta's are coded here from Quanta's own
-filings (register 2026-11-27 QA1):
+and Cisco's acquisitions were documented in the source documents before LT1; Quanta's (L1, register 2026-11-27 QA1) and
+Dell's, Super Micro's and Equinix's (L2 and L3, register 2026-11-27 DA1) are coded here from the companies' own filings:
 
 1. documents() lists the company's 10-Q/10-K filings on EDGAR; document_text() fetches the primary document (a cached
    raw copy when there is one), converts it to plain text (tsmc_sec.to_text) and splits it into sentences as
@@ -18,8 +18,11 @@ filings (register 2026-11-27 QA1):
    locator, the numbers and dates of the row in the sentence, and the filing date.
 
 An *event* is one acquisition, or the businesses a company acquired in one quarter when it only states them together.
-Its quarter a is the calendar quarter of the closing date; when only a period is stated, the period's last quarter
-(register QA1, point 3). A row's label states what was known about its event on the row's filing day, from that filing
+Its quarter a is the quarter of the company's series that holds the closing date: the calendar quarter for Quanta,
+Super Micro and Equinix, and for Dell the series' quarter of the fiscal quarter (S1: the fiscal year ends around
+January 31, so February to April is quarter 1; register DA1, point 3); when only a period is stated, the period's last
+quarter (register QA1, point 3). Dell, Super Micro and Equinix (L2 and L3) follow the same rule (register 2026-11-27
+DA1). A row's label states what was known about its event on the row's filing day, from that filing
 and earlier ones, never what a later filing added ("minst 1 förvärv" when the filings of the day do not settle whether
 two facts are the same deal; register X26, point 4). marks() gives each event known on a day, with the label of its
 latest row known on that day and the latest consideration known on that day.
@@ -45,9 +48,13 @@ SENTENCES_DIR = config.REPO / "data" / "raw" / "acquisitions_sentences"  # gitig
 SUBMISSIONS = "https://data.sec.gov/submissions/CIK{cik:010d}.json"
 SUBMISSIONS_FILE = "https://data.sec.gov/submissions/{name}"
 ARCHIVE = "https://www.sec.gov/Archives/edgar/data/{cik}/{acc}/{doc}"
-COMPANIES = {"pwr": 1050915}
-NAMES = {"pwr": "Quanta"}
+COMPANIES = {"pwr": 1050915, "dell": 1571996, "smci": 1375365, "eqix": 1101239}  # register DA1 adds L2 and L3
+NAMES = {"pwr": "Quanta", "dell": "Dell", "smci": "Super Micro", "eqix": "Equinix"}
 SINCE = "2023-01-01"  # register QA1, point 1: acquisitions that closed from 2023-01-01
+FIRST_QUARTER = "2023Q1"  # register DA1, point 2: quarter a from 2023Q1 (for Dell the fiscal quarter from 2023-02-04)
+# companies whose series label a fiscal quarter by the calendar quarter it mostly covers (S1): the fiscal quarter
+# ends about one month after the calendar quarter, so a day belongs to the quarter of the day one month earlier
+FISCAL_LAG_MONTHS = {"dell": 1}
 
 ROW_TYPES = ("acquisition", "count", "consideration", "none", "rpo_statement")
 MARK_TYPES = ("acquisition", "count")  # rows that carry an event's label
@@ -125,8 +132,12 @@ def save_sentence(row_id: str, sentence: str) -> Path:
 # ------------------------------------------------------------------ the curated table
 
 
-def quarter_of(day: str) -> str:
-    return str(pd.Period(pd.Timestamp(day), freq="Q"))
+def quarter_of(day: str, company: str = "pwr") -> str:
+    """The quarter of the company's series that holds `day` (register DA1, point 3). For Dell the fiscal quarters end
+    on the Friday nearest the end of January, April, July and October, so a closing within a few days of a fiscal
+    boundary has to be checked against the filing (the CSV's quarter is then the filing's)."""
+    t = pd.Timestamp(day) - pd.DateOffset(months=FISCAL_LAG_MONTHS.get(company, 0))
+    return str(pd.Period(t, freq="Q"))
 
 
 def _num(x: str) -> float | None:
@@ -152,10 +163,12 @@ def load(path: Path | None = None) -> pd.DataFrame:
             raise CsvError(f"{where}: row_type {r['row_type']!r} not in {ROW_TYPES}")
         if not re.fullmatch(r"\d{4}Q[1-4]", r["quarter"]):
             raise CsvError(f"{where}: quarter {r['quarter']!r}")
+        if r["quarter"] < FIRST_QUARTER:
+            raise CsvError(f"{where}: quarter before {FIRST_QUARTER} (registers QA1, point 1, and DA1, point 2)")
         if r["closed"]:
-            if quarter_of(r["closed"]) != r["quarter"]:
+            if quarter_of(r["closed"], r["company"]) != r["quarter"]:
                 raise CsvError(f"{where}: closed {r['closed']} is not in quarter {r['quarter']}")
-            if r["closed"] < SINCE:
+            if r["company"] not in FISCAL_LAG_MONTHS and r["closed"] < SINCE:
                 raise CsvError(f"{where}: closed before {SINCE} (register QA1, point 1)")
         if r["row_type"] == "consideration":
             if _num(r["consideration_musd"]) is None or r["consideration_scope"] not in SCOPES:
@@ -196,6 +209,8 @@ def load(path: Path | None = None) -> pd.DataFrame:
 
 
 def _fmt_musd(v: float) -> str:
+    if abs(v) < 10:  # small deals keep one decimal (Super Micro–Gemini 2,5 MUSD, register DA1)
+        return f"{v:.1f}".replace(".", ",")
     return f"{v:,.0f}".replace(",", " ")
 
 
