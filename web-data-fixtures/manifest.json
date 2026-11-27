@@ -121,7 +121,7 @@
    "schema": "method",
    "bytes": 10436,
    "gzip_bytes": 3024,
-   "sha256": "047b1b7ed06b417bf0e91119798017dc60f08d3f1704e819bd9e082b32e5a097"
+   "sha256": "3aa12342d47e2a0d8cba6e08bedb542f69e91950c7f82d44d35c72a9d3fe1988"
   },
   {
    "path": "nowcast/d2.json",
