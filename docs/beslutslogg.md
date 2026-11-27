@@ -1488,3 +1488,23 @@ Johannes svarade "kör på dina rekommendationer" på tre rekommendationer samma
 - **Öppet för Johannes:** om antennraden ska in i det publika månadsbrevet trots `publish=False`-serier.
   Rekommendation: inte än, och i så fall bara utslagen utan värden, efter den första osedda läsningen. Övriga öppna
   punkter står i X25:s post och i `docs/steg2/STATUS.md`, punkt 7.
+
+## 2026-11-27 – PV1: pris mot volym som följd fråga (körning 17)
+
+- **Vad.** Ny följd fråga på F0:s motor: "Följs prisfallet vid fast förmåga (G2) av högre användning (G3), och ändras
+  sambandet?" Registerposten (`6ed50e2`) committades ensam före all beräkning. Modul `followed/prisvolym.py`, rapport
+  `docs/resultat/prisvolym.md`, källor `docs/kallor/prisvolym.md`. Inga nya serier eller källor.
+- **Val.** Huvudläsning: G2:s kärnserie (GPQA-priset) mot npm-nedladdningar av openai + @anthropic-ai/sdk, X:s
+  *förändring i takt* (inte takt, eftersom priset nästan alltid faller och regeln annars bara läser en riktning, R28-5),
+  tecken −1, *g* = 50, *h* = 20, *k* = 2. Bisaker: Arena-priset A (längst historik, men mäter golvet från 2024-07) och
+  SDK:erna relativt kontrollpaketen react + express (CI och npm-tillväxt). Cloudflare (klass `nej`), GitHub (slutar
+  2025-10), PyPI (för kort) och Wikipedia (uppmärksamhet) används inte.
+- **Utfall.** Huvudläsningen kan inte avgöras per 2026-11-27 eller 2025-11-27: GPQA-priset får förändring i takt först
+  för 2026Q4 och kan avgöras tidigast med npm-kvartalet 2027Q1 (omkring 2027-03-30), helt på osedda data. Bisak a gav
+  "inget av mönstren" per 2026-11-27, med två äldre "talar emot, uppåt" (Arena-golvet slutade falla och nedladdningarna
+  accelererade). X-banan för bisak a var sedd före posten.
+- **Fynd.** `g2_price_at_capability` och `_gpqa` har `known_from` = månadsslut i den delade tabellen, medan koden säger
+  månadsslut + 1 (X1). En dag, ingen effekt på PV1:s kvartal. Raderna bör byggas om.
+- **Öppet för Johannes:** (1) Ombyggnad av GPQA- och ECI-prisraderna med X1:s datering. Rekommendation: ja, i nästa
+  veckohämtning. (2) Om huvudläsningen ska få en kortare variant (takt över två kvartal) för att kunna läsas före
+  2027-03. Rekommendation: nej, vänta på den osedda läsningen i stället för att ändra måttet efter att data setts.
