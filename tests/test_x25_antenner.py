@@ -110,7 +110,8 @@ def test_bg1_unseen_after_a_new_quarter_for_every_company():
 # ------------------------------------------------------------------ point 2: acquisitions
 
 
-def test_l1_lists_both_acquisitions_at_2026q2_with_their_directions():
+def test_l1_lists_both_acquisitions_at_2026q2_with_their_directions(monkeypatch):
+    monkeypatch.setattr(L, "ACQ_COMPANIES", {})  # the documented ones only; Quanta's coded ones: test_qa1_*
     marks = L.acquisition_quarters("L1")
     assert marks["2026Q2"] == "Eaton–Fibrebond a + 4, ned; Eaton–Boyd Thermal a + 1, upp"
     assert marks["2025Q2"] == "Eaton–Fibrebond a, upp" and marks["2026Q3"] == "Eaton–Fibrebond a + 5, ned"

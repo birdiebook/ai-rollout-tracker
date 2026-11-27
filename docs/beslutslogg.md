@@ -1534,3 +1534,23 @@ Johannes svarade "kör på dina rekommendationer" på tre rekommendationer samma
   när companyfacts har us-gaap-fakta. Rekommendation: ja, som ett daterat tillägg före 10-K:n, med samma nycklar och
   revideringar som nya versioner. Och om `withheld.json` ska få en kompaktare form i stället för högre budget.
 
+## 2026-11-27 – QA1 Quantas förvärv i LT1:s förvärvsmärke (körning 17, efter R28-7)
+
+- **Registret först.** Posten "2026-11-27 – QA1" committades ensam innan Quantas inlämningar lästes. Den behandlar
+  förvärven som data i LT1:s befintliga märke, men eftersom LT1 (c) räknar upp de belagda förvärven med namn ändrar
+  tillägget vad posten säger. Ingen regel och inget utslag ändras.
+- **Underlaget.** Quantas 16 10-K och 10-Q 2022-12-31 till 2026-09-30. 53 rader i `curated/acquisitions.csv` med
+  accession, plats och meningens hash; meningen sparas bara i `data/raw`. Självkontrollen (`python -m
+  ai_tracker.acquisitions_check`) hämtade alla dokument på nytt: 53 av 53 rätt. Quanta köpte bolag i 14 av 17 kvartal
+  2023Q1–2026Q4 och anger aldrig tillförd RPO, bara att förvärven är en del av ökningen ("i mindre utsträckning" för
+  2026Q1–Q3).
+- **Val: inget väsentlighetsfilter, köpeskilling som den står.** Alla slutförda förvärv märks. Köpeskilling för en
+  period delas inte upp och räknas inte om till RPO. Följden är att nästan alla L1-kvartal från 2023 har märken åt båda
+  hållen, så märket säger att Quantas RPO växer delvis genom förvärv hela tiden snarare än att peka ut ett kvartal.
+- **Läsningen.** Huvudläsningens ursprung 2026Q2 har nu fem märken. Som beskrivning: X hamnar under gränsen först om
+  förvärven uppåt (Boyd Thermal och Quantas tre bolag 2026Q2) tillförde mer än omkring 3,6 mdr USD. EL1:s takt kräver
+  mer än omkring 17 mdr. Ingen av de två siffrorna är belagd eller utesluten.
+- **Öppet för Johannes:** om Quantas förvärv före 2023 (Blattner 2021) ska kodas med en ny post, och om förvärven hos
+  Dell, Super Micro och Equinix (L2, L3) ska läsas på samma sätt. Rekommendation: Dell före den osedda läsningen omkring
+  2026-12-09, eftersom L2 får den första; Blattner bara om LT1:s historik 2022Q4–2023Q1 ska tolkas.
+

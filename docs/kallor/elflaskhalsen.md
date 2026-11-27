@@ -62,7 +62,13 @@ visar huvudläsningen som radens utslag och de sju andra som fakta.
   bolaget, också flyg och fordon. GE Vernova säljer gasturbiner globalt, till elbolag och industri. En växande
   orderstock är därför inte efterfrågan från datacenter ensam.
 - **Förvärv.** GE Vernovas orderstock innehåller Prolec GE från 2026Q1, och Eatons Electrical Global köpte Boyd Thermal
-  2026-03-12 (R19). Det blåser upp orderstockens takt och rättas inte.
+  2026-03-12 (R19). Det blåser upp orderstockens takt och rättas inte. Quanta köper bolag nästan varje kvartal: fem
+  bolag 2026Q2–Q3 (köpeskilling 1 799,7 MUSD för 2026Q1–Q3), Dynamic Systems 2025Q3 och tre bolag 2025Q4 (QA1,
+  `docs/kallor/ledtid.md`, avsnittet "Quantas förvärv", med källor). Quanta anger inte tillförd RPO, och skriver att
+  ökningen till 2026-09-30 i första hand berodde på nya uppdrag och volym och i mindre utsträckning på förvärv. EL1 har
+  inget förvärvsmärke, och utslaget ändras inte. Som beskrivning: huvudläsningens X (takten +45,3 vid 2026Q2) hamnar
+  under gränsen 10 först om förvärven 2025Q3–2026Q2 hos Quanta och Eaton tillsammans fanns kvar i orderstocken med mer
+  än omkring 17,1 mdr USD, cirka 30 % av orderstocken vid 2026Q2.
 - **Elpriset** är reglerade tariffer för kommersiella kunder. Det speglar bränslekostnader och nätens kostnader med
   fördröjning, inte knapphetspriset på marginalen. Priset har en nominell drift uppåt: 62 impulser uppåt och ingen nedåt
   sedan 1959. PJM:s kapacitetspriser ligger närmare knappheten, men de har klassen `nej` och visas inte.

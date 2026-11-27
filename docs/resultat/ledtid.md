@@ -1,8 +1,8 @@
 # Ledtid i stacken: följd fråga (LT1)
 
-*Ändrat av S1 (`docs/mattregister.md`, 2026-11-27 S1, punkt 3): F0:s räkning av hur ofta regeln kunde prövas är ändrad (S1, punkt 3): ett ursprung räknas som prövat bara när Y finns i fönstret, och varje rad visar det gamla talet bredvid det nya i en övergångsnotis. I tabellen står det nya talet först och F0:s gamla som "före S1". Rapporterna nedan är genererade på nytt per 2026-11-27 och 2025-11-27. Utom datumen och räkningen är de desamma som per 2026-11-26 och 2025-11-26, så texten om de dagarna gäller också för de nya.*
-
 *Rättad efter granskningen R28 (rättningsspår X25, `docs/mattregister.md`, 2026-11-26 X25): förbehållet om sedda data avgörs nu per läsning, alla förvärv som träffar ett kvartal märks med riktning, och varje rad visar hur ofta Y var känt i hela fönstret. Inga utslag ändrades. Rapporterna nedan är genererade på nytt med kommandot.*
+
+*Kompletterad efter anmärkningen R28-7 (spår QA1, `docs/mattregister.md`, 2026-11-27 QA1): Quantas förvärv från 2023 är lästa ur bolagets 10-K och 10-Q (`curated/acquisitions.csv`) och ingår i förvärvsmärket för L1, på samma sätt som Eatons. Märket ändrar inget utslag, och inga utslag ändrades. Rapporterna nedan är genererade på nytt per 2026-11-27 och 2025-11-27.*
 
 **Frågan:** Rör sig order och orderstock hos leverantörerna (kraft, kylning, elnät, nät, servrar, datacenterleasing)
 före eller efter capex-takten hos hyperskalarna och de yttre lagren, och ändras ledtiden?
@@ -28,6 +28,9 @@ granskningen av extraktionen.
 
 ## Vad som skiljer de två dagarna (beskrivning, inget test)
 
+Avsnittet skrevs för 2026-11-26 och 2025-11-26. Per 2026-11-27 och 2025-11-27 är alla utslag och värden desamma, eftersom
+inget nytt kvartal har kommit. Det som har tillkommit är Quantas förvärv i märkningen (sista punkten).
+
 - **Huvudläsningen** (L1 kraft och elnät före K-inre, *k* = 2) gav "inget av mönstren" per 2025-11-26 och "talar för
   mekanismen" per 2026-11-26. Per 2026-11-26 är ursprunget 2026Q2: förändringen i takt för L1:s orderstock var +16,5,
   och K-inres capex-takt följde med +9,6 vid 2026Q3. Per 2025-11-26 hade L1 ingen impuls i fönstret 2025Q1–2025Q2.
@@ -38,7 +41,9 @@ granskningen av extraktionen.
   emot: orderstockens takt föll medan köparnas capex-takt steg med 22–27. Med *k* = 4 talar raden "efter" för i 9 av
   21 ursprung med impuls: capex-takten föll 2023 och L1 följde 2024Q1, och capex-takten steg 2024 och L1 följde 2025Q3. Det är i
   praktiken två händelser, med ursprung i följd som räknas var för sig. Det kan vara slump, och L1:s uppgång 2025Q3
-  ligger i ett kvartal som Eatons köp av Fibrebond kan ha påverkat (märkt i rapporten; storleken är inte kontrollerad).
+  ligger i ett kvartal som flera förvärv kan ha påverkat åt olika håll: uppåt Eatons Fibrebond (*a* + 1) och Quantas
+  Dynamic Systems (*a*) och två förvärv 2025Q2 (*a* + 1), nedåt Quantas Cupertino Electric och två förvärv 2024Q3
+  (*a* + 4) och två förvärv 2024Q2 (*a* + 5). Storleken på den tillförda orderstocken är inte känd.
 - **Ledtiden.** För L1 före K-inre (*k* = 4) finns tre "talar för", alla per 2026-11-26 (ledtid 3, 1 och 1 kvartal).
   För L1 efter K-inre räknar ledtiderna ned i två följder (4, 3, 2, 1) och är 1 kvartal 2026Q2. Det är för få
   händelser för att säga att ledtiden har ändrats.
@@ -51,15 +56,17 @@ granskningen av extraktionen.
 - **Nivåerna.** L1:s takt gick från +22,3 till +54,6 log × 100 per år, L2:s från +10,5 till +72,0 (Dells RPO växer
   mest) och K-inres capex-takt från +50,5 till +62,4. Digital Realtys nya avtal är klumpiga: förändringen i takt var
   −98,6 per 2025Q3 och +94,5 per 2026Q3.
-- **Förvärv i fönstret.** Huvudläsningens ursprung 2026Q2 träffas av två förvärv åt olika håll: Fibrebond (*a* + 4,
-  flyttar L1:s förändring i takt nedåt) och Boyd Thermal (*a* + 1, flyttar den uppåt). Nettoriktningen är inte känd.
-  Fibrebond kan bara ha dragit X nedåt, så det är Boyd Thermal som kan ha gett utslaget. Som beskrivning (X25, punkt 2):
-  X vid 2026Q2 (+16,5) hamnar under gränsen 10 först om Boyd Thermal lade till mer än omkring 3,6 mdr USD till Eatons
-  orderstock (cirka 6 % av L1 vid 2026Q2), och ursprunget 2026Q1 (X +15,4, *a* för Boyd Thermal) först vid mer än
-  omkring 2,6 mdr. Eatons hela orderstock växte med 3,0 mdr 2026Q1, det kvartal köpet gjordes. Boyd Thermals
-  orderstock finns inte i datan, så det går inte att utesluta, men det kräver att förvärvet står för det mesta av Eatons
-  ökning. Quantas förvärv är inte kontrollerade (R28-7), och Quanta står för det mesta av L1:s rörelse.
-
+- **Förvärv i fönstret.** Huvudläsningens ursprung 2026Q2 träffas av fem förvärvsmärken (QA1). Uppåt: Eatons Boyd
+  Thermal (*a* + 1) och Quantas tre förvärv 2026Q2 (*a*, köpeskilling 1 430 MUSD för första halvåret 2026). Nedåt:
+  Eatons Fibrebond (*a* + 4) och Quantas två förvärv 2025Q2 (*a* + 4) och två förvärv 2025Q1 (*a* + 5). Nettoriktningen
+  är inte känd. Bara förvärven uppåt kan ha gett utslaget. Som beskrivning (X25, punkt 2): X vid 2026Q2 (+16,5) hamnar
+  under gränsen 10 först om Boyd Thermal och Quantas förvärv 2026Q2 tillsammans lade till mer än omkring 3,6 mdr USD till
+  L1 (cirka 6 % av L1 vid 2026Q2), och mer om förvärven nedåt räknas med. Ursprunget 2026Q1 (X +15,4) kräver på samma sätt
+  mer än omkring 2,6 mdr från Boyd Thermal (*a*) och Quantas tre förvärv 2025Q4 (*a* + 1). Ingen av de två bolagen anger
+  tillförd orderstock eller RPO, och köpeskilling räknas inte om till RPO. Quanta skriver själv att ökningen i RPO från
+  årsskiftet till 2026-06-30 delvis berodde på förvärv, och att ökningen till 2026-09-30 i första hand berodde på nya
+  uppdrag och större volym hos befintliga kunder och i mindre utsträckning på förvärv. Hur mycket av Quantas RPO-ökning
+  2026Q1–Q3 som är förvärvad beskrivs i `docs/kallor/ledtid.md`, avsnittet "Quantas förvärv".
 
 ## Ledtid i stacken per 2026-11-27
 
@@ -78,39 +85,36 @@ Före och efter är inte varandras motsats: två utjämnade serier som rör sig 
 - **Huvudläsning, L1 före K-inre, k = 2:** talar för mekanismen. t = 2026Q3; ursprung 2026Q2, X +16,5 (gräns ±10,0), uppgång, Y +9,6 vid 2026Q3 (gräns ±5,0). X = lt1_rpo_power (förändring i takt), Y = kl_capex4_inner (förändring i takt); fönster 2 kvartal, tecken +.
   Regeln kunde prövas i 18 av 18 ursprung med X (2022Q1–2026Q2). Impulser uppåt 4 (för 2, emot 1, inget 1, kan inte avgöras 0), nedåt 3 (för 0, emot 3, inget 0, kan inte avgöras 0), utan impuls 11.
   Y var känt i hela fönstret i 17 av 18 ursprung, och 7 av 7 impulser kunde läsas mot Y.
-  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 18 av 18; med den nya: 18 av 18.
   Läsningen vilar bara på värden som var kända före registerposten 2026-11-26, och den är därför inget utfall på osedda data.
 
 Alla läsningar i tabellen vilar bara på värden som var kända före registerposten 2026-11-26 (posten, avsnitt (e) och (f)), och ingen av dem är ett utfall på osedda data. Sedda data avgörs per läsning (X25, punkt 1).
 
 | Leverantör | Köpare | Riktning | k | t | Utslag (ursprung, X, Y) | Prövad / ursprung med X; impulser (för/emot/inget/kan inte avgöras) |
 |---|---|---|---|---|---|---|
-| L1 Kraft och elnät (Eaton, Quanta) | K-inre | före | 2 | 2026Q3 | **talar för**: 2026Q2 X +16,5, Y +9,6 vid 2026Q3 (förvärv i fönstret: Eaton–Fibrebond a + 4, ned; Eaton–Boyd Thermal a + 1, upp) | 18 av 18 (2022Q1–2026Q2; före S1 18), Y i hela fönstret 17; upp 4 (2/1/1/0), ned 3 (0/3/0/0) |
-| L1 Kraft och elnät (Eaton, Quanta) | K-inre | före | 4 | 2026Q3 | **talar för**: 2026Q2 X +16,5, Y +9,6 vid 2026Q3 (förvärv i fönstret: Eaton–Fibrebond a + 4, ned; Eaton–Boyd Thermal a + 1, upp) | 17 av 18 (2022Q1–2026Q2; före S1 18), Y i hela fönstret 15; upp 4 (3/1/0/0), ned 3 (0/3/0/0) |
-| L1 Kraft och elnät (Eaton, Quanta) | K-inre | efter | 2 | 2026Q3 | **talar för**: 2026Q2 X +6,2, Y +16,9 vid 2026Q3 (förvärv i fönstret: Eaton–Fibrebond a + 5, ned) | 19 av 27 (2019Q4–2026Q2; före S1 22), Y i hela fönstret 18; upp 11 (3/2/2/4), ned 10 (2/1/6/1) |
-| L1 Kraft och elnät (Eaton, Quanta) | K-inre | efter | 4 | 2026Q3 | **talar för**: 2026Q2 X +6,2, Y +16,9 vid 2026Q3 (förvärv i fönstret: Eaton–Fibrebond a + 5, ned) | 17 av 27 (2019Q4–2026Q2; före S1 22), Y i hela fönstret 16; upp 11 (5/2/0/4), ned 10 (4/1/4/1) |
-| L2 Nät och servrar (Cisco, Dell, Super Micro) | K-inre | före | 2 | 2026Q3 | **talar för**: 2026Q2 X +25,9, Y +9,6 vid 2026Q3 | 26 av 26 (2020Q1–2026Q2; före S1 26), Y i hela fönstret 25; upp 4 (4/0/0/0), ned 4 (4/0/0/0) |
-| L2 Nät och servrar (Cisco, Dell, Super Micro) | K-inre | före | 4 | 2026Q3 | **talar för**: 2026Q2 X +25,9, Y +9,6 vid 2026Q3 | 26 av 26 (2020Q1–2026Q2; före S1 26), Y i hela fönstret 23; upp 4 (4/0/0/0), ned 4 (4/0/0/0) |
-| L2 Nät och servrar (Cisco, Dell, Super Micro) | K-inre | efter | 2 | 2026Q2 | **inget av mönstren** (ingen impuls i fönstret) | 25 av 26 (2019Q4–2026Q1; före S1 26), Y i hela fönstret 25; upp 10 (3/0/7/0), ned 10 (3/0/7/0) |
-| L2 Nät och servrar (Cisco, Dell, Super Micro) | K-inre | efter | 4 | 2026Q2 | **talar för**: 2025Q2 X +5,9, Y +35,7 vid 2025Q4 | 23 av 26 (2019Q4–2026Q1; före S1 26), Y i hela fönstret 23; upp 10 (6/2/2/0), ned 10 (3/0/7/0) |
-| L3 Datacenter (Equinix, RPO) | K-inre | före | 2 | 2026Q3 | **inget av mönstren** (ingen impuls i fönstret) | 27 av 28 (2019Q3–2026Q2; före S1 28), Y i hela fönstret 27; upp 2 (2/0/0/0), ned 2 (0/2/0/0) |
-| L3 Datacenter (Equinix, RPO) | K-inre | före | 4 | 2026Q3 | **inget av mönstren** (ingen impuls i fönstret) | 25 av 28 (2019Q3–2026Q2; före S1 28), Y i hela fönstret 25; upp 2 (2/0/0/0), ned 2 (0/2/0/0) |
-| L3 Datacenter (Equinix, RPO) | K-inre | efter | 2 | 2026Q3 | **kan inte avgöras**: 2026Q2 X +6,2 (fönstret öppet till 2026Q4) | 26 av 27 (2019Q4–2026Q2; före S1 26), Y i hela fönstret 26; upp 11 (4/0/6/1), ned 10 (1/0/9/0) |
-| L3 Datacenter (Equinix, RPO) | K-inre | efter | 4 | 2026Q3 | **kan inte avgöras**: 2026Q2 X +6,2 (fönstret öppet till 2027Q2) | 24 av 27 (2019Q4–2026Q2; före S1 26), Y i hela fönstret 24; upp 11 (4/0/6/1), ned 10 (1/2/7/0) |
-| O1 Eatons order (Electrical Americas, organisk, 12 mån) (S3) | K-inre | före | 2 | 2026Q3 | **talar för**: 2026Q2 X +19,5, Y +9,6 vid 2026Q3 | 17 av 17 (2022Q2–2026Q2; före S1 17), Y i hela fönstret 16; upp 6 (5/0/1/0), ned 6 (3/2/1/0) |
-| O1 Eatons order (Electrical Americas, organisk, 12 mån) (S3) | K-inre | före | 4 | 2026Q3 | **talar för**: 2026Q2 X +19,5, Y +9,6 vid 2026Q3 | 17 av 17 (2022Q2–2026Q2; före S1 17), Y i hela fönstret 14; upp 6 (6/0/0/0), ned 6 (3/3/0/0) |
-| O1 Eatons order (Electrical Americas, organisk, 12 mån) (S3) | K-inre | efter | 2 | 2026Q3 | **kan inte avgöras**: 2026Q2 X +6,2 (fönstret öppet till 2026Q4) | 17 av 27 (2019Q4–2026Q2; före S1 20), Y i hela fönstret 17; upp 11 (2/3/1/5), ned 10 (5/1/2/2) |
-| O1 Eatons order (Electrical Americas, organisk, 12 mån) (S3) | K-inre | efter | 4 | 2026Q3 | **kan inte avgöras**: 2026Q2 X +6,2 (fönstret öppet till 2027Q2) | 15 av 27 (2019Q4–2026Q2; före S1 20), Y i hela fönstret 15; upp 11 (2/4/0/5), ned 10 (7/1/0/2) |
-| O2 Digital Realtys nya avtal (fyra kvartal) (S3) | K-inre | före | 2 | 2026Q3 | **talar för**: 2026Q2 X +34,2, Y +9,6 vid 2026Q3 | 10 av 10 (2024Q1–2026Q2; före S1 10), Y i hela fönstret 9; upp 6 (6/0/0/0), ned 4 (0/2/2/0) |
-| O2 Digital Realtys nya avtal (fyra kvartal) (S3) | K-inre | före | 4 | 2026Q3 | **talar för**: 2026Q2 X +34,2, Y +9,6 vid 2026Q3 | 10 av 10 (2024Q1–2026Q2; före S1 10), Y i hela fönstret 7; upp 6 (6/0/0/0), ned 4 (0/4/0/0) |
-| O2 Digital Realtys nya avtal (fyra kvartal) (S3) | K-inre | efter | 2 | 2026Q3 | **talar för**: 2026Q2 X +6,2, Y +94,5 vid 2026Q3 | 11 av 27 (2019Q4–2026Q2; före S1 14), Y i hela fönstret 10; upp 11 (4/3/0/4), ned 10 (0/1/0/9) |
-| O2 Digital Realtys nya avtal (fyra kvartal) (S3) | K-inre | efter | 4 | 2026Q3 | **talar för**: 2026Q2 X +6,2, Y +94,5 vid 2026Q3 | 9 av 27 (2019Q4–2026Q2; före S1 14), Y i hela fönstret 8; upp 11 (4/3/0/4), ned 10 (0/1/0/9) |
-| L1 Kraft och elnät (Eaton, Quanta) | K-yttre | före | 2 | 2026Q3 | **kan inte avgöras**: 2026Q2 X +16,5 (förvärv i fönstret: Eaton–Fibrebond a + 4, ned; Eaton–Boyd Thermal a + 1, upp) (Y saknas vid 2026Q3) | 0 av 18 (2022Q1–2026Q2; före S1 11), Y i hela fönstret 0; upp 4 (0/0/0/4), ned 3 (0/0/0/3) |
-| L1 Kraft och elnät (Eaton, Quanta) | K-yttre | före | 4 | 2026Q3 | **kan inte avgöras**: 2026Q2 X +16,5 (förvärv i fönstret: Eaton–Fibrebond a + 4, ned; Eaton–Boyd Thermal a + 1, upp) (Y saknas vid 2026Q3) | 0 av 18 (2022Q1–2026Q2; före S1 11), Y i hela fönstret 0; upp 4 (0/0/0/4), ned 3 (0/0/0/3) |
+| L1 Kraft och elnät (Eaton, Quanta) | K-inre | före | 2 | 2026Q3 | **talar för**: 2026Q2 X +16,5, Y +9,6 vid 2026Q3 (förvärv i fönstret: Eaton–Fibrebond a + 4, ned; Eaton–Boyd Thermal a + 1, upp; Quanta, 2 förvärv 2025Q1 (589 MUSD, 3 mån 2025) a + 5, ned; Quanta, 2 förvärv 2025Q2 (816 MUSD, 6 mån 2025) a + 4, ned; Quanta, 3 förvärv 2026Q2 (1 430 MUSD, 6 mån 2026) a, upp) | 18 av 18 (2022Q1–2026Q2), Y i hela fönstret 17; upp 4 (2/1/1/0), ned 3 (0/3/0/0) |
+| L1 Kraft och elnät (Eaton, Quanta) | K-inre | före | 4 | 2026Q3 | **talar för**: 2026Q2 X +16,5, Y +9,6 vid 2026Q3 (förvärv i fönstret: Eaton–Fibrebond a + 4, ned; Eaton–Boyd Thermal a + 1, upp; Quanta, 2 förvärv 2025Q1 (589 MUSD, 3 mån 2025) a + 5, ned; Quanta, 2 förvärv 2025Q2 (816 MUSD, 6 mån 2025) a + 4, ned; Quanta, 3 förvärv 2026Q2 (1 430 MUSD, 6 mån 2026) a, upp) | 18 av 18 (2022Q1–2026Q2), Y i hela fönstret 15; upp 4 (3/1/0/0), ned 3 (0/3/0/0) |
+| L1 Kraft och elnät (Eaton, Quanta) | K-inre | efter | 2 | 2026Q3 | **talar för**: 2026Q2 X +6,2, Y +16,9 vid 2026Q3 (förvärv i fönstret: Eaton–Fibrebond a + 5, ned; Quanta, 2 förvärv 2025Q2 (816 MUSD, 6 mån 2025) a + 5, ned; Quanta–Dynamic Systems (1 673 MUSD) a + 4, ned; Quanta, 3 förvärv 2026Q2 (1 430 MUSD, 6 mån 2026) a + 1, upp; Quanta, 2 förvärv 2026Q3 (1 800 MUSD, 9 mån 2026) a, upp) | 22 av 27 (2019Q4–2026Q2), Y i hela fönstret 18; upp 11 (3/2/2/4), ned 10 (2/1/6/1) |
+| L1 Kraft och elnät (Eaton, Quanta) | K-inre | efter | 4 | 2026Q3 | **talar för**: 2026Q2 X +6,2, Y +16,9 vid 2026Q3 (förvärv i fönstret: Eaton–Fibrebond a + 5, ned; Quanta, 2 förvärv 2025Q2 (816 MUSD, 6 mån 2025) a + 5, ned; Quanta–Dynamic Systems (1 673 MUSD) a + 4, ned; Quanta, 3 förvärv 2026Q2 (1 430 MUSD, 6 mån 2026) a + 1, upp; Quanta, 2 förvärv 2026Q3 (1 800 MUSD, 9 mån 2026) a, upp) | 22 av 27 (2019Q4–2026Q2), Y i hela fönstret 16; upp 11 (5/2/0/4), ned 10 (4/1/4/1) |
+| L2 Nät och servrar (Cisco, Dell, Super Micro) | K-inre | före | 2 | 2026Q3 | **talar för**: 2026Q2 X +25,9, Y +9,6 vid 2026Q3 | 26 av 26 (2020Q1–2026Q2), Y i hela fönstret 25; upp 4 (4/0/0/0), ned 4 (4/0/0/0) |
+| L2 Nät och servrar (Cisco, Dell, Super Micro) | K-inre | före | 4 | 2026Q3 | **talar för**: 2026Q2 X +25,9, Y +9,6 vid 2026Q3 | 26 av 26 (2020Q1–2026Q2), Y i hela fönstret 23; upp 4 (4/0/0/0), ned 4 (4/0/0/0) |
+| L2 Nät och servrar (Cisco, Dell, Super Micro) | K-inre | efter | 2 | 2026Q2 | **inget av mönstren** (ingen impuls i fönstret) | 26 av 26 (2019Q4–2026Q1), Y i hela fönstret 25; upp 10 (3/0/7/0), ned 10 (3/0/7/0) |
+| L2 Nät och servrar (Cisco, Dell, Super Micro) | K-inre | efter | 4 | 2026Q2 | **talar för**: 2025Q2 X +5,9, Y +35,7 vid 2025Q4 | 26 av 26 (2019Q4–2026Q1), Y i hela fönstret 23; upp 10 (6/2/2/0), ned 10 (3/0/7/0) |
+| L3 Datacenter (Equinix, RPO) | K-inre | före | 2 | 2026Q3 | **inget av mönstren** (ingen impuls i fönstret) | 28 av 28 (2019Q3–2026Q2), Y i hela fönstret 27; upp 2 (2/0/0/0), ned 2 (0/2/0/0) |
+| L3 Datacenter (Equinix, RPO) | K-inre | före | 4 | 2026Q3 | **inget av mönstren** (ingen impuls i fönstret) | 28 av 28 (2019Q3–2026Q2), Y i hela fönstret 25; upp 2 (2/0/0/0), ned 2 (0/2/0/0) |
+| L3 Datacenter (Equinix, RPO) | K-inre | efter | 2 | 2026Q3 | **kan inte avgöras**: 2026Q2 X +6,2 (fönstret öppet till 2026Q4) | 26 av 27 (2019Q4–2026Q2), Y i hela fönstret 26; upp 11 (4/0/6/1), ned 10 (1/0/9/0) |
+| L3 Datacenter (Equinix, RPO) | K-inre | efter | 4 | 2026Q3 | **kan inte avgöras**: 2026Q2 X +6,2 (fönstret öppet till 2027Q2) | 26 av 27 (2019Q4–2026Q2), Y i hela fönstret 24; upp 11 (4/0/6/1), ned 10 (1/2/7/0) |
+| O1 Eatons order (Electrical Americas, organisk, 12 mån) (S3) | K-inre | före | 2 | 2026Q3 | **talar för**: 2026Q2 X +19,5, Y +9,6 vid 2026Q3 | 17 av 17 (2022Q2–2026Q2), Y i hela fönstret 16; upp 6 (5/0/1/0), ned 6 (3/2/1/0) |
+| O1 Eatons order (Electrical Americas, organisk, 12 mån) (S3) | K-inre | före | 4 | 2026Q3 | **talar för**: 2026Q2 X +19,5, Y +9,6 vid 2026Q3 | 17 av 17 (2022Q2–2026Q2), Y i hela fönstret 14; upp 6 (6/0/0/0), ned 6 (3/3/0/0) |
+| O1 Eatons order (Electrical Americas, organisk, 12 mån) (S3) | K-inre | efter | 2 | 2026Q3 | **kan inte avgöras**: 2026Q2 X +6,2 (fönstret öppet till 2026Q4) | 20 av 27 (2019Q4–2026Q2), Y i hela fönstret 17; upp 11 (2/3/1/5), ned 10 (5/1/2/2) |
+| O1 Eatons order (Electrical Americas, organisk, 12 mån) (S3) | K-inre | efter | 4 | 2026Q3 | **kan inte avgöras**: 2026Q2 X +6,2 (fönstret öppet till 2027Q2) | 20 av 27 (2019Q4–2026Q2), Y i hela fönstret 15; upp 11 (2/4/0/5), ned 10 (7/1/0/2) |
+| O2 Digital Realtys nya avtal (fyra kvartal) (S3) | K-inre | före | 2 | 2026Q3 | **talar för**: 2026Q2 X +34,2, Y +9,6 vid 2026Q3 | 10 av 10 (2024Q1–2026Q2), Y i hela fönstret 9; upp 6 (6/0/0/0), ned 4 (0/2/2/0) |
+| O2 Digital Realtys nya avtal (fyra kvartal) (S3) | K-inre | före | 4 | 2026Q3 | **talar för**: 2026Q2 X +34,2, Y +9,6 vid 2026Q3 | 10 av 10 (2024Q1–2026Q2), Y i hela fönstret 7; upp 6 (6/0/0/0), ned 4 (0/4/0/0) |
+| O2 Digital Realtys nya avtal (fyra kvartal) (S3) | K-inre | efter | 2 | 2026Q3 | **talar för**: 2026Q2 X +6,2, Y +94,5 vid 2026Q3 | 14 av 27 (2019Q4–2026Q2), Y i hela fönstret 10; upp 11 (4/3/0/4), ned 10 (0/1/0/9) |
+| O2 Digital Realtys nya avtal (fyra kvartal) (S3) | K-inre | efter | 4 | 2026Q3 | **talar för**: 2026Q2 X +6,2, Y +94,5 vid 2026Q3 | 14 av 27 (2019Q4–2026Q2), Y i hela fönstret 8; upp 11 (4/3/0/4), ned 10 (0/1/0/9) |
+| L1 Kraft och elnät (Eaton, Quanta) | K-yttre | före | 2 | 2026Q3 | **kan inte avgöras**: 2026Q2 X +16,5 (förvärv i fönstret: Eaton–Fibrebond a + 4, ned; Eaton–Boyd Thermal a + 1, upp; Quanta, 2 förvärv 2025Q1 (589 MUSD, 3 mån 2025) a + 5, ned; Quanta, 2 förvärv 2025Q2 (816 MUSD, 6 mån 2025) a + 4, ned; Quanta, 3 förvärv 2026Q2 (1 430 MUSD, 6 mån 2026) a, upp) (Y saknas vid 2026Q3) | 11 av 18 (2022Q1–2026Q2), Y i hela fönstret 0; upp 4 (0/0/0/4), ned 3 (0/0/0/3) |
+| L1 Kraft och elnät (Eaton, Quanta) | K-yttre | före | 4 | 2026Q3 | **kan inte avgöras**: 2026Q2 X +16,5 (förvärv i fönstret: Eaton–Fibrebond a + 4, ned; Eaton–Boyd Thermal a + 1, upp; Quanta, 2 förvärv 2025Q1 (589 MUSD, 3 mån 2025) a + 5, ned; Quanta, 2 förvärv 2025Q2 (816 MUSD, 6 mån 2025) a + 4, ned; Quanta, 3 förvärv 2026Q2 (1 430 MUSD, 6 mån 2026) a, upp) (Y saknas vid 2026Q3) | 11 av 18 (2022Q1–2026Q2), Y i hela fönstret 0; upp 4 (0/0/0/4), ned 3 (0/0/0/3) |
 | L1 Kraft och elnät (Eaton, Quanta) | K-yttre | efter | 2 | 2026Q3 | **kan inte avgöras** (X saknas vid 2026Q1; X saknas vid 2026Q2) | X saknas |
 | L1 Kraft och elnät (Eaton, Quanta) | K-yttre | efter | 4 | 2026Q3 | **kan inte avgöras** (X saknas vid 2025Q3; X saknas vid 2025Q4; X saknas vid 2026Q1; X saknas vid 2026Q2) | X saknas |
-
-Övergång (registret 2026-11-27 S1, punkt 3): "prövad" räknar nu ett ursprung bara när Y finns i fönstret (med impuls: utfallet är inte kan inte avgöras; utan impuls: Y är känt i alla k kvartal). "Före S1" är F0:s räkning före ändringen. Utfallen ändras inte.
 
 ### 2. Ledtiden (beskrivning)
 
@@ -224,7 +228,8 @@ Nästa osedda läsning: L2 efter K-inre med 2026Q3 omkring 2026-12-09; huvudläs
 - Med 10–27 ursprung per rad, och färre med impuls, är detta en beskrivning och inget test. Ett mönster kan vara slump, och ett utfall som talar för mekanismen visar inte orsaken.
 - RPO och orderstock är inte orderingång. Ciscos och Dells RPO har stora tjänstedelar. Ciscos och Dells balanser har räkenskapskvartalets kalenderkvartal, upp till en månad efter kalenderkvartalets slut.
 - Leverantörerna säljer också till andra än AI-köparna: Quanta och Eaton till elbolag och industri, Cisco och Dell till företag. Ett utslag säger inget om hur stor del som gäller AI.
-- Förvärv ger nivåskiften. Belagda förvärv märks i tabellen (Cisco–Splunk 2024Q1, Eaton–Fibrebond 2025Q2, Eaton–Boyd Thermal 2026Q1) med förskjutning och riktning: vid a och a + 1 flyttas förändringen i takt uppåt, vid a + 4 och a + 5 nedåt. Träffar två förvärv samma kvartal åt olika håll är nettoriktningen inte känd. Förvärv hos Quanta, Dell, Super Micro och Equinix är inte kontrollerade.
+- Förvärv ger nivåskiften. Belagda förvärv märks i tabellen (Cisco–Splunk 2024Q1, Eaton–Fibrebond 2025Q2, Eaton–Boyd Thermal 2026Q1 och Quantas förvärv nedan) med förskjutning och riktning: vid a och a + 1 flyttas förändringen i takt uppåt, vid a + 4 och a + 5 nedåt. Träffar två förvärv samma kvartal åt olika håll är nettoriktningen inte känd. Märket ändrar inget utslag. Quantas förvärv är kodade ur 10-K och 10-Q från 2023 (`curated/acquisitions.csv`, registret 2026-11-27 QA1). Quantas förvärv före 2023 är inte kodade, fast deras a + 4 och a + 5 kan ligga i L1:s historik (till exempel Blattner, slutfört 2021-10-13). Förvärv hos Dell, Super Micro och Equinix är inte kontrollerade.
+- Quantas förvärv per kvartal a, med köpeskillingen i MUSD som bolaget anger den (för en period: alla förvärv i perioden hittills i året). Bolaget anger inte tillförd RPO, och den räknas inte om ur köpeskillingen: 2023Q1: 3 förvärv (587 MUSD, 3 mån 2023), känt från 2023-02-23; 2023Q3: 1 förvärv (622 MUSD, 9 mån 2023), känt från 2023-11-02; 2023Q4: transformatortillverkare (cirka 300 MUSD), känt från 2023-11-02; 2024Q1: 3 förvärv (449 MUSD, 3 mån 2024), känt från 2024-02-22; 2024Q2: 2 förvärv (540 MUSD, 6 mån 2024), känt från 2024-05-02; 2024Q3: 2 förvärv (642 MUSD, 9 mån 2024, utom Cupertino Electric), känt från 2024-10-31; 2024Q3: Cupertino Electric (2 035 MUSD), känt från 2024-08-01; 2025Q1: 2 förvärv (589 MUSD, 3 mån 2025), känt från 2025-02-20; 2025Q2: 2 förvärv (816 MUSD, 6 mån 2025), känt från 2025-07-31; 2025Q3: Dynamic Systems (1 673 MUSD), känt från 2025-07-31; 2025Q4: 3 förvärv (2 471 MUSD, helår 2025, utom Dynamic Systems), känt från 2026-02-19; 2026Q2: 3 förvärv (1 430 MUSD, 6 mån 2026), känt från 2026-07-30; 2026Q3: 2 förvärv (1 800 MUSD, 9 mån 2026), känt från 2026-07-30; 2026Q4: 1 förvärv, känt från 2026-10-29.
 - O1 och O2 är S3:s extraktion (publish=False i väntan på granskningen). Digital Realtys andel är obelagd 2021Q4–2024Q1 (S3, tolkning 9).
 - Vertiv är BLOCKED (inget RPO i XBRL, och S3:s orderserier slutar 2025Q4). GE Vernovas RPO och order är för korta för läsregeln och visas som sammanhang. Yttre lagrets förändring i capex-takt finns först när serien har sju kvartal (från 2026Q4).
 - Historiken räknas på läsdagens vintage, så revideringar kan ändra äldre utfall (F0).
@@ -244,41 +249,38 @@ F0:s symmetriska regel. X och Y är förändring i takt. Gränser: köparnas cap
 Före och efter är inte varandras motsats: två utjämnade serier som rör sig ihop kan ge "talar för" i båda riktningarna, och då säger regeln inte vilken som kom först.
 
 - **Huvudläsning, L1 före K-inre, k = 2:** inget av mönstren. t = 2025Q3 (ingen impuls i fönstret). X = lt1_rpo_power (förändring i takt), Y = kl_capex4_inner (förändring i takt); fönster 2 kvartal, tecken +.
-  Regeln kunde prövas i 13 av 14 ursprung med X (2022Q1–2025Q2). Impulser uppåt 1 (för 0, emot 1, inget 0, kan inte avgöras 0), nedåt 3 (för 0, emot 3, inget 0, kan inte avgöras 0), utan impuls 10.
+  Regeln kunde prövas i 14 av 14 ursprung med X (2022Q1–2025Q2). Impulser uppåt 1 (för 0, emot 1, inget 0, kan inte avgöras 0), nedåt 3 (för 0, emot 3, inget 0, kan inte avgöras 0), utan impuls 10.
   Y var känt i hela fönstret i 13 av 14 ursprung, och 4 av 4 impulser kunde läsas mot Y.
-  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 14 av 14; med den nya: 13 av 14.
   Läsningen vilar bara på värden som var kända före registerposten 2026-11-26, och den är därför inget utfall på osedda data.
 
 Alla läsningar i tabellen vilar bara på värden som var kända före registerposten 2026-11-26 (posten, avsnitt (e) och (f)), och ingen av dem är ett utfall på osedda data. Sedda data avgörs per läsning (X25, punkt 1).
 
 | Leverantör | Köpare | Riktning | k | t | Utslag (ursprung, X, Y) | Prövad / ursprung med X; impulser (för/emot/inget/kan inte avgöras) |
 |---|---|---|---|---|---|---|
-| L1 Kraft och elnät (Eaton, Quanta) | K-inre | före | 2 | 2025Q3 | **inget av mönstren** (ingen impuls i fönstret) | 13 av 14 (2022Q1–2025Q2; före S1 14), Y i hela fönstret 13; upp 1 (0/1/0/0), ned 3 (0/3/0/0) |
-| L1 Kraft och elnät (Eaton, Quanta) | K-inre | före | 4 | 2025Q3 | **talar emot**: 2024Q3 X -10,6, Y +24,7 vid 2024Q4 | 11 av 14 (2022Q1–2025Q2; före S1 14), Y i hela fönstret 11; upp 1 (0/1/0/0), ned 3 (0/3/0/0) |
-| L1 Kraft och elnät (Eaton, Quanta) | K-inre | efter | 2 | 2025Q3 | **talar för**: 2025Q2 X +5,9, Y +10,4 vid 2025Q3 (förvärv i fönstret: Eaton–Fibrebond a + 1, upp) | 15 av 23 (2019Q4–2025Q2; före S1 18), Y i hela fönstret 14; upp 10 (2/2/2/4), ned 10 (2/1/6/1) |
-| L1 Kraft och elnät (Eaton, Quanta) | K-inre | efter | 4 | 2025Q3 | **talar för**: 2025Q2 X +5,9, Y +10,4 vid 2025Q3 (förvärv i fönstret: Eaton–Fibrebond a + 1, upp) | 15 av 23 (2019Q4–2025Q2; före S1 18), Y i hela fönstret 12; upp 10 (4/2/0/4), ned 10 (4/1/4/1) |
-| L2 Nät och servrar (Cisco, Dell, Super Micro) | K-inre | före | 2 | 2025Q3 | **talar för**: 2025Q1 X +11,0, Y +5,9 vid 2025Q2 (förvärv i fönstret: Cisco–Splunk a + 4, ned) | 21 av 22 (2020Q1–2025Q2; före S1 22), Y i hela fönstret 21; upp 1 (1/0/0/0), ned 4 (4/0/0/0) |
-| L2 Nät och servrar (Cisco, Dell, Super Micro) | K-inre | före | 4 | 2025Q3 | **talar för**: 2025Q1 X +11,0, Y +5,9 vid 2025Q2 (förvärv i fönstret: Cisco–Splunk a + 4, ned) | 20 av 22 (2020Q1–2025Q2; före S1 22), Y i hela fönstret 19; upp 1 (1/0/0/0), ned 4 (4/0/0/0) |
-| L2 Nät och servrar (Cisco, Dell, Super Micro) | K-inre | efter | 2 | 2025Q2 | **kan inte avgöras**: 2025Q1 X +16,0 (fönstret öppet till 2025Q3) | 21 av 22 (2019Q4–2025Q1; före S1 21), Y i hela fönstret 21; upp 9 (2/0/6/1), ned 10 (3/0/7/0) |
-| L2 Nät och servrar (Cisco, Dell, Super Micro) | K-inre | efter | 4 | 2025Q2 | **kan inte avgöras**: 2025Q1 X +16,0 (fönstret öppet till 2026Q1) | 21 av 22 (2019Q4–2025Q1; före S1 21), Y i hela fönstret 19; upp 9 (4/2/2/1), ned 10 (3/0/7/0) |
-| L3 Datacenter (Equinix, RPO) | K-inre | före | 2 | 2025Q3 | **inget av mönstren** (ingen impuls i fönstret) | 23 av 24 (2019Q3–2025Q2; före S1 24), Y i hela fönstret 23; upp 2 (2/0/0/0), ned 2 (0/2/0/0) |
-| L3 Datacenter (Equinix, RPO) | K-inre | före | 4 | 2025Q3 | **talar för**: 2024Q3 X +11,5, Y +24,7 vid 2024Q4 | 21 av 24 (2019Q3–2025Q2; före S1 24), Y i hela fönstret 21; upp 2 (2/0/0/0), ned 2 (0/2/0/0) |
-| L3 Datacenter (Equinix, RPO) | K-inre | efter | 2 | 2025Q3 | **kan inte avgöras**: 2025Q2 X +5,9 (fönstret öppet till 2025Q4) | 22 av 23 (2019Q4–2025Q2; före S1 22), Y i hela fönstret 22; upp 10 (4/0/5/1), ned 10 (1/0/9/0) |
-| L3 Datacenter (Equinix, RPO) | K-inre | efter | 4 | 2025Q3 | **kan inte avgöras**: 2025Q2 X +5,9 (fönstret öppet till 2026Q2) | 20 av 23 (2019Q4–2025Q2; före S1 20), Y i hela fönstret 20; upp 10 (4/0/3/3), ned 10 (1/2/7/0) |
-| O1 Eatons order (Electrical Americas, organisk, 12 mån) (S3) | K-inre | före | 2 | 2025Q3 | **kan inte avgöras**: 2025Q2 X -12,9 (fönstret öppet till 2025Q4) | 12 av 13 (2022Q2–2025Q2; före S1 12), Y i hela fönstret 12; upp 2 (2/0/0/0), ned 6 (3/2/0/1) |
-| O1 Eatons order (Electrical Americas, organisk, 12 mån) (S3) | K-inre | före | 4 | 2025Q3 | **kan inte avgöras**: 2025Q2 X -12,9 (fönstret öppet till 2026Q2) | 11 av 13 (2022Q2–2025Q2; före S1 12), Y i hela fönstret 10; upp 2 (2/0/0/0), ned 6 (3/2/0/1) |
-| O1 Eatons order (Electrical Americas, organisk, 12 mån) (S3) | K-inre | efter | 2 | 2025Q3 | **talar för**: 2025Q2 X +5,9, Y +10,8 vid 2025Q3 | 14 av 23 (2019Q4–2025Q2; före S1 17), Y i hela fönstret 13; upp 10 (2/3/1/4), ned 10 (5/1/2/2) |
-| O1 Eatons order (Electrical Americas, organisk, 12 mån) (S3) | K-inre | efter | 4 | 2025Q3 | **talar för**: 2025Q2 X +5,9, Y +10,8 vid 2025Q3 | 14 av 23 (2019Q4–2025Q2; före S1 17), Y i hela fönstret 11; upp 10 (2/4/0/4), ned 10 (7/1/0/2) |
-| O2 Digital Realtys nya avtal (fyra kvartal) (S3) | K-inre | före | 2 | 2025Q3 | **kan inte avgöras**: 2025Q2 X -42,8 (fönstret öppet till 2025Q4) | 5 av 6 (2024Q1–2025Q2; före S1 5), Y i hela fönstret 5; upp 4 (4/0/0/0), ned 2 (0/1/0/1) |
-| O2 Digital Realtys nya avtal (fyra kvartal) (S3) | K-inre | före | 4 | 2025Q3 | **kan inte avgöras**: 2025Q2 X -42,8 (fönstret öppet till 2026Q2) | 5 av 6 (2024Q1–2025Q2; före S1 5), Y i hela fönstret 3; upp 4 (4/0/0/0), ned 2 (0/1/0/1) |
-| O2 Digital Realtys nya avtal (fyra kvartal) (S3) | K-inre | efter | 2 | 2025Q3 | **talar emot**: 2025Q2 X +5,9, Y -98,6 vid 2025Q3 | 7 av 23 (2019Q4–2025Q2; före S1 10), Y i hela fönstret 6; upp 10 (3/3/0/4), ned 10 (0/1/0/9) |
-| O2 Digital Realtys nya avtal (fyra kvartal) (S3) | K-inre | efter | 4 | 2025Q3 | **talar emot**: 2025Q2 X +5,9, Y -98,6 vid 2025Q3 | 7 av 23 (2019Q4–2025Q2; före S1 10), Y i hela fönstret 4; upp 10 (3/3/0/4), ned 10 (0/1/0/9) |
+| L1 Kraft och elnät (Eaton, Quanta) | K-inre | före | 2 | 2025Q3 | **inget av mönstren** (ingen impuls i fönstret) | 14 av 14 (2022Q1–2025Q2), Y i hela fönstret 13; upp 1 (0/1/0/0), ned 3 (0/3/0/0) |
+| L1 Kraft och elnät (Eaton, Quanta) | K-inre | före | 4 | 2025Q3 | **talar emot**: 2024Q3 X -10,6, Y +24,7 vid 2024Q4 (förvärv i fönstret: Quanta, 1 förvärv 2023Q3 (622 MUSD, 9 mån 2023) a + 4, ned; Quanta, 2 förvärv 2024Q2 (540 MUSD, 6 mån 2024) a + 1, upp; Quanta, 2 förvärv 2024Q3 (642 MUSD, 9 mån 2024, utom Cupertino Electric) a, upp; Quanta–Cupertino Electric (cirka 2 040 MUSD) a, upp) | 14 av 14 (2022Q1–2025Q2), Y i hela fönstret 11; upp 1 (0/1/0/0), ned 3 (0/3/0/0) |
+| L1 Kraft och elnät (Eaton, Quanta) | K-inre | efter | 2 | 2025Q3 | **talar för**: 2025Q2 X +5,9, Y +10,4 vid 2025Q3 (förvärv i fönstret: Eaton–Fibrebond a + 1, upp; Quanta, 2 förvärv 2024Q2 (540 MUSD, 6 mån 2024) a + 5, ned; Quanta, 2 förvärv 2024Q3 (642 MUSD, 9 mån 2024, utom Cupertino Electric) a + 4, ned; Quanta–Cupertino Electric (cirka 2 040 MUSD) a + 4, ned; Quanta, 2 förvärv 2025Q2 (816 MUSD, 6 mån 2025) a + 1, upp; Quanta–Dynamic Systems (1 669 MUSD) a, upp) | 18 av 23 (2019Q4–2025Q2), Y i hela fönstret 14; upp 10 (2/2/2/4), ned 10 (2/1/6/1) |
+| L1 Kraft och elnät (Eaton, Quanta) | K-inre | efter | 4 | 2025Q3 | **talar för**: 2025Q2 X +5,9, Y +10,4 vid 2025Q3 (förvärv i fönstret: Eaton–Fibrebond a + 1, upp; Quanta, 2 förvärv 2024Q2 (540 MUSD, 6 mån 2024) a + 5, ned; Quanta, 2 förvärv 2024Q3 (642 MUSD, 9 mån 2024, utom Cupertino Electric) a + 4, ned; Quanta–Cupertino Electric (cirka 2 040 MUSD) a + 4, ned; Quanta, 2 förvärv 2025Q2 (816 MUSD, 6 mån 2025) a + 1, upp; Quanta–Dynamic Systems (1 669 MUSD) a, upp) | 18 av 23 (2019Q4–2025Q2), Y i hela fönstret 12; upp 10 (4/2/0/4), ned 10 (4/1/4/1) |
+| L2 Nät och servrar (Cisco, Dell, Super Micro) | K-inre | före | 2 | 2025Q3 | **talar för**: 2025Q1 X +11,0, Y +5,9 vid 2025Q2 (förvärv i fönstret: Cisco–Splunk a + 4, ned) | 22 av 22 (2020Q1–2025Q2), Y i hela fönstret 21; upp 1 (1/0/0/0), ned 4 (4/0/0/0) |
+| L2 Nät och servrar (Cisco, Dell, Super Micro) | K-inre | före | 4 | 2025Q3 | **talar för**: 2025Q1 X +11,0, Y +5,9 vid 2025Q2 (förvärv i fönstret: Cisco–Splunk a + 4, ned) | 22 av 22 (2020Q1–2025Q2), Y i hela fönstret 19; upp 1 (1/0/0/0), ned 4 (4/0/0/0) |
+| L2 Nät och servrar (Cisco, Dell, Super Micro) | K-inre | efter | 2 | 2025Q2 | **kan inte avgöras**: 2025Q1 X +16,0 (fönstret öppet till 2025Q3) | 21 av 22 (2019Q4–2025Q1), Y i hela fönstret 21; upp 9 (2/0/6/1), ned 10 (3/0/7/0) |
+| L2 Nät och servrar (Cisco, Dell, Super Micro) | K-inre | efter | 4 | 2025Q2 | **kan inte avgöras**: 2025Q1 X +16,0 (fönstret öppet till 2026Q1) | 21 av 22 (2019Q4–2025Q1), Y i hela fönstret 19; upp 9 (4/2/2/1), ned 10 (3/0/7/0) |
+| L3 Datacenter (Equinix, RPO) | K-inre | före | 2 | 2025Q3 | **inget av mönstren** (ingen impuls i fönstret) | 24 av 24 (2019Q3–2025Q2), Y i hela fönstret 23; upp 2 (2/0/0/0), ned 2 (0/2/0/0) |
+| L3 Datacenter (Equinix, RPO) | K-inre | före | 4 | 2025Q3 | **talar för**: 2024Q3 X +11,5, Y +24,7 vid 2024Q4 | 24 av 24 (2019Q3–2025Q2), Y i hela fönstret 21; upp 2 (2/0/0/0), ned 2 (0/2/0/0) |
+| L3 Datacenter (Equinix, RPO) | K-inre | efter | 2 | 2025Q3 | **kan inte avgöras**: 2025Q2 X +5,9 (fönstret öppet till 2025Q4) | 22 av 23 (2019Q4–2025Q2), Y i hela fönstret 22; upp 10 (4/0/5/1), ned 10 (1/0/9/0) |
+| L3 Datacenter (Equinix, RPO) | K-inre | efter | 4 | 2025Q3 | **kan inte avgöras**: 2025Q2 X +5,9 (fönstret öppet till 2026Q2) | 20 av 23 (2019Q4–2025Q2), Y i hela fönstret 20; upp 10 (4/0/3/3), ned 10 (1/2/7/0) |
+| O1 Eatons order (Electrical Americas, organisk, 12 mån) (S3) | K-inre | före | 2 | 2025Q3 | **kan inte avgöras**: 2025Q2 X -12,9 (fönstret öppet till 2025Q4) | 12 av 13 (2022Q2–2025Q2), Y i hela fönstret 12; upp 2 (2/0/0/0), ned 6 (3/2/0/1) |
+| O1 Eatons order (Electrical Americas, organisk, 12 mån) (S3) | K-inre | före | 4 | 2025Q3 | **kan inte avgöras**: 2025Q2 X -12,9 (fönstret öppet till 2026Q2) | 12 av 13 (2022Q2–2025Q2), Y i hela fönstret 10; upp 2 (2/0/0/0), ned 6 (3/2/0/1) |
+| O1 Eatons order (Electrical Americas, organisk, 12 mån) (S3) | K-inre | efter | 2 | 2025Q3 | **talar för**: 2025Q2 X +5,9, Y +10,8 vid 2025Q3 | 17 av 23 (2019Q4–2025Q2), Y i hela fönstret 13; upp 10 (2/3/1/4), ned 10 (5/1/2/2) |
+| O1 Eatons order (Electrical Americas, organisk, 12 mån) (S3) | K-inre | efter | 4 | 2025Q3 | **talar för**: 2025Q2 X +5,9, Y +10,8 vid 2025Q3 | 17 av 23 (2019Q4–2025Q2), Y i hela fönstret 11; upp 10 (2/4/0/4), ned 10 (7/1/0/2) |
+| O2 Digital Realtys nya avtal (fyra kvartal) (S3) | K-inre | före | 2 | 2025Q3 | **kan inte avgöras**: 2025Q2 X -42,8 (fönstret öppet till 2025Q4) | 5 av 6 (2024Q1–2025Q2), Y i hela fönstret 5; upp 4 (4/0/0/0), ned 2 (0/1/0/1) |
+| O2 Digital Realtys nya avtal (fyra kvartal) (S3) | K-inre | före | 4 | 2025Q3 | **kan inte avgöras**: 2025Q2 X -42,8 (fönstret öppet till 2026Q2) | 5 av 6 (2024Q1–2025Q2), Y i hela fönstret 3; upp 4 (4/0/0/0), ned 2 (0/1/0/1) |
+| O2 Digital Realtys nya avtal (fyra kvartal) (S3) | K-inre | efter | 2 | 2025Q3 | **talar emot**: 2025Q2 X +5,9, Y -98,6 vid 2025Q3 | 10 av 23 (2019Q4–2025Q2), Y i hela fönstret 6; upp 10 (3/3/0/4), ned 10 (0/1/0/9) |
+| O2 Digital Realtys nya avtal (fyra kvartal) (S3) | K-inre | efter | 4 | 2025Q3 | **talar emot**: 2025Q2 X +5,9, Y -98,6 vid 2025Q3 | 10 av 23 (2019Q4–2025Q2), Y i hela fönstret 4; upp 10 (3/3/0/4), ned 10 (0/1/0/9) |
 | L1 Kraft och elnät (Eaton, Quanta) | K-yttre | före | 2 | – | **kan inte avgöras** (kl_capex4_outer: inget kvartal känt på dagen) | X saknas |
 | L1 Kraft och elnät (Eaton, Quanta) | K-yttre | före | 4 | – | **kan inte avgöras** (kl_capex4_outer: inget kvartal känt på dagen) | X saknas |
 | L1 Kraft och elnät (Eaton, Quanta) | K-yttre | efter | 2 | 2025Q3 | **kan inte avgöras** (X saknas vid 2025Q1; X saknas vid 2025Q2) | X saknas |
 | L1 Kraft och elnät (Eaton, Quanta) | K-yttre | efter | 4 | 2025Q3 | **kan inte avgöras** (X saknas vid 2024Q3; X saknas vid 2024Q4; X saknas vid 2025Q1; X saknas vid 2025Q2) | X saknas |
-
-Övergång (registret 2026-11-27 S1, punkt 3): "prövad" räknar nu ett ursprung bara när Y finns i fönstret (med impuls: utfallet är inte kan inte avgöras; utan impuls: Y är känt i alla k kvartal). "Före S1" är F0:s räkning före ändringen. Utfallen ändras inte.
 
 ### 2. Ledtiden (beskrivning)
 
@@ -390,7 +392,8 @@ Nästa osedda läsning: med inlämningar efter 2026-11-26 (inga uppskattade änn
 - Med 10–27 ursprung per rad, och färre med impuls, är detta en beskrivning och inget test. Ett mönster kan vara slump, och ett utfall som talar för mekanismen visar inte orsaken.
 - RPO och orderstock är inte orderingång. Ciscos och Dells RPO har stora tjänstedelar. Ciscos och Dells balanser har räkenskapskvartalets kalenderkvartal, upp till en månad efter kalenderkvartalets slut.
 - Leverantörerna säljer också till andra än AI-köparna: Quanta och Eaton till elbolag och industri, Cisco och Dell till företag. Ett utslag säger inget om hur stor del som gäller AI.
-- Förvärv ger nivåskiften. Belagda förvärv märks i tabellen (Cisco–Splunk 2024Q1, Eaton–Fibrebond 2025Q2, Eaton–Boyd Thermal 2026Q1) med förskjutning och riktning: vid a och a + 1 flyttas förändringen i takt uppåt, vid a + 4 och a + 5 nedåt. Träffar två förvärv samma kvartal åt olika håll är nettoriktningen inte känd. Förvärv hos Quanta, Dell, Super Micro och Equinix är inte kontrollerade.
+- Förvärv ger nivåskiften. Belagda förvärv märks i tabellen (Cisco–Splunk 2024Q1, Eaton–Fibrebond 2025Q2, Eaton–Boyd Thermal 2026Q1 och Quantas förvärv nedan) med förskjutning och riktning: vid a och a + 1 flyttas förändringen i takt uppåt, vid a + 4 och a + 5 nedåt. Träffar två förvärv samma kvartal åt olika håll är nettoriktningen inte känd. Märket ändrar inget utslag. Quantas förvärv är kodade ur 10-K och 10-Q från 2023 (`curated/acquisitions.csv`, registret 2026-11-27 QA1). Quantas förvärv före 2023 är inte kodade, fast deras a + 4 och a + 5 kan ligga i L1:s historik (till exempel Blattner, slutfört 2021-10-13). Förvärv hos Dell, Super Micro och Equinix är inte kontrollerade.
+- Quantas förvärv per kvartal a, med köpeskillingen i MUSD som bolaget anger den (för en period: alla förvärv i perioden hittills i året). Bolaget anger inte tillförd RPO, och den räknas inte om ur köpeskillingen: 2023Q1: 3 förvärv (587 MUSD, 3 mån 2023), känt från 2023-02-23; 2023Q3: 1 förvärv (622 MUSD, 9 mån 2023), känt från 2023-11-02; 2023Q4: transformatortillverkare (cirka 300 MUSD), känt från 2023-11-02; 2024Q1: 3 förvärv (449 MUSD, 3 mån 2024), känt från 2024-02-22; 2024Q2: 2 förvärv (540 MUSD, 6 mån 2024), känt från 2024-05-02; 2024Q3: 2 förvärv (642 MUSD, 9 mån 2024, utom Cupertino Electric), känt från 2024-10-31; 2024Q3: Cupertino Electric (cirka 2 040 MUSD), känt från 2024-08-01; 2025Q1: 2 förvärv (589 MUSD, 3 mån 2025), känt från 2025-02-20; 2025Q2: 2 förvärv (816 MUSD, 6 mån 2025), känt från 2025-07-31; 2025Q3: Dynamic Systems (1 669 MUSD), känt från 2025-07-31.
 - O1 och O2 är S3:s extraktion (publish=False i väntan på granskningen). Digital Realtys andel är obelagd 2021Q4–2024Q1 (S3, tolkning 9).
 - Vertiv är BLOCKED (inget RPO i XBRL, och S3:s orderserier slutar 2025Q4). GE Vernovas RPO och order är för korta för läsregeln och visas som sammanhang. Yttre lagrets förändring i capex-takt finns först när serien har sju kvartal (från 2026Q4).
 - Historiken räknas på läsdagens vintage, så revideringar kan ändra äldre utfall (F0).

@@ -3904,3 +3904,44 @@ användningar i posten ovan ändras.
    Stickprovet på 17 värden lästes för hand ur nyhämtade kopior med en annan tolkning av HTML-tabellerna, och alla 17
    stämde (`docs/kallor/anthropic_gaap.md`). Inget värde skiljer sig mellan dokumenten, så varje serie har en version
    per period.
+
+### 2026-11-27 – QA1: Quantas förvärv som data i LT1:s förvärvsmärke (rättning efter R28-7, ingen regel ändras)
+
+Spår QA1, körning 17, efter anmärkningen R28-7 (`docs/granskning/r28_antenner.md`). Tillägg till posterna "2026-11-26 –
+LT1" (c), "Förvärv", och "2026-11-26 – X25", punkt 2, som inte skrivs om. Skrivet och committat ensamt innan Quantas
+inlämningar läses för förvärv och innan någon kod ändras. Inget mått, ingen läsregel, ingen gräns, inget fönster, inget
+tecken och ingen huvudläsning ändras. Märket ändrar inget utfall (LT1 (c)), så utslagen per 2026-11-26 och 2025-11-26
+ska bli desamma. Det som tillkommer är fler belagda förvärv i listan som märket läser. EL1 har inget förvärvsmärke och
+får bara en beskrivning i källdokumentet.
+
+**Varför en post.** LT1 (c) räknar upp de belagda förvärven med namn och säger att förvärv hos Quanta inte är
+kontrollerade. Att lägga till Quantas förvärv ändrar alltså vad posten säger, även om regeln för märket är densamma.
+
+**Vad som var känt före posten.** Hela R28, X25 och rapporterna för LT1, EL1 och antennerna per 2026-11-26 och
+2025-11-26 i `docs/resultat/`, alltså alla kvartal till och med 2026Q3, bland dem Quantas RPO 26,2, 33,6 och 41,8 mdr
+USD 2026Q1–Q3 (R28-7). Agenten har inte läst Quantas 10-K eller 10-Q för förvärv, och vet inte vilka förvärv som finns,
+när de slöts eller vad de kostade.
+
+1. **Underlaget.** Quantas 10-Q och 10-K (med ändringar) på EDGAR med rapportdag från 2023-03-31, och 10-K för 2022
+   för förvärv som slöts efter balansdagen men före 2023-04-01. Förvärv med slutdag från 2023-01-01 kodas. Förvärv före
+   2023 kodas inte här, fast deras *a* + 4 och *a* + 5 kan ligga i L1:s historik (från 2022Q1). Rapporten säger det.
+2. **En rad per förvärv** som Quanta anger som slutfört: namn (eller "N förvärv" när bolaget bara anger en summa för en
+   period), slutdag, köpeskilling som den står (MUSD, med "approximately" och liknande som kvalificerare) och, där
+   bolaget anger det, tillförd RPO eller backlog (som den står, och vilket av de två). Varje rad har accession,
+   inlämningsdag, plats (meningens nummer i dokumentets text) och meningens SHA-256. Den ordagranna meningen sparas bara
+   i `data/raw` (inte i git). Bara siffrorna publiceras. Raderna stickprovskontrolleras mot ett nytt anrop till EDGAR
+   (meningen på platsen, hash och siffror).
+3. **Kvartalet *a*** är kalenderkvartalet som innehåller slutdagen. Anger Quanta bara att förvärven slöts under en
+   period (till exempel "during the three months ended"), är *a* periodens sista kvartal, och raden säger det. En summa
+   över flera kvartal ("nine months ended") delas inte upp. Har ett senare dokument en annan uppgift för samma förvärv
+   (till exempel en slutlig köpeskilling) används den senaste uppgift som var känd på läsdagen, och båda raderna står i
+   CSV:n.
+4. **Ingen väsentlighetsgräns.** Alla slutförda förvärv märks, som Eatons och Ciscos. Märkets text får köpeskillingen,
+   så att storleken syns. En gräns för vilka förvärv som räknas vore en ny regel.
+5. **known_from.** Ett förvärv märker rapporten bara från den dag det första dokumentet som anger det lämnades in.
+   Läsningar före den dagen märks inte av det förvärvet. Eatons och Ciscos förvärv märks som förut (de var belagda i
+   källdokumenten före posten, och deras dokument är äldre än de läsdagar som rapporteras).
+6. **Beskrivningen av hur mycket som kan vara förvärvat** (källdokumenten, ingen regel): där Quanta anger tillförd RPO
+   eller backlog står beloppet mot ökningen i `rpo_pwr` och L1. Där det inte anges står köpeskillingen och att tillförd
+   RPO inte är belagd, och som i X25, punkt 2, hur stor tillförd RPO skulle behöva vara för att huvudläsningens X vid
+   ursprunget skulle hamna under gränsen 10. Köpeskilling räknas inte om till RPO.
