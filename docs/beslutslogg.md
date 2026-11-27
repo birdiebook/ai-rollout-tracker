@@ -1638,3 +1638,14 @@ Johannes svarade "kör på dina rekommendationer" på tre rekommendationer samma
   ingen läsning är avgjord på osedda data och den låsta formen kan välja riktning; annars står båda kvar. (3) R29-6
   till R29-10 är anmärkningar och inte rättade här (R29-11, datumet i antennernas inledning, är rättat). R29-7 (KL1:s
   sedda data per läsning) bör få en post före Oracles inlämning omkring 2026-12-11. Rekommendation: ja.
+
+## 2026-11-27 – Slutintegration av körning 17 (efter R29 och X26)
+
+- **Vad.** `auto17/integration17` med R29 och X26 är slutintegrerad. R29 har inget must_fix, och X26 rättade R29-2 till
+  R29-5 och R29-1 delvis. CLAUDE.md (faslistan), `docs/steg2/STATUS.md` (körning 17 och punkt 8 under "Väntar på
+  Johannes"), `docs/riktning.md` (avsnitt 8, punkt 9) och `docs/resultat/antenner.md` är uppdaterade. Antennerna per
+  2026-11-27 är genererade på nytt och oförändrade mot X26. Inga utslag och inga registerposter ändrade.
+- **Kontroll.** Full testsvit på den slutliga grenen: 2946 passerade, 3 hoppade (12 min 55 s).
+- **Öppet för Johannes:** samlat i `docs/steg2/STATUS.md`, punkt 8. Viktigast före 2026-12-11: bekräfta S1:s räkning
+  av prövade ursprung (R29-1) och KL1:s sedda data per läsning (R29-7). Före 2027-01-05: om PV1:s geometriska rader ska
+  ersätta de låsta.
