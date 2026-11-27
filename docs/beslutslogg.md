@@ -1751,3 +1751,16 @@ Johannes svarade "kör på dina rekommendationer" på tre rekommendationer samma
 - **Utslag.** Per 2026-11-27 och 2025-11-27 ändras bara förbehållet i LT1:s rapport. Inga märken och inga utslag ändrades,
   och antennerna är oförändrade.
 - **Kontroll.** Full testsvit: 3022 passerade, 3 hoppade (12 min 45 s).
+
+## 2026-11-27 – Slutintegration av körning 18 (efter R30 och X27)
+
+- **Kontroll av granskningen.** R30 har inget must_fix. R30-1 till R30-3 är rättade i X27, R30-5 och R30-6 åtgärdade.
+- **Dokument.** CLAUDE.md har en rad för körning 18, och raden för körning 17 väntar inte längre på Johannes (borttaget
+  i B18). STATUS.md har ett avsnitt för körning 18. Under "Väntar på Johannes" är de avgjorda punkterna strukna (F0:s
+  räkning, EL1:s extra rad, KL1:s symmetriska läsning, Quantas förvärv, ägarbesluten efter R29 och Dells förvärv), och
+  punkt 9 samlar det som är öppet efter körning 18 (Dells 10-Q för 2026Q3, råcachen i `new_track.sh`, Ciscos övriga
+  förvärv). AN1:s citat ligger fortfarande bara i spårets `data/raw`. riktning.md, avsnitt 8, har en rad för körning 18.
+- **Utslag.** `python -m ai_tracker.followed antenner --as-of 2026-11-27` på slutresultatet är samma som avsnittet i
+  `docs/resultat/antenner.md` (utom rubriknivåerna). Inga utslag ändrades.
+- **Kontroll.** Full testsvit: 3022 passerade, 3 hoppade (12 min 54 s). `origin/main` hade inga nya commits utöver
+  `3edc854`, så ingen merge behövdes.
