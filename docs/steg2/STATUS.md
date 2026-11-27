@@ -177,14 +177,12 @@ Kvar för nya sessioner: `DATA_KEY` (punkt 2 nedan).
    - läsa Quantas 10-Q för förvärv (R28-7), utanför körning 16 eftersom det är en ny läsning. Rekommendation: ja, före
      2027-01-31.
    - *Läge 2026-11-27:* F0:s räkning, EL1:s extra rad och KL1:s symmetriska läsning är gjorda i körning 17 (S1) som rader
-     bredvid de låsta, och Quantas förvärv 2023–2026 är kodade (QA1). F0:s räkning väntar på bekräftelse (punkt 8).
+     bredvid de låsta, och Quantas förvärv 2023–2026 är kodade (QA1). F0:s räkning är bekräftad av Johannes 2026-11-27 (B18).
 
 8. **Körning 17 (S1, AN1, QA1, PV1, R29, X26):**
-   - bekräfta S1:s byte av F0:s räkning av prövade ursprung, som gjordes utan loggat ägarbeslut (R29-1).
-     Rekommendation: bekräfta och logga, och ta då bort tillägget i övergångsnotisen;
-   - ska PV1:s geometriska rader (H-G, a-G, b-G) ersätta de låsta som huvudläsning? Rekommendation: ja, genom ett daterat
-     tillägg före 2027-01-05, eftersom ingen läsning är avgjord på osedda data och den låsta formen kan välja riktning;
-   - KL1:s sedda data per läsning (X25:s regel) i en egen post före Oracle omkring 2026-12-11 (R29-7). Rekommendation: ja;
+   - *Beslutat 2026-11-27 (B18, registret och beslutsloggen):* S1:s byte av F0:s räkning är bekräftat (R29-1 stängt),
+     PV1:s huvudläsning är H-G med bisakerna a-G och b-G och de låsta raderna bredvid (R29-2), och KL1 avgör sedda data
+     per läsning (R29-7);
    - flytta AN1:s citat och QA1:s meningar till basens `data/raw` med ett eget steg, så att självkontrollerna kan köras
      från main. Rekommendation: ja, före nästa granskning;
    - Dells förvärv (L2) på samma sätt som Quantas, före den osedda läsningen omkring 2026-12-09. Rekommendation: ja.

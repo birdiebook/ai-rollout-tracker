@@ -1649,3 +1649,22 @@ Johannes svarade "kör på dina rekommendationer" på tre rekommendationer samma
 - **Öppet för Johannes:** samlat i `docs/steg2/STATUS.md`, punkt 8. Viktigast före 2026-12-11: bekräfta S1:s räkning
   av prövade ursprung (R29-1) och KL1:s sedda data per läsning (R29-7). Före 2027-01-05: om PV1:s geometriska rader ska
   ersätta de låsta.
+
+## 2026-11-27 – B18: Johannes ägarbeslut efter R29 (körning 18)
+
+- **Johannes beslut (2026-11-27, i chatten, enligt agentens rekommendationer i R29 avsnitt 7 och X26):**
+  (1) S1:s räkning av prövade ursprung bekräftas. (2) PV1:s huvudläsning byts från H (aritmetiskt kvartalsmedel) till
+  H-G (geometriskt medel), och bisakerna redovisas som a-G och b-G; H, a och b står kvar som låsta rader bredvid.
+  (3) KL1 avgör sedda data per läsning och inte av läsdagen, med X25:s mekanism och registerdagen 2026-11-25.
+- **Registret.** Posten "2026-11-27 – B18: ägarbeslut efter R29" (`6981c7a`) är committad ensam före koden och säger för
+  varje beslut vad som ändras och inte ändras.
+- **Vad som ändrades.** Övergångsnotisen för F0:s räkning väntar inte längre på ägaren (R29-1 stängt). PV1:s rapport läser
+  H-G, a-G och b-G i avsnitt 3 och redovisar H, a och b i avsnitt 6; antennens utslag, fakta och `main_inputs` följer
+  H-G. KL1:s stycke om sedda data i avsnitt 4 följer läsningarna, och antennen anger om huvudläsningen är osedd.
+- **Kontroll.** Inga utslag ändrades per 2026-11-27 eller 2025-11-27. KL1:s avsnitt 1–7 per 2025-11-27 är byte för byte
+  desamma som på `3edc854`, och per 2026-11-27 är den enda skillnaden stycket om sedda data (testat mot rapporten i
+  `3edc854` och mot golden-filerna). Rapporterna för KL1, LT1, BG1, EL1, PV1 och antennerna är genererade på nytt.
+- **Valt utan att fråga (litet, i beslutens anda):** KL1:s läsning vilar på allt som regel (c) läser (alla pris- och
+  beroendemått vid *t* − 2, inte bara det som gjorde A sant), så en revidering av vilket som helst av dem gör läsningen
+  osedd. Det är den försiktiga tolkningen. KL1:s antenn fick fakta "Huvudläsningen på osedda data" som de andra frågorna.
+  Beskrivningsraderna i PV1:s tabeller står kvar i aritmetiskt medel, som PV1 (b) säger.
