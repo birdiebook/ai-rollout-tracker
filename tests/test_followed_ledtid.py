@@ -98,8 +98,10 @@ def test_registered_parameters():
     assert L.limits("fore") == (10.0, 5.0) and L.limits("efter") == (5.0, 10.0)
     assert L.MAIN == ("L1", "inner", "fore", 2) and L.REGISTERED == "2026-11-26"
     assert len(L.ROWS) * len(L.DIRECTIONS) * len(L.WINDOWS) == 24
-    assert L.acquisition_quarters("L2") == {"2024Q1": "Cisco–Splunk a, upp", "2024Q2": "Cisco–Splunk a + 1, upp",
-                                            "2025Q1": "Cisco–Splunk a + 4, ned", "2025Q2": "Cisco–Splunk a + 5, ned"}
+    # the documented acquisition; Dell's and Super Micro's coded ones follow it (register DA1, test_da1_*)
+    l2 = {q: v.split("; ")[0] for q, v in L.acquisition_quarters("L2").items() if v.startswith("Cisco")}
+    assert l2 == {"2024Q1": "Cisco–Splunk a, upp", "2024Q2": "Cisco–Splunk a + 1, upp",
+                  "2025Q1": "Cisco–Splunk a + 4, ned", "2025Q2": "Cisco–Splunk a + 5, ned"}
 
 
 def _m(key: str, change: dict[str, float]) -> dict:
@@ -169,7 +171,8 @@ def test_lead_time_and_acquisition_marks():
            "kl_capex4_inner": _m("kl_capex4_inner", {"2023Q3": 0, "2023Q4": 0, "2024Q1": 6, "2024Q2": 0,
                                                      "2024Q3": 0})}
     e = L.reading("L2", "inner", "efter", 2, ms2)
-    assert e["outcome"] == C.FOR and e["origin_acquisition"] == "Cisco–Splunk a + 1, upp"
+    assert e["outcome"] == C.FOR and e["origin_acquisition"] == (
+        "Cisco–Splunk a + 1, upp; Super Micro–Gemini Open Cloud Computing (2,5 MUSD) a + 4, ned")  # DA1
     assert L.lead_time({"lags": []})["latest"] is None
 
 
