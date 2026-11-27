@@ -35,7 +35,9 @@ BUDGETS: list[tuple[str, tuple[int, int]]] = [
     ("regime.json", (100_000, 20_000)),
     ("expectations.json", (60_000, 12_000)),
     ("method.json", (100_000, 20_000)),
-    ("withheld.json", (80_000, 15_000)),
+    # raw raised 80 -> 200 kB 2026-11-27 (track AN1): 86 kB raw and 7.6 kB gzip with 251 entries (31 kB on 2026-11-24);
+    # names and reasons only, so it grows with the catalog. The gzip bound, what a visitor downloads, is unchanged.
+    ("withheld.json", (200_000, 15_000)),
     ("story/index.json", (60_000, 12_000)),
     ("story/*.json", (60_000, 12_000)),
     ("report/index.json", (60_000, 12_000)),

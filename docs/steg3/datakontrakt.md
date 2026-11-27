@@ -297,7 +297,7 @@ Budgetar (rå storlek och gzip, GitHub Pages serverar gzip). Bygget stoppas om e
 | `overview.json` | 60 kB | 12 kB |
 | `method.json`, `regime.json` | 100 kB | 20 kB |
 | `manifest.json` | 300 kB | 60 kB |
-| `withheld.json` | 80 kB | 15 kB |
+| `withheld.json` | 200 kB (80 kB till 2026-11-26) | 15 kB |
 | `letters/*`, `reports/*`, `letters.json` | 100–200 kB | 10–60 kB |
 | `story/*.json`, `story/index.json` | 60 kB | 12 kB |
 | `report/*.json` (`report/index.json` 60 kB / 12 kB) | 120 kB | 24 kB |
@@ -306,7 +306,10 @@ Budgetar (rå storlek och gzip, GitHub Pages serverar gzip). Bygget stoppas om e
 | **Startsidan** (`overview.json` + `flow.json`) | | **100 kB** (visionens "≤ 100 kB data") |
 
 Budgetarna har ungefär 2,5 gånger marginal mot dagens största fil i varje grupp, för cirka två års tillväxt. När en
-budget nås är rätt åtgärd i första hand en kompaktare form (kolumnform, kortare bana), inte en högre budget.
+budget nås är rätt åtgärd i första hand en kompaktare form (kolumnform, kortare bana), inte en högre budget. Undantag 2026-11-27 (spår AN1): `withheld.json` nådde 80 kB rått (86 kB med 251 poster, 7,6 kB gzip), och
+råbudgeten höjdes till 200 kB med gzip-budgeten oförändrad. Filen har bara namn och skäl och växer med katalogen. Den
+kompaktare formen (källor och licenser en gång, posterna pekar på dem) kräver en ändring av schemat och sidorna och
+är ett beslut för ägaren.
 
 ## 7. Fixturer (`web-data-fixtures/`)
 

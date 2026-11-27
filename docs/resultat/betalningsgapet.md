@@ -2,6 +2,8 @@
 
 *Rättad efter granskningen R28 (rättningsspår X25, `docs/mattregister.md`, 2026-11-26 X25): förbehållet om sedda data avgörs nu per läsning och inte av läsdagen, antennen visar alltid radens kvartal, och varje rad visar hur ofta Y var känt i hela fönstret och vilken riktning som inte har prövats. Inga utslag ändrades. Rapporterna nedan är genererade på nytt med kommandot.*
 
+*Tillägg 2026-11-27 (spår AN1, `docs/mattregister.md`, 2026-11-27 AN1): avsnitt 5 har Anthropics redovisade (GAAP) tal ur registreringsprospektet som tabellrader och en kvartalstabell bredvid run-rate, och BLOCKED-raden om dem är borta. Rapporterna nedan är genererade på nytt med kommandot. Allt utanför avsnitt 5 och förbehållet om labbens intäkter är byte för byte detsamma som förut, och inga utslag ändrades.*
+
 **Frågan:** Växer de intäkter som ska bära investeringarna (molnintäkter, AI-nyckeltal, RPO och frontlabbens intäkter) i
 takt med intäktskravet från avskrivningar och kapitalkostnad, eller öppnas eller sluts gapet?
 
@@ -63,8 +65,15 @@ samma tal som katalogvägen. De syntetiska testerna står i `tests/test_followed
 - **Sammanhang.** AI-nyckeltalen och labbens run-rate är högre per 2026-11-26: Microsofts AI-verksamhet 37 mdr i
   årstakt (2026-03) mot 13 mdr (2024-12), Google Clouds orderstock 460 mdr (2026-03) mot 155 mdr (2025-09), och
   Anthropic 81 mdr per 2026-10-31 enligt S-1/A mot 7 mdr per 2025-10-21 i nyhetsrummet. De två Anthropic-talen är
-  olika mått (S-1 definierar sitt), och run-rate är inte redovisad intäkt. Anthropics GAAP-intäkter och OpenAI är
-  BLOCKED.
+  olika mått (S-1 definierar sitt), och run-rate är inte redovisad intäkt. OpenAI är BLOCKED.
+- **Anthropics redovisade intäkter (AN1, tillagt 2026-11-27).** Prospekten ger redovisade (GAAP) tal från
+  2026-10-26, så de finns per 2026-11-26 men inte per 2025-11-26. Intäkten var 17,0 mdr för 2026Q3 och 11,6 mdr för
+  2026Q2 (4,6 mdr för helåret 2025). Kvartalet × 4 är 67,8 mdr för 2026Q3, under run-rate 81 mdr per 2026-10-31 enligt
+  S-1/A, och 46,2 mdr för 2026Q2, nära nyhetsrummets 47 mdr per 2026-05-28. Det är olika mått: den redovisade
+  intäkten är summan över kvartalet, run-rate är bolagets egen årstakt vid en dag (28 dagars konsumtion × 13 plus
+  abonnemang × 12) och ligger över kvartalet × 4 när intäkterna växer under kvartalet. Kostnaden för compute och
+  infrastruktur var 58 % av intäkten 2026Q3 (48 % 2026Q2), och rörelseresultatet −0,6 mdr efter +1,0 mdr kvartalet före.
+  Talen står i avsnitt 5 som beskrivning. De ingår inte i regeln, och inga utslag ändras.
 - Varje mönster kan vara slump. Med 7 ursprung i molnfyrans historik och klumpig RPO är detta en beskrivning och inget
   test.
 
@@ -241,7 +250,27 @@ Bolagens guidance för molnintäkter finns inte i katalogen, så B1 är enda bas
 
 AI-nyckeltalen är oregelbundna och har definitionsbrott (Azure v1–v3). Run-rate är bolagets egen årstakt vid en tidpunkt och inte redovisad intäkt, och den blandas inte med GAAP-tal.
 
-- **BLOCKED:** Anthropics redovisade (GAAP) intäkter ur S-1: finns inte i katalogen, och körningen gör ingen ny extraktion.
+**Anthropics redovisade tal (GAAP, ur S-1, S-1/A och 424B4; registret 2026-11-27 AN1):**
+
+- Anthropic, intäkter, per kvartal (GAAP, redovisad): **17,0 mdr** (2026Q3; före: 11,6 mdr (2026Q2)); 7 värden, known_from 2026-11-02, `lab_gaap_anthropic_revenue_q`
+- Anthropic, intäkter, per år (GAAP, redovisad): **4,6 mdr** (2025; före: 0,4 mdr (2024)); 3 värden, known_from 2026-10-26, `lab_gaap_anthropic_revenue_a`
+- Anthropic, rörelseresultat, per kvartal (GAAP, redovisad): **-0,6 mdr** (2026Q3; före: 1,0 mdr (2026Q2)); 7 värden, known_from 2026-11-02, `lab_gaap_anthropic_opinc_q`
+- Anthropic, kassaflöde från den löpande verksamheten, hittills i år (GAAP, redovisad): **6,6 mdr** (2026Q3; före: 3,9 mdr (2026Q2)); 4 värden, known_from 2026-11-02, `lab_gaap_anthropic_cfo_ytd`
+
+| Kvartal | Intäkt | Intäkt × 4 | Compute, % av intäkten | Rörelseresultat | known_from | Senaste run-rate känd vid kvartalets slut |
+|---|---|---|---|---|---|---|
+| 2025Q1 | 0,4 mdr | 1,5 mdr | 251,1 % | -0,9 mdr | 2026-10-26 | – |
+| 2025Q2 | 0,8 mdr | 3,1 mdr | 176,6 % | -1,2 mdr | 2026-10-26 | – |
+| 2025Q3 | 1,4 mdr | 5,5 mdr | 148,1 % | -3,1 mdr | 2026-10-26 | 5,0 mdr per 2025-08-31 (känd 2025-09-02, `lab_rev_anthropic_company_run_rate`) |
+| 2025Q4 | 2,0 mdr | 8,2 mdr | 144,4 % | -2,8 mdr | 2026-10-26 | 7,0 mdr per 2025-10-21 (känd 2025-10-21, `lab_rev_anthropic_company_run_rate`) |
+| 2026Q1 | 4,7 mdr | 18,9 mdr | 71,6 % | -1,7 mdr | 2026-10-26 | 14,0 mdr per 2026-02-12 (känd 2026-02-12, `lab_rev_anthropic_company_run_rate`) |
+| 2026Q2 | 11,6 mdr | 46,2 mdr | 48,1 % | 1,0 mdr | 2026-10-26 | 47,0 mdr per 2026-05-28 (känd 2026-05-28, `lab_rev_anthropic_company_run_rate`) |
+| 2026Q3 | 17,0 mdr | 67,8 mdr | 58,2 % | -0,6 mdr | 2026-11-02 | 47,0 mdr per 2026-05-28 (känd 2026-05-28, `lab_rev_anthropic_company_run_rate`) |
+
+**Skillnaden mot run-rate.** Den redovisade intäkten är summan av det som intäktsförts under kvartalet (GAAP). Run-rate är bolagets egen årstakt vid en dag: konsumtionsavgifter under 28 dagar × 13 plus månatliga abonnemang × 12 (S-1:s definition, ej GAAP och inte granskad av tredje part; nyhetsrummets äldre värden anger inget beräkningssätt). Intäkt × 4 är bara kvartalet uppräknat till ett år. I ett bolag som växer snabbt ligger run-rate vid kvartalets slut över kvartalets intäkt × 4, och de två mäter alltså olika saker. De blandas aldrig i en serie eller en kvot, och run-rate-kolumnen visar bara vad bolaget hade sagt när kvartalet slutade.
+
+Compute och infrastruktur är en kostnad efter slag och omfattar också träning och forskning; kostnaden för intäkter (noten om kostnader efter funktion, `lab_gaap_anthropic_cost_of_revenue_*`) är bara compute för kundernas arbetslaster med mera. Labbets kostnader för compute är till stor del molnens intäkter. Labbets intäkter läggs inte till molnintäkterna i regeln: en del av dem säljs via molnen (Bedrock, Vertex) och skulle räknas två gånger. Ingen känslighetsrad i regeln (AN1, (f)): kvartalen börjar 2025Q1, så takten för en summa över fyra kvartal finns först för 2026Q4.
+
 - **BLOCKED:** OpenAI: ingen registreringsansökan på EDGAR, och openai.com nekas av proxyn (docs/kallor/labbintakter.md).
 
 ### 6. Nyttjandeperioder (regimmarkörer)
@@ -293,7 +322,7 @@ Nästa osedda läsning: Oracle 2026Q4 omkring 2026-12-11, bolagsraderna; molnfyr
 - RPO är klumpig (till exempel OpenAI hos Oracle) och en balans, medan intäktskravet är ett flöde per år.
 - Oracles kvartal slutar en månad före kalenderkvartalet (mittpunktsregeln), och Oracle lämnar in tidigare än de andra.
 - CoreWeaves serier börjar 2024, och nettot av anläggningstillgångar först 2024Q4. Bolagsraden har därför få kvartal.
-- Labbens run-rate är inte redovisad intäkt. Anthropics GAAP-intäkter och OpenAI är BLOCKED (avsnitt 5).
+- Labbens run-rate är inte redovisad intäkt. Anthropics redovisade tal kommer ur registreringsprospektet (AN1) och står bara som beskrivning i avsnitt 5. OpenAI är BLOCKED.
 
 ## Betalningsgapet per 2025-11-26
 
@@ -478,7 +507,15 @@ Bolagens guidance för molnintäkter finns inte i katalogen, så B1 är enda bas
 
 AI-nyckeltalen är oregelbundna och har definitionsbrott (Azure v1–v3). Run-rate är bolagets egen årstakt vid en tidpunkt och inte redovisad intäkt, och den blandas inte med GAAP-tal.
 
-- **BLOCKED:** Anthropics redovisade (GAAP) intäkter ur S-1: finns inte i katalogen, och körningen gör ingen ny extraktion.
+**Anthropics redovisade tal (GAAP, ur S-1, S-1/A och 424B4; registret 2026-11-27 AN1):**
+
+- Anthropic, intäkter, per kvartal (GAAP, redovisad): inget värde känt på dagen (`lab_gaap_anthropic_revenue_q`)
+- Anthropic, intäkter, per år (GAAP, redovisad): inget värde känt på dagen (`lab_gaap_anthropic_revenue_a`)
+- Anthropic, rörelseresultat, per kvartal (GAAP, redovisad): inget värde känt på dagen (`lab_gaap_anthropic_opinc_q`)
+- Anthropic, kassaflöde från den löpande verksamheten, hittills i år (GAAP, redovisad): inget värde känt på dagen (`lab_gaap_anthropic_cfo_ytd`)
+
+Inga redovisade kvartal kända på dagen.
+
 - **BLOCKED:** OpenAI: ingen registreringsansökan på EDGAR, och openai.com nekas av proxyn (docs/kallor/labbintakter.md).
 
 ### 6. Nyttjandeperioder (regimmarkörer)
@@ -526,4 +563,4 @@ Nästa osedda läsning: med inlämningar efter 2026-11-26 (inga uppskattade änn
 - RPO är klumpig (till exempel OpenAI hos Oracle) och en balans, medan intäktskravet är ett flöde per år.
 - Oracles kvartal slutar en månad före kalenderkvartalet (mittpunktsregeln), och Oracle lämnar in tidigare än de andra.
 - CoreWeaves serier börjar 2024, och nettot av anläggningstillgångar först 2024Q4. Bolagsraden har därför få kvartal.
-- Labbens run-rate är inte redovisad intäkt. Anthropics GAAP-intäkter och OpenAI är BLOCKED (avsnitt 5).
+- Labbens run-rate är inte redovisad intäkt. Anthropics redovisade tal kommer ur registreringsprospektet (AN1) och står bara som beskrivning i avsnitt 5. OpenAI är BLOCKED.
