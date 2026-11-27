@@ -4102,3 +4102,76 @@ huvudläsningens indata som katalogserier (`main_inputs`, X25 punkt 3): X = `g2_
 **(i) Utanför ramen.** Kostnad per uppgift (Arenas `agent`-delmängd från 2026-11, METR), tokenvolymer från
 leverantörerna (blockerade eller oregelbundna, `docs/riktning.md` avsnitt 4) och PyPI:s exakta historik före 2026-06
 (BigQuery-kvot). Var och en kräver en egen post.
+
+### 2026-11-27 – X26: rättning av S1, QA1 och PV1 efter granskningen R29 (körning 17)
+
+Rättningsspår X26, körning 17, efter granskningen R29 (`docs/granskning/r29_korning17.md`). Tillägg till posterna
+"2026-11-27 – S1", "– QA1" och "– PV1", som inte skrivs om. Skrivet och committat ensamt innan koden ändras och innan
+något utslag för de nya raderna räknas av spåret. Ingen låst läsregel, inget mått i en låst rad, ingen gräns, inget
+fönster, inget tecken och ingen huvudläsning ändras, och utslagen för de låsta raderna per 2026-11-27 och 2025-11-27 ska
+bli desamma. Det som tillkommer är tre rader bredvid PV1:s låsta (punkt 2), ett förbehåll (punkt 3), etiketter per rad
+och två rader data i QA1:s tabell (punkt 4 och 5) och ändrad text (punkt 1 och 6). Grenindex, kärnserier, tillstånd och
+publiceringsflaggor berörs inte.
+
+**Vad som var känt före tillägget.** Hela R29, bland annat R29:s omräkning av Arena-variant A med geometriskt
+kvartalsmedel (förändring i takt +433,7, +301,0, +0,1, −37,7 och 0,0 vid 2025Q3–2026Q3) och påståendet att det
+geometriska medlet ger samma utslag i dag. Rapporterna för PV1, LT1, EL1, KL1, BG1 och antennerna per 2026-11-27 och
+2025-11-27 i `docs/resultat/`. Meningarna i Quantas 10-Q för 2024Q2 och 2025Q2 där köpeskillingen för Cupertino och
+Dynamic Systems står (punkt 5). Inget nytt kvartal, ingen ny månad och ingen ny vecka är hämtad.
+
+1. **F0:s räkning av prövade ursprung (R29-1).** S1, punkt 3, bytte räkningen på rekommendationen i X25, punkt 4, och i
+   beslutsloggen 2026-11-26, som båda kallar bytet ett beslut för Johannes. Inget ägarbeslut är loggat. X26 varken
+   bekräftar eller återställer bytet, eftersom det är ägarens beslut. Till dess står S1:s räkning som den registrerades,
+   F0:s tal före S1 står kvar bredvid i övergångsnotisen, och notisen säger att bytet väntar på ägarens bekräftelse
+   (R29-1). Bekräftar ägaren loggas det med datum i beslutsloggen och notisens tillägg tas bort. Återställer ägaren blir
+   F0:s tal före S1 huvudtal igen genom en ny post. Inget utfall berörs i något av fallen.
+
+2. **PV1, geometriskt kvartalsmedel (R29-2), tre rader bredvid de låsta.** H, a och b (PV1, (c)) står kvar oförändrade,
+   och H är fortfarande huvudläsningen. Bredvid dem läses **H-G**, **a-G** och **b-G** med samma källserier, samma
+   statistik (X:s och Y:s förändring i takt), *g* = 50, *h* = 20, *k* = 2 och *s* = −1. Det enda som skiljer är
+   kvartalsvärdet:
+   - pris: exp(medlet av ln av kvartalets tre månader) i stället för medlet av månaderna;
+   - nedladdningar: exp(medlet av ln av veckosummorna för veckorna i kvartalet) i stället för medlet av veckosummorna.
+     Paketen summeras vecka för vecka före logaritmen, som förut;
+   - b-G: kvoten av de geometriska medlen (lika med det geometriska medlet av veckokvoterna, eftersom veckorna är
+     desamma).
+
+   Samma regler som PV1, (b), för vilka månader och veckor ett kvartal kräver och för `known_from`. En månad eller vecka
+   med värde ≤ 0 ger inget kvartal, eftersom logaritmen saknas, och rapporten säger det. Nycklar `pv1_*_gq`.
+   **Varför.** Logaritmen av ett aritmetiskt medel är inte minus logaritmen av medlet av inverserna, så en prissänkning
+   och en lika stor höjning i log-skala ger olika förändring i takt (R29: ett syntetiskt steg ger +28,8 åt ena hållet och
+   −69,3 åt det andra, och med *g* = 50 avgör riktningen om en impuls uppstår). Med geometriskt medel är kvartalets
+   log-värde medlet av månadernas log-värden, så en speglad bana (1/*x*) ger exakt motsatt nivå, takt och förändring i
+   takt, och F0:s regel, som är symmetrisk, ger det speglade utslaget. **Rapporten och antennen.** De nya raderna står i
+   ett eget avsnitt efter förbehållen, med en egen tabell för kvartalsvärdena, och som en fakta i antennen. Avsnitt 1–4
+   i rapporten ändras inte. **Beslut för Johannes:** om H-G ska ersätta H som huvudläsning, före den första osedda
+   läsningen (npm-kvartalet 2026Q4 omkring 2027-01-05; huvudläsningen kan avgöras tidigast omkring 2027-03-30). Utan
+   beslut står båda kvar och H är huvudläsning. **Sedda data:** som X25, punkt 1, med registerdagen 2026-11-27. Raderna
+   per 2026-11-27 och 2025-11-27 är sedda, och a-G:s förändring i takt var känd från R29 före tillägget.
+
+3. **PV1, backfill (R29-3).** Rapportens förbehåll säger att pris- och npm-raderna är hämtade i efterhand i en omgång
+   (med datumen för hämtningen), med `known_from` satt efter en regel (PV1, (b), och källdokumenten), inte som arkiverade
+   versioner, så att en läsning per en tidigare dag kan innehålla revideringar som inte var kända då. Rapporten anger hur
+   många av de rader som läsningen använder som hämtades efter läsdagen. Ingen regel ändras.
+
+4. **QA1, etiketten per rad (R29-4, del 1).** Etiketten i `curated/acquisitions.csv` gäller per rad: den säger vad som
+   var känt om händelsen på radens inlämningsdag, ur radens eget dokument och tidigare dokument, inte vad som blev känt
+   senare. Rader för samma händelse med samma inlämningsdag har samma etikett, och det kontrolleras när tabellen läses.
+   Märket tar som förut etiketten från den senaste raden som var känd på läsdagen (QA1, punkt 3 och 5). När dokumenten
+   på dagen inte avgör om två uppgifter gäller samma förvärv (en följande händelse och en slutdag i samma 10-Q) säger
+   etiketten "minst 1 förvärv". Det gäller 2026Q3 per 2026-07-30 och 2026Q4 per 2026-10-29. Antalet för 2026Q3 per
+   2026-10-29 (två nya bolag) är bolagets eget och står kvar.
+
+5. **QA1, två angivna köpeskillingar (R29-4, del 2).** Två rader data, ingen regel: Cupertinos köpeskilling som den står i
+   10-Q för 2024Q2 (inlämnad 2024-08-01) och Dynamic Systems köpeskilling vid tillträdet som den står i 10-Q för 2025Q2
+   (inlämnad 2025-07-31), båda med kvalificeraren "approximately". Raderna har accession, plats och meningens SHA-256
+   som de andra, meningen sparas bara i `data/raw`, och självkontrollen hämtar dokumenten på nytt. Senare dokument ersätter
+   uppgiften i märket som förut (QA1, punkt 3).
+
+6. **EL1-S, texten om Quantas förvärv (R29-5).** Raden säger inte längre att Quantas förvärv är okontrollerade. Den säger
+   att de är kodade ur 10-K och 10-Q från 2023 (QA1), inte före, och att märket står i LT1:s huvudläsning, som har samma X.
+   S1, punkt 2 ("Ingen märkning läggs till här"), står kvar: EL1-S får inget eget märke.
+
+**Ärligt om osäkerheten.** Inget av detta gör PV1 till ett test. De nya raderna är tre beskrivningar till, och med få
+ursprung kan ett utslag vara slump. Att de geometriska raderna ger samma utslag som de låsta i dag säger inget om hur
+ofta de skiljer sig på osedda data.
