@@ -158,6 +158,73 @@ def apply_reading(entity: str, ms: dict[str, dict]) -> dict:
             "a_history": a_history(entity, ms)}
 
 
+# ------------------------------------------------------------------ seen data per reading (register B18, point 3)
+
+
+def locked_resting_on(x: dict) -> list[tuple[str, str, str]]:
+    """(series, statistic, quarter) of every value a locked reading's outcome rests on (register B18, point 3, with the
+    mechanism of X25, point 1): everything rule (c) reads, the pace at t - 2 of each price or dependence measure
+    registered for the entity (A), the entity's change in capex pace at t and the inner layer's change in capex pace
+    at the quarter the reading uses."""
+    e, out = x["entity"], []
+    if x.get("t_minus_2"):
+        out += [(f"kl_{m}_{e}", "pace", x["t_minus_2"]) for m in measures_of(e)]
+    if x.get("t"):
+        out.append((f"kl_capex4_{e}", "change", x["t"]))
+    if x.get("inner_period"):
+        out.append(("kl_capex4_inner", "change", x["inner_period"]))
+    return out
+
+
+def locked_seen(readings: dict[str, dict], ms: dict[str, dict], when, ctx) -> None:
+    """Mark each locked reading seen (register B18, point 3): every value its outcome rests on is the same as in the
+    reading on KL1's register day 2026-11-25 (a value missing on both days counts as the same). Always seen up to
+    that day."""
+    if pd.Timestamp(when) <= pd.Timestamp(REGISTERED):
+        for x in readings.values():
+            x["seen"] = True
+        return
+    reg: dict[str, dict] = {}
+    for x in readings.values():
+        rests = locked_resting_on(x)
+        for k, _, _ in rests:
+            if k not in reg:
+                reg[k] = measure(k, pd.Timestamp(REGISTERED), ctx)
+        x["seen"] = all(C.same_value(C.series_of(ms[k], stat).get(q), C.series_of(reg[k], stat).get(q))
+                        for k, stat, q in rests)
+
+
+def _reading_name(e: str) -> str:
+    return "yttre lagret (huvudläsning)" if e == "outer" else f"{S.NAMES[e]} mot inre lagret"
+
+
+def seen_paragraph(r: dict) -> list[str]:
+    """The paragraph on seen data before the readings in section 4. Up to the register day as before, word for word;
+    after it, per reading (register B18, point 3)."""
+    oracle = next((x for x in r["next_filings"] if x["company"] == "orcl"), None)
+    when = f", för Oracle omkring {oracle['estimated']}" if oracle and oracle["estimated"] > REGISTERED else ""
+    if r.get("seen_before_register"):
+        return ["Alla kvartal i den här läsningen var kända före registerposten 2026-11-25, och flera av dem var sedda "
+                "före posten (posten, avsnitt (e)). Läsningen är därför inget utfall på osedda data. Den första läsningen "
+                f"på osedda kvartal kommer med inlämningar efter 2026-11-25{when}.", ""]
+    readings = r["readings"]
+    head = (f"Sedda data avgörs per läsning (registret 2026-11-27 B18, punkt 3): en läsning är sedd när varje värde som "
+            "utslaget vilar på (takterna vid t − 2, förändringen i capex-takt vid t och det inre lagrets förändring i "
+            f"capex-takt) är detsamma som i läsningen per registerdagen {REGISTERED}. ")
+    unseen = [e for e, x in readings.items() if x.get("seen") is False]
+    if not unseen:
+        return [head + f"Alla {len(readings)} läsningar nedan vilar bara på värden som var kända före registerposten "
+                f"{REGISTERED}, och flera av dem var sedda före posten (posten, avsnitt (e)). Ingen av dem är därför ett "
+                f"utfall på osedda data. Den första läsningen på osedda kvartal kommer med inlämningar efter "
+                f"{REGISTERED}{when}.", ""]
+    seen = [e for e in readings if e not in unseen]
+    text = head + (f"Osedda, alltså utfall på osedda data ({len(unseen)} av {len(readings)}): "
+                   + ", ".join(_reading_name(e) for e in unseen) + ".")
+    if seen:
+        text += (" Sedda, inget utfall på osedda data: " + ", ".join(_reading_name(e) for e in seen) + ".")
+    return [text, ""]
+
+
 # ------------------------------------------------------------------ KL1-S: the symmetric rows (register S1, point 1)
 
 S1_REGISTERED = C.S1_REGISTERED
@@ -354,6 +421,7 @@ def compute(as_of, table: pd.DataFrame | None = None, csv: pd.DataFrame | None =
     groups = keys()
     ms = {k: measure(k, when, ctx) for g in groups.values() for k in g}
     readings = {e: apply_reading(e, ms) for e in ("outer", *S.OUTER)}
+    locked_seen(readings, ms, when, ctx)
     s1 = s1_rows(ms)
     for x in s1:
         x["_mx"], x["_my"] = ms[x["x_series"]], ms[x["y_series"]]
@@ -372,6 +440,7 @@ def compute(as_of, table: pd.DataFrame | None = None, csv: pd.DataFrame | None =
     return {
         "question": QUESTION, "as_of": str(when.date()), "generated": str(date.today()),
         "seen_before_register": str(when.date()) <= REGISTERED,
+        "main_seen": readings["outer"]["seen"],
         "groups": groups, "measures": ms, "readings": readings,
         "limits": {"rate_rise_pp": RATE_RISE, "dependence_rise_pp": DEP_RISE, "capex_fall": CAPEX_FALL,
                    "equal_share": EQUAL_SHARE},
@@ -469,7 +538,8 @@ def render_s1(r: dict) -> list[str]:
 
 
 def render_locked(r: dict) -> str:
-    """Sections 1-7: the report as before S1 (register S1, point 1: byte for byte the same)."""
+    """Sections 1-7: the report as before S1 (register S1, point 1: byte for byte the same), except the paragraph on
+    seen data in section 4, which follows the readings after the register day (register B18, point 3)."""
     ms, g = r["measures"], r["groups"]
     out = [f"# Kreditlagret per {r['as_of']}", "", f"**Frågan:** {r['question']}", "",
            "Yttre lagret: Oracle, CoreWeave, Nebius och IREN, och labben som tabellrader. Inre lagret: Microsoft, "
@@ -544,12 +614,7 @@ def render_locked(r: dict) -> str:
             "beroende följt av högre capex-takt blir \"inget av mönstren\". Hur ofta A har gällt står under varje "
             "utslag. När A nästan alltid gäller, avgörs utslaget i praktiken av capex-takten. En regel som läser båda "
             "riktningarna kräver en ny daterad registerpost.", ""]
-    if r.get("seen_before_register"):
-        oracle = next((x for x in r["next_filings"] if x["company"] == "orcl"), None)
-        when = f", för Oracle omkring {oracle['estimated']}" if oracle and oracle["estimated"] > REGISTERED else ""
-        out += ["Alla kvartal i den här läsningen var kända före registerposten 2026-11-25, och flera av dem var sedda "
-                "före posten (posten, avsnitt (e)). Läsningen är därför inget utfall på osedda data. Den första läsningen "
-                f"på osedda kvartal kommer med inlämningar efter 2026-11-25{when}.", ""]
+    out += seen_paragraph(r)
     for e, x in r["readings"].items():
         who = "Yttre lagret (huvudläsning)" if e == "outer" else f"{S.NAMES[e]} mot inre lagret"
         paces = ", ".join(f"{k} {_f(v, 1, True)}" for k, v in x["paces_t_minus_2"].items())
@@ -791,6 +856,7 @@ def antenna(r: dict) -> dict:
     facts["Förändring i capex-takt, inre"] = f"{_f(x['capex_change_inner'], 1, True)} ({x['inner_period'] or '–'})"
     h = x.get("a_history") or {}
     facts["A har gällt (yttre)"] = f"{h.get('held', 0)} av {h.get('of', 0)} kvartal"
+    facts["Huvudläsningen på osedda data"] = "nej" if x.get("seen", True) else "ja"  # register B18, point 3
     for e in S1_ENTITIES:  # KL1-S beside the main reading (register S1, point 1): one fact per entity
         er = [y for y in (r.get("s1") or {}).get("rows", []) if y["entity"] == e]
         if er:

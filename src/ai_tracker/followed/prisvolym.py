@@ -7,7 +7,7 @@ of a monthly G2 series) against the change in pace of SDK downloads on npm (quar
 (the price falling faster is expected to be followed by usage accelerating, and the mirror image), g = 50, h = 20,
 k = 2, three rows:
 
-    H  GPQA price (G2's core series)           against npm openai + @anthropic-ai/sdk     (the main reading)
+    H  GPQA price (G2's core series)           against npm openai + @anthropic-ai/sdk     (the main reading until B18)
     a  Arena price, variant A                  against the same
     b  GPQA price                              against the same relative to react + express (the npm control)
 
@@ -20,7 +20,8 @@ Beside the three locked readings, register X26 (point 2, after R29-2) adds H-G, 
 statistic, bounds, window and sign, with the quarter as the geometric mean (exp of the mean of ln) of its months and
 of its weekly sums. ln of an arithmetic mean is not minus ln of the mean of the inverses, so with the locked arithmetic
 mean a mirrored price path (1/x) does not give the mirrored change in pace; with the geometric mean it does exactly.
-H stays the main reading.
+By the owner's decision (register B18, point 2) H-G is the main reading and a-G and b-G are the side readings in their
+reported form; H, a and b stay beside them as locked rows and are reported in section 6.
 
 Only rows known on the as-of date are used: the table is cut at the day before anything is computed, so
 compute(d, table) equals compute(d, table truncated at d).
@@ -80,40 +81,45 @@ READINGS = {  # name -> (X, Y)
     "a": ("pv1_pris_arena_q", "pv1_sdk_q"),
     "b": ("pv1_pris_gpqa_q", "pv1_sdk_rel_q"),
 }
-MAIN = "H"
+MAIN_LOCKED = "H"  # the main reading of register PV1, (c) and (h), before B18; stays beside as a locked row
 READINGS_G = {  # register X26, point 2: beside the locked readings, not instead of them
     "H-G": ("pv1_pris_gpqa_gq", "pv1_sdk_gq"),
     "a-G": ("pv1_pris_arena_gq", "pv1_sdk_gq"),
     "b-G": ("pv1_pris_gpqa_gq", "pv1_sdk_rel_gq"),
 }
 X26_REGISTERED = "2026-11-27"  # register "X26: rättning av S1, QA1 och PV1 efter granskningen R29"
+B18_REGISTERED = "2026-11-27"  # register "B18: ägarbeslut efter R29", point 2
+MAIN = "H-G"  # register B18, point 2: the main reading; the side readings are a-G and b-G
+SIDE = ("a-G", "b-G")
+LOCKED_OF = {"H-G": "H", "a-G": "a", "b-G": "b"}  # each reported reading and its locked row beside it
 X_STAT = "change"
 G = 50.0  # X: change in pace of the price, log x100
 H = 20.0  # Y: change in pace of the downloads, log x100
 K = 2
 SIGN = -1
 
-READING_NAME = {"H": "Pris vid fast förmåga (GPQA) mot SDK-nedladdningar (huvudläsning)",
-                "a": "Pris vid fast Arena-förmåga (variant A) mot SDK-nedladdningar (bisak a)",
-                "b": "Pris vid fast förmåga (GPQA) mot SDK-nedladdningar relativt kontrollpaketen (bisak b)"}
-READING_NAME.update({
-    "H-G": "Pris vid fast förmåga (GPQA) mot SDK-nedladdningar, geometriskt medel (H-G, bredvid H)",
-    "a-G": "Pris vid fast Arena-förmåga (variant A) mot SDK-nedladdningar, geometriskt medel (a-G, bredvid a)",
-    "b-G": "Pris vid fast förmåga (GPQA) mot SDK-nedladdningar relativt kontrollpaketen, geometriskt medel (b-G, "
-           "bredvid b)"})
-SHORT_NAME = {"a": "Bisak a (Arena-pris mot SDK)", "b": "Bisak b (GPQA-pris mot SDK relativt kontroll)"}
+READING_NAME = {
+    "H-G": "Pris vid fast förmåga (GPQA) mot SDK-nedladdningar, geometriskt medel (H-G, huvudläsning)",
+    "a-G": "Pris vid fast Arena-förmåga (variant A) mot SDK-nedladdningar, geometriskt medel (bisak a-G)",
+    "b-G": "Pris vid fast förmåga (GPQA) mot SDK-nedladdningar relativt kontrollpaketen, geometriskt medel (bisak b-G)",
+    "H": "Pris vid fast förmåga (GPQA) mot SDK-nedladdningar, aritmetiskt medel (H, låst rad bredvid H-G)",
+    "a": "Pris vid fast Arena-förmåga (variant A) mot SDK-nedladdningar, aritmetiskt medel (a, låst rad bredvid a-G)",
+    "b": "Pris vid fast förmåga (GPQA) mot SDK-nedladdningar relativt kontrollpaketen, aritmetiskt medel (b, låst rad "
+         "bredvid b-G)"}
+SHORT_NAME = {"a-G": "Bisak a-G (Arena-pris mot SDK, geometriskt medel)",
+              "b-G": "Bisak b-G (GPQA-pris mot SDK relativt kontroll, geometriskt medel)"}
 
 LABEL = {
-    "pv1_pris_gpqa_q": "Pris vid fast förmåga, GPQA (kärnserie)",
-    "pv1_pris_arena_q": "Pris vid fast Arena-förmåga, variant A",
-    "pv1_sdk_q": "SDK-nedladdningar, openai + @anthropic-ai/sdk",
-    "pv1_kontroll_q": "Kontrollpaket, react + express",
-    "pv1_sdk_rel_q": "SDK relativt kontroll (kvot)",
-    "pv1_pris_gpqa_gq": "Pris vid fast förmåga, GPQA, geometriskt medel",
+    "pv1_pris_gpqa_gq": "Pris vid fast förmåga, GPQA (kärnserie), geometriskt medel",
     "pv1_pris_arena_gq": "Pris vid fast Arena-förmåga, variant A, geometriskt medel",
-    "pv1_sdk_gq": "SDK-nedladdningar, geometriskt medel",
-    "pv1_kontroll_gq": "Kontrollpaket, geometriskt medel",
+    "pv1_sdk_gq": "SDK-nedladdningar, openai + @anthropic-ai/sdk, geometriskt medel",
+    "pv1_kontroll_gq": "Kontrollpaket, react + express, geometriskt medel",
     "pv1_sdk_rel_gq": "SDK relativt kontroll, geometriska medel (kvot)",
+    "pv1_pris_gpqa_q": "Pris vid fast förmåga, GPQA, aritmetiskt medel (låst rad)",
+    "pv1_pris_arena_q": "Pris vid fast Arena-förmåga, variant A, aritmetiskt medel (låst rad)",
+    "pv1_sdk_q": "SDK-nedladdningar, aritmetiskt medel (låst rad)",
+    "pv1_kontroll_q": "Kontrollpaket, aritmetiskt medel (låst rad)",
+    "pv1_sdk_rel_q": "SDK relativt kontroll, aritmetiska medel (kvot, låst rad)",
     "g2_price_at_arena_capability_4o": "Pris vid fast Arena-förmåga, variant B (GPT-4o)",
     "g2_price_at_capability": "Pris vid fast förmåga, ECI (bakåtfylld)",
     "g2_price_rolling12_eci": "Pris vid rörlig tröskel, ECI, 12 mån",
@@ -134,6 +140,11 @@ def used_series() -> set[str]:
     for _, keys in ALL_DERIVED.values():
         out.update(keys)
     return out
+
+
+def reading(r: dict, name: str) -> dict:
+    """One reading of a computed report by name: H-G, a-G, b-G (the reported forms) or H, a, b (the locked rows)."""
+    return r["readings_geo"][name] if name in READINGS_G else r["readings"][name]
 
 
 # ------------------------------------------------------------------ months and weeks to quarters
@@ -358,14 +369,14 @@ def _week_known(monday: pd.Timestamp) -> pd.Timestamp:
 def next_unseen(r: dict) -> tuple[str, str | None]:
     """The next reading with a Y quarter that was not known at the entry, and when the main reading's X first has a
     change in pace (entry, (g))."""
-    y = r["measures"]["pv1_sdk_q"]
+    y = r["measures"]["pv1_sdk_gq"]  # register B18, point 2: H-G's quantities (the same quarters as H's)
     t = y.get("period") if y.get("available") else None
     target = FIRST_UNSEEN if t is None else max(C.plus(t, 1), FIRST_UNSEEN, key=lambda q: pd.Period(q, freq=A.QFREQ))
     last = quarter_weeks(target)[-1]
     day = str(_week_known(last).date())
     text = (f"npm-kvartalet {target} när veckan {last.date()}–{(last + pd.Timedelta(days=6)).date()} är känd, omkring "
             f"{day}")
-    x = r["measures"]["pv1_pris_gpqa_q"]
+    x = r["measures"]["pv1_pris_gpqa_gq"]
     if first_known(x, "change") is None:
         start = x.get("first") if x.get("available") else None
         q0 = C.plus(start, 6) if start else None
@@ -394,8 +405,8 @@ def compute(as_of, table: pd.DataFrame | None = None) -> dict:
         then = (C.series_of(reg["measures"][x["x_series"]], X_STAT),
                 C.series_of(reg["measures"][x["y_series"]], "change"))
         x["seen"] = C.same_inputs(x, *now, *then)
-    r["seen_before_register"] = all(x["seen"] for x in r["readings"].values())
-    r["main_seen"] = r["readings"][MAIN]["seen"]
+    r["seen_before_register"] = all(x["seen"] for x in [*r["readings"].values(), *r["readings_geo"].values()])
+    r["main_seen"] = reading(r, MAIN)["seen"]
     return r
 
 
@@ -435,7 +446,7 @@ def _compute(when: pd.Timestamp, table: pd.DataFrame) -> dict:
                             "decided": decided(rr, C.series_of(ms[x], X_STAT), C.series_of(ms[y], "change"))}
     report = {
         "question": QUESTION, "as_of": str(when.date()), "generated": str(date.today()),
-        "params": {"g": G, "h": H, "k": K, "sign": SIGN, "x_stat": X_STAT, "main": MAIN},
+        "params": {"g": G, "h": H, "k": K, "sign": SIGN, "x_stat": X_STAT, "main": MAIN, "main_locked": MAIN_LOCKED},
         "measures": ms, "readings": readings, "readings_geo": readings_geo, "classes": classes(used_series()),
         "fetch": fetch_summary(t, when),
     }
@@ -514,68 +525,83 @@ def _decided_lines(rr: dict) -> list[str]:
     return [s + " En beskrivning utan gräns för \"ändrat\"; med så få ursprung kan en skillnad vara slump."]
 
 
+def _reading_lines(rr: dict, label: str) -> list[str]:
+    lines = C.reading_lines(rr, label)
+    lines[0] = lines[0].replace(f"**{label}:** {rr['text']}", f"**{label}:** {short(rr)}", 1)
+    if rr.get("x_first") is None:
+        lines.append("  X har ännu ingen förändring i takt på dagen (serien är för kort), så varje ursprung kan "
+                     "inte avgöras.")
+    elif rr.get("y_first") and pd.Period(rr["x_first"], freq=A.QFREQ) < pd.Period(rr["y_first"], freq=A.QFREQ):
+        lines.append(f"  X har förändring i takt från {rr['x_first']} och Y från {rr['y_first']}.")
+    else:
+        lines.append(f"  X har förändring i takt från {rr['x_first']}.")
+    return lines + _decided_lines(rr)
+
+
 def render(r: dict) -> str:
+    """The report. Since register B18 (point 2) sections 1-3 read H-G, a-G and b-G (the geometric mean) and section 6
+    reports the locked rows H, a and b (the arithmetic mean) beside them."""
     ms = r["measures"]
     p = r["params"]
     out = [f"# Pris mot volym per {r['as_of']}", "", f"**Frågan:** {r['question']}", "",
-           "Priset vid fast förmåga (G2) mot nedladdningar av AI-SDK:er på npm (G3). Kvartal: priset som medel av "
-           "kvartalets tre månader, nedladdningarna som medel av veckosummorna för veckorna vars torsdag ligger i "
-           "kvartalet (bara hela kvartal). Takt = 100 × ln(värdet / värdet fyra kvartal tidigare). Förändring i takt = "
-           "mot två kvartal tidigare. Överraskning = mot den naiva baslinjen B1. Bara data kända på dagen. Registret: "
-           "`docs/mattregister.md`, 2026-11-27 PV1. Klass = klass för kommersiell användning (`ai_tracker.licenses`).", ""]
+           "Priset vid fast förmåga (G2) mot nedladdningar av AI-SDK:er på npm (G3). Kvartal: priset som geometriskt "
+           "medel, exp(medlet av ln), av kvartalets tre månader, nedladdningarna som geometriskt medel av veckosummorna "
+           "för veckorna vars torsdag ligger i kvartalet (bara hela kvartal). Det är huvudläsningens och bisakernas form "
+           "sedan ägarbeslutet i registret 2026-11-27 B18, punkt 2. De låsta raderna H, a och b med aritmetiskt medel "
+           "står bredvid i avsnitt 6, och beskrivningsraderna i tabellerna är aritmetiska medel. Takt = 100 × "
+           "ln(värdet / värdet fyra kvartal tidigare). Förändring i takt = mot två kvartal tidigare. Överraskning = mot "
+           "den naiva baslinjen B1. Bara data kända på dagen. Registret: `docs/mattregister.md`, 2026-11-27 PV1, X26 och "
+           "B18. Klass = klass för kommersiell användning (`ai_tracker.licenses`).", ""]
 
     out += ["## 1. Pris vid fast förmåga (X)", "",
             "Lägsta blandade förstapartspris (USD per miljon tokens, 3:1) bland modeller över en fast förmågetröskel. "
             "GPQA-varianten är G2:s kärnserie. Arena-variant A är inte kärnserie och mäter från 2024-07 golvet i de "
-            "billigaste prisnivåerna, eftersom tröskeln inte binder (`docs/kallor/g2_arena_pris.md`). Övriga rader är "
+            "billigaste prisnivåerna, eftersom tröskeln inte binder (`docs/kallor/g2_arena_pris.md`). De två första "
+            "raderna är läsningarnas X, de två därefter samma serier i de låsta radernas form. Övriga rader är "
             "beskrivning.", ""]
-    out += _table(r, ["pv1_pris_gpqa_q", "pv1_pris_arena_q", *CONTEXT_PRICE])
-    out += _missing_lines(ms, ["pv1_pris_gpqa_q", "pv1_pris_arena_q"])
+    out += _table(r, ["pv1_pris_gpqa_gq", "pv1_pris_arena_gq", "pv1_pris_gpqa_q", "pv1_pris_arena_q", *CONTEXT_PRICE])
+    out += _missing_lines(ms, ["pv1_pris_gpqa_gq", "pv1_pris_arena_gq"])
 
     out += ["", "## 2. Användning: nedladdningar på npm (Y)", "",
-            "Nedladdningar per vecka, kvartalsmedel. Huvudläsningens Y är openai + @anthropic-ai/sdk. Bisak b läser "
-            "samma summa relativt kontrollpaketen react + express, så att den gemensamma tillväxten i npm (CI, speglar) "
-            "tas bort så långt kontrollen speglar den. Nedladdningar är inte användare. Övriga paket är beskrivning.", ""]
-    out += _table(r, ["pv1_sdk_q", "pv1_kontroll_q", "pv1_sdk_rel_q", *CONTEXT_NPM])
-    out += _missing_lines(ms, ["pv1_sdk_q", "pv1_kontroll_q"])
+            "Nedladdningar per vecka, kvartalets geometriska medel av veckosummorna. Huvudläsningens Y är openai + "
+            "@anthropic-ai/sdk. Bisak b-G läser samma summa relativt kontrollpaketen react + express, så att den "
+            "gemensamma tillväxten i npm (CI, speglar) tas bort så långt kontrollen speglar den. Nedladdningar är inte "
+            "användare. De tre första raderna är läsningarnas Y, de tre därefter samma storheter i de låsta radernas "
+            "form. Övriga paket är beskrivning.", ""]
+    out += _table(r, ["pv1_sdk_gq", "pv1_kontroll_gq", "pv1_sdk_rel_gq", "pv1_sdk_q", "pv1_kontroll_q", "pv1_sdk_rel_q",
+                      *CONTEXT_NPM])
+    out += _missing_lines(ms, ["pv1_sdk_gq", "pv1_kontroll_gq"])
 
     out += ["", "## 3. Läsregeln, mekaniskt", "",
             f"F0:s symmetriska regel: X:s förändring i takt mot Y:s förändring i takt, tecken −1, fönster {p['k']} "
             f"kvartal efter ursprunget. Gränser (låsta): X ±{_f(p['g'], 0)}, Y ±{_f(p['h'], 0)} log-punkter. En rad "
-            "per par, ingen sammanslagning.", "",
+            "per par, ingen sammanslagning. Huvudläsningen är H-G och bisakerna a-G och b-G (registret 2026-11-27 B18, "
+            "punkt 2). Med det geometriska kvartalsmedlet ger en speglad prisbana (1/x) exakt det speglade utslaget.", "",
             "- **Talar för, nedåt:** prisfallet blev snabbare (X ≤ −g) och användningen accelererade (Y ≥ +h). "
             "**Talar för, uppåt:** prisfallet blev långsammare (X ≥ +g) och användningen bromsade (Y ≤ −h).",
             "- **Talar emot:** användningens takt gick åt samma håll som priset: prisfallet blev snabbare och användningen "
             "bromsade, eller prisfallet blev långsammare och användningen accelererade.",
             "- Förändringen i takt läser om tillväxten blir snabbare eller långsammare, inte om nivån stiger eller "
             "faller. Utslaget är en beskrivning, inget test.", ""]
-    unseen = [k for k, x in r["readings"].items() if x.get("seen") is False]
+    geo = r["readings_geo"]
+    unseen = [k for k, x in geo.items() if x.get("seen") is False]
     if not unseen:
         out += [f"Alla läsningar nedan vilar bara på värden som var kända före registerposten {REGISTERED}. Ingen av "
                 f"dem är därför ett utfall på osedda data. Nästa osedda läsning: {r['next_unseen']}. Sedda data avgörs "
                 "per läsning (X25, punkt 1).", ""]
     else:
-        out += [f"{len(unseen)} av {len(r['readings'])} läsningar vilar på värden som blev kända efter registerposten "
+        out += [f"{len(unseen)} av {len(geo)} läsningar vilar på värden som blev kända efter registerposten "
                 f"{REGISTERED} och är märkta **osedd** nedan. Sedda data avgörs per läsning (X25, punkt 1).", ""]
-    for name, rr in r["readings"].items():
-        label = READING_NAME[name]
-        lines = C.reading_lines(rr, label)
-        lines[0] = lines[0].replace(f"**{label}:** {rr['text']}", f"**{label}:** {short(rr)}", 1)
-        if rr.get("x_first") is None:
-            lines.append("  X har ännu ingen förändring i takt på dagen (serien är för kort), så varje ursprung kan "
-                         "inte avgöras.")
-        elif rr.get("y_first") and pd.Period(rr["x_first"], freq=A.QFREQ) < pd.Period(rr["y_first"], freq=A.QFREQ):
-            lines.append(f"  X har förändring i takt från {rr['x_first']} och Y från {rr['y_first']}.")
-        else:
-            lines.append(f"  X har förändring i takt från {rr['x_first']}.")
-        lines += _decided_lines(rr)
+    for name, rr in geo.items():
+        lines = _reading_lines(rr, READING_NAME[name])
         if name == MAIN:
             lines.append("  " + C.seen_text(rr.get("seen"), REGISTERED))
         elif rr.get("seen") is False:
             lines.append(f"  **Osedd:** läsningen vilar på värden som blev kända efter registerposten {REGISTERED}.")
-        elif name == "a":
-            lines.append("  Bisak a vilar på X-värden som var sedda före posten (nivåerna för variant A stod i "
-                         "`g2_arena_pris.md`, registret avsnitt (f)) och har bara beskrivande värde.")
+        elif name == "a-G":
+            lines.append("  Bisak a-G vilar på X-värden som var sedda före posten (nivåerna för variant A stod i "
+                         "`g2_arena_pris.md`, registret PV1 avsnitt (f), och förändringen i takt i geometriskt medel "
+                         "stod i R29) och har bara beskrivande värde.")
         out += lines
     out.append("")
 
@@ -592,7 +618,7 @@ def render(r: dict) -> str:
             "en lansering kan verka över flera kvartal. Ett utslag som talar för mekanismen visar inte att priset "
             "orsakade användningen.",
             "- **Nedladdningar är inte användare.** CI-byggen, containerbyggen, speglar och transitiva beroenden räknas "
-            "med, och ett verktyg som börjar bero på en SDK höjer nivån utan nya utvecklare. Kontrollpaketen i bisak b "
+            "med, och ett verktyg som börjar bero på en SDK höjer nivån utan nya utvecklare. Kontrollpaketen i bisak b-G "
             "är inte stabila och tar inte bort skiften i en enskild SDK.",
             "- **Förstapartspris.** Öppna modeller som bara säljs av tredje part ingår inte. Arena-variant A mäter "
             "golvet i de billigaste nivåerna från 2024-07, inte priset vid en fast förmåga.",
@@ -603,7 +629,7 @@ def render(r: dict) -> str:
             "- **Licens.** npm-serierna har klassen `okänd` och `publish=False`, Arena-variant A `okänd`. GPQA-priset har "
             "`ja`. Cloudflare Radar (`nej`) används inte.",
             backfill_caveat(r), ""]
-    out += render_geo(r)
+    out += render_locked_rows(r)
     return "\n".join(out)
 
 
@@ -621,60 +647,50 @@ def backfill_caveat(r: dict) -> str:
             "per en tidigare dag kan innehålla revideringar och rättningar som inte var kända den dagen." + after)
 
 
-def _same_text(geo: dict, locked: dict) -> str:
-    if geo["outcome"] == locked["outcome"] and short(geo) == short(locked):
-        return "Samma utslag som den låsta raden."
-    return f"Den låsta raden: {short(locked)}."
+def _same_text(locked: dict, geo: dict, geo_name: str) -> str:
+    if locked["outcome"] == geo["outcome"] and short(locked) == short(geo):
+        return f"Samma utslag som {geo_name}."
+    return f"{geo_name}: {short(geo)}."
 
 
-def render_geo(r: dict) -> list[str]:
-    """Register X26, point 2 (R29-2): H-G, a-G and b-G beside the locked readings, in a section of their own."""
-    out = ["## 6. Geometriskt kvartalsmedel (tillägg X26, bredvid de låsta raderna)", "",
-           "Tre rader bredvid H, a och b (`docs/mattregister.md`, 2026-11-27 X26, punkt 2, efter granskningen R29-2). "
-           "Samma källserier, statistik, gränser, fönster och tecken. Det enda som skiljer är kvartalsvärdet: det "
-           "geometriska medlet, exp(medlet av ln), av kvartalets tre månader och av veckosummorna. Med det aritmetiska "
-           "medlet ger en speglad prisbana (1/x) inte den speglade förändringen i takt, så riktningen kan avgöra om en "
-           "impuls uppstår. Med det geometriska medlet ger den exakt det speglade utslaget. Huvudläsningen är "
-           "fortfarande H. Om H-G ska ersätta H är ett beslut för ägaren före den första osedda läsningen.", ""]
-    out += _table(r, ["pv1_pris_gpqa_gq", "pv1_pris_arena_gq", "pv1_sdk_gq", "pv1_kontroll_gq", "pv1_sdk_rel_gq"])
-    out.append("")
-    locked = {"H-G": "H", "a-G": "a", "b-G": "b"}
-    for name, rr in r["readings_geo"].items():
-        label = READING_NAME[name]
-        lines = C.reading_lines(rr, label)
-        lines[0] = lines[0].replace(f"**{label}:** {rr['text']}", f"**{label}:** {short(rr)}", 1)
-        if rr.get("x_first") is None:
-            lines.append("  X har ännu ingen förändring i takt på dagen (serien är för kort), så varje ursprung kan "
-                         "inte avgöras.")
-        else:
-            lines.append(f"  X har förändring i takt från {rr['x_first']}.")
-        lines += _decided_lines(rr)
-        lines.append("  " + _same_text(rr, r["readings"][locked[name]]))
+def render_locked_rows(r: dict) -> list[str]:
+    """Section 6 (register B18, point 2): the locked rows H, a and b (register PV1, (c)) beside H-G, a-G and b-G."""
+    out = ["## 6. Aritmetiskt kvartalsmedel (de låsta raderna H, a och b, bredvid)", "",
+           "De tre låsta raderna ur registret 2026-11-27 PV1, avsnitt (c), med kvartalet som aritmetiskt medel av "
+           "månaderna och veckosummorna. Samma källserier, statistik, gränser, fönster och tecken som H-G, a-G och b-G. "
+           "Fram till ägarbeslutet i registret 2026-11-27 B18, punkt 2, var H huvudläsningen. Med det aritmetiska "
+           "medlet ger en speglad prisbana inte den speglade förändringen i takt (R29-2), så riktningen kan avgöra om en "
+           "impuls uppstår. Raderna står kvar och redovisas, men de är inte huvudläsningen. Kvartalsvärdena står i "
+           "avsnitt 1 och 2 (märkta \"låst rad\").", ""]
+    for name, rr in r["readings"].items():
+        geo_name = next(g for g, lk in LOCKED_OF.items() if lk == name)
+        lines = _reading_lines(rr, READING_NAME[name])
+        lines.append("  " + _same_text(rr, r["readings_geo"][geo_name], geo_name))
         if rr.get("seen") is False:
-            lines.append(f"  **Osedd:** läsningen vilar på värden som blev kända efter registerposten {X26_REGISTERED}.")
+            lines.append(f"  **Osedd:** läsningen vilar på värden som blev kända efter registerposten {REGISTERED}.")
         else:
-            lines.append("  " + C.seen_text(True, X26_REGISTERED))
+            lines.append("  " + C.seen_text(True, REGISTERED))
         out += lines
     return out + [""]
 
 
-# ------------------------------------------------------------------ antenna (register PV1, (h))
+# ------------------------------------------------------------------ antenna (register PV1, (h), and B18, point 2)
 
 
 def antenna(r: dict) -> dict:
-    """PV1's row in `antenner`: the main reading H, the side readings a and b, X's and Y's change in pace, the main
-    reading's impulses and whether it is unseen as facts; main_inputs = the catalog series of H."""
-    main = r["readings"][MAIN]
-    facts = {SHORT_NAME[n]: short(r["readings"][n]) for n in ("a", "b")}
-    x, y = r["measures"]["pv1_pris_gpqa_q"], r["measures"]["pv1_sdk_q"]
-    facts["GPQA-pris, förändring i takt"] = f"{_f(x.get('change'), 1, True)} ({x.get('period') or '–'})"
-    facts["SDK-nedladdningar, förändring i takt"] = f"{_f(y.get('change'), 1, True)} ({y.get('period') or '–'})"
+    """PV1's row in `antenner` (register B18, point 2): the main reading H-G, the side readings a-G and b-G, X's and Y's
+    change in pace in H-G's form, the main reading's impulses, whether it is unseen and the locked rows H, a and b as
+    facts; main_inputs = the catalog series of H-G (the same as H's)."""
+    main = reading(r, MAIN)
+    facts = {SHORT_NAME[n]: short(reading(r, n)) for n in SIDE}
+    x, y = r["measures"]["pv1_pris_gpqa_gq"], r["measures"]["pv1_sdk_gq"]
+    facts["GPQA-pris (geometriskt medel), förändring i takt"] = f"{_f(x.get('change'), 1, True)} ({x.get('period') or '–'})"
+    facts["SDK-nedladdningar (geometriskt medel), förändring i takt"] = \
+        f"{_f(y.get('change'), 1, True)} ({y.get('period') or '–'})"
     hh = main["history"]
     facts["Huvudläsningen, impulser upp/ned"] = f"{hh['impulses_up']}/{hh['impulses_down']} av {hh['n_x']} ursprung"
     facts["Huvudläsningen på osedda data"] = "nej" if main.get("seen", True) else "ja"
-    geo = r.get("readings_geo") or {}
-    if geo:  # register X26, point 2: beside the locked readings, not the row's outcome
-        facts["Geometriskt medel H-G / a-G / b-G (X26)"] = " / ".join(short(geo[n]) for n in ("H-G", "a-G", "b-G"))
+    facts["Låsta rader H / a / b (aritmetiskt medel)"] = " / ".join(short(r["readings"][n]) for n in READINGS)
     inputs = {"x": [PRICE_GPQA], "y": list(SDK), "x_stat": "förändring i takt", "sign": SIGN}
     return C.antenna_row(QUESTION, main["outcome"], short(main), main["t"], facts, r["next_unseen"],
                          r["next_unseen_date"], inputs)
