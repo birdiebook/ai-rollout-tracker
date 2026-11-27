@@ -1697,3 +1697,22 @@ Johannes svarade "kör på dina rekommendationer" på tre rekommendationer samma
   beroendemått vid *t* − 2, inte bara det som gjorde A sant), så en revidering av vilket som helst av dem gör läsningen
   osedd. Det är den försiktiga tolkningen. KL1:s antenn fick fakta "Huvudläsningen på osedda data" som de andra frågorna.
   Beskrivningsraderna i PV1:s tabeller står kvar i aritmetiskt medel, som PV1 (b) säger.
+
+## 2026-11-27 – Integration av körning 18 (B18, DA1)
+
+- **Vad.** `auto18/b18-agarbeslut` och `auto18/da1-forvarv-l2l3` är sammanslagna (no-ff) i `auto18/integration18` från
+  `3edc854`. Konflikterna i `docs/mattregister.md`, `docs/beslutslogg.md` och `docs/agentkalibrering.md` var tillägg:
+  båda posterna står kvar, DA1 före B18 i den ordning deras registerposter committades (13:40 och 13:42). Ingen post är
+  omskriven.
+- **Rapporterna.** `docs/resultat/antenner.md` (per 2026-11-27) och `docs/resultat/ledtid.md` (per 2026-11-27 och
+  2025-11-27) är genererade på nytt på den sammanslagna koden i stället för lösta för hand. Resultatet är exakt
+  föreningen av spårens ändringar (B18:s övergångsnotis och H-G och KL1:s nya fakta, DA1:s förvärvsmärken i L2 och L3),
+  och inga utslag ändrades. Kreditlagrets, betalningsgapets, elflaskhalsens och prisvolyms rapporter är kontrollerade
+  mot ny generering och är oförändrade. Web-data-fixtures är genererade på nytt.
+- **Data.** Ingen observationsdata att merga. DA1:s råkopior (`data/raw/acquisitions/`, 52 nya dokument) och meningar
+  (`data/raw/acquisitions_sentences/`, 47) är kopierade till basens `data/raw` utan att skriva över något (de 17
+  befintliga filerna var identiska). Självkontrollen mot basens råkopior, med nätanrop avstängda, ger 102 av 102 rader
+  rätt (plats och SHA-256), så den kan köras från main utan nya hämtningar.
+- **Kontroll.** Katalogvalidering utan fel. Full testsvit: 2980 passerade, 3 hoppade (11 min 46 s).
+- **Öppet för Johannes:** DA1:s tre punkter (råcachen i `new_track.sh`, Ciscos övriga förvärv, HPE och Arista) står
+  kvar i DA1:s post ovan.
