@@ -1,5 +1,7 @@
 # Betalningsgapet: följd fråga (BG1)
 
+*Ändrat av S1 (`docs/mattregister.md`, 2026-11-27 S1, punkt 3): F0:s räkning av hur ofta regeln kunde prövas är ändrad (S1, punkt 3): ett ursprung räknas som prövat bara när Y finns i fönstret, och varje rad visar det gamla talet bredvid det nya i en övergångsnotis. Rapporterna nedan är genererade på nytt per 2026-11-27 och 2025-11-27. Utom datumen och räkningen är de desamma som per 2026-11-26 och 2025-11-26, så texten om de dagarna gäller också för de nya.*
+
 *Rättad efter granskningen R28 (rättningsspår X25, `docs/mattregister.md`, 2026-11-26 X25): förbehållet om sedda data avgörs nu per läsning och inte av läsdagen, antennen visar alltid radens kvartal, och varje rad visar hur ofta Y var känt i hela fönstret och vilken riktning som inte har prövats. Inga utslag ändrades. Rapporterna nedan är genererade på nytt med kommandot.*
 
 **Frågan:** Växer de intäkter som ska bära investeringarna (molnintäkter, AI-nyckeltal, RPO och frontlabbens intäkter) i
@@ -9,9 +11,9 @@ Följd fråga, inte en gren. Måtten, läsregeln och gränserna låstes i regist
 (`docs/mattregister.md`, 2026-11-26 BG1, commit `12d9581`, ensam). Källor, kodning och förbehåll:
 `docs/kallor/betalningsgapet.md`. Rapporten byggs med
 
-    python -m ai_tracker.followed betalningsgapet --as-of 2026-11-26 [--json PATH] [--out PATH]
+    python -m ai_tracker.followed betalningsgapet --as-of 2026-11-27 [--json PATH] [--out PATH]
 
-Den använder bara rader som var kända på dagen. Nedan står rapporten per 2026-11-26 och per 2025-11-26, så att
+Den använder bara rader som var kända på dagen. Nedan står rapporten per 2026-11-27 och per 2025-11-27, så att
 ändringen över ett år syns. Rapporterna är genererade av kommandot och inte redigerade (rubrikerna är en nivå lägre).
 
 **Läsningarna är gjorda på sedda data.** Alla kvartal i båda läsningarna var kända före registerposten, och P2b:s
@@ -69,7 +71,7 @@ samma tal som katalogvägen. De syntetiska testerna står i `tests/test_followed
   test.
 
 
-## Betalningsgapet per 2026-11-26
+## Betalningsgapet per 2026-11-27
 
 **Frågan:** Växer de intäkter som ska bära investeringarna (molnintäkter, AI-nyckeltal, RPO och frontlabbens intäkter) i takt med intäktskravet från avskrivningar och kapitalkostnad, eller öppnas eller sluts gapet?
 
@@ -152,55 +154,71 @@ Alla läsningar nedan vilar bara på värden som var kända före registerposten
 - **Huvudläsning: gapet mot molnintäkterna, molnfyran, r = 0,10:** talar emot. t = 2026Q3; ursprung 2026Q2, X +7,6 (gräns ±5,0), uppgång, Y +10,7 vid 2026Q3 (gräns ±5,0). X = gap_moln(molnfyran, r=0,10) (takt), Y = capex4(molnfyran) (förändring i takt); fönster 2 kvartal, tecken −.
   Regeln kunde prövas i 7 av 7 ursprung med X (2024Q4–2026Q2). Impulser uppåt 5 (för 0, emot 4, inget 1, kan inte avgöras 0), nedåt 0 (för 0, emot 0, inget 0, kan inte avgöras 0), utan impuls 2.
   Y var känt i hela fönstret i 6 av 7 ursprung, och 5 av 5 impulser kunde läsas mot Y. Riktningen nedåt har inte prövats: X har inte haft någon impuls nedåt.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 7 av 7; med den nya: 7 av 7.
   Läsningen vilar bara på värden som var kända före registerposten 2026-11-26, och den är därför inget utfall på osedda data.
 - **Gapet mot RPO, molnfyran, r = 0,10:** talar för mekanismen. t = 2026Q3; ursprung 2026Q2, X -69,8 (gräns ±5,0), nedgång, Y +10,7 vid 2026Q3 (gräns ±5,0). X = gap_rpo(molnfyran, r=0,10) (takt), Y = capex4(molnfyran) (förändring i takt); fönster 2 kvartal, tecken −.
   Regeln kunde prövas i 7 av 7 ursprung med X (2024Q4–2026Q2). Impulser uppåt 0 (för 0, emot 0, inget 0, kan inte avgöras 0), nedåt 5 (för 5, emot 0, inget 0, kan inte avgöras 0), utan impuls 2.
   Y var känt i hela fönstret i 6 av 7 ursprung, och 5 av 5 impulser kunde läsas mot Y. Riktningen uppåt har inte prövats: X har inte haft någon impuls uppåt.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 7 av 7; med den nya: 7 av 7.
 - **Känslighet: gapet mot molnintäkterna, molnfyran, r = 0,00 (bara avskrivningar):** inget av mönstren. t = 2026Q3 (ingen impuls i fönstret). X = gap_moln(molnfyran, r=0,00) (takt), Y = capex4(molnfyran) (förändring i takt); fönster 2 kvartal, tecken −.
-  Regeln kunde prövas i 7 av 7 ursprung med X (2024Q4–2026Q2). Impulser uppåt 0 (för 0, emot 0, inget 0, kan inte avgöras 0), nedåt 0 (för 0, emot 0, inget 0, kan inte avgöras 0), utan impuls 7.
+  Regeln kunde prövas i 6 av 7 ursprung med X (2024Q4–2026Q2). Impulser uppåt 0 (för 0, emot 0, inget 0, kan inte avgöras 0), nedåt 0 (för 0, emot 0, inget 0, kan inte avgöras 0), utan impuls 7.
   Y var känt i hela fönstret i 6 av 7 ursprung, och 0 av 0 impulser kunde läsas mot Y. Ingen riktning har prövats: X har inte haft någon impuls.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 7 av 7; med den nya: 6 av 7.
 - **Känslighet: gapet mot molnintäkterna, molnfyran, r = 0,08:** talar emot. t = 2026Q3; ursprung 2026Q2, X +6,7 (gräns ±5,0), uppgång, Y +10,7 vid 2026Q3 (gräns ±5,0). X = gap_moln(molnfyran, r=0,08) (takt), Y = capex4(molnfyran) (förändring i takt); fönster 2 kvartal, tecken −.
   Regeln kunde prövas i 7 av 7 ursprung med X (2024Q4–2026Q2). Impulser uppåt 4 (för 0, emot 4, inget 0, kan inte avgöras 0), nedåt 0 (för 0, emot 0, inget 0, kan inte avgöras 0), utan impuls 3.
   Y var känt i hela fönstret i 6 av 7 ursprung, och 4 av 4 impulser kunde läsas mot Y. Riktningen nedåt har inte prövats: X har inte haft någon impuls nedåt.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 7 av 7; med den nya: 7 av 7.
 - **Känslighet: gapet mot molnintäkterna, molnfyran, r = 0,12:** talar emot. t = 2026Q3; ursprung 2026Q2, X +8,4 (gräns ±5,0), uppgång, Y +10,7 vid 2026Q3 (gräns ±5,0). X = gap_moln(molnfyran, r=0,12) (takt), Y = capex4(molnfyran) (förändring i takt); fönster 2 kvartal, tecken −.
   Regeln kunde prövas i 7 av 7 ursprung med X (2024Q4–2026Q2). Impulser uppåt 5 (för 0, emot 4, inget 1, kan inte avgöras 0), nedåt 0 (för 0, emot 0, inget 0, kan inte avgöras 0), utan impuls 2.
   Y var känt i hela fönstret i 6 av 7 ursprung, och 5 av 5 impulser kunde läsas mot Y. Riktningen nedåt har inte prövats: X har inte haft någon impuls nedåt.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 7 av 7; med den nya: 7 av 7.
 - **Känslighet: gapet mot RPO utan Oracle, r = 0,10:** talar för mekanismen. t = 2026Q3; ursprung 2026Q2, X -58,1 (gräns ±5,0), nedgång, Y +12,5 vid 2026Q3 (gräns ±5,0). X = gap_rpo(molnfyran utan Oracle, r=0,10) (takt), Y = capex4(molnfyran utan Oracle) (förändring i takt); fönster 2 kvartal, tecken −.
   Regeln kunde prövas i 7 av 7 ursprung med X (2024Q4–2026Q2). Impulser uppåt 0 (för 0, emot 0, inget 0, kan inte avgöras 0), nedåt 4 (för 4, emot 0, inget 0, kan inte avgöras 0), utan impuls 3.
   Y var känt i hela fönstret i 6 av 7 ursprung, och 4 av 4 impulser kunde läsas mot Y. Riktningen uppåt har inte prövats: X har inte haft någon impuls uppåt.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 7 av 7; med den nya: 7 av 7.
 
 **Bolagsrader** (bisak, samma gränser, Y = bolagets egen capex-takt):
 
 - **Microsoft: gapet mot molnintäkterna:** talar emot. t = 2026Q3; ursprung 2026Q2, X +9,7 (gräns ±5,0), uppgång, Y +21,7 vid 2026Q3 (gräns ±5,0). X = gap_moln(Microsoft, r=0,10) (takt), Y = capex4(Microsoft) (förändring i takt); fönster 2 kvartal, tecken −.
   Regeln kunde prövas i 17 av 17 ursprung med X (2022Q2–2026Q2). Impulser uppåt 10 (för 3, emot 5, inget 2, kan inte avgöras 0), nedåt 6 (för 4, emot 2, inget 0, kan inte avgöras 0), utan impuls 1.
   Y var känt i hela fönstret i 16 av 17 ursprung, och 16 av 16 impulser kunde läsas mot Y.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 17 av 17; med den nya: 17 av 17.
 - **Microsoft: gapet mot RPO:** talar för mekanismen. t = 2026Q3; ursprung 2026Q2, X -26,5 (gräns ±5,0), nedgång, Y +21,7 vid 2026Q3 (gräns ±5,0). X = gap_rpo(Microsoft, r=0,10) (takt), Y = capex4(Microsoft) (förändring i takt); fönster 2 kvartal, tecken −.
   Regeln kunde prövas i 32 av 32 ursprung med X (2018Q3–2026Q2). Impulser uppåt 6 (för 2, emot 2, inget 2, kan inte avgöras 0), nedåt 22 (för 11, emot 7, inget 4, kan inte avgöras 0), utan impuls 4.
   Y var känt i hela fönstret i 31 av 32 ursprung, och 28 av 28 impulser kunde läsas mot Y.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 32 av 32; med den nya: 32 av 32.
 - **Alphabet: gapet mot molnintäkterna:** inget av mönstren. t = 2026Q3 (ingen impuls i fönstret). X = gap_moln(Alphabet, r=0,10) (takt), Y = capex4(Alphabet) (förändring i takt); fönster 2 kvartal, tecken −.
-  Regeln kunde prövas i 7 av 7 ursprung med X (2024Q4–2026Q2). Impulser uppåt 0 (för 0, emot 0, inget 0, kan inte avgöras 0), nedåt 0 (för 0, emot 0, inget 0, kan inte avgöras 0), utan impuls 7.
+  Regeln kunde prövas i 6 av 7 ursprung med X (2024Q4–2026Q2). Impulser uppåt 0 (för 0, emot 0, inget 0, kan inte avgöras 0), nedåt 0 (för 0, emot 0, inget 0, kan inte avgöras 0), utan impuls 7.
   Y var känt i hela fönstret i 6 av 7 ursprung, och 0 av 0 impulser kunde läsas mot Y. Ingen riktning har prövats: X har inte haft någon impuls.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 7 av 7; med den nya: 6 av 7.
 - **Alphabet: gapet mot RPO:** talar för mekanismen. t = 2026Q3; ursprung 2026Q2, X -115,7 (gräns ±5,0), nedgång, Y +7,5 vid 2026Q3 (gräns ±5,0). X = gap_rpo(Alphabet, r=0,10) (takt), Y = capex4(Alphabet) (förändring i takt); fönster 2 kvartal, tecken −.
   Regeln kunde prövas i 7 av 7 ursprung med X (2024Q4–2026Q2). Impulser uppåt 0 (för 0, emot 0, inget 0, kan inte avgöras 0), nedåt 4 (för 4, emot 0, inget 0, kan inte avgöras 0), utan impuls 3.
   Y var känt i hela fönstret i 6 av 7 ursprung, och 4 av 4 impulser kunde läsas mot Y. Riktningen uppåt har inte prövats: X har inte haft någon impuls uppåt.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 7 av 7; med den nya: 7 av 7.
 - **Amazon: gapet mot molnintäkterna:** talar emot. t = 2026Q3; ursprung 2026Q2, X +6,2 (gräns ±5,0), uppgång, Y +9,9 vid 2026Q3 (gräns ±5,0). X = gap_moln(Amazon, r=0,10) (takt), Y = capex4(Amazon) (förändring i takt); fönster 2 kvartal, tecken −.
   Regeln kunde prövas i 23 av 23 ursprung med X (2020Q4–2026Q2). Impulser uppåt 4 (för 2, emot 2, inget 0, kan inte avgöras 0), nedåt 4 (för 1, emot 3, inget 0, kan inte avgöras 0), utan impuls 15.
   Y var känt i hela fönstret i 22 av 23 ursprung, och 8 av 8 impulser kunde läsas mot Y.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 23 av 23; med den nya: 23 av 23.
 - **Amazon: gapet mot RPO:** talar för mekanismen. t = 2026Q3; ursprung 2026Q2, X -62,9 (gräns ±5,0), nedgång, Y +9,9 vid 2026Q3 (gräns ±5,0). X = gap_rpo(Amazon, r=0,10) (takt), Y = capex4(Amazon) (förändring i takt); fönster 2 kvartal, tecken −.
   Regeln kunde prövas i 23 av 23 ursprung med X (2020Q4–2026Q2). Impulser uppåt 0 (för 0, emot 0, inget 0, kan inte avgöras 0), nedåt 19 (för 7, emot 12, inget 0, kan inte avgöras 0), utan impuls 4.
   Y var känt i hela fönstret i 22 av 23 ursprung, och 19 av 19 impulser kunde läsas mot Y. Riktningen uppåt har inte prövats: X har inte haft någon impuls uppåt.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 23 av 23; med den nya: 23 av 23.
 - **Oracle: gapet mot molnintäkterna:** talar för mekanismen. t = 2026Q3; ursprung 2026Q2, X +27,9 (gräns ±5,0), uppgång, Y -15,8 vid 2026Q3 (gräns ±5,0). X = gap_moln(Oracle, r=0,10) (takt), Y = capex4(Oracle) (förändring i takt); fönster 2 kvartal, tecken −.
   Regeln kunde prövas i 13 av 13 ursprung med X (2023Q2–2026Q2). Impulser uppåt 6 (för 5, emot 1, inget 0, kan inte avgöras 0), nedåt 5 (för 4, emot 1, inget 0, kan inte avgöras 0), utan impuls 2.
   Y var känt i hela fönstret i 12 av 13 ursprung, och 11 av 11 impulser kunde läsas mot Y.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 13 av 13; med den nya: 13 av 13.
 - **Oracle: gapet mot RPO:** talar emot. t = 2026Q3; ursprung 2026Q2, X -92,7 (gräns ±5,0), nedgång, Y -15,8 vid 2026Q3 (gräns ±5,0). X = gap_rpo(Oracle, r=0,10) (takt), Y = capex4(Oracle) (förändring i takt); fönster 2 kvartal, tecken −.
   Regeln kunde prövas i 28 av 28 ursprung med X (2019Q3–2026Q2). Impulser uppåt 4 (för 4, emot 0, inget 0, kan inte avgöras 0), nedåt 15 (för 11, emot 4, inget 0, kan inte avgöras 0), utan impuls 9.
   Y var känt i hela fönstret i 27 av 28 ursprung, och 19 av 19 impulser kunde läsas mot Y.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 28 av 28; med den nya: 28 av 28.
 - **CoreWeave: gapet mot molnintäkterna:** talar emot. t = 2026Q3; ursprung 2026Q2, X +20,3 (gräns ±5,0), uppgång, Y +35,7 vid 2026Q3 (gräns ±5,0). X = gap_moln(CoreWeave, r=0,10) (takt), Y = capex4(CoreWeave) (förändring i takt); fönster 2 kvartal, tecken −.
-  Regeln kunde prövas i 3 av 3 ursprung med X (2025Q4–2026Q2). Impulser uppåt 2 (för 0, emot 2, inget 0, kan inte avgöras 0), nedåt 0 (för 0, emot 0, inget 0, kan inte avgöras 0), utan impuls 1.
+  Regeln kunde prövas i 2 av 3 ursprung med X (2025Q4–2026Q2). Impulser uppåt 2 (för 0, emot 2, inget 0, kan inte avgöras 0), nedåt 0 (för 0, emot 0, inget 0, kan inte avgöras 0), utan impuls 1.
   Y var känt i hela fönstret i 1 av 3 ursprung, och 2 av 2 impulser kunde läsas mot Y. Riktningen nedåt har inte prövats: X har inte haft någon impuls nedåt.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 3 av 3; med den nya: 2 av 3.
 - **CoreWeave: gapet mot RPO:** talar för mekanismen. t = 2026Q3; ursprung 2026Q2, X -26,7 (gräns ±5,0), nedgång, Y +35,7 vid 2026Q3 (gräns ±5,0). X = gap_rpo(CoreWeave, r=0,10) (takt), Y = capex4(CoreWeave) (förändring i takt); fönster 2 kvartal, tecken −.
   Regeln kunde prövas i 2 av 2 ursprung med X (2026Q1–2026Q2). Impulser uppåt 0 (för 0, emot 0, inget 0, kan inte avgöras 0), nedåt 2 (för 2, emot 0, inget 0, kan inte avgöras 0), utan impuls 0.
   Y var känt i hela fönstret i 1 av 2 ursprung, och 2 av 2 impulser kunde läsas mot Y. Riktningen uppåt har inte prövats: X har inte haft någon impuls uppåt.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 2 av 2; med den nya: 2 av 2.
 
 ### 4. Sammanhang
 
@@ -295,7 +313,7 @@ Nästa osedda läsning: Oracle 2026Q4 omkring 2026-12-11, bolagsraderna; molnfyr
 - CoreWeaves serier börjar 2024, och nettot av anläggningstillgångar först 2024Q4. Bolagsraden har därför få kvartal.
 - Labbens run-rate är inte redovisad intäkt. Anthropics GAAP-intäkter och OpenAI är BLOCKED (avsnitt 5).
 
-## Betalningsgapet per 2025-11-26
+## Betalningsgapet per 2025-11-27
 
 **Frågan:** Växer de intäkter som ska bära investeringarna (molnintäkter, AI-nyckeltal, RPO och frontlabbens intäkter) i takt med intäktskravet från avskrivningar och kapitalkostnad, eller öppnas eller sluts gapet?
 
@@ -378,61 +396,75 @@ Alla läsningar nedan vilar bara på värden som var kända före registerposten
 - **Huvudläsning: gapet mot molnintäkterna, molnfyran, r = 0,10:** kan inte avgöras. t = 2025Q3; ursprung 2025Q2, X +8,0 (gräns ±5,0), uppgång (fönstret öppet till 2025Q4). X = gap_moln(molnfyran, r=0,10) (takt), Y = capex4(molnfyran) (förändring i takt); fönster 2 kvartal, tecken −.
   Regeln kunde prövas i 2 av 3 ursprung med X (2024Q4–2025Q2). Impulser uppåt 1 (för 0, emot 0, inget 0, kan inte avgöras 1), nedåt 0 (för 0, emot 0, inget 0, kan inte avgöras 0), utan impuls 2.
   Y var känt i hela fönstret i 2 av 3 ursprung, och 0 av 1 impulser kunde läsas mot Y. Riktningen nedåt har inte prövats: X har inte haft någon impuls nedåt.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 2 av 3; med den nya: 2 av 3.
   Läsningen vilar bara på värden som var kända före registerposten 2026-11-26, och den är därför inget utfall på osedda data.
   Märkning: nyttjandeperioden för Amazon ändrades 2024Q1 (5 → 6 år, högsta värdet, known_from 2024-02-02).
   Märkning: nyttjandeperioden för Oracle ändrades 2024Q2 (5 → 6 år, högsta värdet, known_from 2024-09-10).
   Märkning: Microsofts avskrivningar i fönstret 2023Q3–2025Q2 har kvartal på den gamla basen (till och med 2024Q2).
 - **Gapet mot RPO, molnfyran, r = 0,10:** inget av mönstren. t = 2025Q3 (ingen impuls i fönstret). X = gap_rpo(molnfyran, r=0,10) (takt), Y = capex4(molnfyran) (förändring i takt); fönster 2 kvartal, tecken −.
-  Regeln kunde prövas i 3 av 3 ursprung med X (2024Q4–2025Q2). Impulser uppåt 0 (för 0, emot 0, inget 0, kan inte avgöras 0), nedåt 0 (för 0, emot 0, inget 0, kan inte avgöras 0), utan impuls 3.
+  Regeln kunde prövas i 2 av 3 ursprung med X (2024Q4–2025Q2). Impulser uppåt 0 (för 0, emot 0, inget 0, kan inte avgöras 0), nedåt 0 (för 0, emot 0, inget 0, kan inte avgöras 0), utan impuls 3.
   Y var känt i hela fönstret i 2 av 3 ursprung, och 0 av 0 impulser kunde läsas mot Y. Ingen riktning har prövats: X har inte haft någon impuls.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 3 av 3; med den nya: 2 av 3.
 - **Känslighet: gapet mot molnintäkterna, molnfyran, r = 0,00 (bara avskrivningar):** inget av mönstren. t = 2025Q3 (ingen impuls i fönstret). X = gap_moln(molnfyran, r=0,00) (takt), Y = capex4(molnfyran) (förändring i takt); fönster 2 kvartal, tecken −.
-  Regeln kunde prövas i 3 av 3 ursprung med X (2024Q4–2025Q2). Impulser uppåt 0 (för 0, emot 0, inget 0, kan inte avgöras 0), nedåt 0 (för 0, emot 0, inget 0, kan inte avgöras 0), utan impuls 3.
+  Regeln kunde prövas i 2 av 3 ursprung med X (2024Q4–2025Q2). Impulser uppåt 0 (för 0, emot 0, inget 0, kan inte avgöras 0), nedåt 0 (för 0, emot 0, inget 0, kan inte avgöras 0), utan impuls 3.
   Y var känt i hela fönstret i 2 av 3 ursprung, och 0 av 0 impulser kunde läsas mot Y. Ingen riktning har prövats: X har inte haft någon impuls.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 3 av 3; med den nya: 2 av 3.
 - **Känslighet: gapet mot molnintäkterna, molnfyran, r = 0,08:** kan inte avgöras. t = 2025Q3; ursprung 2025Q2, X +7,4 (gräns ±5,0), uppgång (fönstret öppet till 2025Q4). X = gap_moln(molnfyran, r=0,08) (takt), Y = capex4(molnfyran) (förändring i takt); fönster 2 kvartal, tecken −.
   Regeln kunde prövas i 2 av 3 ursprung med X (2024Q4–2025Q2). Impulser uppåt 1 (för 0, emot 0, inget 0, kan inte avgöras 1), nedåt 0 (för 0, emot 0, inget 0, kan inte avgöras 0), utan impuls 2.
   Y var känt i hela fönstret i 2 av 3 ursprung, och 0 av 1 impulser kunde läsas mot Y. Riktningen nedåt har inte prövats: X har inte haft någon impuls nedåt.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 2 av 3; med den nya: 2 av 3.
   Märkning: nyttjandeperioden för Amazon ändrades 2024Q1 (5 → 6 år, högsta värdet, known_from 2024-02-02).
   Märkning: nyttjandeperioden för Oracle ändrades 2024Q2 (5 → 6 år, högsta värdet, known_from 2024-09-10).
   Märkning: Microsofts avskrivningar i fönstret 2023Q3–2025Q2 har kvartal på den gamla basen (till och med 2024Q2).
 - **Känslighet: gapet mot molnintäkterna, molnfyran, r = 0,12:** kan inte avgöras. t = 2025Q3; ursprung 2025Q2, X +8,4 (gräns ±5,0), uppgång (fönstret öppet till 2025Q4). X = gap_moln(molnfyran, r=0,12) (takt), Y = capex4(molnfyran) (förändring i takt); fönster 2 kvartal, tecken −.
   Regeln kunde prövas i 2 av 3 ursprung med X (2024Q4–2025Q2). Impulser uppåt 1 (för 0, emot 0, inget 0, kan inte avgöras 1), nedåt 0 (för 0, emot 0, inget 0, kan inte avgöras 0), utan impuls 2.
   Y var känt i hela fönstret i 2 av 3 ursprung, och 0 av 1 impulser kunde läsas mot Y. Riktningen nedåt har inte prövats: X har inte haft någon impuls nedåt.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 2 av 3; med den nya: 2 av 3.
   Märkning: nyttjandeperioden för Amazon ändrades 2024Q1 (5 → 6 år, högsta värdet, known_from 2024-02-02).
   Märkning: nyttjandeperioden för Oracle ändrades 2024Q2 (5 → 6 år, högsta värdet, known_from 2024-09-10).
   Märkning: Microsofts avskrivningar i fönstret 2023Q3–2025Q2 har kvartal på den gamla basen (till och med 2024Q2).
 - **Känslighet: gapet mot RPO utan Oracle, r = 0,10:** inget av mönstren. t = 2025Q3 (ingen impuls i fönstret). X = gap_rpo(molnfyran utan Oracle, r=0,10) (takt), Y = capex4(molnfyran utan Oracle) (förändring i takt); fönster 2 kvartal, tecken −.
-  Regeln kunde prövas i 3 av 3 ursprung med X (2024Q4–2025Q2). Impulser uppåt 0 (för 0, emot 0, inget 0, kan inte avgöras 0), nedåt 0 (för 0, emot 0, inget 0, kan inte avgöras 0), utan impuls 3.
+  Regeln kunde prövas i 2 av 3 ursprung med X (2024Q4–2025Q2). Impulser uppåt 0 (för 0, emot 0, inget 0, kan inte avgöras 0), nedåt 0 (för 0, emot 0, inget 0, kan inte avgöras 0), utan impuls 3.
   Y var känt i hela fönstret i 2 av 3 ursprung, och 0 av 0 impulser kunde läsas mot Y. Ingen riktning har prövats: X har inte haft någon impuls.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 3 av 3; med den nya: 2 av 3.
 
 **Bolagsrader** (bisak, samma gränser, Y = bolagets egen capex-takt):
 
 - **Microsoft: gapet mot molnintäkterna:** talar för mekanismen. t = 2025Q3; ursprung 2025Q2, X +21,7 (gräns ±5,0), uppgång, Y -10,6 vid 2025Q3 (gräns ±5,0). X = gap_moln(Microsoft, r=0,10) (takt), Y = capex4(Microsoft) (förändring i takt); fönster 2 kvartal, tecken −.
   Regeln kunde prövas i 13 av 13 ursprung med X (2022Q2–2025Q2). Impulser uppåt 6 (för 3, emot 1, inget 2, kan inte avgöras 0), nedåt 6 (för 4, emot 2, inget 0, kan inte avgöras 0), utan impuls 1.
   Y var känt i hela fönstret i 12 av 13 ursprung, och 12 av 12 impulser kunde läsas mot Y.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 13 av 13; med den nya: 13 av 13.
   Märkning: Microsofts avskrivningar i fönstret 2023Q3–2025Q2 har kvartal på den gamla basen (till och med 2024Q2).
 - **Microsoft: gapet mot RPO:** talar för mekanismen. t = 2025Q3; ursprung 2025Q2, X +11,2 (gräns ±5,0), uppgång, Y -10,6 vid 2025Q3 (gräns ±5,0). X = gap_rpo(Microsoft, r=0,10) (takt), Y = capex4(Microsoft) (förändring i takt); fönster 2 kvartal, tecken −.
   Regeln kunde prövas i 28 av 28 ursprung med X (2018Q3–2025Q2). Impulser uppåt 7 (för 3, emot 2, inget 2, kan inte avgöras 0), nedåt 18 (för 7, emot 7, inget 4, kan inte avgöras 0), utan impuls 3.
   Y var känt i hela fönstret i 27 av 28 ursprung, och 25 av 25 impulser kunde läsas mot Y.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 28 av 28; med den nya: 28 av 28.
   Märkning: Microsofts avskrivningar i fönstret 2023Q3–2025Q2 har kvartal på den gamla basen (till och med 2024Q2).
 - **Alphabet: gapet mot molnintäkterna:** inget av mönstren. t = 2025Q3 (ingen impuls i fönstret). X = gap_moln(Alphabet, r=0,10) (takt), Y = capex4(Alphabet) (förändring i takt); fönster 2 kvartal, tecken −.
-  Regeln kunde prövas i 3 av 3 ursprung med X (2024Q4–2025Q2). Impulser uppåt 0 (för 0, emot 0, inget 0, kan inte avgöras 0), nedåt 0 (för 0, emot 0, inget 0, kan inte avgöras 0), utan impuls 3.
+  Regeln kunde prövas i 2 av 3 ursprung med X (2024Q4–2025Q2). Impulser uppåt 0 (för 0, emot 0, inget 0, kan inte avgöras 0), nedåt 0 (för 0, emot 0, inget 0, kan inte avgöras 0), utan impuls 3.
   Y var känt i hela fönstret i 2 av 3 ursprung, och 0 av 0 impulser kunde läsas mot Y. Ingen riktning har prövats: X har inte haft någon impuls.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 3 av 3; med den nya: 2 av 3.
 - **Alphabet: gapet mot RPO:** inget av mönstren. t = 2025Q3 (ingen impuls i fönstret). X = gap_rpo(Alphabet, r=0,10) (takt), Y = capex4(Alphabet) (förändring i takt); fönster 2 kvartal, tecken −.
-  Regeln kunde prövas i 3 av 3 ursprung med X (2024Q4–2025Q2). Impulser uppåt 0 (för 0, emot 0, inget 0, kan inte avgöras 0), nedåt 0 (för 0, emot 0, inget 0, kan inte avgöras 0), utan impuls 3.
+  Regeln kunde prövas i 2 av 3 ursprung med X (2024Q4–2025Q2). Impulser uppåt 0 (för 0, emot 0, inget 0, kan inte avgöras 0), nedåt 0 (för 0, emot 0, inget 0, kan inte avgöras 0), utan impuls 3.
   Y var känt i hela fönstret i 2 av 3 ursprung, och 0 av 0 impulser kunde läsas mot Y. Ingen riktning har prövats: X har inte haft någon impuls.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 3 av 3; med den nya: 2 av 3.
 - **Amazon: gapet mot molnintäkterna:** inget av mönstren. t = 2025Q3 (ingen impuls i fönstret). X = gap_moln(Amazon, r=0,10) (takt), Y = capex4(Amazon) (förändring i takt); fönster 2 kvartal, tecken −.
-  Regeln kunde prövas i 19 av 19 ursprung med X (2020Q4–2025Q2). Impulser uppåt 0 (för 0, emot 0, inget 0, kan inte avgöras 0), nedåt 4 (för 1, emot 3, inget 0, kan inte avgöras 0), utan impuls 15.
+  Regeln kunde prövas i 18 av 19 ursprung med X (2020Q4–2025Q2). Impulser uppåt 0 (för 0, emot 0, inget 0, kan inte avgöras 0), nedåt 4 (för 1, emot 3, inget 0, kan inte avgöras 0), utan impuls 15.
   Y var känt i hela fönstret i 18 av 19 ursprung, och 4 av 4 impulser kunde läsas mot Y. Riktningen uppåt har inte prövats: X har inte haft någon impuls uppåt.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 19 av 19; med den nya: 18 av 19.
 - **Amazon: gapet mot RPO:** inget av mönstren. t = 2025Q3 (ingen impuls i fönstret). X = gap_rpo(Amazon, r=0,10) (takt), Y = capex4(Amazon) (förändring i takt); fönster 2 kvartal, tecken −.
-  Regeln kunde prövas i 19 av 19 ursprung med X (2020Q4–2025Q2). Impulser uppåt 0 (för 0, emot 0, inget 0, kan inte avgöras 0), nedåt 16 (för 5, emot 11, inget 0, kan inte avgöras 0), utan impuls 3.
+  Regeln kunde prövas i 18 av 19 ursprung med X (2020Q4–2025Q2). Impulser uppåt 0 (för 0, emot 0, inget 0, kan inte avgöras 0), nedåt 16 (för 5, emot 11, inget 0, kan inte avgöras 0), utan impuls 3.
   Y var känt i hela fönstret i 18 av 19 ursprung, och 16 av 16 impulser kunde läsas mot Y. Riktningen uppåt har inte prövats: X har inte haft någon impuls uppåt.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 19 av 19; med den nya: 18 av 19.
 - **Oracle: gapet mot molnintäkterna:** talar för mekanismen. t = 2025Q3; ursprung 2025Q1, X -6,7 (gräns ±5,0), nedgång, Y +69,0 vid 2025Q2 (gräns ±5,0). X = gap_moln(Oracle, r=0,10) (takt), Y = capex4(Oracle) (förändring i takt); fönster 2 kvartal, tecken −.
-  Regeln kunde prövas i 9 av 9 ursprung med X (2023Q2–2025Q2). Impulser uppåt 2 (för 2, emot 0, inget 0, kan inte avgöras 0), nedåt 5 (för 4, emot 1, inget 0, kan inte avgöras 0), utan impuls 2.
+  Regeln kunde prövas i 8 av 9 ursprung med X (2023Q2–2025Q2). Impulser uppåt 2 (för 2, emot 0, inget 0, kan inte avgöras 0), nedåt 5 (för 4, emot 1, inget 0, kan inte avgöras 0), utan impuls 2.
   Y var känt i hela fönstret i 8 av 9 ursprung, och 7 av 7 impulser kunde läsas mot Y.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 9 av 9; med den nya: 8 av 9.
   Märkning: nyttjandeperioden för Oracle ändrades 2024Q2 (5 → 6 år, högsta värdet, known_from 2024-09-10).
 - **Oracle: gapet mot RPO:** talar för mekanismen. t = 2025Q3; ursprung 2025Q2, X -10,3 (gräns ±5,0), nedgång, Y +33,5 vid 2025Q3 (gräns ±5,0). X = gap_rpo(Oracle, r=0,10) (takt), Y = capex4(Oracle) (förändring i takt); fönster 2 kvartal, tecken −.
   Regeln kunde prövas i 24 av 24 ursprung med X (2019Q3–2025Q2). Impulser uppåt 4 (för 4, emot 0, inget 0, kan inte avgöras 0), nedåt 11 (för 10, emot 1, inget 0, kan inte avgöras 0), utan impuls 9.
   Y var känt i hela fönstret i 23 av 24 ursprung, och 15 av 15 impulser kunde läsas mot Y.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 24 av 24; med den nya: 24 av 24.
   Märkning: nyttjandeperioden för Oracle ändrades 2024Q2 (5 → 6 år, högsta värdet, known_from 2024-09-10).
 - **CoreWeave: gapet mot molnintäkterna:** kan inte avgöras. t = – (capex4(CoreWeave): inget kvartal känt på dagen). X = gap_moln(CoreWeave, r=0,10) (takt), Y = capex4(CoreWeave) (förändring i takt); fönster 2 kvartal, tecken −.
   Regeln kunde inte prövas: X saknas i hela historiken.

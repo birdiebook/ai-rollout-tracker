@@ -5,7 +5,9 @@
 Read with F0's symmetric rule (common.read_rule): the pace of four leading quantities on the power side (price, load,
 grid backlog in MUSD, gas-turbine backlog in GW) against the change in pace of two following quantities (the inner
 layer's capex over four quarters, Digital Realty's signed MW over four quarters), sign -1, k = 2, one row per pair.
-The main reading is the grid backlog against the inner layer's capex.
+The main reading is the grid backlog against the inner layer's capex. Beside the eight locked rows, register
+2026-11-27 "S1", point 2 ("EL1-S") adds a ninth: the grid backlog's change in pace (not its pace) against the same Y, so
+that an impulse downward can occur. It is LT1's main reading with the opposite sign, not a new observation.
 
 Derived quantities (keys el1_*) are not catalog series: they are computed here from catalog series with
 aggregate.derive (a version only once every input is known, known_from = the latest input) and measured with
@@ -73,6 +75,13 @@ PAIRS = [MAIN] + [(x, y) for y in Y for x in X if (x, y) != MAIN]
 XNAME = {"pris": "Elpris (PPI, kommersiella kunder)", "last": "Last (fem balansområden)",
          "nat": "Orderstock elnät (Quanta + Eaton, MUSD)", "gw": "Orderstock gasturbiner (GE Vernova, GW)"}
 YNAME = {"capex": "capex inre lagret", "dlr": "tecknade MW (Digital Realty)"}
+
+# ------------------------------------------------------------------ EL1-S beside the locked rows (register S1, point 2)
+
+S1_REGISTERED = C.S1_REGISTERED
+S1_X, S1_Y = "el1_ob_nat", CAPEX_INNER
+S1_G = 10.0  # log x100: EL1's limit for X3 and LT1's for the same quantity as change in pace
+S1_LABEL = "Orderstock elnät (Quanta + Eaton, MUSD), förändring i takt"
 
 # ------------------------------------------------------------------ description only (no rule)
 
@@ -234,6 +243,16 @@ def compute(as_of, table: pd.DataFrame | None = None) -> dict:
         x["seen"] = C.same_inputs(x, *now, *then)
     r["seen_before_register"] = all(x["seen"] for x in r["readings"].values())
     r["main_seen"] = r["readings"]["|".join(MAIN)]["seen"]
+    s1 = r["s1"]  # EL1-S: seen against the reading on its own register day (register S1, point 4)
+    if when <= pd.Timestamp(S1_REGISTERED):
+        s1["seen"] = True
+    else:
+        day = pd.Timestamp(S1_REGISTERED)
+        t = _cut(table, day)
+        mx, my = derived_measure(S1_X, t, day), C.measure(S1_Y, day, M.Context(table=t))
+        s1["seen"] = C.same_inputs(s1, C.series_of(r["measures"][S1_X], "change"),
+                                   C.series_of(r["measures"][S1_Y], "change"), C.series_of(mx, "change"),
+                                   C.series_of(my, "change"))
     return r
 
 
@@ -251,10 +270,13 @@ def _compute(when: pd.Timestamp, table: pd.DataFrame) -> dict:
         r = C.read_measures(ms[X[x]], ms[Y[y]], x_stat="pace", g=G[x], h=H[y], k=K, sign=SIGN)
         readings[f"{x}|{y}"] = {**r, "x": x, "y": y, "y_first": first_known(ms[Y[y]], "change"),
                                 "x_first": first_known(ms[X[x]], "pace")}
+    s1 = C.read_measures(ms[S1_X], ms[S1_Y], x_stat="change", g=S1_G, h=H["capex"], k=K, sign=SIGN)
+    s1.update(x_first=first_known(ms[S1_X], "change"), y_first=first_known(ms[S1_Y], "change"),
+              registered=S1_REGISTERED)
     report = {
         "question": QUESTION, "as_of": str(when.date()), "generated": str(date.today()),
         "params": {"g": G, "h": H, "k": K, "sign": SIGN, "main": "|".join(MAIN)},
-        "measures": ms, "readings": readings, "plans": plans(t, when),
+        "measures": ms, "readings": readings, "s1": s1, "plans": plans(t, when),
         "next_filings": C.next_filings(t, when, FILERS),
     }
     report["next_unseen"], report["next_unseen_date"] = next_unseen(report)
@@ -397,6 +419,7 @@ def render(r: dict) -> str:
                 lines.append(f"  **Osedd:** läsningen vilar på värden som blev kända efter registerposten {REGISTERED}.")
             out += lines
         out.append("")
+    out += s1_lines(r)
 
     out += ["## 6. Att bevaka", "", "Nästa inlämning per bolag, uppskattad som nästa kvartals slut plus medianen av "
             "avståndet för de åtta senaste inlämningarna:", ""]
@@ -428,6 +451,39 @@ def render(r: dict) -> str:
     return "\n".join(out)
 
 
+def s1_lines(r: dict) -> list[str]:
+    """EL1-S in section 5, after the locked rows (register 2026-11-27 S1, point 2)."""
+    rr = r["s1"]
+    h = rr["history"]
+    out = [f"**Tillägg S1 (registret {S1_REGISTERED} S1, punkt 2): orderstock elnät som förändring i takt mot "
+           f"{YNAME['capex']}.** En nionde rad bredvid de åtta låsta. Huvudläsningen ovan är oförändrad. X = förändringen "
+           f"i takt för orderstocken (gräns ±{_f(S1_G, 1)}), Y och tecken som i huvudläsningen. Förändringen i takt vänder "
+           "när orderstocken växer långsammare än förut, också när den fortfarande växer, så riktningen nedåt kan "
+           "inträffa.", ""]
+    lines = C.reading_lines(rr, S1_LABEL)
+    lines[0] = lines[0].replace(f"**{S1_LABEL}:** {rr['text']}", f"**{S1_LABEL}:** {short(rr)}", 1)
+    out += lines
+    if h["impulses_down"]:
+        dn = h["by_direction"]["down"]
+        out.append(f"  Riktningen nedåt har inträffat: {h['impulses_down']} impulser nedåt och {h['impulses_up']} uppåt "
+                   f"i {h['n_x']} ursprung med X (nedåt: för {dn[C.FOR]}, emot {dn[C.AGAINST]}, inget "
+                   f"{dn[C.NEITHER]}, kan inte avgöras {dn[C.UNDECIDED]}).")
+    else:
+        out.append(f"  Riktningen nedåt har inte inträffat: 0 impulser nedåt och {h['impulses_up']} uppåt i {h['n_x']} "
+                   "ursprung med X.")
+    out.append("  Samma observation som LT1:s huvudläsning (L1 före K-inre, k = 2): samma X, statistik, gränser, fönster "
+               "och Y, men tecken +. Utslagen är spegelvända (talar för där är talar emot här och tvärtom) och "
+               "impulserna desamma, så raden ger ingen observation utöver LT1:s.")
+    out.append("  Förvärv flyttar förändringen i takt: uppåt vid förvärvets kvartal och kvartalet efter, nedåt fyra och fem "
+               "kvartal senare (X25, punkt 2). Boyd Thermal ingår i Eatons orderstock från 2026Q1, och Quantas förvärv är "
+               "inte kontrollerade (R28-7).")
+    if rr.get("seen") is False:
+        out.append(f"  **Osedd:** raden vilar på värden som blev kända efter registerposten {S1_REGISTERED}.")
+    else:
+        out.append("  " + C.seen_text(True, S1_REGISTERED))
+    return out + [""]
+
+
 # ------------------------------------------------------------------ antenna (register EL1, (h))
 
 
@@ -445,6 +501,12 @@ def antenna(r: dict) -> dict:
     hh = main["history"]
     facts["Huvudläsningen, impulser upp/ned"] = f"{hh['impulses_up']}/{hh['impulses_down']} av {hh['n_x']} ursprung"
     facts["Huvudläsningen på osedda data"] = "nej" if main.get("seen", True) else "ja"
+    s1 = r.get("s1")
+    if s1:  # EL1-S beside the main reading (register S1, point 2)
+        h1 = s1["history"]
+        facts["S1: orderstock elnät som förändring i takt mot capex inre lagret"] = short(s1)
+        facts["S1: samma rad, impulser upp/ned"] = f"{h1['impulses_up']}/{h1['impulses_down']} av {h1['n_x']} ursprung"
+        facts["S1: samma rad, oberoende av LT1"] = "nej: LT1:s huvudläsning med motsatt tecken"
     from ai_tracker.series import kreditlagret as KS  # the inner layer's capex sum, as KL1 derives it
 
     inputs = {"x": FORMULAS[X[MAIN[0]]].components, "y": KS.formula("capex4", "inner").components,

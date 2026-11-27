@@ -1488,3 +1488,32 @@ Johannes svarade "kör på dina rekommendationer" på tre rekommendationer samma
 - **Öppet för Johannes:** om antennraden ska in i det publika månadsbrevet trots `publish=False`-serier.
   Rekommendation: inte än, och i så fall bara utslagen utan värden, efter den första osedda läsningen. Övriga öppna
   punkter står i X25:s post och i `docs/steg2/STATUS.md`, punkt 7.
+
+## 2026-11-27 – S1: symmetriska rader bredvid låsta regler (körning 17)
+
+- **Varför.** Antennerna kunde inte läsa en vändning nedåt: KL1:s låsta regel läser bara uppgång, och EL1:s
+  huvudläsning har bara haft impulser uppåt (R28-5). Oracles inlämning omkring 2026-12-11 är den första osedda läsningen.
+  Registerposten "2026-11-27 – S1" (`654cbc0`) committades ensam före koden.
+- **KL1-S.** F0:s regel per pris- och beroendemått mot samma enhets capex-takt, tecken −1, KL1:s gränser (0,25 och 5
+  procentenheter, *h* = 5), *k* = 2. 18 rader: yttre och inre lagret och varje yttre bolag. Ingen ny huvudläsning.
+  Avsnitt 1–7 i rapporten (`render_locked`) är byte för byte desamma som före S1, prövat mot golden-filerna från före F0
+  och mot rapporterna per 2026-11-27 och 2025-11-27 med koden före S1. KL1-S står i avsnitt 8 och i antennen som fakta.
+- **EL1-S.** Orderstocken för elnät som förändring i takt (*g* = 10) mot capex i inre lagret, bredvid de åtta låsta.
+  Riktningen nedåt har inträffat (3 nedåt, 4 uppåt). Raden är exakt LT1:s huvudläsning med motsatt tecken, prövat på
+  riktiga data: ingen ny observation, och det står i rapporten och antennen.
+- **F0:s räkning.** Ett ursprung är prövat bara när Y finns i fönstret (utan impuls: Y känt i alla *k* kvartal).
+  Övergångsnotis per rad med det gamla talet. Elpriset mot capex: 27 av 267 i stället för 213. Inga utfall ändrade.
+- **Valt.** Bolagen mot sin egen capex (som KL1:s läsning per bolag), inte mot inre lagret, eftersom mekanismen gäller
+  samma balansräkning. En fakta per enhet i antennen i stället för 18, så att raden går att läsa.
+- **Förkastat.** Att låta KL1-S ersätta huvudläsningen (låst). Att välja ett annat *g* för EL1-S bara för att skilja den
+  från LT1 (godtyckligt efter att ha sett LT1).
+- **Utfall (sedda data).** Per 2026-11-27: Oracles tre beroendemått "talar för, uppåt" (samma capex-takt −15,8 som den
+  låsta läsningen, alltså inget oberoende belägg), inre lagret "talar emot, uppåt", CoreWeave och Nebius "talar för,
+  nedåt", yttre lagret kan inte avgöras (ingen förändring i capex-takt före 2026Q4). Beroendemåtten har capex i sig, så
+  utslagen är svaga belägg åt båda hållen.
+- **Öppet för Johannes:** (1) Granskning av S1 före Oracles inlämning omkring 2026-12-11. Rekommendation: ja, kort, med
+  fokus på KL1-S:s mekaniska koppling och byte-identiteten. (2) KL1:s låsta rapport avgör sedda data av läsdagen, så
+  stycket om sedda data försvinner efter 2026-11-25 fast inget nytt kvartal kommit. Rekommendation: en post som ger KL1
+  X25:s regel per läsning före 2026-12-11. (3) Om EL1-S ska stå kvar när den bara speglar LT1. Rekommendation: ja, men
+  läs den inte som en egen observation. (4) R28-7 (Quantas förvärv) är fortfarande okontrollerat och påverkar EL1-S mer
+  än huvudläsningen. Rekommendation: läs Quantas 10-Q före 2027-01-31.

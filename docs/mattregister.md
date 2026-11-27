@@ -3697,3 +3697,102 @@ i `docs/resultat/`, alltså alla kvartal till och med 2026Q3. Inget nytt kvartal
    rapporten att den andra riktningen inte har prövats. Två saker ändras inte här, eftersom de ändrar låsta poster och är
    beslut för Johannes: att byta F0:s räkning mot den nya, och EL1:s förslag om en extra rad med förändring i takt för
    orderstockarna.
+
+### 2026-11-27 – S1: symmetriska rader bredvid låsta regler
+
+Spår S1, körning 17 (spårets namn; posten har inget med "2026-11-25 – S1", nät, optik och servrar, att göra och citeras
+med datum). Tillägg till posterna "2026-11-25 – KL1", "2026-11-26 – F0", "– EL1" och "– X25", som inte skrivs om.
+Posten låses och committas ensam, innan någon kod skrivs och innan något utslag för de nya raderna räknas. Den lägger nya
+rader **bredvid** de låsta läsreglerna. KL1:s regel (avsnitt (c)), EL1:s åtta rader och huvudläsning (avsnitt (c)) och
+F0:s utfall per ursprung (avsnitt (b), punkt 1–3, och läsdagens utslag) ändras inte. Det som ändras i F0 är bara hur
+rapporten räknar ursprung där regeln kunde prövas (punkt 3 nedan). Inga nya serier, inga nya källor och ingen ny
+extraktion. Grenindex, kärnserier, tillstånd och publiceringsflaggor berörs inte. Syftet är att antennerna ska kunna
+läsa en vändning nedåt: KL1:s låsta regel läser bara uppgång (X23, punkt 4), och EL1:s huvudläsning har bara haft
+impulser uppåt (R28-5).
+
+**1. KL1, symmetrisk läsning (tillägg, KL1-S).** F0:s regel (`common.read_rule` via `common.read_measures`) per pris-
+och beroendemått, en rad per mått och enhet, utan "eller" mellan måtten (F0, (b)).
+- *X*: takten för KL1:s mått `kl_rate_eff_<e>`, `kl_fcfgap_<e>`, `kl_netdebt_<e>` och `kl_leases_<e>`, de som KL1
+  registrerade för enheten *e* (KL1, (b), tabellen "Lageraggregat" och medlemmarna per mått). Gränsen *g* är KL1:s:
+  0,25 procentenheter för den effektiva räntan och 5 procentenheter för de tre beroendemåtten.
+- *Y*: förändringen i takt för `kl_capex4_<e>`, samma enhet. *h* = 5 log × 100, KL1:s gräns för att takten föll, nu
+  åt båda hållen.
+- *k* = 2 kvartal (KL1 läser A vid *t* − 2 och capex vid *t*, och F0:s fönster *q* + 1, *q* + 2 täcker det avståndet).
+  Tecken *s* = −1 (F0:s förslag i beslutsloggen 2026-11-26): stiger pris eller beroende väntas investeringstakten falla,
+  och faller de väntas den stiga.
+- Enheter: yttre lagret och inre lagret, var och ett mot sitt eget lagers capex, och varje yttre bolag (Oracle,
+  CoreWeave, Nebius, IREN) mot sin egen capex. Det är 18 rader: yttre och inre lagret 4 var, Oracle och CoreWeave 4 var,
+  Nebius och IREN 1 var (`fcfgap`). Inre lagret läses mot sin egen capex med samma regel, som jämförelse. KL1:s villkor C
+  (inre lagret höll) ingår inte.
+- Utslagen: **talar för, uppåt** (pris eller beroende steg minst *g*, sedan föll capex-takten minst 5), **talar för,
+  nedåt** (föll minst *g*, sedan steg capex-takten minst 5), **talar emot, uppåt** (steg, sedan steg takten), **talar
+  emot, nedåt** (föll, sedan föll takten), inget av mönstren och kan inte avgöras som i F0, (b).
+- **Ingen ny huvudläsning.** KL1:s huvudläsning är fortfarande yttre lagret mot inre med den låsta regeln, och den
+  läsningens del av rapporten (avsnitt 1–7) ska vara byte för byte densamma som med koden före S1. KL1-S står i ett
+  eget avsnitt efter förbehållen. I antennen står KL1-S som fakta, en per enhet med radernas utslag och riktning, bredvid
+  huvudläsningen.
+- **Mekaniska kopplingar (förbehåll i rapporten).** Alla tre beroendemåtten har capex över samma fyra kvartal i sig.
+  (capex − OCF) / capex stiger när capex växer snabbare än kassaflödet, så en acceleration i capex ger lätt en impuls
+  uppåt följd av högre takt, alltså "talar emot, uppåt". Nettoemission / capex och leasing / capex har capex i nämnaren
+  och faller när capex accelererar, så samma acceleration ger lätt en impuls nedåt följd av högre takt, alltså "talar
+  för, nedåt". X läses vid ursprunget och Y i de två kvartalen efter, men capex-takten är trög, så kopplingen finns kvar.
+  Utslagen för beroendemåtten är därför svaga belägg åt båda hållen. Räntan har ingen sådan koppling men kort historik.
+- **Täckning på dagen** (bara antal perioder, inga värden): yttre lagrets `kl_capex4_outer` finns från 2025Q2 och får
+  förändring i takt först vid 2026Q4, och `kl_rate_eff_outer` och `kl_rate_eff_crwv` har tre kvartal och ingen takt.
+  Yttre lagrets rader och flera bolagsrader blir därför kan inte avgöras tills vidare, och rapporten säger varför.
+
+**2. EL1, orderstockarna som förändring i takt (tillägg, EL1-S).** En nionde rad bredvid de åtta låsta: X3
+`el1_ob_nat` (`rpo_pwr` + `rpo_etn`) med statistiken **förändring i takt** mot Y1 `kl_capex4_inner` (förändring i takt).
+*g* = 10 log × 100 (EL1:s gräns för X3 och LT1:s gräns för samma storhet som förändring i takt), *h* = 5, *k* = 2,
+*s* = −1. Huvudläsningen är fortfarande X3:s takt mot Y1. Raden finns för att riktningen nedåt ska kunna inträffa:
+förändringen i takt vänder när orderstocken växer långsammare än förut, också när den fortfarande växer.
+- Rapporten anger antalet impulser uppåt och nedåt i radens historik och säger uttryckligen om någon impuls nedåt har
+  inträffat. Antennen visar radens utslag och antalet impulser upp/ned som fakta.
+- **Samma observation som LT1:s huvudläsning.** LT1:s huvudläsning (L1 före K-inre, *k* = 2) har samma X (`lt1_rpo_power`
+  = `rpo_pwr` + `rpo_etn`), samma statistik, samma *g*, *h* och *k* och samma Y, men tecken +. Utslagen blir därför
+  spegelvända (talar för i LT1 är talar emot här och tvärtom), impulserna är desamma, och raden ger ingen observation
+  utöver LT1:s. Rapporten och antennen säger det. Det som tillkommer är läsningen under EL1:s mekanism.
+- Förvärv flyttar förändringen i takt (X25, punkt 2: *a* och *a* + 1 uppåt, *a* + 4 och *a* + 5 nedåt). Boyd Thermal i
+  Eaton från 2026Q1 kan alltså ge en skenbar impuls uppåt nu och nedåt omkring 2027Q1. Quantas förvärv är inte
+  kontrollerade (R28-7). Ingen märkning läggs till här.
+
+**3. F0, hur ofta regeln kunde prövas (ändrad räkning, bara redovisning).** Från och med den här posten räknas ett
+ursprung *q* med ett värde för X som **prövat** bara när Y finns i fönstret på läsdagen:
+- med impuls: utfallet är inte kan inte avgöras (som förut, eftersom regeln då har läst Y fram till utfallet);
+- utan impuls: Y har ett värde i alla *k* kvartal *q* + 1, …, *q* + *k*.
+
+Ett ursprung utan impuls räknades förut alltid som prövat (inget av mönstren), också när Y saknades. Det nya talet är
+därför aldrig större än det gamla, och skillnaden är antalet ursprung utan impuls där Y inte finns i hela fönstret. Det
+gäller varje rad som läses med `common.read_rule` (LT1, BG1, EL1 och KL1-S). Utfallen per ursprung, läsdagens utslag och
+de andra talen (impulser och utfall per riktning, utan impuls, X25:s beskrivande tal) ändras inte. KL1:s låsta regel och
+"A har gällt" berörs inte. **Övergångsnotis:** varje rad visar också det gamla talet (F0, (b), före S1), så att båda
+syns. Notisen står kvar tills en senare post tar bort den, och åtminstone till och med läsningen omkring 2027-01-31.
+
+**4. Sedda data för de nya raderna.** Som X25, punkt 1, med registerdagen 2026-11-27: en läsning i KL1-S och EL1-S är
+sedd när varje värde som utfallet vilar på är detsamma som i läsningen per 2026-11-27. Läsdagar till och med 2026-11-27
+är alltid sedda.
+
+**5. Rapporterna.** `docs/resultat/kreditlagret.md`, `elflaskhalsen.md` och `antenner.md` genereras om med kommandona
+per 2026-11-27 (och per 2025-11-27 för KL1 och EL1, som har den jämförelsen), med en rad överst om S1. `ledtid.md` och
+`betalningsgapet.md` genereras om på samma sätt, eftersom räkningen i punkt 3 ändrar dem. Antennraden visar
+huvudläsningen oförändrad, och de nya raderna står som tillägg (fakta).
+
+**Ärligt om osäkerheten.** Samma som F0 och KL1: med 8–12 kvartal per mått (Oracle och inre lagret längre) är detta en
+beskrivning och inget test, och inget p-värde räknas. Med 19 nya rader väntas några ge talar för eller talar emot av en
+slump. Ett utslag som talar för mekanismen visar inte orsaken.
+
+**6. Vad som var sett före posten.** Agenten har läst CLAUDE.md, F0:s kod (`common.py`), KL1:s och EL1:s kod,
+`antenner.py`, registerposterna KL1, F0, EL1 och X25, R28 (R28-4, R28-5, R28-7) och beslutsloggen för körning 16.
+Värden som därmed var sedda: hela `docs/resultat/antenner.md` per 2026-11-26 (alla frågors utslag och fakta, bland
+annat inre lagrets förändring i capex-takt +6,2 vid 2026Q2 och +9,6 vid 2026Q3, KL1:s bolagsutslag, "A har gällt" 4 av
+4 för yttre lagret, EL1:s 20 impulser uppåt och 0 nedåt och LT1:s huvudläsning "talar för" vid 2026Q3), och början av
+`docs/resultat/kreditlagret.md` (Oracles förändring i capex-takt +33,5 vid 2025Q3 och −15,8 vid 2026Q3, A för Oracle i
+44 av 58 kvartal). KL1:s rapport per 2026-11-25 i sin helhet var dessutom sedd av Johannes och orkestreraren, med
+takterna vid *t* − 2 för varje mått. Därmed är KL1-S:s utfall för ursprunget 2026Q1 delvis känt före posten. EL1-S:s
+utslag per 2026-11-26 är LT1:s spegelvänt och var därför känt ("talar emot", eftersom LT1:s huvudläsning talar för).
+Täckning utan värden: antal perioder, första och sista period och senaste `known_from` för de använda `kl_*`-serierna,
+`lt1_rpo_power`, `rpo_pwr` och `rpo_etn`. Inga takter, förändringar i takt eller utfall för KL1-S:s X har räknats.
+
+**7. Första osedda läsningar.** KL1-S: Oracle 2026Q4 omkring 2026-12-11 (Y för Oracles rader, ursprungen 2026Q2 och
+2026Q3), inre lagret när alla fyra har lämnat in 2026Q4 omkring 2027-01-31, yttre lagret när alla fyra har lämnat in
+2026Q4 och dess förändring i takt finns. EL1-S: med inre lagrets capex för 2026Q4, omkring 2027-01-31.
