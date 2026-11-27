@@ -1716,3 +1716,21 @@ Johannes svarade "kör på dina rekommendationer" på tre rekommendationer samma
 - **Kontroll.** Katalogvalidering utan fel. Full testsvit: 2980 passerade, 3 hoppade (11 min 46 s).
 - **Öppet för Johannes:** DA1:s tre punkter (råcachen i `new_track.sh`, Ciscos övriga förvärv, HPE och Arista) står
   kvar i DA1:s post ovan.
+
+## 2026-11-27 – R30 granskning av körning 18 (B18, DA1)
+
+- **Vad.** Oberoende granskning av `auto18/integration18` (`496ecae`): `docs/granskning/r30_korning18.md`, tester i
+  `tests/test_r30_korning18.py`. Ingen produktionskod ändrad.
+- **Dom: GODKÄND MED ANMÄRKNINGAR.** Registerposterna DA1 och B18 är committade ensamma före kod och utslag och
+  oförändrade genom mergarna. B18 ändrar bara det de tre besluten säger: KL1 skiljer mot `3edc854` bara i stycket om sedda
+  data (avsnitt 1–7) och i övergångsnotiserna, PV1:s antenn och huvudutslag följer H-G med H, a och b bredvid, och ingen
+  rapport väntar längre på ägaren. DA1:s 47 rader stämmer mot nyhämtade dokument (hash, inlämningsdag, formulär), 16 lästa
+  i texten med rätt kvartal, riktning och etikett per dag. L2:s fyra läsningar och DA1:s gräns räknade om rätt utan
+  projektets kod.
+- **Fynd.** Inget must_fix. Should_fix: rapporten säger inte till och med vilket kvartal förvärven är kodade, så Dells
+  2026Q3 (omkring 2026-12-09) ser ut som ett kvartal utan förvärv (R30-1); Dells kvartal *a* blir fel vid
+  räkenskapsgränserna och `load()` avvisar inlämningens kvartal (R30-2, latent); beskrivningen av Equinix 2025Q4 kallar
+  skillnaden en möjlig senare betalning för TIM fast goodwilltabellen visar ett tillägg i EMEA (R30-3). Tre anmärkningar
+  (R30-4–R30-6). Fynden R30-1–R30-3 är strikta xfail.
+- **Rekommendation:** rätta R30-1 före Dells inlämning omkring 2026-12-09, R30-2 och R30-3 i samma rättning.
+
