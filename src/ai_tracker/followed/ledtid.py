@@ -466,7 +466,7 @@ def render(r: dict) -> str:
                    f"| {DIRECTIONS[x['direction']]} | {x['k']} | {x['t'] or '–'} | {_cell(x)} | {_tried(x)} |")
     out += ["", "Övergång (registret 2026-11-27 S1, punkt 3): \"prövad\" räknar nu ett ursprung bara när Y finns i "
             "fönstret (med impuls: utfallet är inte kan inte avgöras; utan impuls: Y är känt i alla k kvartal). \"Före "
-            "S1\" är F0:s räkning före ändringen. Utfallen ändras inte."]
+            "S1\" är F0:s räkning före ändringen. Utfallen ändras inte. " + C.PENDING_OWNER]
 
     out += ["", "## 2. Ledtiden (beskrivning)", "",
             f"I läsningarna med k = {LEAD_WINDOW}: kvartal från ursprunget till kvartalet som avgjorde ett \"talar för\". "

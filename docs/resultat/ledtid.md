@@ -1,5 +1,8 @@
 # Ledtid i stacken: följd fråga (LT1)
 
+*Rättad efter granskningen R29 (rättningsspår X26, `docs/mattregister.md`, 2026-11-27 X26): förvärvsmärkets etikett säger bara det som var inlämnat på läsdagen (per 2024-02-25 "2 förvärv 2024Q1", inte 3), "minst 1 förvärv" när dagens dokument inte avgör om två uppgifter gäller samma förvärv (2026Q3 per 2026-07-30 och 2026Q4 per 2026-10-29), och Cupertinos och Dynamic Systems första angivna köpeskillingar (cirka 1 500 och 1 350 MUSD) står i märket från 2024-08-01 och 2025-07-31 (R29-4). Per 2026-11-27 ändras bara texten för 2026Q4 ("minst 1 förvärv" i stället för "1 förvärv"), och per 2025-11-27 ingenting. Övergångsnotisen för F0:s räkning säger att bytet väntar på ägarens bekräftelse (R29-1). Märket ändrar inget utslag, och inga utslag ändrades.*
+
+
 *Ändrat av S1 (`docs/mattregister.md`, 2026-11-27 S1, punkt 3): F0:s räkning av hur ofta regeln kunde prövas är ändrad (S1, punkt 3): ett ursprung räknas som prövat bara när Y finns i fönstret, och varje rad visar det gamla talet bredvid det nya i en övergångsnotis. I tabellen står det nya talet först och F0:s gamla som "före S1". Rapporterna nedan är genererade på nytt per 2026-11-27 och 2025-11-27 på den sammanslagna koden från körning 17 (S1 och QA1). Utom datumen, räkningen och Quantas förvärv i märket (QA1, notisen nedan) är de desamma som per 2026-11-26 och 2025-11-26, så texten om de dagarna gäller också för de nya.*
 
 *Rättad efter granskningen R28 (rättningsspår X25, `docs/mattregister.md`, 2026-11-26 X25): förbehållet om sedda data avgörs nu per läsning, alla förvärv som träffar ett kvartal märks med riktning, och varje rad visar hur ofta Y var känt i hela fönstret. Inga utslag ändrades. Rapporterna nedan är genererade på nytt med kommandot.*
@@ -87,7 +90,7 @@ Före och efter är inte varandras motsats: två utjämnade serier som rör sig 
 - **Huvudläsning, L1 före K-inre, k = 2:** talar för mekanismen. t = 2026Q3; ursprung 2026Q2, X +16,5 (gräns ±10,0), uppgång, Y +9,6 vid 2026Q3 (gräns ±5,0). X = lt1_rpo_power (förändring i takt), Y = kl_capex4_inner (förändring i takt); fönster 2 kvartal, tecken +.
   Regeln kunde prövas i 18 av 18 ursprung med X (2022Q1–2026Q2). Impulser uppåt 4 (för 2, emot 1, inget 1, kan inte avgöras 0), nedåt 3 (för 0, emot 3, inget 0, kan inte avgöras 0), utan impuls 11.
   Y var känt i hela fönstret i 17 av 18 ursprung, och 7 av 7 impulser kunde läsas mot Y.
-  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 18 av 18; med den nya: 18 av 18.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 18 av 18; med den nya: 18 av 18. Bytet väntar på ägarens bekräftelse (R29-1, registret 2026-11-27 X26, punkt 1).
   Läsningen vilar bara på värden som var kända före registerposten 2026-11-26, och den är därför inget utfall på osedda data.
 
 Alla läsningar i tabellen vilar bara på värden som var kända före registerposten 2026-11-26 (posten, avsnitt (e) och (f)), och ingen av dem är ett utfall på osedda data. Sedda data avgörs per läsning (X25, punkt 1).
@@ -119,7 +122,7 @@ Alla läsningar i tabellen vilar bara på värden som var kända före registerp
 | L1 Kraft och elnät (Eaton, Quanta) | K-yttre | efter | 2 | 2026Q3 | **kan inte avgöras** (X saknas vid 2026Q1; X saknas vid 2026Q2) | X saknas |
 | L1 Kraft och elnät (Eaton, Quanta) | K-yttre | efter | 4 | 2026Q3 | **kan inte avgöras** (X saknas vid 2025Q3; X saknas vid 2025Q4; X saknas vid 2026Q1; X saknas vid 2026Q2) | X saknas |
 
-Övergång (registret 2026-11-27 S1, punkt 3): "prövad" räknar nu ett ursprung bara när Y finns i fönstret (med impuls: utfallet är inte kan inte avgöras; utan impuls: Y är känt i alla k kvartal). "Före S1" är F0:s räkning före ändringen. Utfallen ändras inte.
+Övergång (registret 2026-11-27 S1, punkt 3): "prövad" räknar nu ett ursprung bara när Y finns i fönstret (med impuls: utfallet är inte kan inte avgöras; utan impuls: Y är känt i alla k kvartal). "Före S1" är F0:s räkning före ändringen. Utfallen ändras inte. Bytet väntar på ägarens bekräftelse (R29-1, registret 2026-11-27 X26, punkt 1).
 
 ### 2. Ledtiden (beskrivning)
 
@@ -234,7 +237,7 @@ Nästa osedda läsning: L2 efter K-inre med 2026Q3 omkring 2026-12-09; huvudläs
 - RPO och orderstock är inte orderingång. Ciscos och Dells RPO har stora tjänstedelar. Ciscos och Dells balanser har räkenskapskvartalets kalenderkvartal, upp till en månad efter kalenderkvartalets slut.
 - Leverantörerna säljer också till andra än AI-köparna: Quanta och Eaton till elbolag och industri, Cisco och Dell till företag. Ett utslag säger inget om hur stor del som gäller AI.
 - Förvärv ger nivåskiften. Belagda förvärv märks i tabellen (Cisco–Splunk 2024Q1, Eaton–Fibrebond 2025Q2, Eaton–Boyd Thermal 2026Q1 och Quantas förvärv nedan) med förskjutning och riktning: vid a och a + 1 flyttas förändringen i takt uppåt, vid a + 4 och a + 5 nedåt. Träffar två förvärv samma kvartal åt olika håll är nettoriktningen inte känd. Märket ändrar inget utslag. Quantas förvärv är kodade ur 10-K och 10-Q från 2023 (`curated/acquisitions.csv`, registret 2026-11-27 QA1). Quantas förvärv före 2023 är inte kodade, fast deras a + 4 och a + 5 kan ligga i L1:s historik (till exempel Blattner, slutfört 2021-10-13). Förvärv hos Dell, Super Micro och Equinix är inte kontrollerade.
-- Quantas förvärv per kvartal a, med köpeskillingen i MUSD som bolaget anger den (för en period: alla förvärv i perioden hittills i året). Bolaget anger inte tillförd RPO, och den räknas inte om ur köpeskillingen: 2023Q1: 3 förvärv (587 MUSD, 3 mån 2023), känt från 2023-02-23; 2023Q3: 1 förvärv (622 MUSD, 9 mån 2023), känt från 2023-11-02; 2023Q4: transformatortillverkare (cirka 300 MUSD), känt från 2023-11-02; 2024Q1: 3 förvärv (449 MUSD, 3 mån 2024), känt från 2024-02-22; 2024Q2: 2 förvärv (540 MUSD, 6 mån 2024), känt från 2024-05-02; 2024Q3: 2 förvärv (642 MUSD, 9 mån 2024, utom Cupertino Electric), känt från 2024-10-31; 2024Q3: Cupertino Electric (2 035 MUSD), känt från 2024-08-01; 2025Q1: 2 förvärv (589 MUSD, 3 mån 2025), känt från 2025-02-20; 2025Q2: 2 förvärv (816 MUSD, 6 mån 2025), känt från 2025-07-31; 2025Q3: Dynamic Systems (1 673 MUSD), känt från 2025-07-31; 2025Q4: 3 förvärv (2 471 MUSD, helår 2025, utom Dynamic Systems), känt från 2026-02-19; 2026Q2: 3 förvärv (1 430 MUSD, 6 mån 2026), känt från 2026-07-30; 2026Q3: 2 förvärv (1 800 MUSD, 9 mån 2026), känt från 2026-07-30; 2026Q4: 1 förvärv, känt från 2026-10-29.
+- Quantas förvärv per kvartal a, med köpeskillingen i MUSD som bolaget anger den (för en period: alla förvärv i perioden hittills i året). Bolaget anger inte tillförd RPO, och den räknas inte om ur köpeskillingen: 2023Q1: 3 förvärv (587 MUSD, 3 mån 2023), känt från 2023-02-23; 2023Q3: 1 förvärv (622 MUSD, 9 mån 2023), känt från 2023-11-02; 2023Q4: transformatortillverkare (cirka 300 MUSD), känt från 2023-11-02; 2024Q1: 3 förvärv (449 MUSD, 3 mån 2024), känt från 2024-02-22; 2024Q2: 2 förvärv (540 MUSD, 6 mån 2024), känt från 2024-05-02; 2024Q3: 2 förvärv (642 MUSD, 9 mån 2024, utom Cupertino Electric), känt från 2024-10-31; 2024Q3: Cupertino Electric (2 035 MUSD), känt från 2024-08-01; 2025Q1: 2 förvärv (589 MUSD, 3 mån 2025), känt från 2025-02-20; 2025Q2: 2 förvärv (816 MUSD, 6 mån 2025), känt från 2025-07-31; 2025Q3: Dynamic Systems (1 673 MUSD), känt från 2025-07-31; 2025Q4: 3 förvärv (2 471 MUSD, helår 2025, utom Dynamic Systems), känt från 2026-02-19; 2026Q2: 3 förvärv (1 430 MUSD, 6 mån 2026), känt från 2026-07-30; 2026Q3: 2 förvärv (1 800 MUSD, 9 mån 2026), känt från 2026-07-30; 2026Q4: minst 1 förvärv, känt från 2026-10-29.
 - O1 och O2 är S3:s extraktion (publish=False i väntan på granskningen). Digital Realtys andel är obelagd 2021Q4–2024Q1 (S3, tolkning 9).
 - Vertiv är BLOCKED (inget RPO i XBRL, och S3:s orderserier slutar 2025Q4). GE Vernovas RPO och order är för korta för läsregeln och visas som sammanhang. Yttre lagrets förändring i capex-takt finns först när serien har sju kvartal (från 2026Q4).
 - Historiken räknas på läsdagens vintage, så revideringar kan ändra äldre utfall (F0).
@@ -256,7 +259,7 @@ Före och efter är inte varandras motsats: två utjämnade serier som rör sig 
 - **Huvudläsning, L1 före K-inre, k = 2:** inget av mönstren. t = 2025Q3 (ingen impuls i fönstret). X = lt1_rpo_power (förändring i takt), Y = kl_capex4_inner (förändring i takt); fönster 2 kvartal, tecken +.
   Regeln kunde prövas i 13 av 14 ursprung med X (2022Q1–2025Q2). Impulser uppåt 1 (för 0, emot 1, inget 0, kan inte avgöras 0), nedåt 3 (för 0, emot 3, inget 0, kan inte avgöras 0), utan impuls 10.
   Y var känt i hela fönstret i 13 av 14 ursprung, och 4 av 4 impulser kunde läsas mot Y.
-  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 14 av 14; med den nya: 13 av 14.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 14 av 14; med den nya: 13 av 14. Bytet väntar på ägarens bekräftelse (R29-1, registret 2026-11-27 X26, punkt 1).
   Läsningen vilar bara på värden som var kända före registerposten 2026-11-26, och den är därför inget utfall på osedda data.
 
 Alla läsningar i tabellen vilar bara på värden som var kända före registerposten 2026-11-26 (posten, avsnitt (e) och (f)), och ingen av dem är ett utfall på osedda data. Sedda data avgörs per läsning (X25, punkt 1).
@@ -288,7 +291,7 @@ Alla läsningar i tabellen vilar bara på värden som var kända före registerp
 | L1 Kraft och elnät (Eaton, Quanta) | K-yttre | efter | 2 | 2025Q3 | **kan inte avgöras** (X saknas vid 2025Q1; X saknas vid 2025Q2) | X saknas |
 | L1 Kraft och elnät (Eaton, Quanta) | K-yttre | efter | 4 | 2025Q3 | **kan inte avgöras** (X saknas vid 2024Q3; X saknas vid 2024Q4; X saknas vid 2025Q1; X saknas vid 2025Q2) | X saknas |
 
-Övergång (registret 2026-11-27 S1, punkt 3): "prövad" räknar nu ett ursprung bara när Y finns i fönstret (med impuls: utfallet är inte kan inte avgöras; utan impuls: Y är känt i alla k kvartal). "Före S1" är F0:s räkning före ändringen. Utfallen ändras inte.
+Övergång (registret 2026-11-27 S1, punkt 3): "prövad" räknar nu ett ursprung bara när Y finns i fönstret (med impuls: utfallet är inte kan inte avgöras; utan impuls: Y är känt i alla k kvartal). "Före S1" är F0:s räkning före ändringen. Utfallen ändras inte. Bytet väntar på ägarens bekräftelse (R29-1, registret 2026-11-27 X26, punkt 1).
 
 ### 2. Ledtiden (beskrivning)
 

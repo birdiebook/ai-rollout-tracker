@@ -48,6 +48,14 @@ exakt ett kvartal (13 eller 14 veckor). För en summa summeras paketen vecka fö
 paket har den. Ett kvartal finns först när alla dess veckor är kända på dagen. Värdet är medlet av veckosummorna, och
 `known_from` är den senaste veckans. Kvoten är kvoten av kvartalsmedlen.
 
+**Geometriskt medel (X26, efter R29-2).** Bredvid de fem storheterna ovan räknas `pv1_pris_gpqa_gq`,
+`pv1_pris_arena_gq`, `pv1_sdk_gq`, `pv1_kontroll_gq` och `pv1_sdk_rel_gq` med kvartalet som exp(medlet av ln) av
+månaderna och av veckosummorna, med samma krav på hela kvartal och samma `known_from`. En månad eller vecka med värde
+≤ 0 ger inget kvartal. De läses i raderna H-G, a-G och b-G bredvid de låsta (registret 2026-11-27 X26, punkt 2). Med det
+aritmetiska medlet ger en speglad prisbana inte den speglade förändringen i takt (R29: Arena A +441,0 och +346,0, speglat
+−424,6 och −232,4); med det geometriska blir den exakt speglad (Arena A +433,7 och +301,0). I dag ger raderna samma
+utslag som de låsta.
+
 **as_of.** Tabellen kapas vid läsdagen innan något räknas, och varje rad tas i sin senaste vintage på dagen. Testet
 `test_a_row_known_after_the_day_changes_nothing` lägger till en senare vintage, senare månader och ett helt senare
 kvartal av veckor och kräver att rapporten blir densamma.

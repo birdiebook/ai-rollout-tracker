@@ -68,7 +68,7 @@ def test_marks_follow_known_from_and_the_latest_consideration(df):
     assert "2026Q2" not in before and "2026Q3" not in before
     assert {"2026Q2", "2026Q3"} <= after  # the 10-Q for 2026Q2 also states a closing on 2026-07-10
     cei = {a: n for n, a, _ in A.marks("pwr", "2024-08-01", df) if n.startswith("Quanta–Cupertino")}
-    assert cei == {"2024Q3": "Quanta–Cupertino Electric"}  # known, no consideration yet
+    assert cei == {"2024Q3": "Quanta–Cupertino Electric (cirka 1 500 MUSD)"}  # first stated in the same 10-Q (X26)
     by_day = {d: [n for n, _, _ in A.marks("pwr", d, df) if n.startswith("Quanta–Cupertino")][0]
               for d in ("2024-10-31", "2025-02-20", "2026-02-19")}
     assert by_day == {"2024-10-31": "Quanta–Cupertino Electric (1 968 MUSD)",

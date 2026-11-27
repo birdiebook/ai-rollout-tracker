@@ -1,5 +1,8 @@
 # Pris mot volym: följd fråga (PV1)
 
+*Rättad efter granskningen R29 (rättningsspår X26, `docs/mattregister.md`, 2026-11-27 X26): tre rader bredvid de låsta, H-G, a-G och b-G, med kvartalet som geometriskt medel (exp av medlet av ln) av månaderna och veckosummorna, i ett eget avsnitt 6 i rapporterna nedan (R29-2). Med det aritmetiska medlet ger en speglad prisbana inte den speglade förändringen i takt; med det geometriska gör den det exakt. De geometriska raderna ger samma utslag som de låsta båda dagarna (Arena A: förändring i takt +433,7 och +301,0 vid 2025Q3 och 2025Q4 i stället för +441,0 och +346,0). Huvudläsningen är fortfarande H; om H-G ska ersätta H är ett beslut för Johannes före 2027-01-05. Förbehållen säger nu att historiken är backfill, hämtad 2026-11-23–26 med `known_from` satt efter en regel, så att läsningen per 2025-11-27 kan innehålla senare revideringar (R29-3). Övergångsnotisen för F0:s räkning säger att bytet väntar på ägarens bekräftelse (R29-1). Inga låsta utslag ändrades.*
+
+
 *Omgenererad i integrationen av körning 17: F0:s räkning av hur ofta regeln kunde prövas är ändrad av S1 (`docs/mattregister.md`, 2026-11-27 S1, punkt 3, registrerad före PV1). Ett ursprung räknas nu som prövat bara när Y finns i fönstret, och rapporten visar båda talen i en övergångsnotis. Per 2026-11-27 ger det 3 av 4 ursprung i stället för 4 av 4 för bisak a. Inga utslag ändrades.*
 
 **Frågan:** Följs prisfallet vid fast förmåga (G2) av högre användning (G3), och ändras sambandet?
@@ -112,7 +115,7 @@ Alla läsningar nedan vilar bara på värden som var kända före registerposten
 - **Pris vid fast Arena-förmåga (variant A) mot SDK-nedladdningar (bisak a):** inget av mönstren. t = 2026Q3 (ingen impuls i fönstret). X = pv1_pris_arena_q (förändring i takt), Y = pv1_sdk_q (förändring i takt); fönster 2 kvartal, tecken −.
   Regeln kunde prövas i 3 av 4 ursprung med X (2025Q3–2026Q2). Impulser uppåt 2 (för 0, emot 2, inget 0, kan inte avgöras 0), nedåt 0 (för 0, emot 0, inget 0, kan inte avgöras 0), utan impuls 2.
   Y var känt i hela fönstret i 3 av 4 ursprung, och 2 av 2 impulser kunde läsas mot Y. Riktningen nedåt har inte prövats: X har inte haft någon impuls nedåt.
-  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 4 av 4; med den nya: 3 av 4.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 4 av 4; med den nya: 3 av 4. Bytet väntar på ägarens bekräftelse (R29-1, registret 2026-11-27 X26, punkt 1).
   X har förändring i takt från 2025Q3.
   Ändras sambandet? Avgjorda ursprung i tidsordning: 2025Q3 talar emot, uppåt (X +441,0, Y +42,0 vid 2025Q4); 2025Q4 talar emot, uppåt (X +346,0, Y +44,9 vid 2026Q1). Senaste: talar emot (2025Q4), tidigare 0 talar för och 1 talar emot. En beskrivning utan gräns för "ändrat"; med så få ursprung kan en skillnad vara slump.
   Bisak a vilar på X-värden som var sedda före posten (nivåerna för variant A stod i `g2_arena_pris.md`, registret avsnitt (f)) och har bara beskrivande värde.
@@ -135,6 +138,40 @@ Alla läsningar nedan vilar bara på värden som var kända före registerposten
 - **Urval.** npm-paketen valdes 2026-11-23 med kunskap om vilka SDK:er som blev stora. Googles SDK:er ingår inte i summan, eftersom bytet mellan två paket är en migrering.
 - **Korta serier.** GPQA-priset har förändring i takt först från 2026Q4. Med en handfull ursprung är detta en beskrivning och inget test, och utfall kan vara slump.
 - **Licens.** npm-serierna har klassen `okänd` och `publish=False`, Arena-variant A `okänd`. GPQA-priset har `ja`. Cloudflare Radar (`nej`) används inte.
+- **Historiken är backfill.** Pris- och npm-raderna är hämtade 2026-11-23–2026-11-26, i efterhand, med `known_from` satt efter en regel (prisserierna vid månadsslut eller dagen efter, npm söndag + 2 dagar), inte som arkiverade versioner. "Bara data kända på dagen" gäller därför `known_from` och inte vad källan visade då: en läsning per en tidigare dag kan innehålla revideringar och rättningar som inte var kända den dagen. Ingen av de 1485 rader som läsningarna använder hämtades efter läsdagen, men de hämtades ändå i efterhand i en omgång.
+
+### 6. Geometriskt kvartalsmedel (tillägg X26, bredvid de låsta raderna)
+
+Tre rader bredvid H, a och b (`docs/mattregister.md`, 2026-11-27 X26, punkt 2, efter granskningen R29-2). Samma källserier, statistik, gränser, fönster och tecken. Det enda som skiljer är kvartalsvärdet: det geometriska medlet, exp(medlet av ln), av kvartalets tre månader och av veckosummorna. Med det aritmetiska medlet ger en speglad prisbana (1/x) inte den speglade förändringen i takt, så riktningen kan avgöra om en impuls uppstår. Med det geometriska medlet ger den exakt det speglade utslaget. Huvudläsningen är fortfarande H. Om H-G ska ersätta H är ett beslut för ägaren före den första osedda läsningen.
+
+| Vem | Nivå | Takt | Förändring i takt | Överraskning (B1) | Senaste kvartal | known_from | Serie | Klass |
+|---|---|---|---|---|---|---|---|---|
+| Pris vid fast förmåga, GPQA, geometriskt medel | 0,2679 USD | -197,2 | – | +31,0 | 2026Q3 | 2026-09-30 | `pv1_pris_gpqa_gq` | ja |
+| Pris vid fast Arena-förmåga, variant A, geometriskt medel | 0,1194 USD | -9,5 | +0,0 | +37,7 | 2026Q3 | 2026-10-01 | `pv1_pris_arena_gq` | okänd |
+| SDK-nedladdningar, geometriskt medel | 68,1 M/vecka | +214,9 | +62,1 | +3,6 | 2026Q3 | 2026-09-29 | `pv1_sdk_gq` | okänd |
+| Kontrollpaket, geometriskt medel | 301,3 M/vecka | +121,9 | +39,0 | +0,2 | 2026Q3 | 2026-09-29 | `pv1_kontroll_gq` | okänd |
+| SDK relativt kontroll, geometriska medel (kvot) | 0,226 | +93,1 | +23,1 | +3,4 | 2026Q3 | 2026-09-29 | `pv1_sdk_rel_gq` | okänd |
+
+- **Pris vid fast förmåga (GPQA) mot SDK-nedladdningar, geometriskt medel (H-G, bredvid H):** kan inte avgöras. t = 2026Q3 (X saknas vid 2026Q1; X saknas vid 2026Q2). X = pv1_pris_gpqa_gq (förändring i takt), Y = pv1_sdk_gq (förändring i takt); fönster 2 kvartal, tecken −.
+  Regeln kunde inte prövas: X saknas i hela historiken.
+  X har ännu ingen förändring i takt på dagen (serien är för kort), så varje ursprung kan inte avgöras.
+  Ändras sambandet? Inget ursprung har avgjorts (talar för eller talar emot) i historiken på dagen.
+  Samma utslag som den låsta raden.
+  Läsningen vilar bara på värden som var kända före registerposten 2026-11-27, och den är därför inget utfall på osedda data.
+- **Pris vid fast Arena-förmåga (variant A) mot SDK-nedladdningar, geometriskt medel (a-G, bredvid a):** inget av mönstren. t = 2026Q3 (ingen impuls i fönstret). X = pv1_pris_arena_gq (förändring i takt), Y = pv1_sdk_gq (förändring i takt); fönster 2 kvartal, tecken −.
+  Regeln kunde prövas i 3 av 4 ursprung med X (2025Q3–2026Q2). Impulser uppåt 2 (för 0, emot 2, inget 0, kan inte avgöras 0), nedåt 0 (för 0, emot 0, inget 0, kan inte avgöras 0), utan impuls 2.
+  Y var känt i hela fönstret i 3 av 4 ursprung, och 2 av 2 impulser kunde läsas mot Y. Riktningen nedåt har inte prövats: X har inte haft någon impuls nedåt.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 4 av 4; med den nya: 3 av 4. Bytet väntar på ägarens bekräftelse (R29-1, registret 2026-11-27 X26, punkt 1).
+  X har förändring i takt från 2025Q3.
+  Ändras sambandet? Avgjorda ursprung i tidsordning: 2025Q3 talar emot, uppåt (X +433,7, Y +42,9 vid 2025Q4); 2025Q4 talar emot, uppåt (X +301,0, Y +42,4 vid 2026Q1). Senaste: talar emot (2025Q4), tidigare 0 talar för och 1 talar emot. En beskrivning utan gräns för "ändrat"; med så få ursprung kan en skillnad vara slump.
+  Samma utslag som den låsta raden.
+  Läsningen vilar bara på värden som var kända före registerposten 2026-11-27, och den är därför inget utfall på osedda data.
+- **Pris vid fast förmåga (GPQA) mot SDK-nedladdningar relativt kontrollpaketen, geometriskt medel (b-G, bredvid b):** kan inte avgöras. t = 2026Q3 (X saknas vid 2026Q1; X saknas vid 2026Q2). X = pv1_pris_gpqa_gq (förändring i takt), Y = pv1_sdk_rel_gq (förändring i takt); fönster 2 kvartal, tecken −.
+  Regeln kunde inte prövas: X saknas i hela historiken.
+  X har ännu ingen förändring i takt på dagen (serien är för kort), så varje ursprung kan inte avgöras.
+  Ändras sambandet? Inget ursprung har avgjorts (talar för eller talar emot) i historiken på dagen.
+  Samma utslag som den låsta raden.
+  Läsningen vilar bara på värden som var kända före registerposten 2026-11-27, och den är därför inget utfall på osedda data.
 
 ## Rapporten per 2025-11-27
 
@@ -222,3 +259,35 @@ Alla läsningar nedan vilar bara på värden som var kända före registerposten
 - **Urval.** npm-paketen valdes 2026-11-23 med kunskap om vilka SDK:er som blev stora. Googles SDK:er ingår inte i summan, eftersom bytet mellan två paket är en migrering.
 - **Korta serier.** GPQA-priset har förändring i takt först från 2026Q4. Med en handfull ursprung är detta en beskrivning och inget test, och utfall kan vara slump.
 - **Licens.** npm-serierna har klassen `okänd` och `publish=False`, Arena-variant A `okänd`. GPQA-priset har `ja`. Cloudflare Radar (`nej`) används inte.
+- **Historiken är backfill.** Pris- och npm-raderna är hämtade 2026-11-23–2026-11-25, i efterhand, med `known_from` satt efter en regel (prisserierna vid månadsslut eller dagen efter, npm söndag + 2 dagar), inte som arkiverade versioner. "Bara data kända på dagen" gäller därför `known_from` och inte vad källan visade då: en läsning per en tidigare dag kan innehålla revideringar och rättningar som inte var kända den dagen. 1237 av 1237 rader som läsningarna använder hämtades efter läsdagen.
+
+### 6. Geometriskt kvartalsmedel (tillägg X26, bredvid de låsta raderna)
+
+Tre rader bredvid H, a och b (`docs/mattregister.md`, 2026-11-27 X26, punkt 2, efter granskningen R29-2). Samma källserier, statistik, gränser, fönster och tecken. Det enda som skiljer är kvartalsvärdet: det geometriska medlet, exp(medlet av ln), av kvartalets tre månader och av veckosummorna. Med det aritmetiska medlet ger en speglad prisbana (1/x) inte den speglade förändringen i takt, så riktningen kan avgöra om en impuls uppstår. Med det geometriska medlet ger den exakt det speglade utslaget. Huvudläsningen är fortfarande H. Om H-G ska ersätta H är ett beslut för ägaren före den första osedda läsningen.
+
+| Vem | Nivå | Takt | Förändring i takt | Överraskning (B1) | Senaste kvartal | known_from | Serie | Klass |
+|---|---|---|---|---|---|---|---|---|
+| Pris vid fast förmåga, GPQA, geometriskt medel | 1,9250 USD | – | – | – | 2025Q3 | 2025-09-30 | `pv1_pris_gpqa_gq` | ja |
+| Pris vid fast Arena-förmåga, variant A, geometriskt medel | 0,1312 USD | -9,6 | +433,7 | +75,3 | 2025Q3 | 2025-10-01 | `pv1_pris_arena_gq` | okänd |
+| SDK-nedladdningar, geometriskt medel | 7,9 M/vecka | +110,5 | +37,9 | +14,5 | 2025Q3 | 2025-09-30 | `pv1_sdk_gq` | okänd |
+| Kontrollpaket, geometriskt medel | 89,1 M/vecka | +49,0 | +26,4 | -0,7 | 2025Q3 | 2025-09-30 | `pv1_kontroll_gq` | okänd |
+| SDK relativt kontroll, geometriska medel (kvot) | 0,089 | +61,5 | +11,4 | +15,3 | 2025Q3 | 2025-09-30 | `pv1_sdk_rel_gq` | okänd |
+
+- **Pris vid fast förmåga (GPQA) mot SDK-nedladdningar, geometriskt medel (H-G, bredvid H):** kan inte avgöras. t = 2025Q3 (X saknas vid 2025Q1; X saknas vid 2025Q2). X = pv1_pris_gpqa_gq (förändring i takt), Y = pv1_sdk_gq (förändring i takt); fönster 2 kvartal, tecken −.
+  Regeln kunde inte prövas: X saknas i hela historiken.
+  X har ännu ingen förändring i takt på dagen (serien är för kort), så varje ursprung kan inte avgöras.
+  Ändras sambandet? Inget ursprung har avgjorts (talar för eller talar emot) i historiken på dagen.
+  Samma utslag som den låsta raden.
+  Läsningen vilar bara på värden som var kända före registerposten 2026-11-27, och den är därför inget utfall på osedda data.
+- **Pris vid fast Arena-förmåga (variant A) mot SDK-nedladdningar, geometriskt medel (a-G, bredvid a):** kan inte avgöras. t = 2025Q3 (X saknas vid 2025Q1; X saknas vid 2025Q2). X = pv1_pris_arena_gq (förändring i takt), Y = pv1_sdk_gq (förändring i takt); fönster 2 kvartal, tecken −.
+  Regeln kunde inte prövas: X saknas i hela historiken.
+  X har förändring i takt från 2025Q3.
+  Ändras sambandet? Inget ursprung har avgjorts (talar för eller talar emot) i historiken på dagen.
+  Samma utslag som den låsta raden.
+  Läsningen vilar bara på värden som var kända före registerposten 2026-11-27, och den är därför inget utfall på osedda data.
+- **Pris vid fast förmåga (GPQA) mot SDK-nedladdningar relativt kontrollpaketen, geometriskt medel (b-G, bredvid b):** kan inte avgöras. t = 2025Q3 (X saknas vid 2025Q1; X saknas vid 2025Q2). X = pv1_pris_gpqa_gq (förändring i takt), Y = pv1_sdk_rel_gq (förändring i takt); fönster 2 kvartal, tecken −.
+  Regeln kunde inte prövas: X saknas i hela historiken.
+  X har ännu ingen förändring i takt på dagen (serien är för kort), så varje ursprung kan inte avgöras.
+  Ändras sambandet? Inget ursprung har avgjorts (talar för eller talar emot) i historiken på dagen.
+  Samma utslag som den låsta raden.
+  Läsningen vilar bara på värden som var kända före registerposten 2026-11-27, och den är därför inget utfall på osedda data.

@@ -1,5 +1,8 @@
 # Elflaskhalsen: följd fråga (EL1)
 
+*Rättad efter granskningen R29 (rättningsspår X26, `docs/mattregister.md`, 2026-11-27 X26): EL1-S säger inte längre att Quantas förvärv är okontrollerade. De är kodade ur 10-K och 10-Q från 2023 (QA1), inte före, och märket står i LT1:s huvudläsning, som har samma X (R29-5). Övergångsnotisen för F0:s räkning säger att bytet väntar på ägarens bekräftelse (R29-1). Inga utslag ändrades.*
+
+
 *Tillägg S1 (`docs/mattregister.md`, 2026-11-27 S1, punkt 2 och 3): en nionde rad i avsnitt 5, orderstocken för elnät som förändring i takt mot capex i det inre lagret, bredvid de åtta låsta. Huvudläsningen är oförändrad. Raden är LT1:s huvudläsning med motsatt tecken och ingen ny observation. F0:s räkning av hur ofta regeln kunde prövas är ändrad (S1, punkt 3): ett ursprung räknas som prövat bara när Y finns i fönstret, och varje rad visar det gamla talet bredvid det nya i en övergångsnotis. Rapporterna nedan är genererade på nytt per 2026-11-27 och 2025-11-27. Utom datumen, räkningen och den nya raden är de desamma som per 2026-11-26 och 2025-11-26, så texten om de dagarna gäller också för de nya.*
 
 *Rättad efter granskningen R28 (rättningsspår X25, `docs/mattregister.md`, 2026-11-26 X25): förbehållet om sedda data avgörs nu per läsning och inte av läsdagen, och varje rad visar hur ofta Y var känt i hela fönstret och vilken riktning som inte har prövats (för elpriset mot capex var Y känt i 27 av 267 ursprung, inte 213). Inga utslag ändrades. Rapporterna nedan är genererade på nytt med kommandot.*
@@ -153,53 +156,53 @@ Alla läsningar nedan vilar bara på värden som var publicerade före registerp
 - **Elpris (PPI, kommersiella kunder):** inget av mönstren. t = 2026Q3 (ingen impuls i fönstret). X = el1_pris4 (takt), Y = kl_capex4_inner (förändring i takt); fönster 2 kvartal, tecken −.
   Regeln kunde prövas i 27 av 267 ursprung med X (1959Q4–2026Q2). Impulser uppåt 62 (för 7, emot 1, inget 0, kan inte avgöras 54), nedåt 0 (för 0, emot 0, inget 0, kan inte avgöras 0), utan impuls 205.
   Y var känt i hela fönstret i 27 av 267 ursprung, och 8 av 62 impulser kunde läsas mot Y. Riktningen nedåt har inte prövats: X har inte haft någon impuls nedåt.
-  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 213 av 267; med den nya: 27 av 267.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 213 av 267; med den nya: 27 av 267. Bytet väntar på ägarens bekräftelse (R29-1, registret 2026-11-27 X26, punkt 1).
   X har takt från 1959Q4 och Y förändring i takt från 2019Q4. Ett ursprung före 2019Q3 kan bara bli inget av mönstren (utan impuls) eller kan inte avgöras (Y saknas).
 - **Last (fem balansområden):** talar emot, uppåt. t = 2026Q3; ursprung 2026Q2, X +2,9 (gräns ±2,0), uppgång, Y +9,6 vid 2026Q3 (gräns ±5,0). X = el1_last4 (takt), Y = kl_capex4_inner (förändring i takt); fönster 2 kvartal, tecken −.
   Regeln kunde prövas i 23 av 23 ursprung med X (2020Q4–2026Q2). Impulser uppåt 15 (för 6, emot 7, inget 2, kan inte avgöras 0), nedåt 1 (för 1, emot 0, inget 0, kan inte avgöras 0), utan impuls 7.
   Y var känt i hela fönstret i 22 av 23 ursprung, och 16 av 16 impulser kunde läsas mot Y.
-  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 23 av 23; med den nya: 23 av 23.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 23 av 23; med den nya: 23 av 23. Bytet väntar på ägarens bekräftelse (R29-1, registret 2026-11-27 X26, punkt 1).
 - **Orderstock elnät (Quanta + Eaton, MUSD) (huvudläsning):** talar emot, uppåt. t = 2026Q3; ursprung 2026Q2, X +45,3 (gräns ±10,0), uppgång, Y +9,6 vid 2026Q3 (gräns ±5,0). X = el1_ob_nat (takt), Y = kl_capex4_inner (förändring i takt); fönster 2 kvartal, tecken −.
   Regeln kunde prövas i 20 av 20 ursprung med X (2021Q3–2026Q2). Impulser uppåt 20 (för 9, emot 9, inget 2, kan inte avgöras 0), nedåt 0 (för 0, emot 0, inget 0, kan inte avgöras 0), utan impuls 0.
   Y var känt i hela fönstret i 19 av 20 ursprung, och 20 av 20 impulser kunde läsas mot Y. Riktningen nedåt har inte prövats: X har inte haft någon impuls nedåt.
-  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 20 av 20; med den nya: 20 av 20.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 20 av 20; med den nya: 20 av 20. Bytet väntar på ägarens bekräftelse (R29-1, registret 2026-11-27 X26, punkt 1).
   Läsningen vilar bara på värden som var kända före registerposten 2026-11-26, och den är därför inget utfall på osedda data.
 - **Orderstock gasturbiner (GE Vernova, GW):** talar emot, uppåt. t = 2026Q3; ursprung 2026Q2, X +74,6 (gräns ±10,0), uppgång, Y +9,6 vid 2026Q3 (gräns ±5,0). X = ob_gev_backlog_and_slot_reservations_gas_power_equipment_end_level_gw (takt), Y = kl_capex4_inner (förändring i takt); fönster 2 kvartal, tecken −.
   Regeln kunde prövas i 2 av 2 ursprung med X (2026Q1–2026Q2). Impulser uppåt 2 (för 0, emot 2, inget 0, kan inte avgöras 0), nedåt 0 (för 0, emot 0, inget 0, kan inte avgöras 0), utan impuls 0.
   Y var känt i hela fönstret i 1 av 2 ursprung, och 2 av 2 impulser kunde läsas mot Y. Riktningen nedåt har inte prövats: X har inte haft någon impuls nedåt.
-  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 2 av 2; med den nya: 2 av 2.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 2 av 2; med den nya: 2 av 2. Bytet väntar på ägarens bekräftelse (R29-1, registret 2026-11-27 X26, punkt 1).
 
 **Mot tecknade MW (Digital Realty):**
 
 - **Elpris (PPI, kommersiella kunder):** inget av mönstren. t = 2026Q3 (ingen impuls i fönstret). X = el1_pris4 (takt), Y = el1_dlr_mw4 (förändring i takt); fönster 2 kvartal, tecken −.
   Regeln kunde prövas i 10 av 267 ursprung med X (1959Q4–2026Q2). Impulser uppåt 62 (för 0, emot 1, inget 0, kan inte avgöras 61), nedåt 0 (för 0, emot 0, inget 0, kan inte avgöras 0), utan impuls 205.
   Y var känt i hela fönstret i 10 av 267 ursprung, och 1 av 62 impulser kunde läsas mot Y. Riktningen nedåt har inte prövats: X har inte haft någon impuls nedåt.
-  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 206 av 267; med den nya: 10 av 267.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 206 av 267; med den nya: 10 av 267. Bytet väntar på ägarens bekräftelse (R29-1, registret 2026-11-27 X26, punkt 1).
   X har takt från 1959Q4 och Y förändring i takt från 2024Q1. Ett ursprung före 2023Q4 kan bara bli inget av mönstren (utan impuls) eller kan inte avgöras (Y saknas).
 - **Last (fem balansområden):** talar emot, uppåt. t = 2026Q3; ursprung 2026Q2, X +2,9 (gräns ±2,0), uppgång, Y +100,4 vid 2026Q3 (gräns ±10,0). X = el1_last4 (takt), Y = el1_dlr_mw4 (förändring i takt); fönster 2 kvartal, tecken −.
   Regeln kunde prövas i 11 av 23 ursprung med X (2020Q4–2026Q2). Impulser uppåt 15 (för 4, emot 5, inget 0, kan inte avgöras 6), nedåt 1 (för 0, emot 0, inget 0, kan inte avgöras 1), utan impuls 7.
   Y var känt i hela fönstret i 10 av 23 ursprung, och 9 av 16 impulser kunde läsas mot Y.
-  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 16 av 23; med den nya: 11 av 23.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 16 av 23; med den nya: 11 av 23. Bytet väntar på ägarens bekräftelse (R29-1, registret 2026-11-27 X26, punkt 1).
   X har takt från 2020Q4 och Y förändring i takt från 2024Q1. Ett ursprung före 2023Q4 kan bara bli inget av mönstren (utan impuls) eller kan inte avgöras (Y saknas).
 - **Orderstock elnät (Quanta + Eaton, MUSD):** talar emot, uppåt. t = 2026Q3; ursprung 2026Q2, X +45,3 (gräns ±10,0), uppgång, Y +100,4 vid 2026Q3 (gräns ±10,0). X = el1_ob_nat (takt), Y = el1_dlr_mw4 (förändring i takt); fönster 2 kvartal, tecken −.
   Regeln kunde prövas i 11 av 20 ursprung med X (2021Q3–2026Q2). Impulser uppåt 20 (för 4, emot 7, inget 0, kan inte avgöras 9), nedåt 0 (för 0, emot 0, inget 0, kan inte avgöras 0), utan impuls 0.
   Y var känt i hela fönstret i 10 av 20 ursprung, och 11 av 20 impulser kunde läsas mot Y. Riktningen nedåt har inte prövats: X har inte haft någon impuls nedåt.
-  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 11 av 20; med den nya: 11 av 20.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 11 av 20; med den nya: 11 av 20. Bytet väntar på ägarens bekräftelse (R29-1, registret 2026-11-27 X26, punkt 1).
   X har takt från 2021Q3 och Y förändring i takt från 2024Q1. Ett ursprung före 2023Q4 kan bara bli inget av mönstren (utan impuls) eller kan inte avgöras (Y saknas).
 - **Orderstock gasturbiner (GE Vernova, GW):** talar emot, uppåt. t = 2026Q3; ursprung 2026Q2, X +74,6 (gräns ±10,0), uppgång, Y +100,4 vid 2026Q3 (gräns ±10,0). X = ob_gev_backlog_and_slot_reservations_gas_power_equipment_end_level_gw (takt), Y = el1_dlr_mw4 (förändring i takt); fönster 2 kvartal, tecken −.
   Regeln kunde prövas i 2 av 2 ursprung med X (2026Q1–2026Q2). Impulser uppåt 2 (för 0, emot 2, inget 0, kan inte avgöras 0), nedåt 0 (för 0, emot 0, inget 0, kan inte avgöras 0), utan impuls 0.
   Y var känt i hela fönstret i 1 av 2 ursprung, och 2 av 2 impulser kunde läsas mot Y. Riktningen nedåt har inte prövats: X har inte haft någon impuls nedåt.
-  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 2 av 2; med den nya: 2 av 2.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 2 av 2; med den nya: 2 av 2. Bytet väntar på ägarens bekräftelse (R29-1, registret 2026-11-27 X26, punkt 1).
 
 **Tillägg S1 (registret 2026-11-27 S1, punkt 2): orderstock elnät som förändring i takt mot capex inre lagret.** En nionde rad bredvid de åtta låsta. Huvudläsningen ovan är oförändrad. X = förändringen i takt för orderstocken (gräns ±10,0), Y och tecken som i huvudläsningen. Förändringen i takt vänder när orderstocken växer långsammare än förut, också när den fortfarande växer, så riktningen nedåt kan inträffa.
 
 - **Orderstock elnät (Quanta + Eaton, MUSD), förändring i takt:** talar emot, uppåt. t = 2026Q3; ursprung 2026Q2, X +16,5 (gräns ±10,0), uppgång, Y +9,6 vid 2026Q3 (gräns ±5,0). X = el1_ob_nat (förändring i takt), Y = kl_capex4_inner (förändring i takt); fönster 2 kvartal, tecken −.
   Regeln kunde prövas i 18 av 18 ursprung med X (2022Q1–2026Q2). Impulser uppåt 4 (för 1, emot 2, inget 1, kan inte avgöras 0), nedåt 3 (för 3, emot 0, inget 0, kan inte avgöras 0), utan impuls 11.
   Y var känt i hela fönstret i 17 av 18 ursprung, och 7 av 7 impulser kunde läsas mot Y.
-  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 18 av 18; med den nya: 18 av 18.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 18 av 18; med den nya: 18 av 18. Bytet väntar på ägarens bekräftelse (R29-1, registret 2026-11-27 X26, punkt 1).
   Riktningen nedåt har inträffat: 3 impulser nedåt och 4 uppåt i 18 ursprung med X (nedåt: för 3, emot 0, inget 0, kan inte avgöras 0).
   Samma observation som LT1:s huvudläsning (L1 före K-inre, k = 2): samma X, statistik, gränser, fönster och Y, men tecken +. Utslagen är spegelvända (talar för där är talar emot här och tvärtom) och impulserna desamma, så raden ger ingen observation utöver LT1:s.
-  Förvärv flyttar förändringen i takt: uppåt vid förvärvets kvartal och kvartalet efter, nedåt fyra och fem kvartal senare (X25, punkt 2). Boyd Thermal ingår i Eatons orderstock från 2026Q1, och Quantas förvärv är inte kontrollerade (R28-7).
+  Förvärv flyttar förändringen i takt: uppåt vid förvärvets kvartal och kvartalet efter, nedåt fyra och fem kvartal senare (X25, punkt 2). Boyd Thermal ingår i Eatons orderstock från 2026Q1. Quantas förvärv är kodade ur 10-K och 10-Q från 2023 (`curated/acquisitions.csv`, registret 2026-11-27 QA1), inte före, och märket står i LT1:s huvudläsning, som har samma X (`docs/resultat/ledtid.md`). Raden har inget eget märke (registret 2026-11-27 S1, punkt 2, och X26, punkt 6).
   Läsningen vilar bara på värden som var kända före registerposten 2026-11-27, och den är därför inget utfall på osedda data.
 
 ### 6. Att bevaka
@@ -313,16 +316,16 @@ Alla läsningar nedan vilar bara på värden som var publicerade före registerp
 - **Elpris (PPI, kommersiella kunder):** kan inte avgöras. t = 2025Q3 (X saknas vid 2025Q2). X = el1_pris4 (takt), Y = kl_capex4_inner (förändring i takt); fönster 2 kvartal, tecken −.
   Regeln kunde prövas i 23 av 262 ursprung med X (1959Q4–2025Q1). Impulser uppåt 62 (för 7, emot 1, inget 0, kan inte avgöras 54), nedåt 0 (för 0, emot 0, inget 0, kan inte avgöras 0), utan impuls 200.
   Y var känt i hela fönstret i 23 av 262 ursprung, och 8 av 62 impulser kunde läsas mot Y. Riktningen nedåt har inte prövats: X har inte haft någon impuls nedåt.
-  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 208 av 262; med den nya: 23 av 262.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 208 av 262; med den nya: 23 av 262. Bytet väntar på ägarens bekräftelse (R29-1, registret 2026-11-27 X26, punkt 1).
   X har takt från 1959Q4 och Y förändring i takt från 2019Q4. Ett ursprung före 2019Q3 kan bara bli inget av mönstren (utan impuls) eller kan inte avgöras (Y saknas).
 - **Last (fem balansområden):** kan inte avgöras. t = 2025Q3; ursprung 2025Q2, X +2,9 (gräns ±2,0), uppgång (fönstret öppet till 2025Q4). X = el1_last4 (takt), Y = kl_capex4_inner (förändring i takt); fönster 2 kvartal, tecken −.
   Regeln kunde prövas i 18 av 19 ursprung med X (2020Q4–2025Q2). Impulser uppåt 11 (för 6, emot 4, inget 0, kan inte avgöras 1), nedåt 1 (för 1, emot 0, inget 0, kan inte avgöras 0), utan impuls 7.
   Y var känt i hela fönstret i 18 av 19 ursprung, och 11 av 12 impulser kunde läsas mot Y.
-  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 18 av 19; med den nya: 18 av 19.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 18 av 19; med den nya: 18 av 19. Bytet väntar på ägarens bekräftelse (R29-1, registret 2026-11-27 X26, punkt 1).
 - **Orderstock elnät (Quanta + Eaton, MUSD) (huvudläsning):** kan inte avgöras. t = 2025Q3; ursprung 2025Q2, X +21,5 (gräns ±10,0), uppgång (fönstret öppet till 2025Q4). X = el1_ob_nat (takt), Y = kl_capex4_inner (förändring i takt); fönster 2 kvartal, tecken −.
   Regeln kunde prövas i 15 av 16 ursprung med X (2021Q3–2025Q2). Impulser uppåt 16 (för 9, emot 6, inget 0, kan inte avgöras 1), nedåt 0 (för 0, emot 0, inget 0, kan inte avgöras 0), utan impuls 0.
   Y var känt i hela fönstret i 15 av 16 ursprung, och 15 av 16 impulser kunde läsas mot Y. Riktningen nedåt har inte prövats: X har inte haft någon impuls nedåt.
-  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 15 av 16; med den nya: 15 av 16.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 15 av 16; med den nya: 15 av 16. Bytet väntar på ägarens bekräftelse (R29-1, registret 2026-11-27 X26, punkt 1).
   Läsningen vilar bara på värden som var kända före registerposten 2026-11-26, och den är därför inget utfall på osedda data.
 - **Orderstock gasturbiner (GE Vernova, GW):** kan inte avgöras. t = 2025Q3 (X saknas vid 2025Q1; X saknas vid 2025Q2). X = ob_gev_backlog_and_slot_reservations_gas_power_equipment_end_level_gw (takt), Y = kl_capex4_inner (förändring i takt); fönster 2 kvartal, tecken −.
   Regeln kunde inte prövas: X saknas i hela historiken.
@@ -332,17 +335,17 @@ Alla läsningar nedan vilar bara på värden som var publicerade före registerp
 - **Elpris (PPI, kommersiella kunder):** kan inte avgöras. t = 2025Q3 (X saknas vid 2025Q2). X = el1_pris4 (takt), Y = el1_dlr_mw4 (förändring i takt); fönster 2 kvartal, tecken −.
   Regeln kunde prövas i 6 av 262 ursprung med X (1959Q4–2025Q1). Impulser uppåt 62 (för 0, emot 1, inget 0, kan inte avgöras 61), nedåt 0 (för 0, emot 0, inget 0, kan inte avgöras 0), utan impuls 200.
   Y var känt i hela fönstret i 6 av 262 ursprung, och 1 av 62 impulser kunde läsas mot Y. Riktningen nedåt har inte prövats: X har inte haft någon impuls nedåt.
-  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 201 av 262; med den nya: 6 av 262.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 201 av 262; med den nya: 6 av 262. Bytet väntar på ägarens bekräftelse (R29-1, registret 2026-11-27 X26, punkt 1).
   X har takt från 1959Q4 och Y förändring i takt från 2024Q1. Ett ursprung före 2023Q4 kan bara bli inget av mönstren (utan impuls) eller kan inte avgöras (Y saknas).
 - **Last (fem balansområden):** talar för mekanismen, uppåt. t = 2025Q3; ursprung 2025Q2, X +2,9 (gräns ±2,0), uppgång, Y -100,8 vid 2025Q3 (gräns ±10,0). X = el1_last4 (takt), Y = el1_dlr_mw4 (förändring i takt); fönster 2 kvartal, tecken −.
   Regeln kunde prövas i 7 av 19 ursprung med X (2020Q4–2025Q2). Impulser uppåt 11 (för 3, emot 2, inget 0, kan inte avgöras 6), nedåt 1 (för 0, emot 0, inget 0, kan inte avgöras 1), utan impuls 7.
   Y var känt i hela fönstret i 6 av 19 ursprung, och 5 av 12 impulser kunde läsas mot Y.
-  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 12 av 19; med den nya: 7 av 19.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 12 av 19; med den nya: 7 av 19. Bytet väntar på ägarens bekräftelse (R29-1, registret 2026-11-27 X26, punkt 1).
   X har takt från 2020Q4 och Y förändring i takt från 2024Q1. Ett ursprung före 2023Q4 kan bara bli inget av mönstren (utan impuls) eller kan inte avgöras (Y saknas).
 - **Orderstock elnät (Quanta + Eaton, MUSD):** talar för mekanismen, uppåt. t = 2025Q3; ursprung 2025Q2, X +21,5 (gräns ±10,0), uppgång, Y -100,8 vid 2025Q3 (gräns ±10,0). X = el1_ob_nat (takt), Y = el1_dlr_mw4 (förändring i takt); fönster 2 kvartal, tecken −.
   Regeln kunde prövas i 7 av 16 ursprung med X (2021Q3–2025Q2). Impulser uppåt 16 (för 3, emot 4, inget 0, kan inte avgöras 9), nedåt 0 (för 0, emot 0, inget 0, kan inte avgöras 0), utan impuls 0.
   Y var känt i hela fönstret i 6 av 16 ursprung, och 7 av 16 impulser kunde läsas mot Y. Riktningen nedåt har inte prövats: X har inte haft någon impuls nedåt.
-  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 7 av 16; med den nya: 7 av 16.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 7 av 16; med den nya: 7 av 16. Bytet väntar på ägarens bekräftelse (R29-1, registret 2026-11-27 X26, punkt 1).
   X har takt från 2021Q3 och Y förändring i takt från 2024Q1. Ett ursprung före 2023Q4 kan bara bli inget av mönstren (utan impuls) eller kan inte avgöras (Y saknas).
 - **Orderstock gasturbiner (GE Vernova, GW):** kan inte avgöras. t = 2025Q3 (X saknas vid 2025Q1; X saknas vid 2025Q2). X = ob_gev_backlog_and_slot_reservations_gas_power_equipment_end_level_gw (takt), Y = el1_dlr_mw4 (förändring i takt); fönster 2 kvartal, tecken −.
   Regeln kunde inte prövas: X saknas i hela historiken.
@@ -352,10 +355,10 @@ Alla läsningar nedan vilar bara på värden som var publicerade före registerp
 - **Orderstock elnät (Quanta + Eaton, MUSD), förändring i takt:** inget av mönstren. t = 2025Q3 (ingen impuls i fönstret). X = el1_ob_nat (förändring i takt), Y = kl_capex4_inner (förändring i takt); fönster 2 kvartal, tecken −.
   Regeln kunde prövas i 13 av 14 ursprung med X (2022Q1–2025Q2). Impulser uppåt 1 (för 1, emot 0, inget 0, kan inte avgöras 0), nedåt 3 (för 3, emot 0, inget 0, kan inte avgöras 0), utan impuls 10.
   Y var känt i hela fönstret i 13 av 14 ursprung, och 4 av 4 impulser kunde läsas mot Y.
-  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 14 av 14; med den nya: 13 av 14.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 14 av 14; med den nya: 13 av 14. Bytet väntar på ägarens bekräftelse (R29-1, registret 2026-11-27 X26, punkt 1).
   Riktningen nedåt har inträffat: 3 impulser nedåt och 1 uppåt i 14 ursprung med X (nedåt: för 3, emot 0, inget 0, kan inte avgöras 0).
   Samma observation som LT1:s huvudläsning (L1 före K-inre, k = 2): samma X, statistik, gränser, fönster och Y, men tecken +. Utslagen är spegelvända (talar för där är talar emot här och tvärtom) och impulserna desamma, så raden ger ingen observation utöver LT1:s.
-  Förvärv flyttar förändringen i takt: uppåt vid förvärvets kvartal och kvartalet efter, nedåt fyra och fem kvartal senare (X25, punkt 2). Boyd Thermal ingår i Eatons orderstock från 2026Q1, och Quantas förvärv är inte kontrollerade (R28-7).
+  Förvärv flyttar förändringen i takt: uppåt vid förvärvets kvartal och kvartalet efter, nedåt fyra och fem kvartal senare (X25, punkt 2). Boyd Thermal ingår i Eatons orderstock från 2026Q1. Quantas förvärv är kodade ur 10-K och 10-Q från 2023 (`curated/acquisitions.csv`, registret 2026-11-27 QA1), inte före, och märket står i LT1:s huvudläsning, som har samma X (`docs/resultat/ledtid.md`). Raden har inget eget märke (registret 2026-11-27 S1, punkt 2, och X26, punkt 6).
   Läsningen vilar bara på värden som var kända före registerposten 2026-11-27, och den är därför inget utfall på osedda data.
 
 ### 6. Att bevaka

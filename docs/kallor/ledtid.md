@@ -116,6 +116,16 @@ Systems anges med egen köpeskilling.
 | 2026Q4 | 1 bolag (stålstolpar) | efter 2026-09-30 (aktier vid ett slut 2026-10-14) | ej angiven | 10-Q 0001050915-26-000041 (2026-10-29) |
 
 Tolkningar och luckor:
+- **Etiketten per inlämningsdag (X26, efter R29-4).** Etiketten i CSV:n säger vad som var inlämnat om händelsen på radens
+  dag, inte vad som blev känt senare: 2024Q1 är "2 förvärv" i 10-K för 2023 (två slut i januari) och "3 förvärv" från
+  10-Q 2024-05-02, 2024Q2 "1 förvärv" 2024-05-02 och "2 förvärv" från 2024-08-01. Där dokumenten på dagen inte avgör
+  om en följande händelse och en slutdag gäller samma förvärv står "minst 1 förvärv" (2026Q3 per 2026-07-30, 2026Q4 per
+  2026-10-29). Rader för samma händelse och dag har samma etikett, och `acquisitions.load` kontrollerar det.
+- **Första angivna köpeskilling (X26, efter R29-4).** Två rader till (55 i stället för 53): Cupertino cirka 1 500 MUSD i
+  10-Q 2024-08-01 (utan förvärvad kassa, före justeringar och utan tilläggsköpeskilling) och Dynamic Systems cirka 1 350
+  MUSD vid tillträdet i 10-Q 2025-07-31 (före justeringar och tilläggsköpeskilling). Senare dokument ersätter dem i
+  märket. Båda kontrollerades mot ett nytt anrop till EDGAR 2026-11-27 (mening, hash, belopp och inlämningsdag), liksom
+  de sex rader vars etikett ändrades.
 - **2026Q3.** Del II punkt 2 nämner tre förvärv med aktier (07-10, 08-31 och 09-11), men antalet bolag för nio månader
   ökar med två (från 3 till 5). Ett av de tre kan vara ett förvärv som inte räknas som ett eget bolag. Raden har två
   bolag, som antalet säger.
@@ -123,7 +133,7 @@ Tolkningar och luckor:
   förvärv var 22,9 MUSD. Raden "inget" bygger på att förvärv saknas i dokumentet, och på att halvårets antal (3) är detsamma
   som antalet nya bolag i 2026Q2-dokumentet.
 - **Köpeskillingen** är verkligt värde av hela köpeskillingen (kontant, aktier och tilläggsköpeskilling) som bolaget
-  anger den. Senare dokument kan justera den (Cupertino: 1 967,7 → cirka 2 040 → 2 035,2). Märket använder den senast
+  anger den. Senare dokument kan justera den (Cupertino: cirka 1 500 → 1 967,7 → cirka 2 040 → 2 035,2; Dynamic Systems: cirka 1 350 → 1 668,6 → 1 673,3). Märket använder den senast
   kända på läsdagen.
 - **Andelar i intresseföretag** (40 % i en stolptillverkare 2025, 49 % i ett samriskbolag 2026) är inte rörelseförvärv
   och kodas inte.

@@ -304,13 +304,15 @@ def reading_lines(r: dict, label: str, nd: int = 1) -> list[str]:
 
 
 S1_REGISTERED = "2026-11-27"  # register "S1: symmetriska rader bredvid låsta regler"
+# register X26, point 1 (R29-1): S1 changed F0's count on a recommendation; no owner decision is logged yet
+PENDING_OWNER = "Bytet väntar på ägarens bekräftelse (R29-1, registret 2026-11-27 X26, punkt 1)."
 
 
 def transition_note(h: dict) -> str:
     """The transition note of register S1, point 3: the new count of tried origins next to F0 (b)'s count before S1."""
     return (f"Övergång (registret {S1_REGISTERED} S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i "
             f"fönstret. Med F0:s räkning före S1: {h['n_tested']} av {h['n_x']}; med den nya: {h['n_tried']} av "
-            f"{h['n_x']}.")
+            f"{h['n_x']}. {PENDING_OWNER}")
 
 
 def short(r: dict) -> str:

@@ -9,7 +9,8 @@ numbers and dates are kept here, never filing text.
   filings with its own parser (lxml, not the project's line list).
 - Properties that hold: PV1's months and weeks give the quarter R29 computed by hand, and a mirrored price gives the
   mirrored outcome on the real table.
-- Findings R29-2 to R29-5 are strict xfails: they pass once the finding is fixed.
+- Findings R29-2 to R29-5 were strict xfails; X26 (register 2026-11-27 X26) fixed them and they are plain tests now.
+  R29-2 is fixed by rows beside the locked ones (geometric mean), so the locked arithmetic mean is pinned as it is.
 """
 
 from __future__ import annotations
@@ -173,8 +174,8 @@ STEP = {**{str(m): 2.0 for m in pd.period_range("2024-01", "2024-08", freq="M")}
         **{str(m): 0.5 for m in pd.period_range("2024-09", "2026-06", freq="M")}}  # a price step in the quarter's last month
 
 
-def _change(values: dict[str, float]) -> dict[str, float]:
-    q = P.monthly_quarters(_monthly(P.PRICE_GPQA, values), (P.PRICE_GPQA,))
+def _change(values: dict[str, float], geometric: bool = False) -> dict[str, float]:
+    q = P.monthly_quarters(_monthly(P.PRICE_GPQA, values), (P.PRICE_GPQA,), geometric=geometric)
     pm = P.C.path_measures({k: v for k, (v, _) in q.items()}, "log")
     return {k: float(v) for k, v in pm["change"].dropna().items()}
 
@@ -185,18 +186,23 @@ def test_pv1_quarter_is_the_mean_of_its_three_months_r29_by_hand():
     assert q["2024Q3"][1] == "2024-10-01"
 
 
-@pytest.mark.xfail(strict=True, reason="R29-2: the arithmetic mean of the months is not symmetric in log terms, so a "
-                                       "mirrored price (1/x) does not give the mirrored change in pace")
 def test_pv1_mirrored_price_gives_the_mirrored_change_in_pace():
-    up = _change(STEP)
-    down = _change({m: 1.0 / v for m, v in STEP.items()})
+    """R29-2, fixed in X26: the geometric rows (H-G, a-G, b-G) are exactly symmetric."""
+    up = _change(STEP, geometric=True)
+    down = _change({m: 1.0 / v for m, v in STEP.items()}, geometric=True)
     assert up and set(up) == set(down)
     for q in up:
         assert math.isclose(up[q], -down[q], abs_tol=1e-6), (q, up[q], down[q])
 
 
-@pytest.mark.xfail(strict=True, reason="R29-3: the npm history (and the price history) is a backfill fetched "
-                                       "2026-11-23..26, and the report's caveats do not say so")
+def test_pv1_locked_arithmetic_mean_stays_as_registered_and_is_not_symmetric():
+    """X26 adds rows beside the locked ones: the locked arithmetic mean is unchanged, and R29's step example holds."""
+    up = _change(STEP)
+    down = _change({m: 1.0 / v for m, v in STEP.items()})
+    assert (round(up["2025Q3"], 1), round(down["2025Q3"], 1)) == (28.8, -69.3)  # no impulse one way, one the other
+    assert any(not math.isclose(up[q], -down[q], abs_tol=1e-6) for q in up)
+
+
 def test_pv1_report_says_the_history_is_a_backfill():
     doc = (RESULTS / "prisvolym.md").read_text(encoding="utf-8")
     caveats = doc.split("## 5. Förbehåll", 1)[1].split("\n## ", 1)[0]
@@ -206,15 +212,11 @@ def test_pv1_report_says_the_history_is_a_backfill():
 # ------------------------------------------------------------------ QA1: mark text on historical days
 
 
-@pytest.mark.xfail(strict=True, reason="R29-4: the event label is written with hindsight: on 2024-02-25 only the 10-K "
-                                       "for 2023 (two acquisitions in January 2024) was filed, the label says three")
 def test_qa1_label_states_only_what_was_filed_on_the_day():
     m = [x for x in ACQ.marks("pwr", "2024-02-25") if x[1] == "2024Q1"]
     assert m and "3 förvärv" not in m[0][0]
 
 
-@pytest.mark.xfail(strict=True, reason="R29-4: the 10-Q filed 2024-08-01 states Cupertino's consideration "
-                                       "(approximately 1.5 billion USD), and the CSV has no row for it")
 def test_qa1_cupertino_has_its_first_stated_consideration():
     m = [x for x in ACQ.marks("pwr", "2024-08-15") if "Cupertino" in x[0]]
     assert m and "MUSD" in m[0][0]
@@ -223,8 +225,6 @@ def test_qa1_cupertino_has_its_first_stated_consideration():
 # ------------------------------------------------------------------ S1: EL1-S text after QA1
 
 
-@pytest.mark.xfail(strict=True, reason="R29-5: EL1-S still says Quanta's acquisitions are unchecked (R28-7), which "
-                                       "QA1 resolved for 2023-2026 in the same run")
 def test_el1s_text_does_not_say_quanta_is_unchecked():
     phrase = "Quantas förvärv är inte kontrollerade"
     assert phrase not in inspect.getsource(E)

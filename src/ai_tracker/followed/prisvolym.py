@@ -16,12 +16,19 @@ common.path_measures (the formulas of state.measures). Months become quarters as
 months (aggregate.derive with monthly frequency); weeks belong to the quarter of their Thursday and a quarter is the
 mean of its weekly sums, only once every week of the quarter is known (register PV1, (b)).
 
+Beside the three locked readings, register X26 (point 2, after R29-2) adds H-G, a-G and b-G: the same series,
+statistic, bounds, window and sign, with the quarter as the geometric mean (exp of the mean of ln) of its months and
+of its weekly sums. ln of an arithmetic mean is not minus ln of the mean of the inverses, so with the locked arithmetic
+mean a mirrored price path (1/x) does not give the mirrored change in pace; with the geometric mean it does exactly.
+H stays the main reading.
+
 Only rows known on the as-of date are used: the table is cut at the day before anything is computed, so
 compute(d, table) equals compute(d, table truncated at d).
 """
 
 from __future__ import annotations
 
+import math
 from datetime import date
 
 import pandas as pd
@@ -49,6 +56,16 @@ DERIVED = {
     "pv1_kontroll_q": ("W", CONTROL),
 }
 RATIO = {"pv1_sdk_rel_q": ("pv1_sdk_q", "pv1_kontroll_q")}
+# register X26, point 2: the same quantities with the quarter as the geometric mean of its months or weekly sums
+DERIVED_G = {
+    "pv1_pris_gpqa_gq": ("M", (PRICE_GPQA,)),
+    "pv1_pris_arena_gq": ("M", (PRICE_ARENA,)),
+    "pv1_sdk_gq": ("W", SDK),
+    "pv1_kontroll_gq": ("W", CONTROL),
+}
+RATIO_G = {"pv1_sdk_rel_gq": ("pv1_sdk_gq", "pv1_kontroll_gq")}
+ALL_DERIVED = {**DERIVED, **DERIVED_G}
+ALL_RATIO = {**RATIO, **RATIO_G}
 
 CONTEXT_PRICE = ("g2_price_at_arena_capability_4o", "g2_price_at_capability", "g2_price_rolling12_eci",
                  "g2_price_rolling12_arena", "g2_price_rolling6_arena", "g2_price_frontier_arena")
@@ -64,6 +81,12 @@ READINGS = {  # name -> (X, Y)
     "b": ("pv1_pris_gpqa_q", "pv1_sdk_rel_q"),
 }
 MAIN = "H"
+READINGS_G = {  # register X26, point 2: beside the locked readings, not instead of them
+    "H-G": ("pv1_pris_gpqa_gq", "pv1_sdk_gq"),
+    "a-G": ("pv1_pris_arena_gq", "pv1_sdk_gq"),
+    "b-G": ("pv1_pris_gpqa_gq", "pv1_sdk_rel_gq"),
+}
+X26_REGISTERED = "2026-11-27"  # register "X26: rättning av S1, QA1 och PV1 efter granskningen R29"
 X_STAT = "change"
 G = 50.0  # X: change in pace of the price, log x100
 H = 20.0  # Y: change in pace of the downloads, log x100
@@ -73,6 +96,11 @@ SIGN = -1
 READING_NAME = {"H": "Pris vid fast förmåga (GPQA) mot SDK-nedladdningar (huvudläsning)",
                 "a": "Pris vid fast Arena-förmåga (variant A) mot SDK-nedladdningar (bisak a)",
                 "b": "Pris vid fast förmåga (GPQA) mot SDK-nedladdningar relativt kontrollpaketen (bisak b)"}
+READING_NAME.update({
+    "H-G": "Pris vid fast förmåga (GPQA) mot SDK-nedladdningar, geometriskt medel (H-G, bredvid H)",
+    "a-G": "Pris vid fast Arena-förmåga (variant A) mot SDK-nedladdningar, geometriskt medel (a-G, bredvid a)",
+    "b-G": "Pris vid fast förmåga (GPQA) mot SDK-nedladdningar relativt kontrollpaketen, geometriskt medel (b-G, "
+           "bredvid b)"})
 SHORT_NAME = {"a": "Bisak a (Arena-pris mot SDK)", "b": "Bisak b (GPQA-pris mot SDK relativt kontroll)"}
 
 LABEL = {
@@ -81,6 +109,11 @@ LABEL = {
     "pv1_sdk_q": "SDK-nedladdningar, openai + @anthropic-ai/sdk",
     "pv1_kontroll_q": "Kontrollpaket, react + express",
     "pv1_sdk_rel_q": "SDK relativt kontroll (kvot)",
+    "pv1_pris_gpqa_gq": "Pris vid fast förmåga, GPQA, geometriskt medel",
+    "pv1_pris_arena_gq": "Pris vid fast Arena-förmåga, variant A, geometriskt medel",
+    "pv1_sdk_gq": "SDK-nedladdningar, geometriskt medel",
+    "pv1_kontroll_gq": "Kontrollpaket, geometriskt medel",
+    "pv1_sdk_rel_gq": "SDK relativt kontroll, geometriska medel (kvot)",
     "g2_price_at_arena_capability_4o": "Pris vid fast Arena-förmåga, variant B (GPT-4o)",
     "g2_price_at_capability": "Pris vid fast förmåga, ECI (bakåtfylld)",
     "g2_price_rolling12_eci": "Pris vid rörlig tröskel, ECI, 12 mån",
@@ -98,7 +131,7 @@ LABEL = {
 def used_series() -> set[str]:
     """Every catalog series the report reads."""
     out = {*CONTEXT_PRICE, *CONTEXT_NPM}
-    for _, keys in DERIVED.values():
+    for _, keys in ALL_DERIVED.values():
         out.update(keys)
     return out
 
@@ -120,10 +153,28 @@ def monthly_formula(key: str, series: tuple[str, ...]) -> A.Formula:
     return A.Formula(key, tuple(A.Term(s, k, 1.0 / 3.0) for s in series for k in range(3)))
 
 
-def monthly_quarters(table: pd.DataFrame, series: tuple[str, ...], key: str = "pv1") -> dict[str, tuple[float, str]]:
+def _log_months(table: pd.DataFrame, series: tuple[str, ...]) -> pd.DataFrame:
+    """The rows of one monthly series with ln(value) (register X26, point 2). A month whose latest vintage on the day is
+    <= 0 has no logarithm: all its rows are dropped, so the quarter that needs it has no value."""
+    if len(series) != 1:
+        raise ValueError("the geometric mean of months is defined for one series")
+    t = table[table["series"] == series[0]].copy()
+    if t.empty:
+        return t
+    last = t.sort_values("known_from", kind="stable").groupby("period")["value"].last()
+    bad = set(last[last <= 0].index)
+    t = t[~t["period"].isin(bad) & (t["value"] > 0)].copy()
+    t["value"] = [math.log(v) for v in t["value"]]
+    return t
+
+
+def monthly_quarters(table: pd.DataFrame, series: tuple[str, ...], key: str = "pv1",
+                     geometric: bool = False) -> dict[str, tuple[float, str]]:
     """{quarter: (mean of its three months, known_from)} with aggregate.derive at monthly frequency: a quarter exists
-    only once all three months of every series are known, dated by the latest of them."""
-    rows = A.derive(monthly_formula(key, series), table, freq="M")
+    only once all three months of every series are known, dated by the latest of them. geometric=True (register X26,
+    point 2): exp of the mean of the months' ln, for one series."""
+    src = _log_months(table, series) if geometric else table
+    rows = A.derive(monthly_formula(key, series), src, freq="M")
     if rows.empty:
         return {}
     rows = rows.sort_values("known_from", kind="stable").groupby("period").last()
@@ -131,7 +182,8 @@ def monthly_quarters(table: pd.DataFrame, series: tuple[str, ...], key: str = "p
     for p, r in rows.iterrows():
         m = pd.Period(p, freq="M")
         if m.month % 3 == 0:
-            out[C.quarter(m)] = (float(r["value"]), str(pd.Timestamp(r["known_from"]).date()))
+            v = float(r["value"])
+            out[C.quarter(m)] = (math.exp(v) if geometric else v, str(pd.Timestamp(r["known_from"]).date()))
     return out
 
 
@@ -170,8 +222,11 @@ def weekly_sums(table: pd.DataFrame, series: tuple[str, ...]) -> dict[pd.Timesta
     return {w: (sum(x[w][0] for x in per), max(x[w][1] for x in per)) for w in sorted(weeks)}
 
 
-def weekly_quarters(table: pd.DataFrame, series: tuple[str, ...]) -> dict[str, tuple[float, str]]:
-    """{quarter: (mean of its weekly sums, known_from)}: a quarter only once every week that belongs to it is known."""
+def weekly_quarters(table: pd.DataFrame, series: tuple[str, ...],
+                    geometric: bool = False) -> dict[str, tuple[float, str]]:
+    """{quarter: (mean of its weekly sums, known_from)}: a quarter only once every week that belongs to it is known.
+    geometric=True (register X26, point 2): exp of the mean of ln of the weekly sums, and no quarter when a weekly sum
+    is <= 0."""
     ws = weekly_sums(table, series)
     if not ws:
         return {}
@@ -179,8 +234,14 @@ def weekly_quarters(table: pd.DataFrame, series: tuple[str, ...]) -> dict[str, t
     out = {}
     for q in qs:
         need = quarter_weeks(q)
-        if all(w in ws for w in need):
-            out[q] = (sum(ws[w][0] for w in need) / len(need), str(max(ws[w][1] for w in need).date()))
+        if not all(w in ws for w in need):
+            continue
+        kf = str(max(ws[w][1] for w in need).date())
+        vs = [ws[w][0] for w in need]
+        if not geometric:
+            out[q] = (sum(vs) / len(vs), kf)
+        elif all(v > 0 for v in vs):
+            out[q] = (math.exp(sum(math.log(v) for v in vs) / len(vs)), kf)
     return out
 
 
@@ -243,10 +304,10 @@ def classes(keys) -> dict[str, str]:
                 out[k] = licenses.classify(specs[k], specs)[0]
             except licenses.Unclassified:
                 out[k] = licenses.OKAND
-    for key, (_, comps) in DERIVED.items():
+    for key, (_, comps) in ALL_DERIVED.items():
         cs = [out.get(c, licenses.OKAND) for c in comps]
         out[key] = max(cs, key=lambda c: licenses.RANK[c])
-    for key, (a, b) in RATIO.items():
+    for key, (a, b) in ALL_RATIO.items():
         out[key] = max((out[a], out[b]), key=lambda c: licenses.RANK[c])
     return out
 
@@ -276,6 +337,18 @@ def decided(r: dict, x: dict, y: dict) -> list[dict]:
     rows = [C.origin_outcome(q, x, y, t, **kw) for q in qs]
     return [{"origin": o["origin"], "outcome": o["outcome"], "direction": o["direction"], "x": o["x"], "y": o["y"],
              "decided_at": o["decided_at"]} for o in rows if o["outcome"] in (C.FOR, C.AGAINST)]
+
+
+def fetch_summary(t: pd.DataFrame, when: pd.Timestamp) -> dict:
+    """When the rows the readings use were fetched (register X26, point 3): the history is a backfill fetched in one go,
+    with known_from set by rule, not archived vintages."""
+    inputs = {s for _, keys in DERIVED.values() for s in keys}
+    x = t[t["series"].isin(inputs)]
+    if x.empty or "fetched_at" not in x or x["fetched_at"].isna().all():
+        return {"n": int(len(x)), "first": None, "last": None, "after": 0}
+    f = pd.to_datetime(x["fetched_at"])
+    return {"n": int(len(x)), "first": str(f.min().date()), "last": str(f.max().date()),
+            "after": int((f.dt.normalize() > when.normalize()).sum())}
 
 
 def _week_known(monday: pd.Timestamp) -> pd.Timestamp:
@@ -313,7 +386,7 @@ def compute(as_of, table: pd.DataFrame | None = None) -> dict:
     table = observations.load() if table is None else table
     r = _compute(when, table)
     reg = _compute(pd.Timestamp(REGISTERED), table) if when > pd.Timestamp(REGISTERED) else None
-    for x in r["readings"].values():
+    for x in [*r["readings"].values(), *r["readings_geo"].values()]:  # X26 shares PV1's register day
         if reg is None:
             x["seen"] = True
             continue
@@ -330,13 +403,15 @@ def _compute(when: pd.Timestamp, table: pd.DataFrame) -> dict:
     t = _cut(table, when)
     ms: dict[str, dict] = {}
     vals: dict[str, dict] = {}
-    for key, (freq, series) in DERIVED.items():
-        vals[key] = monthly_quarters(t, series, key) if freq == "M" else weekly_quarters(t, series)
-    for key, (a, b) in RATIO.items():
+    for key, (freq, series) in ALL_DERIVED.items():
+        geo = key in DERIVED_G
+        vals[key] = (monthly_quarters(t, series, key, geometric=geo) if freq == "M"
+                     else weekly_quarters(t, series, geometric=geo))
+    for key, (a, b) in ALL_RATIO.items():
         vals[key] = {q: (vals[a][q][0] / vals[b][q][0], max(vals[a][q][1], vals[b][q][1]))
                      for q in vals[a] if q in vals[b] and vals[b][q][0] > 0}
     for key, v in vals.items():
-        freq, series = DERIVED.get(key, ("Q", RATIO.get(key, ())))
+        freq, series = ALL_DERIVED.get(key, ("Q", ALL_RATIO.get(key, ())))
         m = quarterly_measure(key, v, {"components": list(series), "freq_in": freq})
         if m["available"]:
             nxt = C.plus(m["period"], 1)
@@ -350,16 +425,19 @@ def _compute(when: pd.Timestamp, table: pd.DataFrame) -> dict:
     for key in CONTEXT_NPM:
         if key not in ms:
             ms[key] = quarterly_measure(key, weekly_quarters(t, (key,)), {"components": [key], "freq_in": "W"})
-    readings = {}
-    for name, (x, y) in READINGS.items():
-        rr = C.read_measures(ms[x], ms[y], x_stat=X_STAT, g=G, h=H, k=K, sign=SIGN)
-        readings[name] = {**rr, "name": name, "x_first": first_known(ms[x], X_STAT),
-                          "y_first": first_known(ms[y], "change"),
-                          "decided": decided(rr, C.series_of(ms[x], X_STAT), C.series_of(ms[y], "change"))}
+    readings: dict[str, dict] = {}
+    readings_geo: dict[str, dict] = {}
+    for target, spec in ((readings, READINGS), (readings_geo, READINGS_G)):
+        for name, (x, y) in spec.items():
+            rr = C.read_measures(ms[x], ms[y], x_stat=X_STAT, g=G, h=H, k=K, sign=SIGN)
+            target[name] = {**rr, "name": name, "x_first": first_known(ms[x], X_STAT),
+                            "y_first": first_known(ms[y], "change"),
+                            "decided": decided(rr, C.series_of(ms[x], X_STAT), C.series_of(ms[y], "change"))}
     report = {
         "question": QUESTION, "as_of": str(when.date()), "generated": str(date.today()),
         "params": {"g": G, "h": H, "k": K, "sign": SIGN, "x_stat": X_STAT, "main": MAIN},
-        "measures": ms, "readings": readings, "classes": classes(used_series()),
+        "measures": ms, "readings": readings, "readings_geo": readings_geo, "classes": classes(used_series()),
+        "fetch": fetch_summary(t, when),
     }
     report["next_unseen"], report["next_unseen_date"] = next_unseen(report)
     return report
@@ -375,9 +453,9 @@ def _who(key: str) -> str:
 
 
 def _level(key: str):
-    if key.startswith("g3_npm") or key in ("pv1_sdk_q", "pv1_kontroll_q"):
+    if key.startswith("g3_npm") or key in ("pv1_sdk_q", "pv1_kontroll_q", "pv1_sdk_gq", "pv1_kontroll_gq"):
         return lambda x: "–" if C.num(x) is None else f"{_f(x / 1e6, 1)} M/vecka"
-    if key == "pv1_sdk_rel_q":
+    if key in ("pv1_sdk_rel_q", "pv1_sdk_rel_gq"):
         return lambda x: _f(x, 3)
     return lambda x: "–" if C.num(x) is None else f"{_f(x, 4)} USD"
 
@@ -523,8 +601,61 @@ def render(r: dict) -> str:
             "- **Korta serier.** GPQA-priset har förändring i takt först från 2026Q4. Med en handfull ursprung är detta "
             "en beskrivning och inget test, och utfall kan vara slump.",
             "- **Licens.** npm-serierna har klassen `okänd` och `publish=False`, Arena-variant A `okänd`. GPQA-priset har "
-            "`ja`. Cloudflare Radar (`nej`) används inte.", ""]
+            "`ja`. Cloudflare Radar (`nej`) används inte.",
+            backfill_caveat(r), ""]
+    out += render_geo(r)
     return "\n".join(out)
+
+
+def backfill_caveat(r: dict) -> str:
+    """Register X26, point 3 (R29-3): the history is a backfill."""
+    f = r.get("fetch") or {}
+    when = (f"hämtade {f['first']}–{f['last']}" if f.get("first") and f["first"] != f["last"]
+            else f"hämtade {f['first']}" if f.get("first") else "utan hämtningsdatum")
+    after = (f" {f['after']} av {f['n']} rader som läsningarna använder hämtades efter läsdagen." if f.get("after")
+             else f" Ingen av de {f.get('n', 0)} rader som läsningarna använder hämtades efter läsdagen, men de "
+                  "hämtades ändå i efterhand i en omgång.")
+    return ("- **Historiken är backfill.** Pris- och npm-raderna är " + when + ", i efterhand, med `known_from` satt "
+            "efter en regel (prisserierna vid månadsslut eller dagen efter, npm söndag + 2 dagar), inte som arkiverade "
+            "versioner. \"Bara data kända på dagen\" gäller därför `known_from` och inte vad källan visade då: en läsning "
+            "per en tidigare dag kan innehålla revideringar och rättningar som inte var kända den dagen." + after)
+
+
+def _same_text(geo: dict, locked: dict) -> str:
+    if geo["outcome"] == locked["outcome"] and short(geo) == short(locked):
+        return "Samma utslag som den låsta raden."
+    return f"Den låsta raden: {short(locked)}."
+
+
+def render_geo(r: dict) -> list[str]:
+    """Register X26, point 2 (R29-2): H-G, a-G and b-G beside the locked readings, in a section of their own."""
+    out = ["## 6. Geometriskt kvartalsmedel (tillägg X26, bredvid de låsta raderna)", "",
+           "Tre rader bredvid H, a och b (`docs/mattregister.md`, 2026-11-27 X26, punkt 2, efter granskningen R29-2). "
+           "Samma källserier, statistik, gränser, fönster och tecken. Det enda som skiljer är kvartalsvärdet: det "
+           "geometriska medlet, exp(medlet av ln), av kvartalets tre månader och av veckosummorna. Med det aritmetiska "
+           "medlet ger en speglad prisbana (1/x) inte den speglade förändringen i takt, så riktningen kan avgöra om en "
+           "impuls uppstår. Med det geometriska medlet ger den exakt det speglade utslaget. Huvudläsningen är "
+           "fortfarande H. Om H-G ska ersätta H är ett beslut för ägaren före den första osedda läsningen.", ""]
+    out += _table(r, ["pv1_pris_gpqa_gq", "pv1_pris_arena_gq", "pv1_sdk_gq", "pv1_kontroll_gq", "pv1_sdk_rel_gq"])
+    out.append("")
+    locked = {"H-G": "H", "a-G": "a", "b-G": "b"}
+    for name, rr in r["readings_geo"].items():
+        label = READING_NAME[name]
+        lines = C.reading_lines(rr, label)
+        lines[0] = lines[0].replace(f"**{label}:** {rr['text']}", f"**{label}:** {short(rr)}", 1)
+        if rr.get("x_first") is None:
+            lines.append("  X har ännu ingen förändring i takt på dagen (serien är för kort), så varje ursprung kan "
+                         "inte avgöras.")
+        else:
+            lines.append(f"  X har förändring i takt från {rr['x_first']}.")
+        lines += _decided_lines(rr)
+        lines.append("  " + _same_text(rr, r["readings"][locked[name]]))
+        if rr.get("seen") is False:
+            lines.append(f"  **Osedd:** läsningen vilar på värden som blev kända efter registerposten {X26_REGISTERED}.")
+        else:
+            lines.append("  " + C.seen_text(True, X26_REGISTERED))
+        out += lines
+    return out + [""]
 
 
 # ------------------------------------------------------------------ antenna (register PV1, (h))
@@ -541,6 +672,9 @@ def antenna(r: dict) -> dict:
     hh = main["history"]
     facts["Huvudläsningen, impulser upp/ned"] = f"{hh['impulses_up']}/{hh['impulses_down']} av {hh['n_x']} ursprung"
     facts["Huvudläsningen på osedda data"] = "nej" if main.get("seen", True) else "ja"
+    geo = r.get("readings_geo") or {}
+    if geo:  # register X26, point 2: beside the locked readings, not the row's outcome
+        facts["Geometriskt medel H-G / a-G / b-G (X26)"] = " / ".join(short(geo[n]) for n in ("H-G", "a-G", "b-G"))
     inputs = {"x": [PRICE_GPQA], "y": list(SDK), "x_stat": "förändring i takt", "sign": SIGN}
     return C.antenna_row(QUESTION, main["outcome"], short(main), main["t"], facts, r["next_unseen"],
                          r["next_unseen_date"], inputs)

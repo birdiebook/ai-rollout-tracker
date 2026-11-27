@@ -1,5 +1,8 @@
 # Kreditlagret: följd fråga (KL1)
 
+*Efter granskningen R29 (rättningsspår X26, `docs/mattregister.md`, 2026-11-27 X26, punkt 1): övergångsnotisen för F0:s räkning av prövade ursprung säger att bytet i S1, punkt 3, väntar på ägarens bekräftelse (R29-1). Inget annat ändrades, och KL1:s låsta avsnitt 1–7 är oförändrade.*
+
+
 *Tillägg S1 (`docs/mattregister.md`, 2026-11-27 S1, punkt 1): rapporten har ett nytt avsnitt 8, en symmetrisk läsning med F0:s regel per pris- och beroendemått mot samma enhets capex-takt (tecken −), bredvid den låsta läsningen. Avsnitt 1–7 är byte för byte desamma som med koden före S1, och huvudläsningen är den låsta. Rapporterna nedan är genererade på nytt per 2026-11-27 och 2025-11-27. Utom datumen och avsnitt 8 är de desamma som per 2026-11-25 och 2025-11-25, så texten om de dagarna gäller också för de nya. Undantag: per 2026-11-27 saknar avsnitt 4 stycket om sedda data, eftersom den låsta rapporten avgör det av läsdagen (efter 2026-11-25) och inte per läsning. Inget kvartal i KL1:s serier blev känt efter 2026-11-25, så läsningen är fortfarande på sedda data.*
 
 **Frågan:** Ändras finansieringens pris och tillgång i de yttre lagren, och följer investeringstakten där med?
@@ -310,17 +313,17 @@ Alla rader vilar bara på värden som var kända före registerposten 2026-11-27
 - **(capex − OCF) / capex:** kan inte avgöras. t = 2026Q3; ursprung 2026Q2, X +15,2 (gräns ±5,0), uppgång (Y saknas vid 2026Q3). X = kl_fcfgap_outer (takt), Y = kl_capex4_outer (förändring i takt); fönster 2 kvartal, tecken −.
   Regeln kunde prövas i 0 av 1 ursprung med X (2026Q2–2026Q2). Impulser uppåt 1 (för 0, emot 0, inget 0, kan inte avgöras 1), nedåt 0 (för 0, emot 0, inget 0, kan inte avgöras 0), utan impuls 0.
   Y var känt i hela fönstret i 0 av 1 ursprung, och 0 av 1 impulser kunde läsas mot Y. Riktningen nedåt har inte prövats: X har inte haft någon impuls nedåt.
-  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 0 av 1; med den nya: 0 av 1.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 0 av 1; med den nya: 0 av 1. Bytet väntar på ägarens bekräftelse (R29-1, registret 2026-11-27 X26, punkt 1).
   `kl_capex4_outer` har ingen förändring i takt på dagen (serien är för kort), så Y saknas i varje fönster.
 - **(emitterad − amorterad skuld) / capex:** kan inte avgöras. t = 2026Q3; ursprung 2026Q2, X +36,0 (gräns ±5,0), uppgång (Y saknas vid 2026Q3). X = kl_netdebt_outer (takt), Y = kl_capex4_outer (förändring i takt); fönster 2 kvartal, tecken −.
   Regeln kunde prövas i 0 av 3 ursprung med X (2025Q4–2026Q2). Impulser uppåt 2 (för 0, emot 0, inget 0, kan inte avgöras 2), nedåt 0 (för 0, emot 0, inget 0, kan inte avgöras 0), utan impuls 1.
   Y var känt i hela fönstret i 0 av 3 ursprung, och 0 av 2 impulser kunde läsas mot Y. Riktningen nedåt har inte prövats: X har inte haft någon impuls nedåt.
-  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 1 av 3; med den nya: 0 av 3.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 1 av 3; med den nya: 0 av 3. Bytet väntar på ägarens bekräftelse (R29-1, registret 2026-11-27 X26, punkt 1).
   `kl_capex4_outer` har ingen förändring i takt på dagen (serien är för kort), så Y saknas i varje fönster.
 - **Leasingavtal som inte börjat / capex:** kan inte avgöras. t = 2026Q3; ursprung 2026Q2, X +127,8 (gräns ±5,0), uppgång (Y saknas vid 2026Q3). X = kl_leases_outer (takt), Y = kl_capex4_outer (förändring i takt); fönster 2 kvartal, tecken −.
   Regeln kunde prövas i 0 av 2 ursprung med X (2026Q1–2026Q2). Impulser uppåt 2 (för 0, emot 0, inget 0, kan inte avgöras 2), nedåt 0 (för 0, emot 0, inget 0, kan inte avgöras 0), utan impuls 0.
   Y var känt i hela fönstret i 0 av 2 ursprung, och 0 av 2 impulser kunde läsas mot Y. Riktningen nedåt har inte prövats: X har inte haft någon impuls nedåt.
-  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 0 av 2; med den nya: 0 av 2.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 0 av 2; med den nya: 0 av 2. Bytet väntar på ägarens bekräftelse (R29-1, registret 2026-11-27 X26, punkt 1).
   `kl_capex4_outer` har ingen förändring i takt på dagen (serien är för kort), så Y saknas i varje fönster.
 
 **Inre lagret** (Y = `kl_capex4_inner`):
@@ -330,34 +333,34 @@ Alla rader vilar bara på värden som var kända före registerposten 2026-11-27
 - **(capex − OCF) / capex:** talar emot, uppåt. t = 2026Q3; ursprung 2026Q2, X +40,0 (gräns ±5,0), uppgång, Y +9,6 vid 2026Q3 (gräns ±5,0). X = kl_fcfgap_inner (takt), Y = kl_capex4_inner (förändring i takt); fönster 2 kvartal, tecken −.
   Regeln kunde prövas i 28 av 29 ursprung med X (2019Q2–2026Q2). Impulser uppåt 19 (för 8, emot 8, inget 3, kan inte avgöras 0), nedåt 9 (för 5, emot 3, inget 0, kan inte avgöras 1), utan impuls 1.
   Y var känt i hela fönstret i 27 av 29 ursprung, och 27 av 28 impulser kunde läsas mot Y.
-  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 28 av 29; med den nya: 28 av 29.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 28 av 29; med den nya: 28 av 29. Bytet väntar på ägarens bekräftelse (R29-1, registret 2026-11-27 X26, punkt 1).
 - **(emitterad − amorterad skuld) / capex:** talar emot, uppåt. t = 2026Q3; ursprung 2026Q2, X +33,8 (gräns ±5,0), uppgång, Y +9,6 vid 2026Q3 (gräns ±5,0). X = kl_netdebt_inner (takt), Y = kl_capex4_inner (förändring i takt); fönster 2 kvartal, tecken −.
   Regeln kunde prövas i 28 av 29 ursprung med X (2019Q2–2026Q2). Impulser uppåt 14 (för 4, emot 7, inget 3, kan inte avgöras 0), nedåt 9 (för 5, emot 3, inget 0, kan inte avgöras 1), utan impuls 6.
   Y var känt i hela fönstret i 27 av 29 ursprung, och 22 av 23 impulser kunde läsas mot Y.
-  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 28 av 29; med den nya: 28 av 29.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 28 av 29; med den nya: 28 av 29. Bytet väntar på ägarens bekräftelse (R29-1, registret 2026-11-27 X26, punkt 1).
 - **Leasingavtal som inte börjat / capex:** talar emot, uppåt. t = 2026Q3; ursprung 2026Q2, X +62,9 (gräns ±5,0), uppgång, Y +9,6 vid 2026Q3 (gräns ±5,0). X = kl_leases_inner (takt), Y = kl_capex4_inner (förändring i takt); fönster 2 kvartal, tecken −.
   Regeln kunde prövas i 19 av 19 ursprung med X (2021Q4–2026Q2). Impulser uppåt 11 (för 0, emot 9, inget 2, kan inte avgöras 0), nedåt 7 (för 0, emot 7, inget 0, kan inte avgöras 0), utan impuls 1.
   Y var känt i hela fönstret i 18 av 19 ursprung, och 18 av 18 impulser kunde läsas mot Y.
-  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 19 av 19; med den nya: 19 av 19.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 19 av 19; med den nya: 19 av 19. Bytet väntar på ägarens bekräftelse (R29-1, registret 2026-11-27 X26, punkt 1).
 
 **Oracle** (Y = `kl_capex4_orcl`):
 
 - **Effektiv ränta:** inget av mönstren. t = 2026Q3 (ingen impuls i fönstret). X = kl_rate_eff_orcl (takt), Y = kl_capex4_orcl (förändring i takt); fönster 2 kvartal, tecken −.
   Regeln kunde prövas i 20 av 21 ursprung med X (2021Q2–2026Q2). Impulser uppåt 3 (för 3, emot 0, inget 0, kan inte avgöras 0), nedåt 1 (för 1, emot 0, inget 0, kan inte avgöras 0), utan impuls 17.
   Y var känt i hela fönstret i 20 av 21 ursprung, och 4 av 4 impulser kunde läsas mot Y.
-  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 21 av 21; med den nya: 20 av 21.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 21 av 21; med den nya: 20 av 21. Bytet väntar på ägarens bekräftelse (R29-1, registret 2026-11-27 X26, punkt 1).
 - **(capex − OCF) / capex:** talar för mekanismen, uppåt. t = 2026Q3; ursprung 2026Q2, X +40,7 (gräns ±5,0), uppgång, Y -15,8 vid 2026Q3 (gräns ±5,0). X = kl_fcfgap_orcl (takt), Y = kl_capex4_orcl (förändring i takt); fönster 2 kvartal, tecken −.
   Regeln kunde prövas i 56 av 57 ursprung med X (2012Q2–2026Q2). Impulser uppåt 38 (för 14, emot 23, inget 0, kan inte avgöras 1), nedåt 17 (för 9, emot 8, inget 0, kan inte avgöras 0), utan impuls 2.
   Y var känt i hela fönstret i 55 av 57 ursprung, och 54 av 55 impulser kunde läsas mot Y.
-  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 56 av 57; med den nya: 56 av 57.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 56 av 57; med den nya: 56 av 57. Bytet väntar på ägarens bekräftelse (R29-1, registret 2026-11-27 X26, punkt 1).
 - **(emitterad − amorterad skuld) / capex:** talar för mekanismen, uppåt. t = 2026Q3; ursprung 2026Q2, X +52,9 (gräns ±5,0), uppgång, Y -15,8 vid 2026Q3 (gräns ±5,0). X = kl_netdebt_orcl (takt), Y = kl_capex4_orcl (förändring i takt); fönster 2 kvartal, tecken −.
   Regeln kunde prövas i 41 av 41 ursprung med X (2016Q2–2026Q2). Impulser uppåt 17 (för 5, emot 12, inget 0, kan inte avgöras 0), nedåt 24 (för 12, emot 12, inget 0, kan inte avgöras 0), utan impuls 0.
   Y var känt i hela fönstret i 40 av 41 ursprung, och 41 av 41 impulser kunde läsas mot Y.
-  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 41 av 41; med den nya: 41 av 41.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 41 av 41; med den nya: 41 av 41. Bytet väntar på ägarens bekräftelse (R29-1, registret 2026-11-27 X26, punkt 1).
 - **Leasingavtal som inte börjat / capex:** talar för mekanismen, uppåt. t = 2026Q3; ursprung 2026Q2, X +262,5 (gräns ±5,0), uppgång, Y -15,8 vid 2026Q3 (gräns ±5,0). X = kl_leases_orcl (takt), Y = kl_capex4_orcl (förändring i takt); fönster 2 kvartal, tecken −.
   Regeln kunde prövas i 7 av 7 ursprung med X (2024Q4–2026Q2). Impulser uppåt 5 (för 3, emot 2, inget 0, kan inte avgöras 0), nedåt 2 (för 2, emot 0, inget 0, kan inte avgöras 0), utan impuls 0.
   Y var känt i hela fönstret i 6 av 7 ursprung, och 7 av 7 impulser kunde läsas mot Y.
-  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 7 av 7; med den nya: 7 av 7.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 7 av 7; med den nya: 7 av 7. Bytet väntar på ägarens bekräftelse (R29-1, registret 2026-11-27 X26, punkt 1).
 
 **CoreWeave** (Y = `kl_capex4_crwv`):
 
@@ -366,29 +369,29 @@ Alla rader vilar bara på värden som var kända före registerposten 2026-11-27
 - **(capex − OCF) / capex:** talar för mekanismen, nedåt. t = 2026Q3; ursprung 2026Q2, X -26,2 (gräns ±5,0), nedgång, Y +35,7 vid 2026Q3 (gräns ±5,0). X = kl_fcfgap_crwv (takt), Y = kl_capex4_crwv (förändring i takt); fönster 2 kvartal, tecken −.
   Regeln kunde prövas i 2 av 3 ursprung med X (2025Q4–2026Q2). Impulser uppåt 0 (för 0, emot 0, inget 0, kan inte avgöras 0), nedåt 2 (för 2, emot 0, inget 0, kan inte avgöras 0), utan impuls 1.
   Y var känt i hela fönstret i 1 av 3 ursprung, och 2 av 2 impulser kunde läsas mot Y. Riktningen uppåt har inte prövats: X har inte haft någon impuls uppåt.
-  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 3 av 3; med den nya: 2 av 3.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 3 av 3; med den nya: 2 av 3. Bytet väntar på ägarens bekräftelse (R29-1, registret 2026-11-27 X26, punkt 1).
 - **(emitterad − amorterad skuld) / capex:** talar för mekanismen, nedåt. t = 2026Q3; ursprung 2026Q1, X -12,5 (gräns ±5,0), nedgång, Y +70,6 vid 2026Q2 (gräns ±5,0). X = kl_netdebt_crwv (takt), Y = kl_capex4_crwv (förändring i takt); fönster 2 kvartal, tecken −.
   Regeln kunde prövas i 1 av 3 ursprung med X (2025Q4–2026Q2). Impulser uppåt 1 (för 0, emot 0, inget 0, kan inte avgöras 1), nedåt 1 (för 1, emot 0, inget 0, kan inte avgöras 0), utan impuls 1.
   Y var känt i hela fönstret i 1 av 3 ursprung, och 1 av 2 impulser kunde läsas mot Y.
-  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 2 av 3; med den nya: 1 av 3.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 2 av 3; med den nya: 1 av 3. Bytet väntar på ägarens bekräftelse (R29-1, registret 2026-11-27 X26, punkt 1).
 - **Leasingavtal som inte börjat / capex:** talar för mekanismen, nedåt. t = 2026Q3; ursprung 2026Q2, X -224,0 (gräns ±5,0), nedgång, Y +35,7 vid 2026Q3 (gräns ±5,0). X = kl_leases_crwv (takt), Y = kl_capex4_crwv (förändring i takt); fönster 2 kvartal, tecken −.
   Regeln kunde prövas i 2 av 2 ursprung med X (2026Q1–2026Q2). Impulser uppåt 1 (för 0, emot 1, inget 0, kan inte avgöras 0), nedåt 1 (för 1, emot 0, inget 0, kan inte avgöras 0), utan impuls 0.
   Y var känt i hela fönstret i 1 av 2 ursprung, och 2 av 2 impulser kunde läsas mot Y.
-  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 2 av 2; med den nya: 2 av 2.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 2 av 2; med den nya: 2 av 2. Bytet väntar på ägarens bekräftelse (R29-1, registret 2026-11-27 X26, punkt 1).
 
 **Nebius** (Y = `kl_capex4_nbis`):
 
 - **(capex − OCF) / capex:** talar för mekanismen, nedåt. t = 2026Q3; ursprung 2026Q2, X -75,2 (gräns ±5,0), nedgång, Y +44,0 vid 2026Q3 (gräns ±5,0). X = kl_fcfgap_nbis (takt), Y = kl_capex4_nbis (förändring i takt); fönster 2 kvartal, tecken −.
   Regeln kunde prövas i 2 av 3 ursprung med X (2025Q4–2026Q2). Impulser uppåt 0 (för 0, emot 0, inget 0, kan inte avgöras 0), nedåt 3 (för 2, emot 0, inget 0, kan inte avgöras 1), utan impuls 0.
   Y var känt i hela fönstret i 1 av 3 ursprung, och 2 av 3 impulser kunde läsas mot Y. Riktningen uppåt har inte prövats: X har inte haft någon impuls uppåt.
-  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 2 av 3; med den nya: 2 av 3.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 2 av 3; med den nya: 2 av 3. Bytet väntar på ägarens bekräftelse (R29-1, registret 2026-11-27 X26, punkt 1).
 
 **IREN** (Y = `kl_capex4_iren`):
 
 - **(capex − OCF) / capex:** kan inte avgöras. t = 2026Q3; ursprung 2026Q2, X -27,2 (gräns ±5,0), nedgång (Y saknas vid 2026Q3). X = kl_fcfgap_iren (takt), Y = kl_capex4_iren (förändring i takt); fönster 2 kvartal, tecken −.
   Regeln kunde prövas i 0 av 1 ursprung med X (2026Q2–2026Q2). Impulser uppåt 0 (för 0, emot 0, inget 0, kan inte avgöras 0), nedåt 1 (för 0, emot 0, inget 0, kan inte avgöras 1), utan impuls 0.
   Y var känt i hela fönstret i 0 av 1 ursprung, och 0 av 1 impulser kunde läsas mot Y. Riktningen uppåt har inte prövats: X har inte haft någon impuls uppåt.
-  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 0 av 1; med den nya: 0 av 1.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 0 av 1; med den nya: 0 av 1. Bytet väntar på ägarens bekräftelse (R29-1, registret 2026-11-27 X26, punkt 1).
   `kl_capex4_iren` har ingen förändring i takt på dagen (serien är för kort), så Y saknas i varje fönster.
 
 ## Kreditlagret per 2025-11-27
@@ -613,34 +616,34 @@ Alla rader vilar bara på värden som var kända före registerposten 2026-11-27
 - **(capex − OCF) / capex:** kan inte avgöras. t = 2025Q3; ursprung 2025Q2, X +62,3 (gräns ±5,0), uppgång (fönstret öppet till 2025Q4). X = kl_fcfgap_inner (takt), Y = kl_capex4_inner (förändring i takt); fönster 2 kvartal, tecken −.
   Regeln kunde prövas i 23 av 25 ursprung med X (2019Q2–2025Q2). Impulser uppåt 15 (för 8, emot 5, inget 1, kan inte avgöras 1), nedåt 9 (för 5, emot 3, inget 0, kan inte avgöras 1), utan impuls 1.
   Y var känt i hela fönstret i 23 av 25 ursprung, och 22 av 24 impulser kunde läsas mot Y.
-  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 23 av 25; med den nya: 23 av 25.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 23 av 25; med den nya: 23 av 25. Bytet väntar på ägarens bekräftelse (R29-1, registret 2026-11-27 X26, punkt 1).
 - **(emitterad − amorterad skuld) / capex:** kan inte avgöras. t = 2025Q3; ursprung 2025Q2, X +11,2 (gräns ±5,0), uppgång (fönstret öppet till 2025Q4). X = kl_netdebt_inner (takt), Y = kl_capex4_inner (förändring i takt); fönster 2 kvartal, tecken −.
   Regeln kunde prövas i 23 av 25 ursprung med X (2019Q2–2025Q2). Impulser uppåt 10 (för 4, emot 4, inget 1, kan inte avgöras 1), nedåt 9 (för 5, emot 3, inget 0, kan inte avgöras 1), utan impuls 6.
   Y var känt i hela fönstret i 23 av 25 ursprung, och 17 av 19 impulser kunde läsas mot Y.
-  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 23 av 25; med den nya: 23 av 25.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 23 av 25; med den nya: 23 av 25. Bytet väntar på ägarens bekräftelse (R29-1, registret 2026-11-27 X26, punkt 1).
 - **Leasingavtal som inte börjat / capex:** kan inte avgöras. t = 2025Q3; ursprung 2025Q2, X +25,4 (gräns ±5,0), uppgång (fönstret öppet till 2025Q4). X = kl_leases_inner (takt), Y = kl_capex4_inner (förändring i takt); fönster 2 kvartal, tecken −.
   Regeln kunde prövas i 14 av 15 ursprung med X (2021Q4–2025Q2). Impulser uppåt 7 (för 0, emot 6, inget 0, kan inte avgöras 1), nedåt 7 (för 0, emot 7, inget 0, kan inte avgöras 0), utan impuls 1.
   Y var känt i hela fönstret i 14 av 15 ursprung, och 13 av 14 impulser kunde läsas mot Y.
-  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 14 av 15; med den nya: 14 av 15.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 14 av 15; med den nya: 14 av 15. Bytet väntar på ägarens bekräftelse (R29-1, registret 2026-11-27 X26, punkt 1).
 
 **Oracle** (Y = `kl_capex4_orcl`):
 
 - **Effektiv ränta:** inget av mönstren. t = 2025Q3 (ingen impuls i fönstret). X = kl_rate_eff_orcl (takt), Y = kl_capex4_orcl (förändring i takt); fönster 2 kvartal, tecken −.
   Regeln kunde prövas i 16 av 17 ursprung med X (2021Q2–2025Q2). Impulser uppåt 3 (för 3, emot 0, inget 0, kan inte avgöras 0), nedåt 1 (för 1, emot 0, inget 0, kan inte avgöras 0), utan impuls 13.
   Y var känt i hela fönstret i 16 av 17 ursprung, och 4 av 4 impulser kunde läsas mot Y.
-  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 17 av 17; med den nya: 16 av 17.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 17 av 17; med den nya: 16 av 17. Bytet väntar på ägarens bekräftelse (R29-1, registret 2026-11-27 X26, punkt 1).
 - **(capex − OCF) / capex:** talar emot, uppåt. t = 2025Q3; ursprung 2025Q2, X +173,8 (gräns ±5,0), uppgång, Y +33,5 vid 2025Q3 (gräns ±5,0). X = kl_fcfgap_orcl (takt), Y = kl_capex4_orcl (förändring i takt); fönster 2 kvartal, tecken −.
   Regeln kunde prövas i 52 av 53 ursprung med X (2012Q2–2025Q2). Impulser uppåt 34 (för 11, emot 22, inget 0, kan inte avgöras 1), nedåt 17 (för 9, emot 8, inget 0, kan inte avgöras 0), utan impuls 2.
   Y var känt i hela fönstret i 51 av 53 ursprung, och 50 av 51 impulser kunde läsas mot Y.
-  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 52 av 53; med den nya: 52 av 53.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 52 av 53; med den nya: 52 av 53. Bytet väntar på ägarens bekräftelse (R29-1, registret 2026-11-27 X26, punkt 1).
 - **(emitterad − amorterad skuld) / capex:** talar emot, uppåt. t = 2025Q3; ursprung 2025Q2, X +68,4 (gräns ±5,0), uppgång, Y +33,5 vid 2025Q3 (gräns ±5,0). X = kl_netdebt_orcl (takt), Y = kl_capex4_orcl (förändring i takt); fönster 2 kvartal, tecken −.
   Regeln kunde prövas i 37 av 37 ursprung med X (2016Q2–2025Q2). Impulser uppåt 13 (för 2, emot 11, inget 0, kan inte avgöras 0), nedåt 24 (för 12, emot 12, inget 0, kan inte avgöras 0), utan impuls 0.
   Y var känt i hela fönstret i 36 av 37 ursprung, och 37 av 37 impulser kunde läsas mot Y.
-  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 37 av 37; med den nya: 37 av 37.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 37 av 37; med den nya: 37 av 37. Bytet väntar på ägarens bekräftelse (R29-1, registret 2026-11-27 X26, punkt 1).
 - **Leasingavtal som inte börjat / capex:** talar för mekanismen, nedåt. t = 2025Q3; ursprung 2025Q2, X -129,0 (gräns ±5,0), nedgång, Y +33,5 vid 2025Q3 (gräns ±5,0). X = kl_leases_orcl (takt), Y = kl_capex4_orcl (förändring i takt); fönster 2 kvartal, tecken −.
   Regeln kunde prövas i 3 av 3 ursprung med X (2024Q4–2025Q2). Impulser uppåt 2 (för 0, emot 2, inget 0, kan inte avgöras 0), nedåt 1 (för 1, emot 0, inget 0, kan inte avgöras 0), utan impuls 0.
   Y var känt i hela fönstret i 2 av 3 ursprung, och 3 av 3 impulser kunde läsas mot Y.
-  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 3 av 3; med den nya: 3 av 3.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 3 av 3; med den nya: 3 av 3. Bytet väntar på ägarens bekräftelse (R29-1, registret 2026-11-27 X26, punkt 1).
 
 **CoreWeave** (Y = `kl_capex4_crwv`):
 

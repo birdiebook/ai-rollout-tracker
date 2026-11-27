@@ -1,5 +1,8 @@
 # Antenner: de följda frågorna i en tabell
 
+*Efter granskningen R29 (rättningsspår X26, `docs/mattregister.md`, 2026-11-27 X26): prisvolym har en ny fakta med utslagen för de geometriska raderna H-G, a-G och b-G bredvid de låsta (samma utslag i dag). Inga rader och inga utslag ändrades.*
+
+
 *Integrationen av körning 17 (S1, AN1, QA1, PV1): avsnittet nedan är genererat på nytt per 2026-11-27 på den sammanslagna koden. Ny rad: prisvolym (PV1), vars huvudläsning inte kan avgöras (GPQA-priset har ännu ingen förändring i takt) och inte delar serier med någon annan frågas huvudläsning. AN1 (Anthropics redovisade tal i BG1) och QA1 (Quantas förvärv i LT1:s märke) ändrar ingen rad. Övriga rader är desamma som i S1:s gren.*
 
 *Tillägg S1 (`docs/mattregister.md`, 2026-11-27 S1): avsnittet nedan är genererat på nytt per 2026-11-27, och jämförelsen är mot 2026-10-27. Varje frågas huvudläsning och utslag är oförändrade. Nya fakta, märkta "S1", står som tillägg: för kreditlagret den symmetriska läsningen per enhet (pris- och beroendemått mot samma enhets capex-takt, tecken −), för elflaskhalsen orderstocken för elnät som förändring i takt mot capex i det inre lagret, som kan ge impulser nedåt (3 nedåt och 4 uppåt i historiken) men är LT1:s huvudläsning med motsatt tecken och ingen ny observation. Inget nytt kvartal har blivit känt sedan 2026-11-26, så texten nedan om utslagen per 2026-11-26 gäller också per 2026-11-27. F0:s räkning av prövade ursprung (S1, punkt 3) syns i varje frågas rapport, inte här.*
@@ -12,7 +15,7 @@ ligger en nivå lägre. Varje frågas egen rapport finns i `docs/resultat/<fråg
 huvudläsning som där (kontrollerat: rapporterna per 2026-11-26 är byte för byte desamma i integrationen som i respektive
 spårs gren).
 
-Alla utslag per 2026-11-26 bygger på kvartal som var sedda när registerposterna skrevs. De är beskrivningar, inte
+Alla utslag per 2026-11-27 (som per 2026-11-26) bygger på kvartal som var sedda när registerposterna skrevs. De är beskrivningar, inte
 utfall på osedda data, och de första osedda läsningarna står i sista kolumnen. Frågorna vägs inte ihop. Flera av dem
 läser samma capex-takt i det inre lagret (+9,6 för 2026Q3 i KL1, LT1 och EL1), så de är inte oberoende belägg. LT1:s och EL1:s huvudläsningar har dessutom samma X (`rpo_pwr` + `rpo_etn`), läst med olika statistik och tecken, så "talar för" i LT1 och "talar emot" i EL1 är samma rörelse och tillsammans en observation (avsnittet "Samma serier i flera frågor"). BG1:s rader ändrar kvartal från 2026Q2 till 2026Q3 mot förra månaden, och det står som en ändring per rad.
 
@@ -119,3 +122,4 @@ Huvudläsningarnas X och Y som de katalogserier de summerar (X25, punkt 3). Frå
 - SDK-nedladdningar, förändring i takt: +60,5 (2026Q3)
 - Huvudläsningen, impulser upp/ned: 0/0 av 0 ursprung
 - Huvudläsningen på osedda data: nej
+- Geometriskt medel H-G / a-G / b-G (X26): kan inte avgöras / inget av mönstren / kan inte avgöras

@@ -19,7 +19,10 @@ filings (register 2026-11-27 QA1):
 
 An *event* is one acquisition, or the businesses a company acquired in one quarter when it only states them together.
 Its quarter a is the calendar quarter of the closing date; when only a period is stated, the period's last quarter
-(register QA1, point 3). marks() gives each event known on a day, with the latest consideration known on that day.
+(register QA1, point 3). A row's label states what was known about its event on the row's filing day, from that filing
+and earlier ones, never what a later filing added ("minst 1 förvärv" when the filings of the day do not settle whether
+two facts are the same deal; register X26, point 4). marks() gives each event known on a day, with the label of its
+latest row known on that day and the latest consideration known on that day.
 Nothing here changes a reading: the marks are text beside an outcome (LT1 (c)).
 """
 
@@ -184,6 +187,11 @@ def load(path: Path | None = None) -> pd.DataFrame:
     events = df.groupby("event")["quarter"].nunique()
     if (events > 1).any():
         raise CsvError(f"{path.name}: events with more than one quarter: {list(events[events > 1].index)}")
+    # register X26, point 4: a label states what was known on the row's filing day, so rows of one event filed on the
+    # same day carry the same label
+    same_day = df[df["row_type"].isin(MARK_TYPES)].groupby(["event", "filed"])["label"].nunique()
+    if (same_day > 1).any():
+        raise CsvError(f"{path.name}: one event and filing day with different labels: {list(same_day[same_day > 1].index)}")
     return df
 
 
@@ -194,7 +202,8 @@ def _fmt_musd(v: float) -> str:
 def marks(company: str, as_of=None, df: pd.DataFrame | None = None) -> list[tuple[str, str, str]]:
     """(label, quarter a, first known day) per acquisition event known on `as_of` (every event when None).
 
-    The label carries the latest consideration known on the day (register QA1, points 3 to 5), with the period it
+    The label is the one of the event's latest row known on the day (register X26, point 4) and carries the latest
+    consideration known on the day (register QA1, points 3 to 5), with the period it
     covers when the company states it for a period: 'Quanta, 3 förvärv 2026Q2 (1 430 MUSD, 6 mån 2026)' or
     'Quanta–Cupertino Electric (2 035 MUSD)'. Quarters with no acquisition ('none') give no mark."""
     d = load() if df is None else df

@@ -475,8 +475,10 @@ def s1_lines(r: dict) -> list[str]:
                "och Y, men tecken +. Utslagen är spegelvända (talar för där är talar emot här och tvärtom) och "
                "impulserna desamma, så raden ger ingen observation utöver LT1:s.")
     out.append("  Förvärv flyttar förändringen i takt: uppåt vid förvärvets kvartal och kvartalet efter, nedåt fyra och fem "
-               "kvartal senare (X25, punkt 2). Boyd Thermal ingår i Eatons orderstock från 2026Q1, och Quantas förvärv är "
-               "inte kontrollerade (R28-7).")
+               "kvartal senare (X25, punkt 2). Boyd Thermal ingår i Eatons orderstock från 2026Q1. Quantas förvärv är "
+               "kodade ur 10-K och 10-Q från 2023 (`curated/acquisitions.csv`, registret 2026-11-27 QA1), inte före, "
+               "och märket står i LT1:s huvudläsning, som har samma X (`docs/resultat/ledtid.md`). Raden har inget eget "
+               "märke (registret 2026-11-27 S1, punkt 2, och X26, punkt 6).")
     if rr.get("seen") is False:
         out.append(f"  **Osedd:** raden vilar på värden som blev kända efter registerposten {S1_REGISTERED}.")
     else:

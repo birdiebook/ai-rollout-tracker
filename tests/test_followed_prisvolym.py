@@ -295,7 +295,7 @@ def test_antenna_declares_the_main_inputs():
     row = P.antenna(r)
     assert row["main_inputs"] == {"x": [P.PRICE_GPQA], "y": sorted(P.SDK), "x_stat": "förändring i takt",
                                   "sign": -1}
-    assert row["reading"] == "talar för mekanismen, nedåt" and len(row["facts"]) == 6
+    assert row["reading"] == "talar för mekanismen, nedåt" and len(row["facts"]) == 7  # + X26's geometric rows
     assert row["next_unseen_date"] == "2027-01-05" and row["next_unseen"].startswith("npm-kvartalet 2026Q4")
 
 
