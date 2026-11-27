@@ -1,5 +1,7 @@
 # Antenner: de följda frågorna i en tabell
 
+*Slutintegrationen av körning 17 (efter R29 och X26): avsnittet nedan är genererat på nytt per 2026-11-27 på den slutliga koden och är oförändrat mot X26.*
+
 *Efter granskningen R29 (rättningsspår X26, `docs/mattregister.md`, 2026-11-27 X26): prisvolym har en ny fakta med utslagen för de geometriska raderna H-G, a-G och b-G bredvid de låsta (samma utslag i dag). Inga rader och inga utslag ändrades.*
 
 
@@ -9,7 +11,7 @@
 
 *Rättad efter granskningen R28 (rättningsspår X25, `docs/mattregister.md`, 2026-11-26 X25): BG1:s fakta har alltid radens kvartal (Oracles rader visades förut som ändrade fast de inte var det), varje fråga anger om huvudläsningen är på osedda data, och rapporten säger vilka frågor som delar serier. Inga utslag ändrades. Avsnittet nedan är genererat på nytt med kommandot.*
 
-Integrationen av körning 16 (F0, LT1, BG1, EL1). Avsnittet nedan är utdata från
+Integrationen av körning 16 (F0, LT1, BG1, EL1), med PV1 från körning 17. Avsnittet nedan är utdata från
 `python -m ai_tracker.followed antenner --as-of 2026-11-27` på den sammanslagna koden, oförändrad utom att rubrikerna
 ligger en nivå lägre. Varje frågas egen rapport finns i `docs/resultat/<fråga>.md`, och raderna här är samma
 huvudläsning som där (kontrollerat: rapporterna per 2026-11-26 är byte för byte desamma i integrationen som i respektive

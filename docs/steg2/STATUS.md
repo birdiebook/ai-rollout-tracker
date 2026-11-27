@@ -1,7 +1,7 @@
 # Status steg 2
 
-Uppdateras av orkestreraren vid varje milstolpe. Senast: 2026-11-26 (körning 16, antenner, integrerad efter R28 och
-X25).
+Uppdateras av orkestreraren vid varje milstolpe. Senast: 2026-11-27 (körning 17, S1, AN1, QA1 och PV1, integrerad
+efter R29 och X26).
 
 ## Läge
 
@@ -12,6 +12,26 @@ X25).
   `-index.htm` vid 5xx (beslutsloggen 2026-11-26). En manuell veckohämtning 2026-11-26 var grön, med alla
   fyra serierna (32 rader var) och aktualiteten ok.
 - npm gav 429 för två serier 2026-11-25, men de gick igenom 2026-11-26.
+
+### Körning 17: symmetri, Anthropics tal, Quantas förvärv och pris mot volym (2026-11-27)
+
+- **Status:** S1 (symmetriska rader bredvid låsta läsningar), AN1 (Anthropics GAAP-tal ur prospekten), QA1 (Quantas
+  förvärv i LT1:s märke) och PV1 (pris mot volym, ny följd fråga) är byggda, granskade (R29, GODKÄND MED ANMÄRKNINGAR,
+  inget must_fix) och rättade (X26: R29-2 till R29-5, R29-1 delvis), och integrerade på grenen `auto17/integration17`
+  med main. 19 nya katalogserier `lab_gaap_anthropic_*` med `publish=False` och klassen `ja`. Ingen kärnserie och inget
+  grentillstånd ändras, och KL1:s låsta del (avsnitt 1–7) är byte för byte densamma.
+- **Läs:** [resultat/antenner.md](../resultat/antenner.md), nu med raden prisvolym. Frågornas rapporter:
+  [prisvolym](../resultat/prisvolym.md) (ny), [ledtid](../resultat/ledtid.md) (Quantas förvärv i märket),
+  [betalningsgapet](../resultat/betalningsgapet.md) (Anthropics redovisade tal i avsnitt 5),
+  [elflaskhalsen](../resultat/elflaskhalsen.md) (EL1-S) och [kreditlagret](../resultat/kreditlagret.md) (KL1-S i
+  avsnitt 8). Källor: [kallor/prisvolym.md](../kallor/prisvolym.md). Granskning:
+  [granskning/r29_korning17.md](../granskning/r29_korning17.md).
+- **Förbehåll:** alla utslag per 2026-11-27 är på kvartal som var sedda när registerposterna skrevs. EL1-S är LT1:s
+  huvudläsning med motsatt tecken, alltså ingen ny observation. KL1-S:s beroendemått har capex i sig och är svaga belägg.
+  PV1:s huvudläsning kan inte avgöras före npm-kvartalet 2027Q1 (omkring 2027-03-30), och historiken per 2025-11-27 är
+  backfill. Quantas förvärv är kodade från 2023, inte före. AN1:s citat och QA1:s meningar ligger i spårens `data/raw`,
+  så självkontrollerna går inte att köra från main än.
+- **Väntar på ägarbeslut:** se punkt 8 under "Väntar på Johannes".
 
 ### Körning 16: antenner, tre nya följda frågor (2026-11-26)
 
@@ -156,6 +176,25 @@ Kvar för nya sessioner: `DATA_KEY` (punkt 2 nedan).
    - KL1: en symmetrisk läsning bredvid den låsta, före Oracle omkring 2026-12-11. Rekommendation: ja;
    - läsa Quantas 10-Q för förvärv (R28-7), utanför körning 16 eftersom det är en ny läsning. Rekommendation: ja, före
      2027-01-31.
+   - *Läge 2026-11-27:* F0:s räkning, EL1:s extra rad och KL1:s symmetriska läsning är gjorda i körning 17 (S1) som rader
+     bredvid de låsta, och Quantas förvärv 2023–2026 är kodade (QA1). F0:s räkning väntar på bekräftelse (punkt 8).
+
+8. **Körning 17 (S1, AN1, QA1, PV1, R29, X26):**
+   - bekräfta S1:s byte av F0:s räkning av prövade ursprung, som gjordes utan loggat ägarbeslut (R29-1).
+     Rekommendation: bekräfta och logga, och ta då bort tillägget i övergångsnotisen;
+   - ska PV1:s geometriska rader (H-G, a-G, b-G) ersätta de låsta som huvudläsning? Rekommendation: ja, genom ett daterat
+     tillägg före 2027-01-05, eftersom ingen läsning är avgjord på osedda data och den låsta formen kan välja riktning;
+   - KL1:s sedda data per läsning (X25:s regel) i en egen post före Oracle omkring 2026-12-11 (R29-7). Rekommendation: ja;
+   - flytta AN1:s citat och QA1:s meningar till basens `data/raw` med ett eget steg, så att självkontrollerna kan köras
+     från main. Rekommendation: ja, före nästa granskning;
+   - Dells förvärv (L2) på samma sätt som Quantas, före den osedda läsningen omkring 2026-12-09. Rekommendation: ja.
+     Quantas förvärv före 2023 (Blattner 2021) bara om LT1:s historik 2022Q4–2023Q1 ska tolkas;
+   - Anthropics första 10-K (omkring mars 2027) som förlängning av `lab_gaap_anthropic_*` genom ett daterat tillägg.
+     Rekommendation: ja;
+   - ombyggnad av GPQA- och ECI-prisraderna med X1:s datering (månadsslut + 1, R29-10). Rekommendation: ja, i nästa
+     veckohämtning;
+   - kompaktare form för `withheld.json` i stället för AN1:s högre råbudget (R29-8). Rekommendation: ja, när den växer
+     igen.
 
 ## Viktiga datum
 
