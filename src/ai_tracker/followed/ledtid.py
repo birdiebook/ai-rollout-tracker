@@ -191,6 +191,38 @@ def acquisition_quarters(row: str, when=None) -> dict[str, str]:
     return {q: "; ".join(v) for q, v in by.items()}
 
 
+def uncoded(row: str, quarter: str | None, when=None) -> str | None:
+    """'Dell efter 2026Q2' when `quarter` lies after the last quarter whose filing the acquisition coding has read on
+    `when` for a coded company of the row: the quarter has no mark for that company because its filing is not coded
+    yet, which is not the same as a quarter coded without acquisitions (R30-1, X27). None otherwise."""
+    if not quarter:
+        return None
+    qp = pd.Period(quarter, freq=C.QFREQ)
+    if qp < pd.Period(ACQ.FIRST_QUARTER, freq=C.QFREQ):
+        return None  # acquisitions before 2023 are not coded, and the caveats say so
+    out = []
+    for c in ACQ_COMPANIES.get(row, ()):
+        through = ACQ.coded_through(c, when)
+        if through is None or qp > pd.Period(through, freq=C.QFREQ):
+            out.append(f"{ACQ.NAMES.get(c, c)} efter {through or 'inget kvartal'}")
+    return "; ".join(out) or None
+
+
+def coded_through(when=None) -> dict[str, str | None]:
+    """{company: the last quarter whose filing the acquisition coding has read on `when`} for the coded companies."""
+    return {c: ACQ.coded_through(c, when) for cs in ACQ_COMPANIES.values() for c in cs}
+
+
+def coded_through_text(through: dict[str, str | None]) -> str:
+    """The caveat sentence that says through which quarter each coded company's filings are read (R30-1, X27)."""
+    parts = [f"{ACQ.NAMES.get(c, c)} till och med {q}" if q else f"{ACQ.NAMES.get(c, c)} inget kvartal"
+             for c, q in through.items()]
+    listed = ", ".join(parts[:-1]) + f" och {parts[-1]}" if len(parts) > 1 else "".join(parts)
+    return (f"Inlämningarna är kodade för förvärv per läsdagen: {listed} (det senaste lästa räkenskapskvartalet). Ett "
+            "senare kvartal har inget märke för bolagets förvärv eftersom inlämningen inte är kodad, inte för att "
+            "kvartalet saknar förvärv, och ett ursprung eller avgörande kvartal där står med \"förvärv inte kodade\".")
+
+
 def origins(x: dict, y: dict, t: str | None, *, g: float, h: float, k: int) -> list[dict]:
     """Every origin before t with X known, with its outcome (the rows behind read_rule's history counts)."""
     if t is None:
@@ -219,6 +251,7 @@ def reading(row: str, buyer: str, direction: str, k: int, ms: dict[str, dict], w
         # the mark goes where the supplier's change in pace is read: the origin in "före" (X = supplier), the
         # deciding quarter in "efter" (Y = supplier); the outcome is not changed (register entry, (c), "Förvärv")
         o["acquisition"] = acq.get(o["origin"]) if direction == "fore" else acq.get(o["decided_at"] or "")
+        o["acquisition_uncoded"] = uncoded(row, o["origin"] if direction == "fore" else o["decided_at"], when)
     lags = [{"origin": o["origin"], "direction": o["direction"], "lag": lag(o), "acquisition": o["acquisition"]}
             for o in hist if lag(o) is not None]
     picked = next((o for o in r["origins"] if o["origin"] == r["origin"]), None)
@@ -348,6 +381,7 @@ def _compute(when: pd.Timestamp, table: pd.DataFrame) -> dict:
         "missing": {k: missing_members(k, t, ms[k], when) for k in formulas() if k in ms},
         "next_filings": filings, "next": nx, "guidance": guidance,
         "acquisitions": {c: ACQ.marks(c, when) for cs in ACQ_COMPANIES.values() for c in cs},
+        "acquisitions_coded_through": coded_through(when),
     }
 
 
@@ -410,6 +444,8 @@ def _cell(r: dict) -> str:
             s += f", Y {_f(o['y'], 1, True)} vid {o['decided_at']}"
         if o.get("acquisition"):
             s += f" (förvärv i fönstret: {o['acquisition']})"
+        if o.get("acquisition_uncoded"):
+            s += f" (förvärv inte kodade: {o['acquisition_uncoded']})"
         if r["outcome"] in (C.UNDECIDED, C.NEITHER) and o.get("reason"):
             s += f" ({o['reason']})"
     elif r.get("reason"):
@@ -533,7 +569,7 @@ def render(r: dict) -> str:
             "- Förvärv ger nivåskiften. Belagda förvärv märks i tabellen (Cisco–Splunk 2024Q1, Eaton–Fibrebond 2025Q2, "
             "Eaton–Boyd Thermal 2026Q1, och Quantas, Dells, Super Micros och Equinix förvärv nedan) med förskjutning och riktning: vid a och a + 1 flyttas "
             "förändringen i takt uppåt, vid a + 4 och a + 5 nedåt. Träffar två förvärv samma kvartal åt olika håll är "
-            f"nettoriktningen inte känd. Märket ändrar inget utslag. {UNCHECKED_ACQ}",
+            f"nettoriktningen inte känd. Märket ändrar inget utslag. {UNCHECKED_ACQ} {coded_through_text(r.get('acquisitions_coded_through', {}))}",
             *_acquisition_lines(r),
             "- O1 och O2 är S3:s extraktion (publish=False i väntan på granskningen). Digital Realtys andel är obelagd "
             "2021Q4–2024Q1 (S3, tolkning 9).",

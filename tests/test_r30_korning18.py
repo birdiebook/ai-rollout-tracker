@@ -10,7 +10,7 @@ filing text.
   quarters and directions of the L2 and L3 marks per reading day.
 - Properties that hold: L2's readings per 2026-11-27 recomputed straight from observations.parquet with pandas (no
   project module) give the outcomes in the report, and the DA1 bound of 28.7 bn USD.
-- Findings R30-1 to R30-3 are strict xfails.
+- Findings R30-1 to R30-3 were strict xfails; X27 fixed them and they are ordinary tests.
 """
 
 from __future__ import annotations
@@ -168,13 +168,11 @@ def test_l2_per_2026_11_27_recomputed_without_the_project(real):
     assert round(a / 1000, 1) == 28.7
 
 
-# ------------------------------------------------------------------ findings (strict xfails)
+# ------------------------------------------------------------------ findings (strict xfails in R30, fixed in X27)
 
 
 @pytest.mark.real_data
-@pytest.mark.xfail(strict=True, reason="R30-1: the report does not say through which quarter each company's filings are "
-                                       "coded, so a quarter filed after the coding reads like a quarter without "
-                                       "acquisitions (Dell 2026Q3 about 2026-12-09)")
+# R30-1: a strict xfail in R30, fixed in X27
 def test_r30_1_lt1_report_states_through_which_quarter_the_acquisitions_are_coded(real):
     from ai_tracker import observations
 
@@ -183,16 +181,14 @@ def test_r30_1_lt1_report_states_through_which_quarter_the_acquisitions_are_code
     assert re.search(r"Dell[^.]*till och med 2026Q2", caveats) and re.search(r"Equinix[^.]*till och med 2026Q3", caveats)
 
 
-@pytest.mark.xfail(strict=True, reason="R30-2: Dell's fiscal quarter ends on the Friday nearest the month end, so the "
-                                       "first days of May, August, November and February map to the next quarter")
+# R30-2: a strict xfail in R30, fixed in X27
 def test_r30_2_dell_quarter_of_follows_the_fiscal_calendar_at_its_boundaries():
     assert ACQ.quarter_of("2023-11-01", "dell") == "2023Q3"  # fiscal Q3 FY2024 ended 2023-11-03 (10-Q)
     assert ACQ.quarter_of("2023-05-03", "dell") == "2023Q1"  # fiscal Q1 FY2024 ended 2023-05-05
     assert ACQ.quarter_of("2024-02-01", "dell") == "2023Q4"  # fiscal year 2024 ended 2024-02-02
 
 
-@pytest.mark.xfail(strict=True, reason="R30-2: load() rejects a Dell row whose quarter is the filing's fiscal quarter "
-                                       "when the closing day is a few days after the calendar month end")
+# R30-2: a strict xfail in R30, fixed in X27
 def test_r30_2_load_accepts_a_dell_closing_in_the_last_days_of_a_fiscal_quarter(tmp_path, df):
     row = df[df["id"] == "dell-2023Q3-moog-01"].iloc[0].to_dict()
     row.update(id="dell-2023Q3-r30-01", event="dell-2023Q3-r30", closed="2023-11-01", quarter="2023Q3")
@@ -201,9 +197,7 @@ def test_r30_2_load_accepts_a_dell_closing_in_the_last_days_of_a_fiscal_quarter(
     assert ACQ.load(p)["quarter"].tolist() == ["2023Q3"]
 
 
-@pytest.mark.xfail(strict=True, reason="R30-3: the 10-K's goodwill table has 2025 additions of 11 MUSD in EMEA beside "
-                                       "TIM's 127 in Asia-Pacific; the description still calls the gap a possible "
-                                       "later payment for TIM")
+# R30-3: a strict xfail in R30, fixed in X27
 def test_r30_3_equinix_2025q4_description_follows_the_goodwill_table(df):
     note = df.set_index("id").loc["eqix-2025Q4-01", "note"]
     doc = SOURCE_DOC.read_text(encoding="utf-8")

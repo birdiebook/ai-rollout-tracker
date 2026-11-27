@@ -19,8 +19,9 @@ Dell's, Super Micro's and Equinix's (L2 and L3, register 2026-11-27 DA1) are cod
 
 An *event* is one acquisition, or the businesses a company acquired in one quarter when it only states them together.
 Its quarter a is the quarter of the company's series that holds the closing date: the calendar quarter for Quanta,
-Super Micro and Equinix, and for Dell the series' quarter of the fiscal quarter (S1: the fiscal year ends around
-January 31, so February to April is quarter 1; register DA1, point 3); when only a period is stated, the period's last
+Super Micro and Equinix, and for Dell the series' quarter of the fiscal quarter (S1: the fiscal year ends on the
+Friday nearest January 31, so about February to April is quarter 1; register DA1, point 3, computed from the fiscal
+calendar by quarter_of, X27); when only a period is stated, the period's last
 quarter (register QA1, point 3). Dell, Super Micro and Equinix (L2 and L3) follow the same rule (register 2026-11-27
 DA1). A row's label states what was known about its event on the row's filing day, from that filing
 and earlier ones, never what a later filing added ("minst 1 förvärv" when the filings of the day do not settle whether
@@ -52,9 +53,11 @@ COMPANIES = {"pwr": 1050915, "dell": 1571996, "smci": 1375365, "eqix": 1101239} 
 NAMES = {"pwr": "Quanta", "dell": "Dell", "smci": "Super Micro", "eqix": "Equinix"}
 SINCE = "2023-01-01"  # register QA1, point 1: acquisitions that closed from 2023-01-01
 FIRST_QUARTER = "2023Q1"  # register DA1, point 2: quarter a from 2023Q1 (for Dell the fiscal quarter from 2023-02-04)
-# companies whose series label a fiscal quarter by the calendar quarter it mostly covers (S1): the fiscal quarter
-# ends about one month after the calendar quarter, so a day belongs to the quarter of the day one month earlier
-FISCAL_LAG_MONTHS = {"dell": 1}
+# companies whose series label a fiscal quarter by the calendar quarter it mostly covers (S1): Dell's 52- or 53-week
+# fiscal year ends on the Friday nearest January 31, its quarters 1 to 3 are 13 weeks each and quarter 4 takes the
+# rest (13 or 14 weeks); fiscal quarter q of the year that starts in calendar year y is the series' quarter yQq
+# (register DA1, point 3; X27 after R30-2 computes it from that calendar instead of a one-month shift)
+FISCAL_YEAR_END_FRIDAY_NEAR_JAN31 = ("dell",)
 
 ROW_TYPES = ("acquisition", "count", "consideration", "none", "rpo_statement")
 MARK_TYPES = ("acquisition", "count")  # rows that carry an event's label
@@ -132,12 +135,35 @@ def save_sentence(row_id: str, sentence: str) -> Path:
 # ------------------------------------------------------------------ the curated table
 
 
+def fiscal_year_end(year: int) -> pd.Timestamp:
+    """The Friday nearest January 31 of `year`: the end of a 52- or 53-week fiscal year (Dell)."""
+    d = pd.Timestamp(year=year, month=1, day=31)
+    delta = (4 - d.weekday()) % 7  # Friday is weekday 4
+    return d + pd.Timedelta(days=delta - 7 if delta > 3 else delta)
+
+
+def fiscal_quarter_end(label: str) -> pd.Timestamp:
+    """The last day of the fiscal quarter that a Dell series labels `label` (e.g. '2023Q3' -> 2023-11-03)."""
+    p = pd.Period(label, freq="Q")
+    if p.quarter == 4:
+        return fiscal_year_end(p.year + 1)
+    return fiscal_year_end(p.year) + pd.Timedelta(weeks=13 * p.quarter)
+
+
 def quarter_of(day: str, company: str = "pwr") -> str:
-    """The quarter of the company's series that holds `day` (register DA1, point 3). For Dell the fiscal quarters end
-    on the Friday nearest the end of January, April, July and October, so a closing within a few days of a fiscal
-    boundary has to be checked against the filing (the CSV's quarter is then the filing's)."""
-    t = pd.Timestamp(day) - pd.DateOffset(months=FISCAL_LAG_MONTHS.get(company, 0))
-    return str(pd.Period(t, freq="Q"))
+    """The quarter of the company's series that holds `day` (register DA1, point 3): the calendar quarter, and for Dell
+    the series' label of the fiscal quarter that holds the day. Dell's fiscal quarters end on a Friday (the year on
+    the Friday nearest January 31, quarters 1 to 3 after 13, 26 and 39 weeks), so the first days of May, August,
+    November and February can lie in the quarter before (2023-11-01 is in fiscal quarter 3 to 2023-11-03: 2023Q3)."""
+    d = pd.Timestamp(day).normalize()
+    if company not in FISCAL_YEAR_END_FRIDAY_NEAR_JAN31:
+        return str(pd.Period(d, freq="Q"))
+    end = fiscal_year_end(d.year)
+    if d > end:
+        end = fiscal_year_end(d.year + 1)
+    start = fiscal_year_end(end.year - 1)  # the day before the fiscal year starts
+    q = min(4, ((d - start).days - 1) // 91 + 1)
+    return f"{end.year - 1}Q{q}"
 
 
 def _num(x: str) -> float | None:
@@ -168,7 +194,7 @@ def load(path: Path | None = None) -> pd.DataFrame:
         if r["closed"]:
             if quarter_of(r["closed"], r["company"]) != r["quarter"]:
                 raise CsvError(f"{where}: closed {r['closed']} is not in quarter {r['quarter']}")
-            if r["company"] not in FISCAL_LAG_MONTHS and r["closed"] < SINCE:
+            if r["company"] not in FISCAL_YEAR_END_FRIDAY_NEAR_JAN31 and r["closed"] < SINCE:
                 raise CsvError(f"{where}: closed before {SINCE} (register QA1, point 1)")
         if r["row_type"] == "consideration":
             if _num(r["consideration_musd"]) is None or r["consideration_scope"] not in SCOPES:
@@ -212,6 +238,26 @@ def _fmt_musd(v: float) -> str:
     if abs(v) < 10:  # small deals keep one decimal (Super Micro–Gemini 2,5 MUSD, register DA1)
         return f"{v:.1f}".replace(".", ",")
     return f"{v:,.0f}".replace(",", " ")
+
+
+def report_quarter(source_url: str, company: str) -> str | None:
+    """The series' quarter of the period a document reports on, from the report date in its EDGAR file name
+    ('dell-20260731.htm' -> 2026Q2); None when the name has no date."""
+    m = re.search(r"-(\d{8})\.htm$", source_url)
+    return quarter_of(f"{m.group(1)[:4]}-{m.group(1)[4:6]}-{m.group(1)[6:]}", company) if m else None
+
+
+def coded_through(company: str, as_of=None, df: pd.DataFrame | None = None) -> str | None:
+    """The last quarter of the company whose filing the coding has read on `as_of` (every row when None): the latest
+    reporting period of a document behind a row known on the day. A quarter after it has no mark because its filing is
+    not coded yet, not because it had no acquisition (R30-1, X27); a subsequent event in the last filing read can still
+    mark a later quarter. None when nothing is coded."""
+    d = load() if df is None else df
+    d = d[d["company"] == company]
+    if as_of is not None:
+        d = d[d["known_from"] <= pd.Timestamp(as_of)]
+    qs = [report_quarter(u, company) or q for u, q in zip(d["source_url"], d["quarter"])]
+    return max(qs, key=lambda q: pd.Period(q, freq="Q")) if qs else None
 
 
 def marks(company: str, as_of=None, df: pd.DataFrame | None = None) -> list[tuple[str, str, str]]:
