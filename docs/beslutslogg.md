@@ -1750,3 +1750,4 @@ Johannes svarade "kör på dina rekommendationer" på tre rekommendationer samma
   senare betalning för TIM. Citatet ur 10-K är omskrivet med egna ord (R30-6).
 - **Utslag.** Per 2026-11-27 och 2025-11-27 ändras bara förbehållet i LT1:s rapport. Inga märken och inga utslag ändrades,
   och antennerna är oförändrade.
+- **Kontroll.** Full testsvit: 3022 passerade, 3 hoppade (12 min 45 s).
