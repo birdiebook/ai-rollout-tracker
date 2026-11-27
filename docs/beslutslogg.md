@@ -1573,3 +1573,27 @@ Johannes svarade "kör på dina rekommendationer" på tre rekommendationer samma
 - **Öppet för Johannes:** (1) Ombyggnad av GPQA- och ECI-prisraderna med X1:s datering. Rekommendation: ja, i nästa
   veckohämtning. (2) Om huvudläsningen ska få en kortare variant (takt över två kvartal) för att kunna läsas före
   2027-03. Rekommendation: nej, vänta på den osedda läsningen i stället för att ändra måttet efter att data setts.
+
+## 2026-11-27 – Körning 17 integrerad (S1, AN1, QA1, PV1)
+
+- **Vad.** `auto17/integration17` från main (0070cee) med S1, AN1, QA1 och PV1 mergade i den ordningen (no-ff).
+  Konflikterna låg i `docs/mattregister.md`, `docs/beslutslogg.md`, `docs/agentkalibrering.md`, de syntetiska
+  fixturerna och, för QA1, i `docs/resultat/ledtid.md`. Dokumenten löstes genom att alla poster behölls i datumordning,
+  med samma datum i registerpostens commitordning (S1 09:58, AN1 09:59 och 10:08, QA1 10:23, PV1 10:40), som är
+  mergeordningen. Fixturerna genererades om efter varje merge. Inga kodkonflikter: S1 och QA1 ändrar båda
+  `followed/ledtid.py`, men i skilda delar (S1 räkningen av prövade ursprung och övergångsnotisen, QA1 de kodade
+  förvärven i märket), så båda finns kvar. AN1 ändrar BG1:s rapport och S1 inte BG1:s modul.
+- **Data.** AN1:s 19 `lab_gaap_anthropic_*` slogs ihop med basen med `python -m ai_tracker.datamerge
+  /home/user/wt/an1-anthropic-gaap/data` (75 rader, 19 tillagda serier, datatesterna godkända). AN1:s citat
+  (`data/raw/.../quotes.json`) och QA1:s meningar (`data/raw/...`) ligger kvar i spårens worktrees, eftersom bara
+  tabellerna får skrivas till basen.
+- **Rapporter per 2026-11-27 och 2025-11-27.** KL1, BG1 och EL1 är byte för byte desamma som i spårens grenar. LT1 har
+  både S1:s räkning och QA1:s förvärv (S1:s notis återställd bredvid QA1:s). PV1:s bisak a räknas som prövad i 3 av 4
+  ursprung i stället för 4 av 4, eftersom S1 (registrerad före PV1) ändrar F0:s räkning. Inga utslag ändrades.
+  Antenner per 2026-11-27 har fått raden prisvolym. Alla utslag är fortfarande på sedda kvartal.
+- **Kontroll.** `catalog.validate()` utan fel. Full testsvit: 2916 passerade, 3 hoppade.
+- **Öppet för Johannes:** spårens egna punkter står i deras poster ovan. S1:s punkt (4) om Quantas förvärv är löst
+  av QA1 för 2023–2026, men inte för tiden före 2023. Därtill: (1) Om citaten och meningarna i spårens `data/raw` ska
+  flyttas till basens `data/raw` med ett eget steg, så att självkontrollerna för AN1 och QA1 kan köras från main.
+  Rekommendation: ja, före nästa granskning. (2) Granskning av körning 17 före Oracles inlämning omkring 2026-12-11,
+  med fokus på AN1:s extraktion (kärnvärden för BG1) och S1:s ändrade räkning. Rekommendation: ja.
