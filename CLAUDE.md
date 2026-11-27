@@ -100,6 +100,11 @@ Se `docs/plan.md`, avsnitt 8. Uppdatera här när en fas är klar.
   volym som följd fråga (PV1, `python -m ai_tracker.followed prisvolym --as-of D`). Granskning R29 (inget must_fix),
   rättning X26 (bland annat PV1:s geometriska rader bredvid de låsta). Alla utslag per 2026-11-27 är på sedda kvartal.
   Första osedda läsningarna: Dell omkring 2026-12-09, Oracle omkring 2026-12-11, PV1 omkring 2027-01-05
+- **Körning 18** ✅ (`docs/resultat/antenner.md`): Johannes beslut efter R29 (B18: F0:s räkning bekräftad, PV1:s
+  huvudläsning H-G med H, a och b som låsta rader bredvid, KL1 avgör sedda data per läsning) och Dells, Super Micros och
+  Equinix förvärv 2023–2026 i LT1:s märke för L2 och L3 (DA1, 47 rader i `curated/acquisitions.csv`). Granskning R30
+  (inget must_fix), rättning X27 (kodat kvartal per bolag i LT1, Dells räkenskapskalender). Inga utslag ändrades, och alla
+  per 2026-11-27 är på sedda kvartal. Kvar före Dells läsning omkring 2026-12-09: koda Dells 10-Q för 2026Q3
 - Drift: `docs/drift.md` (veckohämtning, skarpa prognoser N2 dag 5 och N1 kvartal + 20 dagar, ögonblicksbild vid månadsslut)
 
 ## Tekniska konventioner

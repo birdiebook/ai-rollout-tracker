@@ -243,6 +243,7 @@ delat med kostnaden i agentspår och de mänskliga flaskhalsarna (nycklar, licen
    symmetrisk läsregel (F0). En rad per fråga i [resultat/antenner.md](resultat/antenner.md), granskad i
    [granskning/r28_antenner.md](granskning/r28_antenner.md). Utslagen per 2026-11-26 är på sedda kvartal.
 9. **Körning 17:** symmetriska rader bredvid de låsta (S1), Anthropics GAAP-tal i BG1 (AN1), Quantas förvärv i LT1:s märke (QA1) och pris mot volym som följd fråga (PV1, [resultat/prisvolym.md](resultat/prisvolym.md)), granskade i [granskning/r29_korning17.md](granskning/r29_korning17.md) och rättade i X26. Utslagen per 2026-11-27 är på sedda kvartal.
+10. **Körning 18:** Johannes beslut efter R29 i kod (B18: F0:s räkning bekräftad, PV1:s huvudläsning H-G, KL1:s sedda data per läsning) och Dells, Super Micros och Equinix förvärv i LT1:s märke för L2 och L3 (DA1, [kallor/ledtid.md](kallor/ledtid.md)), granskade i [granskning/r30_korning18.md](granskning/r30_korning18.md) och rättade i X27. Inga utslag ändrades, och de per 2026-11-27 är på sedda kvartal.
 
 **Kalender som inte går att snabba på:** 2026-11-30 första ögonblicksbilden, 2026-12-05 första TSMC-prognosen med B3,
 2027-01-20 första capex-prognosen, och Anthropics första periodiska rapport till SEC, som ger de första reviderade

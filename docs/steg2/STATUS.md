@@ -1,7 +1,7 @@
 # Status steg 2
 
-Uppdateras av orkestreraren vid varje milstolpe. Senast: 2026-11-27 (körning 17, S1, AN1, QA1 och PV1, integrerad
-efter R29 och X26).
+Uppdateras av orkestreraren vid varje milstolpe. Senast: 2026-11-27 (körning 18, B18 och DA1, integrerad efter R30
+och X27).
 
 ## Läge
 
@@ -12,6 +12,23 @@ efter R29 och X26).
   `-index.htm` vid 5xx (beslutsloggen 2026-11-26). En manuell veckohämtning 2026-11-26 var grön, med alla
   fyra serierna (32 rader var) och aktualiteten ok.
 - npm gav 429 för två serier 2026-11-25, men de gick igenom 2026-11-26.
+
+### Körning 18: ägarbeslut efter R29 och förvärv i L2 och L3 (2026-11-27)
+
+- **Status:** B18 (Johannes tre beslut efter R29 i kod) och DA1 (Dells, Super Micros och Equinix förvärv 2023–2026 i
+  LT1:s förvärvsmärke) är byggda, granskade (R30, GODKÄND MED ANMÄRKNINGAR, inget must_fix) och rättade (X27: R30-1 till
+  R30-3, R30-5 och R30-6), och integrerade på grenen `auto18/integration18` med main. 47 nya rader i
+  `curated/acquisitions.csv` med accession, plats och meningens SHA-256. Inga nya serier, ingen kärnserie och inget
+  grentillstånd ändras, och inga utslag ändrades per 2026-11-27 eller 2025-11-27.
+- **Läs:** [resultat/antenner.md](../resultat/antenner.md). PV1:s huvudläsning är nu H-G
+  ([prisvolym](../resultat/prisvolym.md), avsnitt 3, med H, a och b i avsnitt 6). KL1 anger sedda data per läsning
+  ([kreditlagret](../resultat/kreditlagret.md), avsnitt 4). LT1:s förbehåll säger till och med vilket kvartal varje bolags
+  förvärv är kodade ([ledtid](../resultat/ledtid.md), källor i [kallor/ledtid.md](../kallor/ledtid.md)). Granskning:
+  [granskning/r30_korning18.md](../granskning/r30_korning18.md).
+- **Förbehåll:** alla utslag per 2026-11-27 är på sedda kvartal. Dells förvärv är kodade till och med 2026Q2, så Dells
+  10-Q för 2026Q3 ska kodas före den osedda läsningen omkring 2026-12-09. HPE, Arista och Ciscos förvärv utom Splunk
+  är inte kodade. Självkontrollen för förvärven går från basens råkopior utan nätanrop (102 av 102 rader).
+- **Väntar på ägarbeslut:** se punkt 9 under "Väntar på Johannes".
 
 ### Körning 17: symmetri, Anthropics tal, Quantas förvärv och pris mot volym (2026-11-27)
 
@@ -168,32 +185,26 @@ Kvar för nya sessioner: `DATA_KEY` (punkt 2 nedan).
 7. **Körning 16 (antenner):**
    - ska antennraden in i det publika månadsbrevet, fast LT1:s serier och KL1:s `kl_*` har `publish=False`?
      Rekommendation: inte än. Brevet visar i dag aldrig värden för `publish=False`-serier. Antennerna kan få en rad med
-     bara utslagen (inga värden) efter den första osedda läsningen, i en egen post;
-   - byta F0:s "kunde prövas" mot antalet ursprung där Y finns i fönstret (R28-5). Rekommendation: ja, en daterad post
-     före läsningen omkring 2027-01-31;
-   - EL1: en extra rad med förändring i takt för orderstockarna, så att riktningen nedåt kan prövas. Rekommendation:
-     ja, i samma post;
-   - KL1: en symmetrisk läsning bredvid den låsta, före Oracle omkring 2026-12-11. Rekommendation: ja;
-   - läsa Quantas 10-Q för förvärv (R28-7), utanför körning 16 eftersom det är en ny läsning. Rekommendation: ja, före
-     2027-01-31.
-   - *Läge 2026-11-27:* F0:s räkning, EL1:s extra rad och KL1:s symmetriska läsning är gjorda i körning 17 (S1) som rader
-     bredvid de låsta, och Quantas förvärv 2023–2026 är kodade (QA1). F0:s räkning är bekräftad av Johannes 2026-11-27 (B18).
+     bara utslagen (inga värden) efter den första osedda läsningen, i en egen post.
 
 8. **Körning 17 (S1, AN1, QA1, PV1, R29, X26):**
-   - *Beslutat 2026-11-27 (B18, registret och beslutsloggen):* S1:s byte av F0:s räkning är bekräftat (R29-1 stängt),
-     PV1:s huvudläsning är H-G med bisakerna a-G och b-G och de låsta raderna bredvid (R29-2), och KL1 avgör sedda data
-     per läsning (R29-7);
-   - flytta AN1:s citat och QA1:s meningar till basens `data/raw` med ett eget steg, så att självkontrollerna kan köras
-     från main. Rekommendation: ja, före nästa granskning;
-   - Dells förvärv (L2) på samma sätt som Quantas, före den osedda läsningen omkring 2026-12-09: gjort i DA1 (körning
-     18, med Super Micro och Equinix), och rapporten säger från X27 till och med vilket kvartal förvärven är kodade.
-     Kvar: koda Dells 10-Q för 2026Q3 när den kommer, före läsningen. Quantas förvärv före 2023 (Blattner 2021) bara om LT1:s historik 2022Q4–2023Q1 ska tolkas;
+   - flytta AN1:s citat till basens `data/raw` med ett eget steg, så att självkontrollen kan köras från main (förvärvens
+     råkopior ligger där sedan integrationen av körning 18). Rekommendation: ja, före nästa granskning;
+   - Quantas förvärv före 2023 (Blattner 2021) bara om LT1:s historik 2022Q4–2023Q1 ska tolkas;
    - Anthropics första 10-K (omkring mars 2027) som förlängning av `lab_gaap_anthropic_*` genom ett daterat tillägg.
      Rekommendation: ja;
    - ombyggnad av GPQA- och ECI-prisraderna med X1:s datering (månadsslut + 1, R29-10). Rekommendation: ja, i nästa
      veckohämtning;
    - kompaktare form för `withheld.json` i stället för AN1:s högre råbudget (R29-8). Rekommendation: ja, när den växer
      igen.
+
+9. **Körning 18 (B18, DA1, R30, X27):**
+   - koda Dells 10-Q för 2026Q3 (omkring 2026-12-09) innan LT1:s läsning redovisas. Rekommendation: ja, som första steg
+     i läsningen;
+   - `new_track.sh` ska sluta peka råcachen mot huvudutcheckningen för spår som hämtar dokument (DA1). Rekommendation:
+     ja, en flagga för spår som hämtar;
+   - Ciscos förvärv utom Splunk med en egen post. Rekommendation: ja om L2 ska tolkas bakåt. HPE och Arista bara om de
+     förs in i L2 med en ny post.
 
 ## Viktiga datum
 
