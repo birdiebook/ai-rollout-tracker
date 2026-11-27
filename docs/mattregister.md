@@ -3945,3 +3945,160 @@ när de slöts eller vad de kostade.
    eller backlog står beloppet mot ökningen i `rpo_pwr` och L1. Där det inte anges står köpeskillingen och att tillförd
    RPO inte är belagd, och som i X25, punkt 2, hur stor tillförd RPO skulle behöva vara för att huvudläsningens X vid
    ursprunget skulle hamna under gränsen 10. Köpeskilling räknas inte om till RPO.
+
+### 2026-11-27 – PV1: följd fråga om pris mot volym (prisfall vid fast förmåga mot användningens takt)
+
+Spår PV1, körning 17. Posten låses och committas ensam, innan något aggregat, mått eller utslag för PV1 räknas. Den gäller
+en **följd fråga** med F0:s mall (posten "2026-11-26 – F0", avsnitt (a)–(c), med tillägget X25). Den ändrar inga
+kärnserier, inget grenindex, ingen tillståndsregel och inga publiceringsflaggor. Ingen ny källa hämtas och ingen ny
+extraktion görs. De härledda storheterna nedan (nycklar `pv1_*`) räknas i rapporten ur befintliga katalogserier och blir
+inga katalogserier.
+
+**Frågan, neutral och åt båda hållen:** "Följs prisfallet vid fast förmåga (G2) av högre användning (G3), och ändras
+sambandet?"
+
+**(a) Mekanismen, åt båda hållen.** Om priset för en given förmåga faller snabbare än förut och användningen därefter
+accelererar, talar det för en priskänslig efterfrågan. Spegelbilden är samma mekanism: faller priset långsammare (eller
+stiger det) och användningen därefter bromsar, talar det också för. Om användningens takt inte följer, eller bromsar trots
+att prisfallet blev snabbare (eller accelererar fast prisfallet blev långsammare), talar det emot. Båda riktningarna läses
+lika (F0, (b)). Ingen riktning är vald i förväg.
+
+**(b) Storheterna och aggregeringen.** Kalenderkvartal (`Q-DEC`). Tabellen kapas vid läsdagen innan något räknas
+(`known_from` ≤ läsdagen), och varje rad tas i sin senaste vintage på dagen. Historiken räknas på läsdagens vintage
+(F0, (b)).
+
+*Pris (X), månadsserier i USD per miljon tokens (3:1 input:output):*
+- **X-H `pv1_pris_gpqa_q`** ur `g2_price_at_capability_gpqa`, G2:s kärnserie (pris vid fast förmåga, GPQA Diamond, tröskel
+  o1 hög). Huvudläsningens X. Klass `ja`.
+- **X-a `pv1_pris_arena_q`** ur `g2_price_at_arena_capability` (variant A, referens GPT-4 0314). Inte kärnserie
+  (underkänd i R8, rättad i X5, lappas inte mer enligt `docs/riktning.md` avsnitt 7). Används för att den har längst
+  ärligt daterad historik (2024-01–). Tröskeln binder inte från 2024-07, så serien mäter därefter golvet i de billigaste
+  förstapartsnivåerna, inte priset vid en fast förmåga (`docs/kallor/g2_arena_pris.md`, avsnitt 4). Klass `okänd`.
+- **Månad till kvartal:** kvartalets värde = medlet av kvartalets tre månader (`aggregate.derive` med månadsfrekvens,
+  vikt 1/3 för månaderna m, m − 1, m − 2, och bara kvartalets sista månad behålls). Ett värde finns först när alla tre
+  månader har ett värde känt på dagen, och `known_from` är den senaste av dem. Ingen interpolation. Tre månader och inte
+  tolv, eftersom serierna börjar 2024-01 och 2025-02 och ett tolvmånadersmedel skulle ta bort det mesta av historiken.
+
+*Användning (Y), veckoserier (W-SUN) med nedladdningar per vecka ur npm:*
+- **Y-H `pv1_sdk_q`** = `g3_npm_openai_w` + `g3_npm_anthropic_sdk_w`, de två direkta API-SDK:erna med längst historik
+  (openai från 2020-07, @anthropic-ai/sdk från 2023-01). Huvudläsningens Y. Googles SDK:er ingår inte: bytet från
+  `@google/generative-ai` till `@google/genai` (från 2025-03) är en migrering som skulle läsas som användning.
+- **Y-b `pv1_sdk_rel_q`** = `pv1_sdk_q` / `pv1_kontroll_q`, där `pv1_kontroll_q` = `g3_npm_react_w` + `g3_npm_express_w`
+  (kontrollpaketen). Takten för kvoten är SDK:ernas takt minus kontrollens, så den gemensamma tillväxten i npm, CI och
+  speglar tas bort så långt kontrollen speglar den. Kontrollen är inte stabil (`docs/kallor/utvecklaradoption.md`), så
+  kvoten är en känslighet och ingen rättning.
+- **Vecka till kvartal:** en vecka hör till det kvartal där veckans torsdag ligger (måndag + 3 dagar). Kvartalets värde =
+  medlet av veckosummorna för veckorna i kvartalet. För en summa summeras paketen vecka för vecka, och en vecka finns
+  bara när alla paket i summan har ett värde. Ett kvartal har ett värde först när **alla** veckor som hör till kvartalet
+  har ett värde känt på dagen, och `known_from` är den senaste av dem. Kvoten är kvoten av kvartalsmedlen (summor av
+  komponenter, inte ett medel av kvoter, F0 (a)). Ingen interpolation. npm:s egen regel för saknade dagar
+  (`docs/kallor/utvecklaradoption.md`) gäller i källserierna.
+- Alla npm-serier har klass `okänd` och `publish=False`. Historiken är backfill med `known_from` = söndag + 2 dagar.
+
+*Måtten:* `common.path_measures(method="log")`, samma formler som `state.measures`: nivå, takt = 100 × ln(värdet / värdet
+fyra kvartal tidigare), förändring i takt = takten minus takten två kvartal tidigare, överraskning mot B1.
+
+*Beskrivning utan läsregel* (tabeller i rapporten, samma kvartalsregler): `g2_price_at_arena_capability_4o`,
+`g2_price_at_capability` (ECI, bakåtfylld och spärrad i registret, läcker), `g2_price_rolling12_eci`,
+`g2_price_rolling12_arena`, `g2_price_rolling6_arena`, `g2_price_frontier_arena`, och npm-paketen var för sig: openai,
+@anthropic-ai/sdk, @google/genai, @google/generative-ai, ai (Vercel), langchain, @langchain/core,
+@modelcontextprotocol/sdk, react och express.
+
+*Används inte:* Cloudflare Radar (`g3_cf_*`, klass `nej`, och måttet är bottrafik och inte användning), GitHubs andel
+AI-medförfattade commits (`g3_gh_ai_coauthor_*`, serierna slutar 2025-10-05), PyPI (exakta veckor bara från 2026-06, och
+onsdagsserien finns i den delade tabellen bara från 2026-05) och Wikipedia (`g3_wiki_*`, uppmärksamhet och inte
+användning av API:er).
+
+**(c) Läsregeln.** F0:s symmetriska regel (`common.read_rule`), X:s **förändring i takt** mot Y:s förändring i takt.
+
+| Läsning | X | Y | *g* (X, log × 100) | *h* (Y, log × 100) | *k* | *s* |
+|---|---|---|---|---|---|---|
+| H, huvudläsning | `pv1_pris_gpqa_q` | `pv1_sdk_q` | 50 | 20 | 2 | −1 |
+| a, bisak | `pv1_pris_arena_q` | `pv1_sdk_q` | 50 | 20 | 2 | −1 |
+| b, bisak | `pv1_pris_gpqa_q` | `pv1_sdk_rel_q` | 50 | 20 | 2 | −1 |
+
+Tre rader, en per par, utan "eller". Bara *k* = 2. Vad utslagen betyder (*e* = *s* × *d*, F0 (b)):
+- **Talar för, nedåt:** X ≤ −50 vid ursprunget *q* (prisfallet blev snabbare), och det första av *q* + 1, *q* + 2 som
+  når gränsen har Y ≥ +20 (användningen accelererade).
+- **Talar för, uppåt:** X ≥ +50 (prisfallet blev långsammare eller priset steg), och sedan Y ≤ −20 (användningen bromsade).
+- **Talar emot, nedåt:** prisfallet blev snabbare, och användningen bromsade. **Talar emot, uppåt:** prisfallet blev
+  långsammare, och användningen accelererade.
+- **Inget av mönstren:** |X| < 50, eller Y inom ±20 i båda kvartalen. **Kan inte avgöras:** X saknas, eller Y saknas
+  innan gränsen nås (fönstret öppet eller data saknas). Rapporten säger vilket.
+Läsdagens utslag, räkningen av hur ofta regeln kunde prövas och de beskrivande talen bredvid den följer F0 (b) och X25
+(punkt 4).
+
+**Varför förändring i takt för X, och inte takt.** Priset vid fast förmåga faller nästan alltid. Med takt skulle X ha
+impulser bara nedåt, och utslaget skulle avgöras av Y ensam (R28-5, R26-8). Frågan gäller dessutom om priset faller
+*snabbare*. Förändringen i takt kan gå åt båda hållen.
+
+**Varför de här gränserna (satta före data, inte prövade mot data).** *g* = 50: pris vid fast förmåga är en stegfunktion
+(det lägsta priset bland modeller över tröskeln). Ett steg kommer när en billigare modell kvalificerar eller ett pris
+sänks, och flyttar ofta nivån en faktor 1,5–10 (40–230 log-punkter) på en gång. Kvartalsmedlet sprider ett steg över
+upp till två kvartal. En ändring av den årliga takten med 50 log-punkter (ungefär en faktor 1,65 per år) är en klar
+ändring, medan en liten prisjustering inte blir en impuls. *h* = 20: nedladdningar har CI-brus, speglar och transitiva
+beroenden, och ett nytt verktyg som drar in en SDK kan flytta nivån tiotals procent på några veckor. Kvartalsmedlet
+dämpar veckobruset men inte ett nivåskifte. 20 log-punkter (ungefär en faktor 1,22 i den årliga tillväxten) är dubbla
+LT1:s gräns för klumpiga orderstockar. *k* = 2: en priseffekt på hur utvecklare tar in en SDK väntas synas inom ett
+halvår. Samma kvartal läses inte (F0), vilket också håller isär en lansering som samtidigt sänker priset och drar
+nedladdningar.
+
+**Ändras sambandet? (beskrivning, inget utslag).** För varje läsning listar rapporten de avgjorda ursprungen i tidsordning
+(talar för eller talar emot, med riktning), och visar det senaste avgjorda utfallet bredvid räkningen av de tidigare i
+samma rad. Det finns ingen gräns för "ändrat", och med få ursprung kan en skillnad vara slump.
+
+**Inget test.** Inget p-värde räknas (F0). De tre raderna är beskrivningar, så ingen korrektion för flera prövningar görs.
+
+**(d) Baslinje.** Överraskningen mot B1 står i tabellerna (F0, (d)). Ingen guidance finns för priser eller nedladdningar.
+
+**(e) Förbehåll (i rapporten).**
+- **Pris per token, inte per uppgift** (`docs/riktning.md` avsnitt 4). Resonemangsmodeller använder fler tokens per
+  uppgift. GPQA-förmågan mäts med resonemang påslaget, men priset är per token. Ett snabbare prisfall per token kan
+  därför vara ett långsammare fall, eller en ökning, per uppgift. Arenas kostnad per uppgift finns bara från 2026-11.
+- **Gemensam orsak.** En lansering kan både sänka priset (en billig modell kvalificerar) och dra nedladdningar (en ny
+  SDK-version, nya funktioner, uppmärksamhet). Regeln läser Y först kvartalet efter, men effekter av en lansering kan
+  sträcka sig över flera kvartal. Ett utslag som talar för mekanismen visar inte att priset orsakade användningen.
+- **Nedladdningar är inte användare.** CI-byggen, containerbyggen, speglar och transitiva beroenden räknas med. Ett
+  verktyg eller ramverk som börjar bero på en SDK höjer nivån utan att någon ny utvecklare tillkommit. Bisak b tar bort
+  den gemensamma tillväxten i npm så långt kontrollpaketen speglar den, men inte skiften i en enskild SDK.
+- **Pris från förstapartslistor.** Öppna modeller som bara säljs av tredje part ingår inte. Arena-varianten mäter golvet
+  i de billigaste nivåerna från 2024-07 (ovan).
+- **Urval.** Paketlistan valdes 2026-11-23 med kunskap om vilka SDK:er som blev stora (`utvecklaradoption.md`).
+- **Korta serier.** X-H har förändring i takt först från 2026Q4, X-a från omkring 2025Q3. Det är 0 respektive ett fåtal
+  ursprung på läsdagen.
+
+**(f) Vad som var sett före posten.** Agenten har läst CLAUDE.md, F0:s kod (`followed/common.py`, `aggregate.py`), EL1:s
+modul och tester, registerposterna F0, LT1, EL1 och X25, `docs/resultat/antenner.md`, granskningen R28 (R28-4, R28-5,
+R28-7), `docs/riktning.md` avsnitt 4, och källdokumenten `g2_rorlig_troskel.md` (avsnitt 1–4), `pris_formaga.md`
+(metod och tröskel), `g2_arena_pris.md` (avsnitt 1 och 4–6) och `utvecklaradoption.md`. Värden som därmed var sedda:
+- **Arena-variant A (X-a):** nivåkontrollen i `g2_arena_pris.md` avsnitt 4, alltså priset vid minimum per period:
+  15 USD 2024-01–02, 6 USD 2024-03–05, 0,525 (2024-06), 0,175 (2024-07), 0,13125 från 2024-08 till 2025-12, 0,1375
+  2026-01–02, 0,09 2026-03–07 och 0,1375 2026-08–10. Agenten räknade i huvudet ungefärliga kvartalsmedel ur den och såg
+  att X-a:s förändring i takt troligen är stor och positiv (+300 eller mer) vid 2025Q3 och 2025Q4, när takten går från
+  de stora fallen 2024 till ett platt golv, och liten därefter, med ungefär −40 vid 2026Q2. Gränsen *g* = 50 valdes
+  efter det, men inte för att ge eller undvika en impuls vid ett visst kvartal. Bisak a vilar därför på sedda X-värden och
+  har bara beskrivande värde.
+- **Q1:s tabeller** i `g2_rorlig_troskel.md` (värden för `g2_price_rolling12_arena` och början av `g2_price_rolling6_arena`).
+  De är beskrivning här.
+- **npm:** enstaka veckor ur `utvecklaradoption.md` (2026-11-09–15: openai 58 843 658, @anthropic-ai/sdk 70 671 564, react
+  260 880 973; openai 2026-10-12–18 51 634 370), och att express mer än fördubblades 2025 → 2026.
+- **Inga värden** för `g2_price_at_capability_gpqa` (X-H) är lästa. Täckning utan värden: serienycklar, frekvens, enhet,
+  första och sista period, antal perioder och rader, `source`, luckor och avståndet till `known_from` för G2:s
+  prisserier och G3:s npm-, PyPI-, GitHub-, Cloudflare- och Wikipedia-serier, och klass och `publish` per serie.
+  Inga takter, förändringar i takt eller jämförelser mellan pris och nedladdningar har räknats.
+
+**(g) Första osedda läsningen.** Alla perioder till och med 2026-10 (pris) och veckan 2026-11-16–22 (npm) var kända när
+posten skrevs. Läsningarna per 2026-11-27 och 2025-11-27 är därför gjorda på sedda data, avgjort per läsning (X25,
+punkt 1, med registerdagen 2026-11-27). Y får kvartalet 2026Q4 när veckan 2026-12-28–2027-01-03 är känd (söndag + 2,
+omkring 2027-01-05): då får bisak a ett *t* som inte var känt. X-H får sin första förändring i takt för 2026Q4 när
+december 2026 är känd (omkring 2027-01-01). Huvudläsningen kan avgöras tidigast med Y för 2027Q1, omkring 2027-03-30.
+Huvudläsningen är alltså helt på osedda data när den första gången kan avgöras.
+
+**(h) Antennen.** Huvudläsningen H är radens utslag. Bisakerna a och b, X-H:s förändring i takt, Y-H:s förändring i takt,
+antalet impulser upp och ned i huvudläsningen och om den är osedd är fakta som jämförs mot förra månaden. Antennen anger
+huvudläsningens indata som katalogserier (`main_inputs`, X25 punkt 3): X = `g2_price_at_capability_gpqa`, Y =
+`g3_npm_openai_w` + `g3_npm_anthropic_sdk_w`. Ingen annan följd fråga läser dem i dag.
+
+**(i) Utanför ramen.** Kostnad per uppgift (Arenas `agent`-delmängd från 2026-11, METR), tokenvolymer från
+leverantörerna (blockerade eller oregelbundna, `docs/riktning.md` avsnitt 4) och PyPI:s exakta historik före 2026-06
+(BigQuery-kvot). Var och en kräver en egen post.
