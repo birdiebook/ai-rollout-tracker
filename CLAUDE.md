@@ -95,7 +95,7 @@ Se `docs/plan.md`, avsnitt 8. Uppdatera här när en fas är klar.
   fråga: `python -m ai_tracker.followed antenner --as-of D`. Alla utslag per 2026-11-26 är på sedda kvartal, och LT1 och
   EL1 har samma huvudpar (en observation). Första osedda läsningarna: Dell omkring 2026-12-09, Oracle omkring 2026-12-11
 - **Körning 17** ✅ (`docs/resultat/antenner.md`): symmetriska rader bredvid låsta läsningar (S1: KL1-S, EL1-S, och F0
-  räknar ett ursprung som prövat bara med Y i fönstret, väntar på Johannes bekräftelse), Anthropics GAAP-tal ur S-1 i BG1
+  räknar ett ursprung som prövat bara med Y i fönstret), Anthropics GAAP-tal ur S-1 i BG1
   (AN1, 19 `lab_gaap_anthropic_*` med `publish=False`), Quantas förvärv 2023–2026 i LT1:s märke (QA1) och pris mot
   volym som följd fråga (PV1, `python -m ai_tracker.followed prisvolym --as-of D`). Granskning R29 (inget must_fix),
   rättning X26 (bland annat PV1:s geometriska rader bredvid de låsta). Alla utslag per 2026-11-27 är på sedda kvartal.

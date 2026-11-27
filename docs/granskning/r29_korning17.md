@@ -26,7 +26,10 @@ fastlåsta registerposter och värden som R29 läst i källan, egenskaper som h�
 | 5. Omräkning | **Rätt.** Minst ett utslag per spår räknat om direkt ur `observations.parquet` med pandas och numpy, utan projektets moduler. Alla stämmer på avrundningen |
 
 *Rättning: X26 (`auto17/integration17`, registret 2026-11-27 X26) rättade R29-2 till R29-5 och R29-1 delvis (ägarbeslutet
-kvarstår). Se "Rättat i X26" under varje fynd.*
+kvarstod). Se "Rättat i X26" under varje fynd.*
+
+*Ägarbeslut: B18 (registret 2026-11-27 B18) loggar Johannes tre beslut i avsnitt 7. R29-1 är stängt, PV1:s huvudläsning
+är H-G (R29-2) och KL1 avgör sedda data per läsning (R29-7). Se "Stängt genom B18" och "Avgjort genom B18" nedan.*
 
 **Slutdom: GODKÄND MED ANMÄRKNINGAR.** Inget must_fix. Fem should_fix (R29-1 till R29-5) och sex anmärkningar. Inget
 fynd ändrar ett utslag eller ett värde per 2026-11-27 eller 2025-11-27. R29-2 och R29-3 bör rättas före PV1:s första
@@ -181,6 +184,10 @@ varje rapport säger att bytet väntar på ägarens bekräftelse. Ett ägarbeslu
 sådant finns i registret, beslutsloggen eller `docs/riktning.md`. Beslutet står kvar som öppet för Johannes
 (rekommendation: bekräfta).
 
+**Stängt genom B18** (registret 2026-11-27 B18, punkt 1, och beslutsloggen 2026-11-27): Johannes bekräftade S1:s räkning
+2026-11-27. Tillägget "Bytet väntar på ägarens bekräftelse" är borttaget ur övergångsnotisen i varje rapport, och notisen
+står kvar med båda talen enligt S1, punkt 3.
+
 ### R29-2 (should_fix, PV1): kvartalsmedlet bryter symmetrin
 
 Se avsnitt 4. Måttet är log av ett aritmetiskt medel av månadspriser, så en prissänkning och en lika stor höjning i
@@ -197,6 +204,10 @@ fakta i antennen. De låsta raderna och avsnitt 1–4 är oförändrade, och H �
 2026-11-27 och 2025-11-27 (Arena A +433,7, +301,0, +0,1, −37,7, 0,0). Testet är ett vanligt test på de geometriska
 raderna, och den låsta formens asymmetri är fastlåst bredvid (+28,8 mot −69,3). Om H-G ska ersätta H är kvar som beslut
 för Johannes före 2027-01-05.
+
+**Avgjort genom B18** (registret 2026-11-27 B18, punkt 2): H-G är huvudläsningen, och a-G och b-G är bisakernas
+redovisade form. H, a och b står kvar som låsta rader bredvid, i rapportens avsnitt 6 och som en fakta i antennen. Inga
+utslag ändrades.
 
 ### R29-3 (should_fix, PV1): förbehållet om backfill saknas i rapporten
 
@@ -257,6 +268,10 @@ säger det i en rad överst, och S1 listar det som öppet för Johannes. Efter O
 Oracles läsning osedd medan de andra fortfarande är sedda, och den låsta delen kan inte säga vilken som är vilken. R29
 instämmer i S1:s rekommendation: en post som ger KL1 X25:s regel per läsning före 2026-12-11.
 
+**Avgjort genom B18** (registret 2026-11-27 B18, punkt 3): KL1 avgör sedda data per läsning med X25:s mekanism och
+registerdagen 2026-11-25. Per 2026-11-27 har avsnitt 4 stycket igen (alla fem läsningarna sedda), och det är den enda
+skillnaden i avsnitt 1–7 mot rapporten före B18.
+
 ### R29-8 (note, AN1): budgeten för `withheld.json`
 
 `docs/steg3/datakontrakt.md` säger att en kompaktare form är rätt åtgärd i första hand när en budget nås. AN1 höjde den
@@ -280,6 +295,8 @@ föreslår en ombyggnad. Ingen effekt på PV1:s kvartal. R29 instämmer.
 sedda", medan rapporten nu står per 2026-11-27. Påståendet gäller fortfarande, men datumet bör följa med.
 
 ## 7. Beslut för Johannes
+
+*Alla tre fattade 2026-11-27 enligt rekommendationerna (registret 2026-11-27 B18, beslutsloggen 2026-11-27).*
 
 1. **F0:s räkning (R29-1):** bekräfta S1:s byte i efterhand, eller återställ det gamla talet som huvudtal.
    Rekommendation: bekräfta och logga, eftersom det nya talet är ärligare och det gamla står bredvid.

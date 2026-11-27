@@ -1,5 +1,8 @@
 # Ledtid i stacken: följd fråga (LT1)
 
+*Ägarbeslut 2026-11-27 (spår B18, `docs/mattregister.md`, 2026-11-27 B18, punkt 1): S1:s räkning av prövade ursprung är bekräftad, och övergångsnotisen väntar inte längre på ägarens bekräftelse (R29-1 stängt). Båda talen står kvar i notisen. Inget annat ändrades, och inga utslag ändrades. Rapporterna nedan är genererade på nytt med kommandot.*
+
+
 *Rättad efter granskningen R29 (rättningsspår X26, `docs/mattregister.md`, 2026-11-27 X26): förvärvsmärkets etikett säger bara det som var inlämnat på läsdagen (per 2024-02-25 "2 förvärv 2024Q1", inte 3), "minst 1 förvärv" när dagens dokument inte avgör om två uppgifter gäller samma förvärv (2026Q3 per 2026-07-30 och 2026Q4 per 2026-10-29), och Cupertinos och Dynamic Systems första angivna köpeskillingar (cirka 1 500 och 1 350 MUSD) står i märket från 2024-08-01 och 2025-07-31 (R29-4). Per 2026-11-27 ändras bara texten för 2026Q4 ("minst 1 förvärv" i stället för "1 förvärv"), och per 2025-11-27 ingenting. Övergångsnotisen för F0:s räkning säger att bytet väntar på ägarens bekräftelse (R29-1). Märket ändrar inget utslag, och inga utslag ändrades.*
 
 
@@ -90,7 +93,7 @@ Före och efter är inte varandras motsats: två utjämnade serier som rör sig 
 - **Huvudläsning, L1 före K-inre, k = 2:** talar för mekanismen. t = 2026Q3; ursprung 2026Q2, X +16,5 (gräns ±10,0), uppgång, Y +9,6 vid 2026Q3 (gräns ±5,0). X = lt1_rpo_power (förändring i takt), Y = kl_capex4_inner (förändring i takt); fönster 2 kvartal, tecken +.
   Regeln kunde prövas i 18 av 18 ursprung med X (2022Q1–2026Q2). Impulser uppåt 4 (för 2, emot 1, inget 1, kan inte avgöras 0), nedåt 3 (för 0, emot 3, inget 0, kan inte avgöras 0), utan impuls 11.
   Y var känt i hela fönstret i 17 av 18 ursprung, och 7 av 7 impulser kunde läsas mot Y.
-  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 18 av 18; med den nya: 18 av 18. Bytet väntar på ägarens bekräftelse (R29-1, registret 2026-11-27 X26, punkt 1).
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 18 av 18; med den nya: 18 av 18.
   Läsningen vilar bara på värden som var kända före registerposten 2026-11-26, och den är därför inget utfall på osedda data.
 
 Alla läsningar i tabellen vilar bara på värden som var kända före registerposten 2026-11-26 (posten, avsnitt (e) och (f)), och ingen av dem är ett utfall på osedda data. Sedda data avgörs per läsning (X25, punkt 1).
@@ -122,7 +125,7 @@ Alla läsningar i tabellen vilar bara på värden som var kända före registerp
 | L1 Kraft och elnät (Eaton, Quanta) | K-yttre | efter | 2 | 2026Q3 | **kan inte avgöras** (X saknas vid 2026Q1; X saknas vid 2026Q2) | X saknas |
 | L1 Kraft och elnät (Eaton, Quanta) | K-yttre | efter | 4 | 2026Q3 | **kan inte avgöras** (X saknas vid 2025Q3; X saknas vid 2025Q4; X saknas vid 2026Q1; X saknas vid 2026Q2) | X saknas |
 
-Övergång (registret 2026-11-27 S1, punkt 3): "prövad" räknar nu ett ursprung bara när Y finns i fönstret (med impuls: utfallet är inte kan inte avgöras; utan impuls: Y är känt i alla k kvartal). "Före S1" är F0:s räkning före ändringen. Utfallen ändras inte. Bytet väntar på ägarens bekräftelse (R29-1, registret 2026-11-27 X26, punkt 1).
+Övergång (registret 2026-11-27 S1, punkt 3): "prövad" räknar nu ett ursprung bara när Y finns i fönstret (med impuls: utfallet är inte kan inte avgöras; utan impuls: Y är känt i alla k kvartal). "Före S1" är F0:s räkning före ändringen. Utfallen ändras inte.
 
 ### 2. Ledtiden (beskrivning)
 
@@ -259,7 +262,7 @@ Före och efter är inte varandras motsats: två utjämnade serier som rör sig 
 - **Huvudläsning, L1 före K-inre, k = 2:** inget av mönstren. t = 2025Q3 (ingen impuls i fönstret). X = lt1_rpo_power (förändring i takt), Y = kl_capex4_inner (förändring i takt); fönster 2 kvartal, tecken +.
   Regeln kunde prövas i 13 av 14 ursprung med X (2022Q1–2025Q2). Impulser uppåt 1 (för 0, emot 1, inget 0, kan inte avgöras 0), nedåt 3 (för 0, emot 3, inget 0, kan inte avgöras 0), utan impuls 10.
   Y var känt i hela fönstret i 13 av 14 ursprung, och 4 av 4 impulser kunde läsas mot Y.
-  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 14 av 14; med den nya: 13 av 14. Bytet väntar på ägarens bekräftelse (R29-1, registret 2026-11-27 X26, punkt 1).
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 14 av 14; med den nya: 13 av 14.
   Läsningen vilar bara på värden som var kända före registerposten 2026-11-26, och den är därför inget utfall på osedda data.
 
 Alla läsningar i tabellen vilar bara på värden som var kända före registerposten 2026-11-26 (posten, avsnitt (e) och (f)), och ingen av dem är ett utfall på osedda data. Sedda data avgörs per läsning (X25, punkt 1).
@@ -291,7 +294,7 @@ Alla läsningar i tabellen vilar bara på värden som var kända före registerp
 | L1 Kraft och elnät (Eaton, Quanta) | K-yttre | efter | 2 | 2025Q3 | **kan inte avgöras** (X saknas vid 2025Q1; X saknas vid 2025Q2) | X saknas |
 | L1 Kraft och elnät (Eaton, Quanta) | K-yttre | efter | 4 | 2025Q3 | **kan inte avgöras** (X saknas vid 2024Q3; X saknas vid 2024Q4; X saknas vid 2025Q1; X saknas vid 2025Q2) | X saknas |
 
-Övergång (registret 2026-11-27 S1, punkt 3): "prövad" räknar nu ett ursprung bara när Y finns i fönstret (med impuls: utfallet är inte kan inte avgöras; utan impuls: Y är känt i alla k kvartal). "Före S1" är F0:s räkning före ändringen. Utfallen ändras inte. Bytet väntar på ägarens bekräftelse (R29-1, registret 2026-11-27 X26, punkt 1).
+Övergång (registret 2026-11-27 S1, punkt 3): "prövad" räknar nu ett ursprung bara när Y finns i fönstret (med impuls: utfallet är inte kan inte avgöras; utan impuls: Y är känt i alla k kvartal). "Före S1" är F0:s räkning före ändringen. Utfallen ändras inte.
 
 ### 2. Ledtiden (beskrivning)
 
