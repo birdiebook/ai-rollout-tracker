@@ -476,6 +476,8 @@ SOURCE_GROUPS: list[tuple[str, str, str]] = [
     ("KL1: kreditlagret (härledda)", r"^Härledd \(KL1\)", "kallor/kreditlagret.md"),
     # followed question LT1 (run 16)
     ("LT1: ledtid i stacken (härledda)", r"^Härledd \(LT1\)", "kallor/ledtid.md"),
+    # track AN1 (run 17)
+    ("Kurerad extraktion: Anthropics redovisade tal", r"curated/anthropic_gaap\.csv", "kallor/anthropic_gaap.md"),
     ("Anthropics nyhetsrum", r"anthropic\.com/news", "kallor/labbintakter.md"),
     ("BEA NIPA, releasearkivet", r"^BEA NIPA release archive", "kallor/makro_bea_bls.md"),
     ("BEA NIPA", r"^BEA NIPA", "kallor/census_eu.md"),

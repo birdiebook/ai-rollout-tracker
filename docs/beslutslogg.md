@@ -1517,3 +1517,20 @@ Johannes svarade "kör på dina rekommendationer" på tre rekommendationer samma
   X25:s regel per läsning före 2026-12-11. (3) Om EL1-S ska stå kvar när den bara speglar LT1. Rekommendation: ja, men
   läs den inte som en egen observation. (4) R28-7 (Quantas förvärv) är fortfarande okontrollerat och påverkar EL1-S mer
   än huvudläsningen. Rekommendation: läs Quantas 10-Q före 2027-01-31.
+
+## 2026-11-27 – AN1: Anthropics redovisade tal som katalogserier (körning 17)
+
+- **Vad.** Registerposten "2026-11-27 – AN1" låstes ensam före extraktionen. Prospekten (S-1, tre S-1/A och 424B4) har
+  XBRL bara för försättsbladet, så HTML-tabellerna tolkas deterministiskt. 19 katalogserier `lab_gaap_anthropic_*`
+  (kvartal, år och hittills i år för intäkter, compute, rörelseresultat, kostnad för intäkter, härlett bruttoresultat,
+  kassaflöde från rörelsen, capex och förskott), `publish=False`, klass `ja`. Inget värde skiljer sig mellan
+  dokumenten. BG1 visar dem i avsnitt 5 bredvid run-rate, och BLOCKED-raden om dem är borta.
+- **Val.** Ingen känslighetsrad i BG1:s regel: takten för fyra kvartal finns först för 2026Q4, och med labbets tillväxt
+  är X:s tecken i praktiken givet. Labbets intäkter läggs inte till molnintäkterna (dubbelräkning via Bedrock och
+  Vertex). Kvartal härleds inte ur skillnader mellan hittills-i-år-värden.
+- **Råbudgeten för `withheld.json`** höjdes från 80 till 200 kB (gzip oförändrat 15 kB). Huvudgrenen låg på 79 kB, så
+  nästa spår med inhållna serier hade stoppat bygget.
+- **Öppet för Johannes:** om de periodiska rapporterna (första 10-K, omkring mars 2027) ska förlänga serierna, med XBRL
+  när companyfacts har us-gaap-fakta. Rekommendation: ja, som ett daterat tillägg före 10-K:n, med samma nycklar och
+  revideringar som nya versioner. Och om `withheld.json` ska få en kompaktare form i stället för högre budget.
+

@@ -22,6 +22,9 @@ bearing revenue's pace.
 The reading is F0's symmetric rule, one row per X (register BG1, (c)): X = the pace of a gap, Y = the change in pace of
 capex4 with the same members, g = 5, h = 5, k = 2, sign -1. The main reading is gap_moln(cloud four, r = 0.10).
 
+Anthropic's reported (GAAP) figures from the registration statement (register 2026-11-27 "AN1", (f)) are shown in
+section 5 as table rows and a quarter table beside the run-rate, outside the rule; no reading changes.
+
 Only rows known on the as-of date are used (known_from <= as-of); compute(d, table) equals compute(d, table truncated
 at d). A description: no alarm levels, no chosen direction, no p-values.
 """
@@ -61,12 +64,18 @@ KPIS = ("kpi_msft_azure_growth_v2", "kpi_msft_azure_growth_v3", "kpi_msft_azure_
         "kpi_msft_ai_business_runrate", "kpi_amzn_aws_ai_runrate", "kpi_googl_cloud_backlog")
 LABS = ("lab_rev_anthropic_company_run_rate", "lab_rev_anthropic_company_run_rate_s1",
         "lab_rev_anthropic_claude_code_run_rate")
+# Anthropic's reported (GAAP) figures from the registration statement (register 2026-11-27 "AN1", (f)): table rows and a
+# quarter table, outside the rule. Never mixed with the run-rate series in a series or a ratio.
+LABS_GAAP = ("lab_gaap_anthropic_revenue_q", "lab_gaap_anthropic_revenue_a", "lab_gaap_anthropic_opinc_q",
+             "lab_gaap_anthropic_cfo_ytd")
+GAAP_Q = {"revenue": "lab_gaap_anthropic_revenue_q", "compute": "lab_gaap_anthropic_compute_q",
+          "opinc": "lab_gaap_anthropic_opinc_q"}
+RUN_RATES = ("lab_rev_anthropic_company_run_rate", "lab_rev_anthropic_company_run_rate_s1")
 LIVES = {"msft": "useful_life_servers_msft", "googl": "useful_life_servers_googl", "amzn": "useful_life_servers_amzn",
          "orcl": "useful_life_servers_orcl", "crwv": "useful_life_computer_equipment_crwv"}
 LIFE_WINDOW = 7  # X's pace at q uses the quarters q-7..q
 MSFT_OLD_BASIS_LAST = "2024Q2"  # Microsoft's depreciation line is on the old basis through this quarter (P2b, R14)
 BLOCKED = (
-    "Anthropics redovisade (GAAP) intäkter ur S-1: finns inte i katalogen, och körningen gör ingen ny extraktion.",
     "OpenAI: ingen registreringsansökan på EDGAR, och openai.com nekas av proxyn (docs/kallor/labbintakter.md).",
 )
 
@@ -222,6 +231,33 @@ def table_rows(table: pd.DataFrame, keys, when, ctx) -> list[dict]:
     return out
 
 
+def lab_quarters(table: pd.DataFrame, when) -> list[dict]:
+    """Anthropic's reported revenue per quarter known on `when`, with revenue x 4, compute as % of revenue, the operating
+    result and, beside them, the latest run-rate known at the quarter's end (known_from <= quarter end and <= `when`;
+    register AN1, (f)). A description: the two measures are never combined."""
+    rev = C.asof_rows(table, GAAP_Q["revenue"], when)
+    comp = C.asof_rows(table, GAAP_Q["compute"], when).set_index("period")["value"].to_dict()
+    opi = C.asof_rows(table, GAAP_Q["opinc"], when).set_index("period")["value"].to_dict()
+    rr = []
+    for k in RUN_RATES:
+        d = C.asof_rows(table, k, when)
+        rr += [(pd.Timestamp(r.period), float(r.value), pd.Timestamp(r.known_from), k) for r in d.itertuples()]
+    out = []
+    for r in rev.itertuples(index=False):
+        end = pd.Period(str(r.period), freq=C.QFREQ).end_time.normalize()
+        v = float(r.value)
+        known = [x for x in rr if x[0] <= end and x[2] <= end]
+        last = max(known, key=lambda x: (x[0], x[2])) if known else None
+        c = comp.get(r.period)
+        out.append({"period": str(r.period), "revenue": v, "x4": 4.0 * v,
+                    "compute_pct": None if c is None or not v else 100.0 * float(c) / v,
+                    "opinc": None if opi.get(r.period) is None else float(opi[r.period]),
+                    "known_from": str(pd.Timestamp(r.known_from).date()),
+                    "run_rate": None if last is None else {"date": str(last[0].date()), "value": last[1],
+                                                           "known_from": str(last[2].date()), "series": last[3]}})
+    return out
+
+
 # ------------------------------------------------------------------ compute
 
 
@@ -292,7 +328,9 @@ def _compute(when: pd.Timestamp, table: pd.DataFrame, ctx) -> dict:
         "quantities": q, "readings": readings, "main_t": main_t,
         "context": C.measures((*P2B, *RPO_NEAR), when, ctx),
         "orcl_rpo_share": {"period": rpo4.get("period"), "value": share},
-        "kpis": table_rows(table, KPIS, when, ctx), "labs": table_rows(table, LABS, when, ctx), "blocked": list(BLOCKED),
+        "kpis": table_rows(table, KPIS, when, ctx), "labs": table_rows(table, LABS, when, ctx),
+        "labs_gaap": table_rows(table, LABS_GAAP, when, ctx), "lab_quarters": lab_quarters(table, when),
+        "blocked": list(BLOCKED),
         "life_changes": changes, "next_filings": C.next_filings(table, when, FILERS),
     }
 
@@ -412,6 +450,7 @@ def render(r: dict) -> str:
                    f"known_from {x['known_from']}, `{x['series']}`")
     out += ["", "AI-nyckeltalen är oregelbundna och har definitionsbrott (Azure v1–v3). Run-rate är bolagets egen "
             "årstakt vid en tidpunkt och inte redovisad intäkt, och den blandas inte med GAAP-tal.", ""]
+    out += _lab_gaap_lines(r)
     out += [f"- **BLOCKED:** {b}" for b in r["blocked"]]
 
     out += ["", "## 6. Nyttjandeperioder (regimmarkörer)", "",
@@ -457,9 +496,49 @@ def render(r: dict) -> str:
             "än de andra.",
             "- CoreWeaves serier börjar 2024, och nettot av anläggningstillgångar först 2024Q4. Bolagsraden har därför "
             "få kvartal.",
-            "- Labbens run-rate är inte redovisad intäkt. Anthropics GAAP-intäkter och OpenAI är BLOCKED (avsnitt 5).",
+            "- Labbens run-rate är inte redovisad intäkt. Anthropics redovisade tal kommer ur registreringsprospektet "
+            "(AN1) och står bara som beskrivning i avsnitt 5. OpenAI är BLOCKED.",
             ""]
     return "\n".join(out)
+
+
+def _lab_gaap_lines(r: dict) -> list[str]:
+    """Section 5, Anthropic's reported figures (register AN1, (f)): table rows and the quarter table."""
+    out = ["**Anthropics redovisade tal (GAAP, ur S-1, S-1/A och 424B4; registret 2026-11-27 AN1):**", ""]
+    for x in r["labs_gaap"]:
+        if x["value"] is None:
+            out.append(f"- {x['label']}: inget värde känt på dagen (`{x['series']}`)")
+            continue
+        prev = ("" if x["prev_value"] is None else f"; före: {_value(x['prev_value'], x['unit'])} ({x['prev_period']})")
+        out.append(f"- {x['label']}: **{_value(x['value'], x['unit'])}** ({x['period']}{prev}); {x['n']} "
+                   f"{'värde' if x['n'] == 1 else 'värden'}, known_from {x['known_from']}, `{x['series']}`")
+    qs = r["lab_quarters"]
+    if not qs:
+        return out + ["", "Inga redovisade kvartal kända på dagen.", ""]
+    out += ["", "| Kvartal | Intäkt | Intäkt × 4 | Compute, % av intäkten | Rörelseresultat | known_from | Senaste "
+                "run-rate känd vid kvartalets slut |", "|---|---|---|---|---|---|---|"]
+    for q in qs:
+        rr = q["run_rate"]
+        rr_text = ("–" if rr is None else f"{C.fmt_bn(rr['value'])} per {rr['date']} (känd {rr['known_from']}, "
+                   f"`{rr['series']}`)")
+        out.append(f"| {q['period']} | {C.fmt_bn(q['revenue'])} | {C.fmt_bn(q['x4'])} | "
+                   f"{'–' if q['compute_pct'] is None else C.fmt_pct(q['compute_pct'])} | "
+                   f"{'–' if q['opinc'] is None else C.fmt_bn(q['opinc'])} | {q['known_from']} | {rr_text} |")
+    out += ["", "**Skillnaden mot run-rate.** Den redovisade intäkten är summan av det som intäktsförts under kvartalet "
+            "(GAAP). Run-rate är bolagets egen årstakt vid en dag: konsumtionsavgifter under 28 dagar × 13 plus "
+            "månatliga abonnemang × 12 (S-1:s definition, ej GAAP och inte granskad av tredje part; nyhetsrummets äldre "
+            "värden anger inget beräkningssätt). Intäkt × 4 är bara kvartalet uppräknat till ett år. I ett bolag som "
+            "växer snabbt ligger run-rate vid kvartalets slut över kvartalets intäkt × 4, och de två mäter alltså "
+            "olika saker. De blandas aldrig i en serie eller en kvot, och run-rate-kolumnen visar bara vad bolaget "
+            "hade sagt när kvartalet slutade.",
+            "",
+            "Compute och infrastruktur är en kostnad efter slag och omfattar också träning och forskning; kostnaden för "
+            "intäkter (noten om kostnader efter funktion, `lab_gaap_anthropic_cost_of_revenue_*`) är bara compute för "
+            "kundernas arbetslaster med mera. Labbets kostnader för compute är till stor del molnens intäkter. Labbets "
+            "intäkter läggs inte till molnintäkterna i regeln: en del av dem säljs via molnen (Bedrock, Vertex) och "
+            "skulle räknas två gånger. Ingen känslighetsrad i regeln (AN1, (f)): kvartalen börjar 2025Q1, så takten "
+            "för en summa över fyra kvartal finns först för 2026Q4.", ""]
+    return out
 
 
 # ------------------------------------------------------------------ antenna (register F0, (c))

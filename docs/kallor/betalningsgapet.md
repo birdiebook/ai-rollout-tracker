@@ -78,9 +78,9 @@ den publika sidan. Rapporten i `docs/resultat` visar extraherade siffror med ser
 
 ## BLOCKED
 
-- **Anthropics redovisade (GAAP) intäkter** ur S-1 och FWP finns inte i katalogen (`docs/kallor/labbintakter.md`,
-  "Uteslutet"). Den här körningen gör ingen ny extraktion. Att ta med dem kräver en extraktion med citat och en daterad
-  registerpost.
+- ~~Anthropics redovisade (GAAP) intäkter~~: inte längre BLOCKED. Spår AN1 (registret 2026-11-27 AN1) extraherade dem
+  ur S-1, S-1/A och 424B4 som katalogserier `lab_gaap_anthropic_*` (`docs/kallor/anthropic_gaap.md`). BG1 visar dem i
+  avsnitt 5 som tabellrader och en kvartalstabell bredvid run-rate, utanför regeln.
 - **OpenAI** har ingen registreringsansökan på EDGAR, och openai.com nekas av proxyn.
 
 ## Kommandon

@@ -3796,3 +3796,111 @@ Täckning utan värden: antal perioder, första och sista period och senaste `kn
 **7. Första osedda läsningar.** KL1-S: Oracle 2026Q4 omkring 2026-12-11 (Y för Oracles rader, ursprungen 2026Q2 och
 2026Q3), inre lagret när alla fyra har lämnat in 2026Q4 omkring 2027-01-31, yttre lagret när alla fyra har lämnat in
 2026Q4 och dess förändring i takt finns. EL1-S: med inre lagrets capex för 2026Q4, omkring 2027-01-31.
+
+### 2026-11-27 – AN1: Anthropics redovisade (GAAP) intäkter och resultatposter ur registreringsprospektet (katalogserier, före extraktion)
+
+Spår AN1, körning 17. Posten låses och committas ensam innan något värde extraheras eller läses. Den gäller
+**katalogserier** med `publish=False`: inga kärnserier, inget grenindex, inget tillstånd. BG1:s låsta regel (posten
+"2026-11-26 – BG1", avsnitt (c)) och dess huvudläsning ändras inte. Posten ersätter BLOCKED-raden i BG1 (d) om
+Anthropics GAAP-intäkter, och den ändrar inte run-rate-serierna (`lab_rev_anthropic_*`), som står kvar som egna serier.
+
+**(a) Korpus.** Anthropic, PBC (CIK 2130357), varje S-1, S-1/A och 424B4 inlämnad till och med 2026-11-27: S-1
+2026-10-26, S-1/A 2026-11-02, 2026-11-10 och 2026-11-17 och 424B4 2026-11-19 (samma lista som KL1:s korpus för
+Anthropic). Huvuddokumentet i varje inlämning. Inte DRS eller DRS/A (EDGAR daterar dem efter den konfidentiella
+inlämningen, så datumet läcker), inte FWP (utdrag, och 424B4 är det slutliga prospektet) och inte 8-K 2026-11-25.
+Prospekten har bara XBRL för försättsbladet (R1–R3), inga fakta för de finansiella rapporterna, och companyfacts har inga
+us-gaap-fakta för CIK 2130357. Tolkningen görs därför i HTML-tabellerna. Periodiska rapporter (första 10-K för 2026,
+väntas senast omkring mars 2027) förlänger serierna först efter ett daterat tillägg till posten.
+
+**(b) Posterna, tabellerna och periodiciteten.** Allt i miljoner USD (MUSD), som tabellerna anger. Anthropics
+räkenskapsår är kalenderåret.
+1. **Kvartal** ur tabellen "Quarterly Consolidated Statements of Operations" (MD&A, ogranskad), kolumner "Three Months
+   Ended …", period = kalenderkvartalet för kolumnens datum:
+   `lab_gaap_anthropic_revenue_q` (raden "Revenue"), `lab_gaap_anthropic_compute_q` ("Compute and infrastructure") och
+   `lab_gaap_anthropic_opinc_q` ("Operating income (loss)" eller "Operating loss").
+2. **Helår och hittills i år** ur "Consolidated Statements of Operations" i de finansiella rapporterna (F-sidorna):
+   samma tre rader. Kolumnerna "Year Ended December 31" ger `_a` (period = året). Kolumnerna "Six Months Ended June 30"
+   och "Nine Months Ended September 30" ger `_ytd` (period = kvartalet då perioden slutar, värdet = summan från 1 januari).
+3. **Kostnad för intäkter** ur noten "Supplemental Operating Expense Information" (kostnader efter funktion), raden "Cost
+   of revenue": `lab_gaap_anthropic_cost_of_revenue_a` och `_ytd`. Bolaget redovisar sedan bytet till kostnader efter
+   slag inte längre kostnad för intäkter och bruttoresultat i resultaträkningen, bara i noten.
+4. **Bruttoresultat** står inte i dokumenten. Det härleds som intäkter minus kostnad för intäkter, ur samma dokument och
+   samma kolumn: `lab_gaap_anthropic_gross_profit_a` och `_ytd`, märkta som härledda.
+5. **Kassaflöde** ur "Consolidated Statements of Cash Flows": "Net cash provided by (used in) operating activities"
+   (eller "Net cash used in operating activities") ger `lab_gaap_anthropic_cfo_a`/`_ytd` med tecknet som det står.
+   "Purchases of property and equipment" ger `lab_gaap_anthropic_capex_a`/`_ytd`, och "Prepayments for leased assets and
+   equipment" ger `lab_gaap_anthropic_prepay_leased_a`/`_ytd`, båda som positiva utflöden (tabellens parentes vänds).
+   Förskotten läggs inte ihop med capex.
+6. Rörelseresultat och kassaflöde från rörelsen har tecknet som det står (förlust negativ). "—" är 0.
+
+Kvartalstabellen och F-sidorna kan avrunda olika. Kvartal härleds inte ur skillnader mellan hittills-i-år-värden i
+den här posten.
+
+**(c) known_from och versioner.** `known_from` = EDGAR:s inlämningsdatum (filingDate) för det **första** dokumentet i
+korpusen som anger värdet för (serie, period). Ett senare dokument med samma värde ger ingen ny version, men raden
+sparas och kontrolleras. Ett senare dokument med ett annat värde ger en ny version med det dokumentets inlämningsdatum
+(en revidering, och en S-1/A kan alltså revidera en S-1). Ett värde som ett senare dokument inte har kvar behåller sin
+senaste version, och inget raderas. Ingen tidigare datering än inlämningsdagen. Bruttoresultatet får det datum då både
+intäkt och kostnad för intäkter finns i samma dokument.
+
+**(d) Extraktionen.** Deterministisk tolkning (`sources/anthropic_gaap.py`): tabellen hittas på sin rubrikrad (exakt
+text), kolumnernas perioder på rubrikraderna under den och raden på sin etikett (exakt text, med varianterna ovan).
+Cellen tolkas utan bedömning: "$" och tusentalskomma bort, parentes = negativt, "—" = 0. Hittas en tabell, en kolumn
+eller en rad inte, eller blir antalet celler fel, stoppar tolkningen med fel i stället för att gissa. Varje värde sparas
+i `curated/anthropic_gaap.csv` med accession, form, inlämningsdatum, URL, tabellens rubrik, sidnumret som står efter
+tabellen, plats (radnummer i KR1:s radlista för rubrikraderna och raden, kolumnens nummer) och SHA-256 för de raderna.
+Citatet, alltså raderna ordagrant, ligger bara i `data/raw` (gitignored). Bara siffrorna committas.
+
+**(e) Kontroller innan serierna används.**
+1. Självkontroll av alla rader mot en nyhämtad kopia (ingen cache): citatet på platsen har sin SHA-256 och cellen har
+   värdet. Inlämningsdatum och accession stäms av mot EDGAR:s submissions.
+2. Stickprov: minst 10 värden som agenten läser om i en nyhämtad kopia och jämför för hand. Utfallet står i
+   källdokumentet.
+3. Summakontroller: Q1–Q4 2025 mot helåret 2025, Q1 + Q2 mot sex månader och Q1 + Q2 + Q3 mot nio månader (2025 och
+   2026), för intäkter, compute och rörelseresultat, med tolerans 1 MUSD per kvartal i summan (avrundning). Samma värde i
+   sammanfattningstabellen ("Consolidated Statements of Operations Data") och på F-sidorna jämförs för intäkterna.
+   Avvikelser redovisas och rättas inte.
+
+**(f) Hur BG1 använder serierna.** Bara som beskrivning, utanför regeln.
+- **Tabellrader** i BG1:s avsnitt 5: senaste och föregående värde med `known_from` för `lab_gaap_anthropic_revenue_q`,
+  `_revenue_a`, `_opinc_q` och `_cfo_ytd`, bredvid run-rate-raderna.
+- **En kvartalstabell** (beskrivning): redovisad intäkt per kvartal, intäkten × 4, compute i procent av intäkten,
+  rörelseresultatet och, i en egen kolumn, den senaste run-rate som var känd vid kvartalets slut med sitt datum. Texten
+  säger skillnaden: run-rate är bolagets årstakt vid en dag (28 dagars konsumtion × 13 plus abonnemang × 12, ej GAAP,
+  inte granskad), och den redovisade intäkten är summan över kvartalet. I ett bolag som växer snabbt ligger run-rate vid
+  kvartalets slut över kvartalets intäkt × 4. De två blandas aldrig i en serie eller en kvot.
+- **Ingen känslighetsrad i regeln.** Två skäl. Kvartalsintäkten börjar 2025Q1, så en summa över fyra kvartal finns först
+  för 2025Q4 och dess takt först för 2026Q4 (10-K, omkring mars 2027): raden skulle vara "kan inte avgöras" för alla
+  ursprung fram till dess. Och när labbets intäkter växer många gånger snabbare än intäktskravet är tecknet på X i
+  praktiken givet, så utfallet skulle bara spegla Y (molnfyrans capex-takt) och inte tillföra något. Labbets intäkter
+  läggs inte heller till molnintäkterna: en del av dem går via molnen (Bedrock, Vertex) och skulle räknas två gånger.
+- BG1:s huvudläsning, rader, gränser och utslag ändras inte. Labbets kostnader för compute är en del av molnens
+  intäkter, och kvartalstabellen visar dem som sammanhang.
+
+**(g) Vad som var sett före posten.** Agenten har läst `docs/resultat/antenner.md`, F0-motorn, posterna F0, LT1, BG1,
+EL1 och X25, R28, BG1:s kod och rapport och `docs/kallor/labbintakter.md` (run-rate enligt S-1/A per 2026-10-31,
+cirka 81 mdr USD). För att skriva posten hämtades de fem dokumenten och deras struktur lästes med siffrorna maskerade:
+tabellernas rubriker, radetiketter och kolumnernas perioder (kvartalstabellen har 2025Q1–2026Q2 i S-1 och 2025Q1–2026Q3
+från S-1/A 2026-11-02; helåren 2023–2025; sex månader i S-1, nio månader därefter), noten om bytet av presentation och
+att XBRL bara finns för försättsbladet. I de maskerade raderna syntes antalet siffror i cellerna och några meningar ur
+MD&A med maskerade tal, bland annat att bolaget redovisade ett rörelseresultat över noll för kvartalet som slutade
+2026-06-30 och att intäkterna växte med ett fyrsiffrigt procenttal på ett år. Inga värden för serierna ovan har lästs.
+
+### 2026-11-27 – AN1, tillägg efter extraktionen: tolkningar (inga regler ändrade)
+
+Skrivet efter att tolkningen körts på de fem dokumenten och före BG1:s rapport. Inga poster, perioder, dateringar eller
+användningar i posten ovan ändras.
+1. **Förskotten i S-1.** S-1 (2026-10-26) har ingen rad "Prepayments for leased assets and equipment" i
+   kassaflödesanalysen. Raden finns från S-1/A 2026-11-02 (helåren 2023–2025 och nio månader 2025 och 2026). Tolkningen
+   stoppade som (d) säger. Undantaget är listat för hand i koden (`ABSENT` i `sources/anthropic_gaap.py`), och bygget
+   stoppar om raden finns i S-1 ändå. `lab_gaap_anthropic_prepay_leased_*` börjar därför med `known_from` 2026-11-02. Om
+   förskotten låg i en annan rad i S-1 (till exempel "Other investing activities") har inte prövats, och inget räknas om.
+2. **Hittills i år.** Prospekten anger sex och nio månader. Q1 och Q4 hittills i år står inte där och är godtagna luckor
+   i datatesterna. Helåret står i `_a`-serierna.
+3. **"(unaudited)"** står på en egen rad under årtalen i F-sidornas tabeller. Tolkningen läser inte vilka kolumner
+   markeringen gäller. Kvartalstabellen kallas ogranskad i texten ovanför den.
+4. **Utfall av kontrollerna (e):** 297 rader ur fem dokument. Självkontrollen mot nyhämtade kopior: 297 av 297 rätt
+   (citat, värde, inlämningsdatum och accession). Summakontrollerna: 70 av 70 inom toleransen, alla med skillnad 0.
+   Stickprovet på 17 värden lästes för hand ur nyhämtade kopior med en annan tolkning av HTML-tabellerna, och alla 17
+   stämde (`docs/kallor/anthropic_gaap.md`). Inget värde skiljer sig mellan dokumenten, så varje serie har en version
+   per period.

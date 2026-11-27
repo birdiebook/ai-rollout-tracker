@@ -62,9 +62,10 @@ lägg till rader.
 - **DRS och DRS/A** (sex utkast 2026-06-01 till 2026-10-09) **används aldrig.** EDGAR daterar dem efter den
   konfidentiella inlämningen, men de blev offentliga först senare. Datumet skulle läcka. Inläsaren vägrar
   `doc_type` DRS och DRS/A. Utkasten har dessutom tomma värden ("$ as of .").
-- **GAAP-intäkter** i S-1 (kvartal och helår) är redovisning, inte självrapportering, och tas inte med här.
-  Companyfacts har ännu inga us-gaap-fakta för CIK 2130357. Rekommendation: lägg till Anthropic i SEC-flödet
-  (`sources/sec.py`) när första 10-Q kommer. Då kommer reviderade intäkter som egna serier, skilda från de här.
+- **GAAP-intäkter** i S-1 (kvartal och helår) är redovisning, inte självrapportering, och tas inte med här. De finns
+  sedan spår AN1 (2026-11-27) som egna serier `lab_gaap_anthropic_*` ur S-1, S-1/A och 424B4
+  (`docs/kallor/anthropic_gaap.md`), skilda från run-rate-serierna här. Companyfacts har ännu inga us-gaap-fakta för
+  CIK 2130357. De periodiska rapporterna (första 10-K för 2026) förlänger serierna först efter ett daterat tillägg.
 - **xAI:** X.AI Corp. (CIK 2002695, fyra Form D 2023–2025) och X.AI Holdings Corp. (CIK 2079267, två Form D
   2025–2026). Fältet `revenueRange` är "Decline to Disclose" i alla. Ingen intäktsuppgift.
 - **OpenAI:** ingen inlämning från OpenAI självt hittades under OpenAI-namn, bara tredjeparts-SPV:er
@@ -135,7 +136,8 @@ Värdet lagras som det uttalades. En nedre gräns behålls som gräns.
   intäkt.
 - **Härlett värde:** S-1/A:s "up $10 billion from September 30, 2026" ger implicit cirka 71 mdr USD per 2026-09-30.
   Det står inte uttryckligen och registreras inte.
-- **GAAP-intäkter i S-1 och FWP** (kvartalsintäkter 2025–2026). De är redovisade siffror och hör till SEC-flödet.
+- **GAAP-intäkter i S-1 och FWP** (kvartalsintäkter 2025–2026). De är redovisade siffror och hör inte till de här
+  serierna. Prospektens tal finns i `lab_gaap_anthropic_*` (spår AN1, `docs/kallor/anthropic_gaap.md`).
 - **Andrahandsuppgifter:** OpenAI:s, xAI:s, Mistrals och Coheres intäktssiffror som cirkulerar i pressen (The
   Information, Reuters, Bloomberg, CNBC och andra), och VD:ars uttalanden i intervjuer i andras medier eller
   poddar. De kommer inte från bolagens egna kanaler, och bolagens egna kanaler (openai.com, x.ai, x.com och
