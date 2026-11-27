@@ -1,5 +1,7 @@
 # Pris mot volym: följd fråga (PV1)
 
+*Omgenererad i integrationen av körning 17: F0:s räkning av hur ofta regeln kunde prövas är ändrad av S1 (`docs/mattregister.md`, 2026-11-27 S1, punkt 3, registrerad före PV1). Ett ursprung räknas nu som prövat bara när Y finns i fönstret, och rapporten visar båda talen i en övergångsnotis. Per 2026-11-27 ger det 3 av 4 ursprung i stället för 4 av 4 för bisak a. Inga utslag ändrades.*
+
 **Frågan:** Följs prisfallet vid fast förmåga (G2) av högre användning (G3), och ändras sambandet?
 
 Följd fråga, inte en gren. Måtten, aggregaten, läsregeln och gränserna låstes i registret innan något räknades
@@ -108,8 +110,9 @@ Alla läsningar nedan vilar bara på värden som var kända före registerposten
   Ändras sambandet? Inget ursprung har avgjorts (talar för eller talar emot) i historiken på dagen.
   Läsningen vilar bara på värden som var kända före registerposten 2026-11-27, och den är därför inget utfall på osedda data.
 - **Pris vid fast Arena-förmåga (variant A) mot SDK-nedladdningar (bisak a):** inget av mönstren. t = 2026Q3 (ingen impuls i fönstret). X = pv1_pris_arena_q (förändring i takt), Y = pv1_sdk_q (förändring i takt); fönster 2 kvartal, tecken −.
-  Regeln kunde prövas i 4 av 4 ursprung med X (2025Q3–2026Q2). Impulser uppåt 2 (för 0, emot 2, inget 0, kan inte avgöras 0), nedåt 0 (för 0, emot 0, inget 0, kan inte avgöras 0), utan impuls 2.
+  Regeln kunde prövas i 3 av 4 ursprung med X (2025Q3–2026Q2). Impulser uppåt 2 (för 0, emot 2, inget 0, kan inte avgöras 0), nedåt 0 (för 0, emot 0, inget 0, kan inte avgöras 0), utan impuls 2.
   Y var känt i hela fönstret i 3 av 4 ursprung, och 2 av 2 impulser kunde läsas mot Y. Riktningen nedåt har inte prövats: X har inte haft någon impuls nedåt.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 4 av 4; med den nya: 3 av 4.
   X har förändring i takt från 2025Q3.
   Ändras sambandet? Avgjorda ursprung i tidsordning: 2025Q3 talar emot, uppåt (X +441,0, Y +42,0 vid 2025Q4); 2025Q4 talar emot, uppåt (X +346,0, Y +44,9 vid 2026Q1). Senaste: talar emot (2025Q4), tidigare 0 talar för och 1 talar emot. En beskrivning utan gräns för "ändrat"; med så få ursprung kan en skillnad vara slump.
   Bisak a vilar på X-värden som var sedda före posten (nivåerna för variant A stod i `g2_arena_pris.md`, registret avsnitt (f)) och har bara beskrivande värde.
