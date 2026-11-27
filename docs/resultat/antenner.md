@@ -1,7 +1,10 @@
 # Antenner: de följda frågorna i en tabell
 
-*Ägarbeslut 2026-11-27 (spår B18, `docs/mattregister.md`, 2026-11-27 B18): prisvolyms rad följer huvudläsningen H-G (geometriskt kvartalsmedel), med bisakerna a-G och b-G och de låsta raderna H, a och b som fakta (punkt 2). Utslaget är detsamma som för H, och `main_inputs` är samma katalogserier. Kreditlagret har en ny fakta, om huvudläsningen är på osedda data, avgjort per läsning (punkt 3; nej per 2026-11-27). Inga utslag ändrades. Avsnittet nedan är genererat på nytt per 2026-11-27.*
+*Integrationen av körning 18 (B18, DA1): avsnittet nedan är genererat på nytt per 2026-11-27 på den sammanslagna koden. Det är föreningen av spårens ändringar: prisvolyms rad läser H-G och kreditlagret anger om huvudläsningen är osedd (B18), och ledtids rad är oförändrad, eftersom DA1:s förvärv i L2 och L3 inte ändrar något utslag. Inga utslag ändrades.*
 
+*Spår DA1 (`docs/mattregister.md`, 2026-11-27 DA1): avsnittet nedan är genererat på nytt per 2026-11-27 efter att Dells, Super Micros och Equinix förvärv lagts in i LT1:s förvärvsmärke för L2 och L3. Det är oförändrat: märket ändrar inget utslag, och antennen visar inte L2:s och L3:s märken.*
+
+*Ägarbeslut 2026-11-27 (spår B18, `docs/mattregister.md`, 2026-11-27 B18): prisvolyms rad följer huvudläsningen H-G (geometriskt kvartalsmedel), med bisakerna a-G och b-G och de låsta raderna H, a och b som fakta (punkt 2). Utslaget är detsamma som för H, och `main_inputs` är samma katalogserier. Kreditlagret har en ny fakta, om huvudläsningen är på osedda data, avgjort per läsning (punkt 3; nej per 2026-11-27). Inga utslag ändrades. Avsnittet nedan är genererat på nytt per 2026-11-27.*
 
 *Slutintegrationen av körning 17 (efter R29 och X26): avsnittet nedan är genererat på nytt per 2026-11-27 på den slutliga koden och är oförändrat mot X26.*
 

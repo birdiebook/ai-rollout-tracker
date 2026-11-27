@@ -61,15 +61,18 @@ DIRECTIONS = {"fore": "före", "efter": "efter"}
 # acquisition that touches a quarter is listed, with the way it moves the change in pace (register X25, point 2)
 ACQUISITIONS = {"L1": (("Eaton–Fibrebond", "2025Q2"), ("Eaton–Boyd Thermal", "2026Q1")),
                 "L2": (("Cisco–Splunk", "2024Q1"),)}
-# Quanta's acquisitions are data in curated/acquisitions.csv (register 2026-11-27 QA1), marked from the day the first
-# filing that states them was filed; they follow the documented ones above in each mark
-ACQ_COMPANIES = {"L1": ("pwr",)}
+# Quanta's (L1, register 2026-11-27 QA1) and Dell's, Super Micro's and Equinix's (L2 and L3, register 2026-11-27 DA1)
+# acquisitions are data in curated/acquisitions.csv, marked from the day the first filing that states them was filed;
+# they follow the documented ones above in each mark
+ACQ_COMPANIES = {"L1": ("pwr",), "L2": ("dell", "smci"), "L3": ("eqix",)}
 ACQ_OFFSETS = (0, 1, 4, 5)
 ACQ_PUSH = {0: "upp", 1: "upp", 4: "ned", 5: "ned"}  # a level step raises pace at a..a+3: change up at a, a+1, down at a+4, a+5
-UNCHECKED_ACQ = ("Quantas förvärv är kodade ur 10-K och 10-Q från 2023 (`curated/acquisitions.csv`, registret 2026-11-27 "
-                 "QA1). Quantas förvärv före 2023 är inte kodade, fast deras a + 4 och a + 5 kan ligga i L1:s historik "
-                 "(till exempel Blattner, slutfört 2021-10-13). Förvärv hos Dell, Super Micro och Equinix är inte "
-                 "kontrollerade.")
+UNCHECKED_ACQ = ("Quantas förvärv (L1) och Dells, Super Micros och Equinix förvärv (L2 och L3) är kodade ur 10-K och 10-Q "
+                 "från 2023 (`curated/acquisitions.csv`, registret 2026-11-27 QA1 och DA1). Förvärv före 2023 är inte "
+                 "kodade, fast deras a + 4 och a + 5 kan ligga i historiken (till exempel Quantas Blattner, slutfört "
+                 "2021-10-13). Ciscos förvärv utom Splunk är inte kontrollerade. HPE:s och Aristas förvärv är inte "
+                 "kodade, eftersom deras RPO bara visas som sammanhang och inte ingår i L2. Avyttringar märks inte "
+                 "(till exempel Dells försäljning av Secureworks 2025-02-03).")
 
 CONTEXT = {  # (title, keys): measures shown as context, not read
     "members": ("Medlemmarna i L1 och L2, och leverantörer utanför aggregaten",
@@ -376,15 +379,16 @@ def _level(m_unit: str):
 
 
 def _acquisition_lines(r: dict) -> list[str]:
-    """Quanta's coded acquisitions known on the day, one line per quarter a (register QA1)."""
+    """The coded acquisitions known on the day, one line per company, by quarter a (registers QA1 and DA1)."""
     out = []
     for c, ms in r.get("acquisitions", {}).items():
         if not ms:
             continue
         who = ACQ.NAMES.get(c, c)
+        whose = who if who.endswith(("s", "x", "z")) else who + "s"  # Swedish genitive: "Equinix förvärv"
         items = "; ".join(f"{a}: {name.removeprefix(who + ', ').removeprefix(who + '–').replace(f' {a}', '')}, känt från "
                           f"{day}" for name, a, day in ms)
-        out.append(f"- {who}s förvärv per kvartal a, med köpeskillingen i MUSD som bolaget anger den (för en period: alla "
+        out.append(f"- {whose} förvärv per kvartal a, med köpeskillingen i MUSD som bolaget anger den (för en period: alla "
                    f"förvärv i perioden hittills i året). Bolaget anger inte tillförd RPO, och den räknas inte om ur "
                    f"köpeskillingen: {items}.")
     return out
@@ -527,7 +531,7 @@ def render(r: dict) -> str:
             "- Leverantörerna säljer också till andra än AI-köparna: Quanta och Eaton till elbolag och industri, Cisco och "
             "Dell till företag. Ett utslag säger inget om hur stor del som gäller AI.",
             "- Förvärv ger nivåskiften. Belagda förvärv märks i tabellen (Cisco–Splunk 2024Q1, Eaton–Fibrebond 2025Q2, "
-            "Eaton–Boyd Thermal 2026Q1 och Quantas förvärv nedan) med förskjutning och riktning: vid a och a + 1 flyttas "
+            "Eaton–Boyd Thermal 2026Q1, och Quantas, Dells, Super Micros och Equinix förvärv nedan) med förskjutning och riktning: vid a och a + 1 flyttas "
             "förändringen i takt uppåt, vid a + 4 och a + 5 nedåt. Träffar två förvärv samma kvartal åt olika håll är "
             f"nettoriktningen inte känd. Märket ändrar inget utslag. {UNCHECKED_ACQ}",
             *_acquisition_lines(r),

@@ -25,11 +25,11 @@ def df():
 
 def test_csv_loads_and_every_event_has_one_quarter(df):
     assert list(df.columns[:-1]) == A.COLUMNS and df["id"].is_unique
-    assert set(df["company"]) == {"pwr"}
+    assert set(df["company"]) == {"pwr", "dell", "smci", "eqix"}  # Dell, Super Micro and Equinix: register DA1
     assert set(df["row_type"]) <= set(A.ROW_TYPES)
     assert df.groupby("event")["quarter"].nunique().max() == 1
     closed = df[df["closed"] != ""]
-    assert all(A.quarter_of(c) == q for c, q in zip(closed["closed"], closed["quarter"]))
+    assert all(A.quarter_of(c, co) == q for c, co, q in zip(closed["closed"], closed["company"], closed["quarter"]))
     assert (closed["closed"] >= A.SINCE).all()
 
 
@@ -41,6 +41,7 @@ def test_csv_holds_no_source_text(df):
 
 
 def test_every_quarter_from_2023_is_coded_as_acquisitions_or_none(df):
+    df = df[df["company"] == "pwr"]
     qs = [str(q) for q in pd.period_range("2023Q1", "2026Q3", freq="Q")]
     coded = set(df["quarter"])
     assert set(qs) <= coded
@@ -88,9 +89,13 @@ def test_l1_marks_list_documented_then_quanta_with_direction():
 
 
 def test_quanta_marks_only_l1_and_respect_the_day():
-    assert L.acquisition_quarters("L2") == {"2024Q1": "Cisco–Splunk a, upp", "2024Q2": "Cisco–Splunk a + 1, upp",
-                                            "2025Q1": "Cisco–Splunk a + 4, ned", "2025Q2": "Cisco–Splunk a + 5, ned"}
-    for row in ("L3", "O1", "O2"):
+    l2 = L.acquisition_quarters("L2")  # Splunk, then Dell's and Super Micro's coded ones (register DA1)
+    assert {q: v.split("; ")[0] for q, v in l2.items() if v.startswith("Cisco")} == {
+        "2024Q1": "Cisco–Splunk a, upp", "2024Q2": "Cisco–Splunk a + 1, upp",
+        "2025Q1": "Cisco–Splunk a + 4, ned", "2025Q2": "Cisco–Splunk a + 5, ned"}
+    for row in ("L2", "L3"):
+        assert not any("Quanta" in v for v in L.acquisition_quarters(row).values())
+    for row in ("O1", "O2"):
         assert L.acquisition_quarters(row) == {}
     old = L.acquisition_quarters("L1", "2025-11-27")
     assert not any("2026Q2" in v for v in old.values())  # not filed by then

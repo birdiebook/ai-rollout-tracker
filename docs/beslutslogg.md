@@ -1650,6 +1650,35 @@ Johannes svarade "kör på dina rekommendationer" på tre rekommendationer samma
   av prövade ursprung (R29-1) och KL1:s sedda data per läsning (R29-7). Före 2027-01-05: om PV1:s geometriska rader ska
   ersätta de låsta.
 
+## 2026-11-27 – DA1 förvärv hos Dell, Super Micro och Equinix i LT1:s förvärvsmärke (körning 18)
+
+- **Registret först.** Posten "2026-11-27 – DA1" (`6899971`) committades ensam innan inlämningarna lästes. Samma
+  märkesregel som QA1 och X26, punkt 4, inget väsentlighetsfilter, ingen ny regel och inget nytt utslag.
+- **Val: bara L2:s och L3:s medlemmar.** Dell, Super Micro och Equinix kodas. HPE och Arista ingår inte i L2 (deras RPO är
+  sammanhang och läses inte) och kodas inte, fast HPE:s Juniper-förvärv 2025 är stort mot `rpo_hpe`. Ciscos förvärv
+  utom Splunk kodas inte (inte i uppdraget). Rapporten säger alla tre.
+- **Val: Dells *a* är räkenskapskvartalet.** `rpo_dell` har räkenskapskvartalets kalenderkvartal (S1), så *a* är det
+  kvartal i serien vars räkenskapskvartal innehåller slutdagen, alltså det första kvartal vars balans innehåller
+  förvärvet. Det är QA1:s regel tillämpad på ett brutet räkenskapsår, och posten säger det. Förkastat: kalenderkvartalet,
+  som för ett förvärv i april skulle märka ett kvartal före det balansen visar.
+- **Underlaget.** 48 inlämningar (Dell 15, Super Micro 16, Equinix 17). 47 rader: Dell–Moogsoft 2023Q3, ett ej namngivet
+  Dell-förvärv 2025Q4 (goodwill 61 MUSD), Super Micro–Gemini 2023Q2 (2,5 MUSD), Equinix–TIM NextGen DC 2025Q2 (183 MUSD),
+  ett ej namngivet Equinix-förvärv 2025Q4 (kassaflödet cirka 69 MUSD utöver TIM, kan vara en senare betalning) och 39
+  kvartal utan förvärv. Självkontrollen mot nyhämtade dokument: 102 av 102 rader rätt (Quantas 55 och de nya 47).
+  Ingen av bolagen anger tillförd RPO. Avyttringar (Secureworks 2025) och samriskbolag (atNorth 2026) märks inte.
+- **Läsningen.** Inga utslag ändrades. L2:s huvudursprung 2026Q2 har inget märke. Läsningen "L2 efter K-inre", *k* = 4,
+  får märket Dells förvärv 2025Q4 vid 2025Q4. Som beskrivning skulle förvärvet behöva ha tillfört mer än omkring 28,7
+  mdr USD RPO (35 % av Dells RPO) för att förändringen i takt vid 2025Q4 skulle hamna under gränsen. L3 har inga impulser
+  i de märkta kvartalen.
+- **Råcachen.** `.env.local` från `new_track.sh` pekar `AI_TRACKER_SHARED_RAW` mot huvudutcheckningens `data/raw`, så
+  självkontroller skriver dit (X26:s anteckning). I spåret pekades den om till spårets `data/raw` innan något hämtades.
+  Skriptet är inte ändrat.
+- **Öppet för Johannes:** (1) Om `new_track.sh` ska sluta peka råcachen mot huvudutcheckningen för spår som hämtar
+  dokument. Rekommendation: ja, en flagga för spår som hämtar, så att huvudutcheckningen aldrig skrivs. (2) Om Ciscos
+  förvärv utom Splunk ska kodas med en egen post. Rekommendation: ja om L2 ska tolkas bakåt, Ciscos RPO är cirka en
+  fjärdedel av L2 vid 2026Q2, och dess egen förändring i takt var +2,0, så Dells RPO bär L2:s huvudursprung. (3) HPE och Arista bara om de förs in i
+  L2 med en ny post.
+
 ## 2026-11-27 – B18: Johannes ägarbeslut efter R29 (körning 18)
 
 - **Johannes beslut (2026-11-27, i chatten, enligt agentens rekommendationer i R29 avsnitt 7 och X26):**
