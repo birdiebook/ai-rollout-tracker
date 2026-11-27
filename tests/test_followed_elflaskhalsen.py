@@ -277,7 +277,7 @@ def real():
 
 
 @pytest.mark.real_data
-@pytest.mark.parametrize("day,main", [("2026-11-26", C.AGAINST), ("2025-11-26", C.UNDECIDED)])
+@pytest.mark.parametrize("day,main", [("2026-11-27", C.AGAINST), ("2025-11-27", C.UNDECIDED)])  # S1 regenerated
 def test_results_document_is_the_command_output(real, day, main):
     r = E.compute(day, table=real)
     assert _main(r)["outcome"] == main

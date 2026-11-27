@@ -1,14 +1,16 @@
 # Kreditlagret: följd fråga (KL1)
 
+*Tillägg S1 (`docs/mattregister.md`, 2026-11-27 S1, punkt 1): rapporten har ett nytt avsnitt 8, en symmetrisk läsning med F0:s regel per pris- och beroendemått mot samma enhets capex-takt (tecken −), bredvid den låsta läsningen. Avsnitt 1–7 är byte för byte desamma som med koden före S1, och huvudläsningen är den låsta. Rapporterna nedan är genererade på nytt per 2026-11-27 och 2025-11-27. Utom datumen och avsnitt 8 är de desamma som per 2026-11-25 och 2025-11-25, så texten om de dagarna gäller också för de nya. Undantag: per 2026-11-27 saknar avsnitt 4 stycket om sedda data, eftersom den låsta rapporten avgör det av läsdagen (efter 2026-11-25) och inte per läsning. Inget kvartal i KL1:s serier blev känt efter 2026-11-25, så läsningen är fortfarande på sedda data.*
+
 **Frågan:** Ändras finansieringens pris och tillgång i de yttre lagren, och följer investeringstakten där med?
 
 Följd fråga, inte en gren. Måtten, läsregeln och gränserna låstes i registret före beräkningen
 (`docs/mattregister.md`, 2026-11-25 KL1 och tillägget). Källor och kodning: `docs/kallor/kreditlagret.md`. Rapporten
 byggs med
 
-    python -m ai_tracker.followed kreditlagret --as-of 2026-11-25 [--json PATH] [--out PATH]
+    python -m ai_tracker.followed kreditlagret --as-of 2026-11-27 [--json PATH] [--out PATH]
 
-Den använder bara rader som var kända på dagen. Nedan står rapporten per 2026-11-25 och per 2025-11-25, så att
+Den använder bara rader som var kända på dagen. Nedan står rapporten per 2026-11-27 och per 2025-11-27, så att
 ändringen över ett år syns. Rapporterna är genererade av kommandot och inte redigerade. Rättade efter granskningen R26
 (spår X23, registret 2026-11-25 X23): dateringen av fem rader från Anthropic, CoreWeaves obligation 2031, SpaceX (xAI)
 i labbdelen, listan över okodade kandidater och förbehållen nedan. Rättade efter granskningen R27 (spår X24, registret
@@ -47,7 +49,32 @@ läsningen på osedda kvartal kommer med inlämningar efter 2026-11-25, för Ora
   till 120,5 mdr till SpaceXAI.
 - Varje mönster kan vara slump. Med 8–12 kvartal per mått och klumpig RPO är detta en beskrivning.
 
-## Kreditlagret per 2026-11-25
+## Tillägg S1: vad de symmetriska raderna säger (beskrivning, inget test)
+
+Avsnitt 8 i rapporterna nedan. Alla rader per 2026-11-27 vilar på värden som var kända före registerposten 2026-11-27,
+och KL1:s takter vid *t* − 2 var sedda före den (S1, punkt 6). Utslagen är inga utfall på osedda data.
+
+- **Riktningen nedåt kan nu läsas.** 12 av de 18 raderna har haft minst en impuls nedåt i historiken (15 rader har X
+  alls). Den låsta regeln läser bara uppgång.
+- **Oracle:** de tre beroendemåtten ger "talar för, uppåt" per 2026-11-27. Vid ursprunget 2026Q2 hade (capex − OCF) /
+  capex stigit +40,7, nettoemission / capex +52,9 och leasing / capex +262,5 procentenheter, och Oracles capex-takt föll
+  −15,8 vid 2026Q3. Det är samma capex-takt som i den låsta läsningen, så raderna är inget oberoende belägg för den.
+  Räntan ger "inget av mönstren" (ingen impuls i fönstret). Per 2025-11-27 gav (capex − OCF) / capex och nettoemission
+  "talar emot, uppåt" (capex-takten steg +33,5) och leasing "talar för, nedåt" (leasing −129,0, capex-takten +33,5).
+- **Inre lagret:** de tre beroendemåtten ger "talar emot, uppåt" per 2026-11-27: beroendet steg och capex-takten steg
+  +9,6. För (capex − OCF) / capex är det den mekaniska kopplingen i avsnitt 8. Per 2025-11-27 kunde de inte avgöras
+  (capex-takten +2,0 vid 2025Q3, inom ±5, och fönstret var öppet).
+- **CoreWeave och Nebius:** "talar för, nedåt": beroendet föll (CoreWeave (capex − OCF) / capex −26,2 och leasing −224,0
+  vid 2026Q2, nettoemission −12,5 vid 2026Q1; Nebius −75,2) och capex-takten steg (+35,7 och +70,6; Nebius +44,0). För
+  nettoemission och leasing är det samma mekaniska koppling åt andra hållet, och historiken är ett till tre ursprung.
+- **Yttre lagret och IREN** kan inte avgöras: capex över fyra kvartal har ingen förändring i takt förrän 2026Q4. Räntan
+  har ingen takt för yttre lagret, inre lagret och CoreWeave (tre eller fyra kvartal).
+- **Räkningen (S1, punkt 3)** ändrar bara de korta raderna, till exempel Oracles ränta från 21 till 20 prövade ursprung av
+  21 och CoreWeaves nettoemission från 2 till 1 av 3.
+- Med 18 rader och korta serier väntas några utslag av en slump. Första osedda läsningen: Oracle 2026Q4 omkring
+  2026-12-11.
+
+## Kreditlagret per 2026-11-27
 
 **Frågan:** Ändras finansieringens pris och tillgång i de yttre lagren, och följer investeringstakten där med?
 
@@ -190,8 +217,6 @@ Gränser (låsta): A = vid t − 2 har den effektiva räntan en takt ≥ +0,25 p
 
 Regeln läser bara uppgång i pris och beroende: A kräver en takt på minst gränsen. Ett fall i pris och beroende följt av högre capex-takt blir "inget av mönstren". Hur ofta A har gällt står under varje utslag. När A nästan alltid gäller, avgörs utslaget i praktiken av capex-takten. En regel som läser båda riktningarna kräver en ny daterad registerpost.
 
-Alla kvartal i den här läsningen var kända före registerposten 2026-11-25, och flera av dem var sedda före posten (posten, avsnitt (e)). Läsningen är därför inget utfall på osedda data. Den första läsningen på osedda kvartal kommer med inlämningar efter 2026-11-25, för Oracle omkring 2026-12-11.
-
 - **Yttre lagret (huvudläsning):** kan inte avgöras (ett mått som regeln behöver saknas). t = 2026Q3; A = True (takt vid 2026Q1: rate_eff –, fcfgap –, netdebt +3,4, leases +172,1); förändring i capex-takt yttre –, inre +9,6 (2026Q3).
   A har gällt i 4 av 4 kvartal med minst en takt (2025Q4–2026Q3).
   Saknas: kl_rate_eff_outer (takt vid 2026Q1); kl_fcfgap_outer (takt vid 2026Q1); kl_capex4_outer (förändring i takt vid 2026Q3).
@@ -263,8 +288,110 @@ Nästa inlämning per bolag, uppskattad som nästa kvartals slut plus medianen a
 - Regeln läser bara uppgång i pris och beroende. Hur ofta A har gällt står i avsnitt 4.
 - Utanför ramen: privat kredit utanför EDGAR, labbens oregistrerade skuld, spreadar på andrahandsmarknaden (licens) och 144A-affärer utan 8-K. OpenAI har ingen registreringsansökan på EDGAR. SpaceX:s skuld gäller hela koncernen (uppskjutning, Starlink och xAI).
 - Nyhetsuppgifter om kreditbetyg (KBRA, Moody's) är sekundära och används inte som data.
+### 8. Tillägg S1: symmetrisk läsning bredvid den låsta
 
-## Kreditlagret per 2025-11-25
+Registret: `docs/mattregister.md`, 2026-11-27 S1, punkt 1. F0:s symmetriska regel per pris- och beroendemått: X = måttets takt (gräns ±0,25 procentenheter för räntan och ±5 för beroendemåtten, KL1:s gränser), Y = förändringen i capex-takt för samma enhet (gräns ±5), fönster 2 kvartal efter ursprunget, tecken −. En rad per mått, ingen sammanslagning med "eller". Avsnitt 1–7 ovan är den låsta läsningen och är oförändrade, och huvudläsningen är fortfarande den låsta (avsnitt 4). Det här avsnittet är ett tillägg.
+
+- **Talar för, uppåt:** pris eller beroende steg (X ≥ +g) och capex-takten föll sedan (Y ≤ −5). **Talar för, nedåt:** pris eller beroende föll (X ≤ −g) och capex-takten steg sedan (Y ≥ +5).
+- **Talar emot:** capex-takten följde X åt samma håll.
+- En negativ förändring i takt betyder att tillväxten avtar, inte att capex minskar. Utslaget är en beskrivning, inget test.
+
+Beroendemåtten har capex över samma fyra kvartal i sig. (capex − OCF) / capex stiger när capex växer snabbare än kassaflödet, så en acceleration i capex ger lätt "talar emot, uppåt". Nettoemission och leasing har capex i nämnaren och faller när capex accelererar, så samma acceleration ger lätt "talar för, nedåt". Utslagen för beroendemåtten är därför svaga belägg åt båda hållen. Räntan har ingen sådan koppling men kort historik.
+
+Impulser nedåt i historiken: i 12 av 18 rader (15 rader har X i historiken). Antalet per rad och riktning står under varje rad.
+
+Alla rader vilar bara på värden som var kända före registerposten 2026-11-27, och KL1:s takter vid t − 2 var sedda före posten (S1, punkt 6). Ingen av raderna är därför ett utfall på osedda data (S1, punkt 4).
+
+**Yttre lagret** (Y = `kl_capex4_outer`):
+
+- **Effektiv ränta:** kan inte avgöras. t = 2026Q3 (X saknas vid 2026Q1; X saknas vid 2026Q2). X = kl_rate_eff_outer (takt), Y = kl_capex4_outer (förändring i takt); fönster 2 kvartal, tecken −.
+  Regeln kunde inte prövas: X saknas i hela historiken.
+  `kl_capex4_outer` har ingen förändring i takt på dagen (serien är för kort), så Y saknas i varje fönster.
+- **(capex − OCF) / capex:** kan inte avgöras. t = 2026Q3; ursprung 2026Q2, X +15,2 (gräns ±5,0), uppgång (Y saknas vid 2026Q3). X = kl_fcfgap_outer (takt), Y = kl_capex4_outer (förändring i takt); fönster 2 kvartal, tecken −.
+  Regeln kunde prövas i 0 av 1 ursprung med X (2026Q2–2026Q2). Impulser uppåt 1 (för 0, emot 0, inget 0, kan inte avgöras 1), nedåt 0 (för 0, emot 0, inget 0, kan inte avgöras 0), utan impuls 0.
+  Y var känt i hela fönstret i 0 av 1 ursprung, och 0 av 1 impulser kunde läsas mot Y. Riktningen nedåt har inte prövats: X har inte haft någon impuls nedåt.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 0 av 1; med den nya: 0 av 1.
+  `kl_capex4_outer` har ingen förändring i takt på dagen (serien är för kort), så Y saknas i varje fönster.
+- **(emitterad − amorterad skuld) / capex:** kan inte avgöras. t = 2026Q3; ursprung 2026Q2, X +36,0 (gräns ±5,0), uppgång (Y saknas vid 2026Q3). X = kl_netdebt_outer (takt), Y = kl_capex4_outer (förändring i takt); fönster 2 kvartal, tecken −.
+  Regeln kunde prövas i 0 av 3 ursprung med X (2025Q4–2026Q2). Impulser uppåt 2 (för 0, emot 0, inget 0, kan inte avgöras 2), nedåt 0 (för 0, emot 0, inget 0, kan inte avgöras 0), utan impuls 1.
+  Y var känt i hela fönstret i 0 av 3 ursprung, och 0 av 2 impulser kunde läsas mot Y. Riktningen nedåt har inte prövats: X har inte haft någon impuls nedåt.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 1 av 3; med den nya: 0 av 3.
+  `kl_capex4_outer` har ingen förändring i takt på dagen (serien är för kort), så Y saknas i varje fönster.
+- **Leasingavtal som inte börjat / capex:** kan inte avgöras. t = 2026Q3; ursprung 2026Q2, X +127,8 (gräns ±5,0), uppgång (Y saknas vid 2026Q3). X = kl_leases_outer (takt), Y = kl_capex4_outer (förändring i takt); fönster 2 kvartal, tecken −.
+  Regeln kunde prövas i 0 av 2 ursprung med X (2026Q1–2026Q2). Impulser uppåt 2 (för 0, emot 0, inget 0, kan inte avgöras 2), nedåt 0 (för 0, emot 0, inget 0, kan inte avgöras 0), utan impuls 0.
+  Y var känt i hela fönstret i 0 av 2 ursprung, och 0 av 2 impulser kunde läsas mot Y. Riktningen nedåt har inte prövats: X har inte haft någon impuls nedåt.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 0 av 2; med den nya: 0 av 2.
+  `kl_capex4_outer` har ingen förändring i takt på dagen (serien är för kort), så Y saknas i varje fönster.
+
+**Inre lagret** (Y = `kl_capex4_inner`):
+
+- **Effektiv ränta:** kan inte avgöras. t = 2026Q3 (X saknas vid 2026Q1; X saknas vid 2026Q2). X = kl_rate_eff_inner (takt), Y = kl_capex4_inner (förändring i takt); fönster 2 kvartal, tecken −.
+  Regeln kunde inte prövas: X saknas i hela historiken.
+- **(capex − OCF) / capex:** talar emot, uppåt. t = 2026Q3; ursprung 2026Q2, X +40,0 (gräns ±5,0), uppgång, Y +9,6 vid 2026Q3 (gräns ±5,0). X = kl_fcfgap_inner (takt), Y = kl_capex4_inner (förändring i takt); fönster 2 kvartal, tecken −.
+  Regeln kunde prövas i 28 av 29 ursprung med X (2019Q2–2026Q2). Impulser uppåt 19 (för 8, emot 8, inget 3, kan inte avgöras 0), nedåt 9 (för 5, emot 3, inget 0, kan inte avgöras 1), utan impuls 1.
+  Y var känt i hela fönstret i 27 av 29 ursprung, och 27 av 28 impulser kunde läsas mot Y.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 28 av 29; med den nya: 28 av 29.
+- **(emitterad − amorterad skuld) / capex:** talar emot, uppåt. t = 2026Q3; ursprung 2026Q2, X +33,8 (gräns ±5,0), uppgång, Y +9,6 vid 2026Q3 (gräns ±5,0). X = kl_netdebt_inner (takt), Y = kl_capex4_inner (förändring i takt); fönster 2 kvartal, tecken −.
+  Regeln kunde prövas i 28 av 29 ursprung med X (2019Q2–2026Q2). Impulser uppåt 14 (för 4, emot 7, inget 3, kan inte avgöras 0), nedåt 9 (för 5, emot 3, inget 0, kan inte avgöras 1), utan impuls 6.
+  Y var känt i hela fönstret i 27 av 29 ursprung, och 22 av 23 impulser kunde läsas mot Y.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 28 av 29; med den nya: 28 av 29.
+- **Leasingavtal som inte börjat / capex:** talar emot, uppåt. t = 2026Q3; ursprung 2026Q2, X +62,9 (gräns ±5,0), uppgång, Y +9,6 vid 2026Q3 (gräns ±5,0). X = kl_leases_inner (takt), Y = kl_capex4_inner (förändring i takt); fönster 2 kvartal, tecken −.
+  Regeln kunde prövas i 19 av 19 ursprung med X (2021Q4–2026Q2). Impulser uppåt 11 (för 0, emot 9, inget 2, kan inte avgöras 0), nedåt 7 (för 0, emot 7, inget 0, kan inte avgöras 0), utan impuls 1.
+  Y var känt i hela fönstret i 18 av 19 ursprung, och 18 av 18 impulser kunde läsas mot Y.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 19 av 19; med den nya: 19 av 19.
+
+**Oracle** (Y = `kl_capex4_orcl`):
+
+- **Effektiv ränta:** inget av mönstren. t = 2026Q3 (ingen impuls i fönstret). X = kl_rate_eff_orcl (takt), Y = kl_capex4_orcl (förändring i takt); fönster 2 kvartal, tecken −.
+  Regeln kunde prövas i 20 av 21 ursprung med X (2021Q2–2026Q2). Impulser uppåt 3 (för 3, emot 0, inget 0, kan inte avgöras 0), nedåt 1 (för 1, emot 0, inget 0, kan inte avgöras 0), utan impuls 17.
+  Y var känt i hela fönstret i 20 av 21 ursprung, och 4 av 4 impulser kunde läsas mot Y.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 21 av 21; med den nya: 20 av 21.
+- **(capex − OCF) / capex:** talar för mekanismen, uppåt. t = 2026Q3; ursprung 2026Q2, X +40,7 (gräns ±5,0), uppgång, Y -15,8 vid 2026Q3 (gräns ±5,0). X = kl_fcfgap_orcl (takt), Y = kl_capex4_orcl (förändring i takt); fönster 2 kvartal, tecken −.
+  Regeln kunde prövas i 56 av 57 ursprung med X (2012Q2–2026Q2). Impulser uppåt 38 (för 14, emot 23, inget 0, kan inte avgöras 1), nedåt 17 (för 9, emot 8, inget 0, kan inte avgöras 0), utan impuls 2.
+  Y var känt i hela fönstret i 55 av 57 ursprung, och 54 av 55 impulser kunde läsas mot Y.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 56 av 57; med den nya: 56 av 57.
+- **(emitterad − amorterad skuld) / capex:** talar för mekanismen, uppåt. t = 2026Q3; ursprung 2026Q2, X +52,9 (gräns ±5,0), uppgång, Y -15,8 vid 2026Q3 (gräns ±5,0). X = kl_netdebt_orcl (takt), Y = kl_capex4_orcl (förändring i takt); fönster 2 kvartal, tecken −.
+  Regeln kunde prövas i 41 av 41 ursprung med X (2016Q2–2026Q2). Impulser uppåt 17 (för 5, emot 12, inget 0, kan inte avgöras 0), nedåt 24 (för 12, emot 12, inget 0, kan inte avgöras 0), utan impuls 0.
+  Y var känt i hela fönstret i 40 av 41 ursprung, och 41 av 41 impulser kunde läsas mot Y.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 41 av 41; med den nya: 41 av 41.
+- **Leasingavtal som inte börjat / capex:** talar för mekanismen, uppåt. t = 2026Q3; ursprung 2026Q2, X +262,5 (gräns ±5,0), uppgång, Y -15,8 vid 2026Q3 (gräns ±5,0). X = kl_leases_orcl (takt), Y = kl_capex4_orcl (förändring i takt); fönster 2 kvartal, tecken −.
+  Regeln kunde prövas i 7 av 7 ursprung med X (2024Q4–2026Q2). Impulser uppåt 5 (för 3, emot 2, inget 0, kan inte avgöras 0), nedåt 2 (för 2, emot 0, inget 0, kan inte avgöras 0), utan impuls 0.
+  Y var känt i hela fönstret i 6 av 7 ursprung, och 7 av 7 impulser kunde läsas mot Y.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 7 av 7; med den nya: 7 av 7.
+
+**CoreWeave** (Y = `kl_capex4_crwv`):
+
+- **Effektiv ränta:** kan inte avgöras. t = 2026Q3 (X saknas vid 2026Q1; X saknas vid 2026Q2). X = kl_rate_eff_crwv (takt), Y = kl_capex4_crwv (förändring i takt); fönster 2 kvartal, tecken −.
+  Regeln kunde inte prövas: X saknas i hela historiken.
+- **(capex − OCF) / capex:** talar för mekanismen, nedåt. t = 2026Q3; ursprung 2026Q2, X -26,2 (gräns ±5,0), nedgång, Y +35,7 vid 2026Q3 (gräns ±5,0). X = kl_fcfgap_crwv (takt), Y = kl_capex4_crwv (förändring i takt); fönster 2 kvartal, tecken −.
+  Regeln kunde prövas i 2 av 3 ursprung med X (2025Q4–2026Q2). Impulser uppåt 0 (för 0, emot 0, inget 0, kan inte avgöras 0), nedåt 2 (för 2, emot 0, inget 0, kan inte avgöras 0), utan impuls 1.
+  Y var känt i hela fönstret i 1 av 3 ursprung, och 2 av 2 impulser kunde läsas mot Y. Riktningen uppåt har inte prövats: X har inte haft någon impuls uppåt.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 3 av 3; med den nya: 2 av 3.
+- **(emitterad − amorterad skuld) / capex:** talar för mekanismen, nedåt. t = 2026Q3; ursprung 2026Q1, X -12,5 (gräns ±5,0), nedgång, Y +70,6 vid 2026Q2 (gräns ±5,0). X = kl_netdebt_crwv (takt), Y = kl_capex4_crwv (förändring i takt); fönster 2 kvartal, tecken −.
+  Regeln kunde prövas i 1 av 3 ursprung med X (2025Q4–2026Q2). Impulser uppåt 1 (för 0, emot 0, inget 0, kan inte avgöras 1), nedåt 1 (för 1, emot 0, inget 0, kan inte avgöras 0), utan impuls 1.
+  Y var känt i hela fönstret i 1 av 3 ursprung, och 1 av 2 impulser kunde läsas mot Y.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 2 av 3; med den nya: 1 av 3.
+- **Leasingavtal som inte börjat / capex:** talar för mekanismen, nedåt. t = 2026Q3; ursprung 2026Q2, X -224,0 (gräns ±5,0), nedgång, Y +35,7 vid 2026Q3 (gräns ±5,0). X = kl_leases_crwv (takt), Y = kl_capex4_crwv (förändring i takt); fönster 2 kvartal, tecken −.
+  Regeln kunde prövas i 2 av 2 ursprung med X (2026Q1–2026Q2). Impulser uppåt 1 (för 0, emot 1, inget 0, kan inte avgöras 0), nedåt 1 (för 1, emot 0, inget 0, kan inte avgöras 0), utan impuls 0.
+  Y var känt i hela fönstret i 1 av 2 ursprung, och 2 av 2 impulser kunde läsas mot Y.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 2 av 2; med den nya: 2 av 2.
+
+**Nebius** (Y = `kl_capex4_nbis`):
+
+- **(capex − OCF) / capex:** talar för mekanismen, nedåt. t = 2026Q3; ursprung 2026Q2, X -75,2 (gräns ±5,0), nedgång, Y +44,0 vid 2026Q3 (gräns ±5,0). X = kl_fcfgap_nbis (takt), Y = kl_capex4_nbis (förändring i takt); fönster 2 kvartal, tecken −.
+  Regeln kunde prövas i 2 av 3 ursprung med X (2025Q4–2026Q2). Impulser uppåt 0 (för 0, emot 0, inget 0, kan inte avgöras 0), nedåt 3 (för 2, emot 0, inget 0, kan inte avgöras 1), utan impuls 0.
+  Y var känt i hela fönstret i 1 av 3 ursprung, och 2 av 3 impulser kunde läsas mot Y. Riktningen uppåt har inte prövats: X har inte haft någon impuls uppåt.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 2 av 3; med den nya: 2 av 3.
+
+**IREN** (Y = `kl_capex4_iren`):
+
+- **(capex − OCF) / capex:** kan inte avgöras. t = 2026Q3; ursprung 2026Q2, X -27,2 (gräns ±5,0), nedgång (Y saknas vid 2026Q3). X = kl_fcfgap_iren (takt), Y = kl_capex4_iren (förändring i takt); fönster 2 kvartal, tecken −.
+  Regeln kunde prövas i 0 av 1 ursprung med X (2026Q2–2026Q2). Impulser uppåt 0 (för 0, emot 0, inget 0, kan inte avgöras 0), nedåt 1 (för 0, emot 0, inget 0, kan inte avgöras 1), utan impuls 0.
+  Y var känt i hela fönstret i 0 av 1 ursprung, och 0 av 1 impulser kunde läsas mot Y. Riktningen uppåt har inte prövats: X har inte haft någon impuls uppåt.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 0 av 1; med den nya: 0 av 1.
+  `kl_capex4_iren` har ingen förändring i takt på dagen (serien är för kort), så Y saknas i varje fönster.
+
+## Kreditlagret per 2025-11-27
 
 **Frågan:** Ändras finansieringens pris och tillgång i de yttre lagren, och följer investeringstakten där med?
 
@@ -450,3 +577,94 @@ Nästa inlämning per bolag, uppskattad som nästa kvartals slut plus medianen a
 - Regeln läser bara uppgång i pris och beroende. Hur ofta A har gällt står i avsnitt 4.
 - Utanför ramen: privat kredit utanför EDGAR, labbens oregistrerade skuld, spreadar på andrahandsmarknaden (licens) och 144A-affärer utan 8-K. OpenAI har ingen registreringsansökan på EDGAR.
 - Nyhetsuppgifter om kreditbetyg (KBRA, Moody's) är sekundära och används inte som data.
+### 8. Tillägg S1: symmetrisk läsning bredvid den låsta
+
+Registret: `docs/mattregister.md`, 2026-11-27 S1, punkt 1. F0:s symmetriska regel per pris- och beroendemått: X = måttets takt (gräns ±0,25 procentenheter för räntan och ±5 för beroendemåtten, KL1:s gränser), Y = förändringen i capex-takt för samma enhet (gräns ±5), fönster 2 kvartal efter ursprunget, tecken −. En rad per mått, ingen sammanslagning med "eller". Avsnitt 1–7 ovan är den låsta läsningen och är oförändrade, och huvudläsningen är fortfarande den låsta (avsnitt 4). Det här avsnittet är ett tillägg.
+
+- **Talar för, uppåt:** pris eller beroende steg (X ≥ +g) och capex-takten föll sedan (Y ≤ −5). **Talar för, nedåt:** pris eller beroende föll (X ≤ −g) och capex-takten steg sedan (Y ≥ +5).
+- **Talar emot:** capex-takten följde X åt samma håll.
+- En negativ förändring i takt betyder att tillväxten avtar, inte att capex minskar. Utslaget är en beskrivning, inget test.
+
+Beroendemåtten har capex över samma fyra kvartal i sig. (capex − OCF) / capex stiger när capex växer snabbare än kassaflödet, så en acceleration i capex ger lätt "talar emot, uppåt". Nettoemission och leasing har capex i nämnaren och faller när capex accelererar, så samma acceleration ger lätt "talar för, nedåt". Utslagen för beroendemåtten är därför svaga belägg åt båda hållen. Räntan har ingen sådan koppling men kort historik.
+
+Impulser nedåt i historiken: i 7 av 18 rader (7 rader har X i historiken). Antalet per rad och riktning står under varje rad.
+
+Alla rader vilar bara på värden som var kända före registerposten 2026-11-27, och KL1:s takter vid t − 2 var sedda före posten (S1, punkt 6). Ingen av raderna är därför ett utfall på osedda data (S1, punkt 4).
+
+**Yttre lagret** (Y = `kl_capex4_outer`):
+
+- **Effektiv ränta:** kan inte avgöras. t = – (kl_capex4_outer: inget kvartal känt på dagen). X = kl_rate_eff_outer (takt), Y = kl_capex4_outer (förändring i takt); fönster 2 kvartal, tecken −.
+  Regeln kunde inte prövas: X saknas i hela historiken.
+  `kl_capex4_outer` har ingen förändring i takt på dagen (serien är för kort), så Y saknas i varje fönster.
+- **(capex − OCF) / capex:** kan inte avgöras. t = – (kl_capex4_outer: inget kvartal känt på dagen). X = kl_fcfgap_outer (takt), Y = kl_capex4_outer (förändring i takt); fönster 2 kvartal, tecken −.
+  Regeln kunde inte prövas: X saknas i hela historiken.
+  `kl_capex4_outer` har ingen förändring i takt på dagen (serien är för kort), så Y saknas i varje fönster.
+- **(emitterad − amorterad skuld) / capex:** kan inte avgöras. t = – (kl_capex4_outer: inget kvartal känt på dagen). X = kl_netdebt_outer (takt), Y = kl_capex4_outer (förändring i takt); fönster 2 kvartal, tecken −.
+  Regeln kunde inte prövas: X saknas i hela historiken.
+  `kl_capex4_outer` har ingen förändring i takt på dagen (serien är för kort), så Y saknas i varje fönster.
+- **Leasingavtal som inte börjat / capex:** kan inte avgöras. t = – (kl_capex4_outer: inget kvartal känt på dagen). X = kl_leases_outer (takt), Y = kl_capex4_outer (förändring i takt); fönster 2 kvartal, tecken −.
+  Regeln kunde inte prövas: X saknas i hela historiken.
+  `kl_capex4_outer` har ingen förändring i takt på dagen (serien är för kort), så Y saknas i varje fönster.
+
+**Inre lagret** (Y = `kl_capex4_inner`):
+
+- **Effektiv ränta:** kan inte avgöras. t = 2025Q3 (X saknas vid 2025Q1; X saknas vid 2025Q2). X = kl_rate_eff_inner (takt), Y = kl_capex4_inner (förändring i takt); fönster 2 kvartal, tecken −.
+  Regeln kunde inte prövas: X saknas i hela historiken.
+- **(capex − OCF) / capex:** kan inte avgöras. t = 2025Q3; ursprung 2025Q2, X +62,3 (gräns ±5,0), uppgång (fönstret öppet till 2025Q4). X = kl_fcfgap_inner (takt), Y = kl_capex4_inner (förändring i takt); fönster 2 kvartal, tecken −.
+  Regeln kunde prövas i 23 av 25 ursprung med X (2019Q2–2025Q2). Impulser uppåt 15 (för 8, emot 5, inget 1, kan inte avgöras 1), nedåt 9 (för 5, emot 3, inget 0, kan inte avgöras 1), utan impuls 1.
+  Y var känt i hela fönstret i 23 av 25 ursprung, och 22 av 24 impulser kunde läsas mot Y.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 23 av 25; med den nya: 23 av 25.
+- **(emitterad − amorterad skuld) / capex:** kan inte avgöras. t = 2025Q3; ursprung 2025Q2, X +11,2 (gräns ±5,0), uppgång (fönstret öppet till 2025Q4). X = kl_netdebt_inner (takt), Y = kl_capex4_inner (förändring i takt); fönster 2 kvartal, tecken −.
+  Regeln kunde prövas i 23 av 25 ursprung med X (2019Q2–2025Q2). Impulser uppåt 10 (för 4, emot 4, inget 1, kan inte avgöras 1), nedåt 9 (för 5, emot 3, inget 0, kan inte avgöras 1), utan impuls 6.
+  Y var känt i hela fönstret i 23 av 25 ursprung, och 17 av 19 impulser kunde läsas mot Y.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 23 av 25; med den nya: 23 av 25.
+- **Leasingavtal som inte börjat / capex:** kan inte avgöras. t = 2025Q3; ursprung 2025Q2, X +25,4 (gräns ±5,0), uppgång (fönstret öppet till 2025Q4). X = kl_leases_inner (takt), Y = kl_capex4_inner (förändring i takt); fönster 2 kvartal, tecken −.
+  Regeln kunde prövas i 14 av 15 ursprung med X (2021Q4–2025Q2). Impulser uppåt 7 (för 0, emot 6, inget 0, kan inte avgöras 1), nedåt 7 (för 0, emot 7, inget 0, kan inte avgöras 0), utan impuls 1.
+  Y var känt i hela fönstret i 14 av 15 ursprung, och 13 av 14 impulser kunde läsas mot Y.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 14 av 15; med den nya: 14 av 15.
+
+**Oracle** (Y = `kl_capex4_orcl`):
+
+- **Effektiv ränta:** inget av mönstren. t = 2025Q3 (ingen impuls i fönstret). X = kl_rate_eff_orcl (takt), Y = kl_capex4_orcl (förändring i takt); fönster 2 kvartal, tecken −.
+  Regeln kunde prövas i 16 av 17 ursprung med X (2021Q2–2025Q2). Impulser uppåt 3 (för 3, emot 0, inget 0, kan inte avgöras 0), nedåt 1 (för 1, emot 0, inget 0, kan inte avgöras 0), utan impuls 13.
+  Y var känt i hela fönstret i 16 av 17 ursprung, och 4 av 4 impulser kunde läsas mot Y.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 17 av 17; med den nya: 16 av 17.
+- **(capex − OCF) / capex:** talar emot, uppåt. t = 2025Q3; ursprung 2025Q2, X +173,8 (gräns ±5,0), uppgång, Y +33,5 vid 2025Q3 (gräns ±5,0). X = kl_fcfgap_orcl (takt), Y = kl_capex4_orcl (förändring i takt); fönster 2 kvartal, tecken −.
+  Regeln kunde prövas i 52 av 53 ursprung med X (2012Q2–2025Q2). Impulser uppåt 34 (för 11, emot 22, inget 0, kan inte avgöras 1), nedåt 17 (för 9, emot 8, inget 0, kan inte avgöras 0), utan impuls 2.
+  Y var känt i hela fönstret i 51 av 53 ursprung, och 50 av 51 impulser kunde läsas mot Y.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 52 av 53; med den nya: 52 av 53.
+- **(emitterad − amorterad skuld) / capex:** talar emot, uppåt. t = 2025Q3; ursprung 2025Q2, X +68,4 (gräns ±5,0), uppgång, Y +33,5 vid 2025Q3 (gräns ±5,0). X = kl_netdebt_orcl (takt), Y = kl_capex4_orcl (förändring i takt); fönster 2 kvartal, tecken −.
+  Regeln kunde prövas i 37 av 37 ursprung med X (2016Q2–2025Q2). Impulser uppåt 13 (för 2, emot 11, inget 0, kan inte avgöras 0), nedåt 24 (för 12, emot 12, inget 0, kan inte avgöras 0), utan impuls 0.
+  Y var känt i hela fönstret i 36 av 37 ursprung, och 37 av 37 impulser kunde läsas mot Y.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 37 av 37; med den nya: 37 av 37.
+- **Leasingavtal som inte börjat / capex:** talar för mekanismen, nedåt. t = 2025Q3; ursprung 2025Q2, X -129,0 (gräns ±5,0), nedgång, Y +33,5 vid 2025Q3 (gräns ±5,0). X = kl_leases_orcl (takt), Y = kl_capex4_orcl (förändring i takt); fönster 2 kvartal, tecken −.
+  Regeln kunde prövas i 3 av 3 ursprung med X (2024Q4–2025Q2). Impulser uppåt 2 (för 0, emot 2, inget 0, kan inte avgöras 0), nedåt 1 (för 1, emot 0, inget 0, kan inte avgöras 0), utan impuls 0.
+  Y var känt i hela fönstret i 2 av 3 ursprung, och 3 av 3 impulser kunde läsas mot Y.
+  Övergång (registret 2026-11-27 S1, punkt 3): ett ursprung räknas nu som prövat bara när Y finns i fönstret. Med F0:s räkning före S1: 3 av 3; med den nya: 3 av 3.
+
+**CoreWeave** (Y = `kl_capex4_crwv`):
+
+- **Effektiv ränta:** kan inte avgöras. t = – (kl_capex4_crwv: inget kvartal känt på dagen). X = kl_rate_eff_crwv (takt), Y = kl_capex4_crwv (förändring i takt); fönster 2 kvartal, tecken −.
+  Regeln kunde inte prövas: X saknas i hela historiken.
+  `kl_capex4_crwv` har ingen förändring i takt på dagen (serien är för kort), så Y saknas i varje fönster.
+- **(capex − OCF) / capex:** kan inte avgöras. t = – (kl_capex4_crwv: inget kvartal känt på dagen). X = kl_fcfgap_crwv (takt), Y = kl_capex4_crwv (förändring i takt); fönster 2 kvartal, tecken −.
+  Regeln kunde inte prövas: X saknas i hela historiken.
+  `kl_capex4_crwv` har ingen förändring i takt på dagen (serien är för kort), så Y saknas i varje fönster.
+- **(emitterad − amorterad skuld) / capex:** kan inte avgöras. t = – (kl_capex4_crwv: inget kvartal känt på dagen). X = kl_netdebt_crwv (takt), Y = kl_capex4_crwv (förändring i takt); fönster 2 kvartal, tecken −.
+  Regeln kunde inte prövas: X saknas i hela historiken.
+  `kl_capex4_crwv` har ingen förändring i takt på dagen (serien är för kort), så Y saknas i varje fönster.
+- **Leasingavtal som inte börjat / capex:** kan inte avgöras. t = – (kl_capex4_crwv: inget kvartal känt på dagen). X = kl_leases_crwv (takt), Y = kl_capex4_crwv (förändring i takt); fönster 2 kvartal, tecken −.
+  Regeln kunde inte prövas: X saknas i hela historiken.
+  `kl_capex4_crwv` har ingen förändring i takt på dagen (serien är för kort), så Y saknas i varje fönster.
+
+**Nebius** (Y = `kl_capex4_nbis`):
+
+- **(capex − OCF) / capex:** kan inte avgöras. t = – (kl_capex4_nbis: inget kvartal känt på dagen). X = kl_fcfgap_nbis (takt), Y = kl_capex4_nbis (förändring i takt); fönster 2 kvartal, tecken −.
+  Regeln kunde inte prövas: X saknas i hela historiken.
+  `kl_capex4_nbis` har ingen förändring i takt på dagen (serien är för kort), så Y saknas i varje fönster.
+
+**IREN** (Y = `kl_capex4_iren`):
+
+- **(capex − OCF) / capex:** kan inte avgöras. t = – (kl_capex4_iren: inget kvartal känt på dagen). X = kl_fcfgap_iren (takt), Y = kl_capex4_iren (förändring i takt); fönster 2 kvartal, tecken −.
+  Regeln kunde inte prövas: X saknas i hela historiken.
+  `kl_capex4_iren` har ingen förändring i takt på dagen (serien är för kort), så Y saknas i varje fönster.
