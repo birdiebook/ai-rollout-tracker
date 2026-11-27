@@ -382,8 +382,8 @@ def _acquisition_lines(r: dict) -> list[str]:
         if not ms:
             continue
         who = ACQ.NAMES.get(c, c)
-        items = "; ".join(f"{a}: {name.removeprefix(who + ', ').removeprefix(who + '–')} (känt från {day})"
-                          for name, a, day in ms)
+        items = "; ".join(f"{a}: {name.removeprefix(who + ', ').removeprefix(who + '–').replace(f' {a}', '')}, känt från "
+                          f"{day}" for name, a, day in ms)
         out.append(f"- {who}s förvärv per kvartal a, med köpeskillingen i MUSD som bolaget anger den (för en period: alla "
                    f"förvärv i perioden hittills i året). Bolaget anger inte tillförd RPO, och den räknas inte om ur "
                    f"köpeskillingen: {items}.")

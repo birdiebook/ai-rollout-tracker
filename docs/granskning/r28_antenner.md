@@ -259,6 +259,12 @@ huvudläsningens ursprung och avgörande kvartal (EL1:s X3 är samma serie). LT1
 Quanta inte är kontrollerade. R28 rekommenderar att Quantas 10-Q för 2026Q2 och 2026Q3 läses för förvärv innan
 huvudläsningen tolkas, och att resultatet förs in som ett belagt förvärv eller som "inget förvärv" i en daterad post.
 
+**Åtgärdat i QA1** (registret 2026-11-27 QA1): Quantas 10-K och 10-Q 2023–2026 är lästa. Förvärven står i
+`curated/acquisitions.csv` (53 rader med accession, plats och hash, alla kontrollerade mot EDGAR) och ingår i LT1:s
+förvärvsmärke för L1. Huvudläsningens ursprung 2026Q2 har nu märken åt båda hållen, bland dem Quantas tre förvärv
+2026Q2 (*a*, uppåt). Quanta anger inte tillförd RPO. Beskrivningen står i `docs/kallor/ledtid.md`, avsnittet "Quantas
+förvärv". Inga utslag ändrades.
+
 ### R28-8 (note): förvärvsmärket i "efter" följer inte postens ordalydelse
 
 Posten säger att ursprung i kvartalen *a*, *a* + 1, *a* + 4 och *a* + 5 märks. I "efter" är ursprunget köparens kvartal,
