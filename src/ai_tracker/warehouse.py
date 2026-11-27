@@ -80,6 +80,11 @@ from ai_tracker.series.orders_backlog import KNOWN_GAP_PERIODS as _ORDERS_GAP_PE
 
 KNOWN_GAP_PERIODS.update(_ORDERS_GAP_PERIODS)
 
+# Anthropic's prospectuses (track AN1) state six and nine months, never Q1 or Q4 to date (docs/kallor/anthropic_gaap.md).
+from ai_tracker.series.anthropic_gaap import KNOWN_GAP_PERIODS as _AN1_GAP_PERIODS  # noqa: E402
+
+KNOWN_GAP_PERIODS.update(_AN1_GAP_PERIODS)
+
 # Stale series accepted until a date (ISO), and why: a known outage, never a permanent exemption
 # (that is Spec.max_age_days or Spec.closed). Example: {"us_imports_tw_m": ("2026-12-31", "shutdown, ...")}.
 KNOWN_STALE: dict[str, tuple[str, str]] = {
