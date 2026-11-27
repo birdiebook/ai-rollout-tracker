@@ -3786,3 +3786,22 @@ från S-1/A 2026-11-02; helåren 2023–2025; sex månader i S-1, nio månader d
 att XBRL bara finns för försättsbladet. I de maskerade raderna syntes antalet siffror i cellerna och några meningar ur
 MD&A med maskerade tal, bland annat att bolaget redovisade ett rörelseresultat över noll för kvartalet som slutade
 2026-06-30 och att intäkterna växte med ett fyrsiffrigt procenttal på ett år. Inga värden för serierna ovan har lästs.
+
+### 2026-11-27 – AN1, tillägg efter extraktionen: tolkningar (inga regler ändrade)
+
+Skrivet efter att tolkningen körts på de fem dokumenten och före BG1:s rapport. Inga poster, perioder, dateringar eller
+användningar i posten ovan ändras.
+1. **Förskotten i S-1.** S-1 (2026-10-26) har ingen rad "Prepayments for leased assets and equipment" i
+   kassaflödesanalysen. Raden finns från S-1/A 2026-11-02 (helåren 2023–2025 och nio månader 2025 och 2026). Tolkningen
+   stoppade som (d) säger. Undantaget är listat för hand i koden (`ABSENT` i `sources/anthropic_gaap.py`), och bygget
+   stoppar om raden finns i S-1 ändå. `lab_gaap_anthropic_prepay_leased_*` börjar därför med `known_from` 2026-11-02. Om
+   förskotten låg i en annan rad i S-1 (till exempel "Other investing activities") har inte prövats, och inget räknas om.
+2. **Hittills i år.** Prospekten anger sex och nio månader. Q1 och Q4 hittills i år står inte där och är godtagna luckor
+   i datatesterna. Helåret står i `_a`-serierna.
+3. **"(unaudited)"** står på en egen rad under årtalen i F-sidornas tabeller. Tolkningen läser inte vilka kolumner
+   markeringen gäller. Kvartalstabellen kallas ogranskad i texten ovanför den.
+4. **Utfall av kontrollerna (e):** 297 rader ur fem dokument. Självkontrollen mot nyhämtade kopior: 297 av 297 rätt
+   (citat, värde, inlämningsdatum och accession). Summakontrollerna: 70 av 70 inom toleransen, alla med skillnad 0.
+   Stickprovet på 17 värden lästes för hand ur nyhämtade kopior med en annan tolkning av HTML-tabellerna, och alla 17
+   stämde (`docs/kallor/anthropic_gaap.md`). Inget värde skiljer sig mellan dokumenten, så varje serie har en version
+   per period.
