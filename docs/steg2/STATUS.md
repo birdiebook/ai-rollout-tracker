@@ -185,8 +185,9 @@ Kvar för nya sessioner: `DATA_KEY` (punkt 2 nedan).
      per läsning (R29-7);
    - flytta AN1:s citat och QA1:s meningar till basens `data/raw` med ett eget steg, så att självkontrollerna kan köras
      från main. Rekommendation: ja, före nästa granskning;
-   - Dells förvärv (L2) på samma sätt som Quantas, före den osedda läsningen omkring 2026-12-09. Rekommendation: ja.
-     Quantas förvärv före 2023 (Blattner 2021) bara om LT1:s historik 2022Q4–2023Q1 ska tolkas;
+   - Dells förvärv (L2) på samma sätt som Quantas, före den osedda läsningen omkring 2026-12-09: gjort i DA1 (körning
+     18, med Super Micro och Equinix), och rapporten säger från X27 till och med vilket kvartal förvärven är kodade.
+     Kvar: koda Dells 10-Q för 2026Q3 när den kommer, före läsningen. Quantas förvärv före 2023 (Blattner 2021) bara om LT1:s historik 2022Q4–2023Q1 ska tolkas;
    - Anthropics första 10-K (omkring mars 2027) som förlängning av `lab_gaap_anthropic_*` genom ett daterat tillägg.
      Rekommendation: ja;
    - ombyggnad av GPQA- och ECI-prisraderna med X1:s datering (månadsslut + 1, R29-10). Rekommendation: ja, i nästa

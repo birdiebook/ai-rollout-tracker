@@ -26,6 +26,10 @@ projektets kod och fynden R30-1 till R30-3 som `xfail(strict=True)`.
 fynd ändrar ett utslag eller ett värde per 2026-11-27 eller 2025-11-27. R30-1 bör rättas före Dells inlämning omkring
 2026-12-09, som ger L2:s första osedda läsning.
 
+*Rättning: X27 (`auto18/integration18`) rättade R30-1 till R30-3 och anmärkningarna R30-5 och R30-6 (anteckningen).
+Ingen regel ändrades, så ingen registerpost behövdes (DA1, punkt 3, säger redan att Dells *a* är räkenskapskvartalet).
+Se "Rättat i X27" under varje fynd.*
+
 ## 1. Git-ordningen
 
 Tider i UTC (`git log --graph 3edc854..HEAD`):
@@ -127,6 +131,15 @@ kvartalet inte är läst. DA1 gjordes just inför den läsningen. Samma sak gäl
 efter det som "förvärv inte kodade", eller koda varje ny inlämning innan läsningen redovisas. Det är text och ingen
 regel, så det kräver ingen ny registerpost. Test: `test_r30_1_lt1_report_states_through_which_quarter_the_acquisitions_are_coded`.
 
+**Rättat i X27:** `acquisitions.coded_through` ger det senaste räkenskapskvartal vars inlämning är kodad per läsdag
+(rapportdagen i dokumentets filnamn, så att en efterföljande händelse inte räknas som ett läst kvartal: Quanta 2026Q3,
+inte 2026Q4). Förbehållet i LT1:s rapport säger "Quanta till och med 2026Q3, Dell till och med 2026Q2, Super Micro till
+och med 2026Q3 och Equinix till och med 2026Q3" per 2026-11-27 (2025Q3, 2025Q2, 2025Q3 och 2025Q3 per 2025-11-27). Ett
+ursprung (före) eller avgörande kvartal (efter) efter det står med "förvärv inte kodade: Dell efter 2026Q2" bredvid
+utslaget, som märket. Per 2026-11-27 och 2025-11-27 finns inget sådant kvartal i någon läsning, så bara förbehållet
+ändras. Testet är ett vanligt test, och `tests/test_x27_r30_rattning.py` prövar märket med en syntetisk 2026Q3 för Dell
+per 2026-12-10 och att utfallen är desamma utan märket.
+
 ### R30-2 (should_fix, DA1, latent): Dells kvartal *a* vid räkenskapsgränserna
 
 `acquisitions.quarter_of(day, "dell")` flyttar dagen en månad bakåt och tar kalenderkvartalet. Dells räkenskapskvartal
@@ -139,6 +152,13 @@ EDGAR), eller låt `load()` godta inlämningens kvartal för en slutdag inom en 
 `test_r30_2_dell_quarter_of_follows_the_fiscal_calendar_at_its_boundaries`,
 `test_r30_2_load_accepts_a_dell_closing_in_the_last_days_of_a_fiscal_quarter`.
 
+**Rättat i X27:** `quarter_of` räknar Dells kvartal ur räkenskapskalendern: året slutar på fredagen närmast 31 januari
+(`fiscal_year_end`), kvartal 1–3 är 13 veckor och kvartal 4 resten. Kvartalsslutet (`fiscal_quarter_end`) är rapportdagen
+i alla 14 dokument bakom Dells rader, och dagen efter ligger i nästa kvartal. 2023-11-01, 2023-05-03 och 2024-02-01 ger
+2023Q3, 2023Q1 och 2023Q4, och `load()` godtar då en slutdag 2023-11-01 i 2023Q3. Den gamla förskjutningen gav samma
+kvartal för varje dag mer än en vecka från ett kvartalsslut, och ingen Dell-rad har en slutdag, så inget märke flyttas.
+Båda testerna är vanliga tester.
+
 ### R30-3 (should_fix, DA1): beskrivningen av Equinix 2025Q4 följer inte goodwilltabellen
 
 Raden `eqix-2025Q4-01` och märket ("Equinix, ej namngivet förvärv 2025Q4") är rätt. Men raden, källdokumentet
@@ -148,6 +168,12 @@ Asien–Stillahavet, och förvärvsnoten i 10-Q för nio månader nämner bara T
 2025Q4 och emot en senare betalning för TIM. Källdokumentet säger att goodwilltabellen lästes i varje dokument. Inget
 utslag ändras, eftersom märket ändrar inget utfall. *Rekommendation:* skriv om anteckningen och stycket med goodwilltabellen
 som belägg. Test: `test_r30_3_equinix_2025q4_description_follows_the_goodwill_table`.
+
+**Rättat i X27:** X27 läste mening #2682 i 10-K:n i basens råcache (tillägg 11 i EMEA, 127 i Asien–Stillahavet, 138
+totalt) och skrev om anteckningen i `curated/acquisitions.csv` och stycket i `docs/kallor/ledtid.md` med
+goodwilltabellen som belägg: ett eget ej namngivet rörelseförvärv i EMEA under 2025Q4. Etiketten och märket är desamma.
+Beskrivningen i LT1:s resultatdokument säger "i EMEA". Beslutsloggens äldre post står kvar och har en rättelse i X27:s
+post. Testet är ett vanligt test.
 
 ### R30-4 (note, B18): "byte för byte" i registerposten gäller avsnitt 1–7
 
@@ -165,6 +191,9 @@ som läser posten.
   sista commit, och kalibreringsraden för integrationen säger det). Det är bra för självkontrollen, men meningen
   stämmer inte längre.
 
+**Rättat i X27:** STATUS.md, punkt 8, säger att DA1 gjorde Dells förvärv och att Dells 10-Q för 2026Q3 ska kodas före
+läsningen. Källdokumentet säger att integrationen flyttade råkopiorna och meningarna till basens `data/raw`.
+
 ### R30-6 (note, process och licens)
 
 - DA1:s commit `b4eabec` (kod och data) har fixturer med registrets hash från `3edc854`. Spåret förde in fixturerna först
@@ -172,6 +201,9 @@ som läser posten.
 - Anteckningen till `eqix-2025Q4-01` och källdokumentet citerar en kort fras ur 10-K ("including the TIM Acquisition").
   Det är fyra ord och inget faktum som saknas annars, men CLAUDE.md säger att bara extraherade siffror publiceras och
   aldrig själva texten. Det kan skrivas med egna ord.
+
+**Rättat i X27:** frasen är borta ur anteckningen och källdokumentet och är omskriven med egna ord. Mellancommiten står
+kvar (historiken skrivs inte om).
 
 ## 6. Vad R30 inte prövade
 

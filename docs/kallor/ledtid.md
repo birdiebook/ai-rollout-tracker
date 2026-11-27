@@ -184,14 +184,17 @@ goodwilltabellen, kassaflödets investeringsdel och MD&A i varje dokument och f�
 bygger på att kassaflödet saknar en rad för förvärv (eller visar "—") i dokumentet för perioden till och med kvartalet,
 och att noterna inte nämner något förvärv. Raden pekar på kassaflödets mening. Självkontrollen hämtade alla dokument på
 nytt från EDGAR 2026-11-27: alla 102 rader i tabellen (Quantas 55 och de nya 47) har meningen på platsen, sina siffror och
-datum i meningen och rätt inlämningsdag. Råkopiorna och meningarna ligger i spårets `data/raw` (gitignorerad), inte i
-huvudutcheckningens. Spårets `.env.local` pekade den delade råcachen mot huvudutcheckningens `data/raw` (X26:s
-anteckning), och den pekades om till spårets egen innan något hämtades.
+datum i meningen och rätt inlämningsdag. Spåret hämtade råkopiorna och meningarna till sin egen `data/raw`
+(gitignorerad), och integrationen av körning 18 flyttade dem till huvudutcheckningens `data/raw`, där
+självkontrollen och granskningen R30 läser dem (rättat i X27 efter R30-5).
 
 **Kvartalet *a*** (DA1, punkt 3). Super Micro och Equinix har kalenderkvartal, som Quanta. Dells serie har
 räkenskapskvartalets kalenderkvartal (räkenskapsåret slutar omkring 31 januari), så ett förvärv i räkenskapskvartalet
-augusti–oktober har *a* = kvartal 3. `acquisitions.quarter_of` flyttar dagen en månad bakåt för Dell. En slutdag inom
-några dagar från en räkenskapsgräns får kontrolleras mot inlämningen (ingen av Dells rader har en slutdag).
+augusti–oktober har *a* = kvartal 3. `acquisitions.quarter_of` räknar Dells kvartal ur räkenskapskalendern: året är 52
+eller 53 veckor och slutar på fredagen närmast 31 januari, kvartal 1–3 är 13 veckor och kvartal 4 resten. Slutdagarna
+stämmer mot rapportdagen i alla 14 dokument bakom Dells rader. En slutdag de första dagarna i maj, augusti, november eller februari
+hamnar därmed i rätt räkenskapskvartal (2023-11-01 i 2023Q3). Före X27 flyttades dagen en månad bakåt, vilket gav ett
+kvartal för sent vid gränserna (R30-2). Ingen av Dells rader har en slutdag, så inget märke ändrades.
 
 | Bolag | *a* | Förvärv | Slutdag | Köpeskilling, MUSD | Första dokument |
 |---|---|---|---|---|---|
@@ -199,7 +202,7 @@ några dagar från en räkenskapsgräns får kontrolleras mot inlämningen (inge
 | Dell | 2025Q4 | ej namngivet | i räkenskapskvartalet till 2026-01-30 | ej angiven (goodwill 61, kassaflöde 84) | 10-K 0001571996-26-000008 (2026-03-16) |
 | Super Micro | 2023Q2 | Gemini Open Cloud Computing | 2023-04-17 | 2,5 (varav 0,3 innehållet ett år) | 10-K 0001375365-23-000036 (2023-08-28) |
 | Equinix | 2025Q2 | TIM NextGen DC, tre datacenter i Filippinerna | 2025-06-02 | 183 | 10-Q 0001101239-25-000029 (2025-07-30) |
-| Equinix | 2025Q4 | ej namngivet | – | ej angiven (kassaflöde cirka 69) | 10-K 0001101239-26-000032 (2026-02-11) |
+| Equinix | 2025Q4 | ej namngivet, i EMEA | – | ej angiven (kassaflöde cirka 69, goodwill 11) | 10-K 0001101239-26-000032 (2026-02-11) |
 
 Alla andra kvartal 2023Q1–2026Q3 (Dell till och med 2026Q2) har en rad "inget". Tolkningar och luckor:
 - **Dell 2025Q4.** 10-K för räkenskapsåret 2026 har "goodwill acquired" 61 MUSD i ISG och 84 MUSD i kassaflödet för förvärv
@@ -209,9 +212,12 @@ Alla andra kvartal 2023Q1–2026Q3 (Dell till och med 2026Q2) har en rad "inget"
   men ingen slutdag och ingen köpeskilling. Kassaflödet för förvärv av verksamheter och tillgångar var 127 MUSD för nio
   månader och 126 för året, så inget nytt kom 2023Q4.
 - **Equinix 2025Q4.** Kassaflödet för förvärv av verksamheter var 182 MUSD för nio månader 2025 (TIM) och 251 för året,
-  och MD&A skriver att ökningen omfattar TIM ("including the TIM Acquisition"). Noten nämner bara TIM. Skillnaden, cirka
-  69 MUSD, kan vara ett annat förvärv eller en senare betalning för TIM. Raden märker det som ett ej namngivet förvärv,
-  eftersom märket inte ändrar något utfall och ett förvärv inte kan uteslutas.
+  och MD&A räknar TIM in i årets belopp. Förvärvsnoten i 10-Q för nio månader nämner bara TIM:s goodwill. I 10-K:s
+  goodwilltabell (mening #2682) är årets tillägg 11 MUSD i EMEA och 127 MUSD i Asien–Stillahavet (TIM). Skillnaden i
+  kassaflödet, cirka 69 MUSD, och goodwillen i EMEA talar för ett eget rörelseförvärv i EMEA under 2025Q4, som Equinix
+  inte namnger. Raden märker det som ett ej namngivet förvärv. Rättat i X27 efter R30-3: beskrivningen gav tidigare TIM som en
+  möjlig förklaring till skillnaden, vilket goodwilltabellen talar emot. Märket och utfallen är
+  desamma.
 - **Inte förvärv** (DA1, punkt 3): Dells försäljning av Secureworks 2025-02-03 (en avyttring, märks inte, fast den
   sänker en nivå), Super Micros köp av fastighet i San Jose 2024 (80 MUSD) och dess andel på 11 % i Ampera 2025,
   Leadteks andel på 30 % som närstående bolag köpte 2023, Equinix samriskbolag (xScale, och atNorth som ett samriskbolag

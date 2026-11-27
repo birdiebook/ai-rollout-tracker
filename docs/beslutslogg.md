@@ -1734,3 +1734,19 @@ Johannes svarade "kör på dina rekommendationer" på tre rekommendationer samma
   (R30-4–R30-6). Fynden R30-1–R30-3 är strikta xfail.
 - **Rekommendation:** rätta R30-1 före Dells inlämning omkring 2026-12-09, R30-2 och R30-3 i samma rättning.
 
+## 2026-11-27 – X27 rättning efter R30 (körning 18)
+
+- **Vad.** Rättning i `auto18/integration18` efter merge av `auto18/r30-korning18`. Ingen regel ändrades, så ingen
+  registerpost: DA1, punkt 3, säger redan att Dells *a* är räkenskapskvartalet, och R30-1 är text bredvid utslaget.
+- **R30-1.** LT1:s förbehåll säger till och med vilket räkenskapskvartal varje bolags inlämningar är kodade på läsdagen
+  (per 2026-11-27 Quanta, Super Micro och Equinix 2026Q3, Dell 2026Q2). Ett ursprung eller avgörande kvartal efter det
+  står med "förvärv inte kodade". Kvartalet räknas ur dokumentets rapportdag, så Quantas efterföljande händelse 2026Q4
+  inte räknas som ett läst kvartal. *Kvar:* koda Dells 10-Q för 2026Q3 (omkring 2026-12-09) innan läsningen redovisas.
+- **R30-2.** Dells kvartal räknas ur räkenskapskalendern (52 eller 53 veckor till fredagen närmast 31 januari, kvartal
+  1–3 på 13 veckor). Kvartalsslutet stämmer mot rapportdagen i alla 14 dokument. Ingen Dell-rad har en slutdag, så inget
+  märke flyttas.
+- **R30-3.** Anteckningen och källdokumentet beskriver Equinix 2025Q4 som ett eget ej namngivet förvärv i EMEA
+  (goodwilltabellen: 11 MUSD i EMEA bredvid TIM:s 127). Det rättar DA1:s post ovan, som sade att skillnaden kunde vara en
+  senare betalning för TIM. Citatet ur 10-K är omskrivet med egna ord (R30-6).
+- **Utslag.** Per 2026-11-27 och 2025-11-27 ändras bara förbehållet i LT1:s rapport. Inga märken och inga utslag ändrades,
+  och antennerna är oförändrade.
